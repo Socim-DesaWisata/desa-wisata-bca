@@ -1,710 +1,715 @@
-# DESIGN.md — BCA-Inspired Web Design System
+# DESIGN.md — Desa Wisata BCA / Social Impact CSR Aggregator
 
-> Dokumen ini berisi aturan desain website yang disusun berdasarkan observasi dan referensi publik dari website **BCA.co.id** serta halaman design system/brand assets BCA yang tersedia secara publik. Dokumen ini **bukan brand guideline resmi BCA**. Untuk penggunaan logo, aset, nama, dan identitas BCA secara komersial atau publik, ikuti guideline resmi dan izin dari PT Bank Central Asia Tbk.
+Dokumen ini berisi aturan desain untuk membangun seluruh halaman dashboard admin pada project **Desa Wisata BCA / Social Impact CSR Aggregator**.
 
----
+Panduan ini dibuat berdasarkan referensi dashboard admin dengan **sidebar biru**, topbar putih, kartu statistik, chart, tabel, panel aktivitas, dan layout enterprise yang clean. Gunakan dokumen ini sebagai acuan konsisten untuk halaman lain seperti Daftar Desa Wisata, Template Survey, Survey Assignment, Review Survey, Dokumen, Laporan, User Management, dan Pengaturan.
 
-## 1. Tujuan Desain
-
-Design system ini digunakan sebagai panduan UI untuk website yang ingin memiliki nuansa visual seperti BCA.co.id: modern, profesional, bersih, terpercaya, mudah dibaca, dan ramah untuk pengguna Indonesia.
-
-Untuk project **Desa Wisata BCA / Social Impact CSR Aggregator**, arah desain yang disarankan adalah:
-
-- Terpercaya seperti platform perbankan.
-- Bersih dan informatif seperti dashboard korporat.
-- Humanis dan optimistis seperti program CSR/social impact.
-- Mudah digunakan oleh admin, reviewer, enumerator, dan stakeholder non-teknis.
-- Responsif untuk desktop, tablet, dan mobile.
+> Catatan: guideline ini adalah **BCA-inspired UI direction**, bukan brand guideline resmi BCA. Jangan menggunakan logo/aset resmi BCA kecuali memang memiliki izin dan file resmi.
 
 ---
 
-## 2. Prinsip Visual Utama
+## 1. Design Principles
 
-### 2.1 Clean Corporate
+### 1.1 Clean Corporate
+Tampilan harus terasa rapi, profesional, dan terpercaya. Hindari visual yang terlalu ramai, terlalu playful, atau terlalu banyak warna.
 
-Gunakan layout yang rapi, banyak ruang kosong, hierarchy jelas, dan komponen yang tidak terlalu ramai. Hindari tampilan terlalu playful atau terlalu dekoratif.
+### 1.2 Trustworthy Enterprise
+Website harus terasa seperti platform enterprise untuk CSR, assessment, dan monitoring. Gunakan layout yang stabil, banyak white space, border halus, dan hierarchy yang jelas.
 
-### 2.2 Trust First
+### 1.3 Data First
+Dashboard berisi banyak data: statistik, status survey, progres assessment, dokumen, reviewer, enumerator, dan aktivitas. Desain harus membantu user memahami data dengan cepat.
 
-Karena konteksnya dekat dengan institusi finansial dan data CSR, desain harus terasa aman, kredibel, dan stabil.
+### 1.4 Consistent Navigation
+Sidebar biru menjadi identitas utama. Semua halaman admin harus memakai struktur navigasi yang sama agar user tidak bingung.
 
-Aturan:
-
-- Gunakan warna biru sebagai warna dominan.
-- Gunakan teks gelap untuk informasi penting.
-- Gunakan border dan shadow halus, bukan efek berlebihan.
-- Gunakan status warna secara konsisten.
-- Gunakan bahasa UI yang jelas, singkat, dan tidak ambigu.
-
-### 2.3 Human & Optimistic
-
-Untuk halaman publik, CSR, atau desa wisata, gunakan foto/ilustrasi yang terasa natural, positif, dan dekat dengan kehidupan sehari-hari.
-
-Aturan:
-
-- Gunakan imagery yang autentik dan relatable.
-- Hindari visual yang terlalu artificial atau terlalu luxury.
-- Gunakan nuansa biru, putih, abu muda, dan aksen hangat secukupnya.
+### 1.5 Calm Visual Priority
+Gunakan warna biru sebagai primary action dan identity. Gunakan hijau, oranye, merah hanya untuk status/feedback. Jangan memakai terlalu banyak aksen di satu halaman.
 
 ---
 
-## 3. Brand & Legal Usage
+## 2. Brand Personality
 
-### 3.1 Penggunaan Logo
+Desain harus mencerminkan karakter berikut:
 
-Logo BCA harus digunakan secara hati-hati.
+- Corporate
+- Modern
+- Aman
+- Terpercaya
+- Bersih
+- Terstruktur
+- Ramah untuk stakeholder non-teknis
+- Cocok untuk dashboard CSR, social impact, assessment, dan monitoring
 
-Aturan:
+Hindari karakter berikut:
 
-- Jangan mengubah, mengadaptasi, men-stretch, memotong, atau mentransformasi logo.
-- Gunakan logo biru di background putih atau terang.
-- Gunakan logo putih di background berwarna/gelap.
-- Pastikan logo memiliki clear space yang cukup.
-- Jangan menggunakan logo untuk kebutuhan komersial tanpa izin.
-- Cantumkan sumber/pemilik aset jika diwajibkan.
-
-### 3.2 Clear Space Logo
-
-Recommended implementation:
-
-- Beri jarak minimal `16px` di sekitar logo kecil.
-- Beri jarak minimal `24px–32px` di sekitar logo pada header/hero.
-- Jangan menempatkan logo terlalu dekat dengan button, teks padat, atau elemen dekoratif.
-
-### 3.3 Ukuran Logo
-
-Recommended implementation:
-
-| Context | Height |
-|---|---:|
-| Header desktop | 32–40px |
-| Header mobile | 28–32px |
-| Footer | 36–48px |
-| Login/auth page | 48–64px |
-| Splash/empty state | 64–96px |
+- Terlalu playful
+- Terlalu gelap
+- Terlalu ramai
+- Terlalu marketplace/e-commerce
+- Terlalu neon
+- Terlalu banyak gradient
+- Terlalu banyak animasi
 
 ---
 
-## 4. Color Palette
+## 3. Color Palette
 
-Warna berikut disusun dari halaman publik design system BCA.co.id.
+### 3.1 Primary Colors
 
-### 4.1 Primary Colors
-
-| Token | HEX | Usage |
-|---|---|---|
-| `bca-blue-500` | `#0066AE` | Primary brand, primary button, active nav, link utama |
-| `bca-blue-400` | `#2FA6FC` | Hover, highlight, secondary accent |
-| `bca-blue-300` | `#63ACF2` | Soft accent, chart, icon background |
-| `bca-blue-200` | `#AAD2F8` | Light background, info surface |
-| `bca-blue-100` | `#F1F5F8` | Page background, card tint, section surface |
-
-### 4.2 Secondary Blue
-
-| Token | HEX | Usage |
-|---|---|---|
-| `bca-blue-700` | `#093967` | Dark header/footer, strong emphasis, sidebar |
-| `bca-blue-900` | `#031120` | Very dark text/background, footer base |
-
-### 4.3 Accent Colors
-
-| Token | HEX | Usage |
-|---|---|---|
-| `bca-orange` | `#FF944C` | CTA accent, promo badge, warning-like highlight |
-| `bca-tosca` | `#2ECACC` | Secondary accent, subsidiary/product highlight |
-| `bca-webform-blue` | `#28B4E8` | Webform/myBCA related accent |
-
-> Catatan: Pada referensi publik BCA, `#FF944C` muncul sebagai warna orange dan juga disebut pada bagian “WEBFORM button”. Untuk implementasi, gunakan sebagai aksen, bukan warna dominan.
-
-### 4.4 Neutral Colors
-
-| Token | HEX | Usage |
-|---|---|---|
-| `neutral-900` | `#303030` | Main text |
-| `neutral-600` | `#7C7C7C` | Secondary text, placeholder, muted label |
-| `neutral-400` | `#B0B0B0` | Border strong, disabled text |
-| `neutral-200` | `#EFEFEF` | Border, divider, disabled surface |
-| `neutral-100` | `#F7F7F7` | Page background, subtle section |
-| `white` | `#FFFFFF` | Card, modal, navbar surface |
-
-### 4.5 System Colors
-
-| Token | HEX | Usage |
-|---|---|---|
-| `danger` | `#D81313` | Error, rejected, failed, destructive action |
-| `success` | `#00893D` | Success, approved, completed |
-| `warning` | `#FF944C` | Warning, pending attention, draft review |
-| `info` | `#2FA6FC` | Informational status |
-
-### 4.6 Recommended Color Usage Ratio
-
-Gunakan komposisi warna berikut agar UI tetap clean:
-
-- 60% white / light neutral background.
-- 25% BCA blue and light blue surfaces.
-- 10% dark blue / dark text.
-- 5% orange/tosca/system color accents.
-
-### 4.7 CSS Variables
-
-```css
-:root {
-  --bca-blue-100: #F1F5F8;
-  --bca-blue-200: #AAD2F8;
-  --bca-blue-300: #63ACF2;
-  --bca-blue-400: #2FA6FC;
-  --bca-blue-500: #0066AE;
-  --bca-blue-700: #093967;
-  --bca-blue-900: #031120;
-
-  --bca-orange: #FF944C;
-  --bca-tosca: #2ECACC;
-  --bca-webform-blue: #28B4E8;
-
-  --neutral-900: #303030;
-  --neutral-600: #7C7C7C;
-  --neutral-400: #B0B0B0;
-  --neutral-200: #EFEFEF;
-  --neutral-100: #F7F7F7;
-  --white: #FFFFFF;
-
-  --danger: #D81313;
-  --success: #00893D;
-  --warning: #FF944C;
-  --info: #2FA6FC;
+```ts
+export const colors = {
+  bca: {
+    blue100: "#F1F5F8",
+    blue200: "#AAD2F8",
+    blue300: "#63ACF2",
+    blue400: "#2FA6FC",
+    blue500: "#0066AE",
+    blue700: "#093967",
+    blue900: "#031120",
+  },
+  neutral: {
+    white: "#FFFFFF",
+    background: "#F7F7F7",
+    surface: "#FFFFFF",
+    border: "#EFEFEF",
+    mutedBorder: "#E5E7EB",
+    text: "#303030",
+    muted: "#7C7C7C",
+    softText: "#B0B0B0",
+  },
+  system: {
+    success: "#00893D",
+    warning: "#FF944C",
+    danger: "#D81313",
+    info: "#2FA6FC",
+  },
 }
 ```
 
----
+### 3.2 Color Usage Ratio
 
-## 5. Typography
+Gunakan komposisi warna berikut:
 
-### 5.1 Font Family
+- 60–70% white dan light gray
+- 20–25% BCA blue/dark blue pada sidebar dan primary elements
+- 5–10% light blue surface untuk highlight
+- 5% system color untuk status, alert, dan feedback
 
-Gunakan **Open Sans** sebagai font utama.
+### 3.3 Page Background
+
+Gunakan background utama:
 
 ```css
-body {
-  font-family: "Open Sans", Arial, Helvetica, sans-serif;
-}
+background: #F7F7F7;
 ```
 
-Fallback:
+Untuk variasi dashboard yang lebih premium, boleh menggunakan background lembut:
 
-1. Open Sans
-2. Arial
-3. Helvetica
-4. sans-serif
+```css
+background: linear-gradient(180deg, #F1F5F8 0%, #F7F7F7 260px);
+```
 
-### 5.2 Font Weight
+Namun jangan membuat page terlalu penuh gradient.
 
-| Token | Weight | Usage |
-|---|---:|---|
-| `regular` | 400 | Body, paragraph, form input |
-| `semibold` | 600 | Label, card title, tab active |
-| `bold` | 700 | Heading, hero title, important number |
+### 3.4 Surface / Card Background
 
-### 5.3 Desktop Type Scale
+Gunakan:
 
-| Token | Size | Line Height | Usage |
+```css
+background: #FFFFFF;
+border: 1px solid #EFEFEF;
+```
+
+### 3.5 Text Colors
+
+```css
+--text-primary: #303030;
+--text-secondary: #7C7C7C;
+--text-muted: #B0B0B0;
+--text-inverse: #FFFFFF;
+```
+
+### 3.6 Status Colors
+
+| Status | Background | Text |
+|---|---:|---:|
+| Draft | `#F7F7F7` | `#7C7C7C` |
+| Assigned | `#F1F5F8` | `#0066AE` |
+| In Progress | `#EAF7FF` | `#0066AE` |
+| Submitted | `#EAF7FF` | `#093967` |
+| Approved / Aktif / Selesai | `#EAF8F0` | `#00893D` |
+| Need Revision / Perlu Review | `#FFF4EA` | `#C9681E` |
+| Rejected / Error | `#FDECEC` | `#D81313` |
+| Archived / Diarsipkan | `#F1F5F8` | `#7C7C7C` |
+
+---
+
+## 4. Typography
+
+### 4.1 Font Family
+
+Gunakan font corporate sans-serif:
+
+```css
+font-family: "Open Sans", Arial, Helvetica, sans-serif;
+```
+
+Jika Open Sans belum tersedia, gunakan fallback:
+
+```css
+font-family: Inter, "Open Sans", Arial, Helvetica, sans-serif;
+```
+
+### 4.2 Type Scale
+
+| Element | Size | Weight | Color |
 |---|---:|---:|---|
-| `hero` | 56px | 64px | Hero title / landing headline |
-| `title` | 32px | 40px | Page title, section title |
-| `subtitle` | 24px | 32px | Subheading, dashboard section |
-| `paragraph-lg` | 18px | 30px | Hero paragraph, intro copy |
-| `body` | 16px | 26px | Main content |
-| `small` | 14px | 22px | Table text, metadata, helper text |
-| `micro` | 12px | 18px | Badge, caption, warning, textlink |
+| Page Title | 28–32px | 700 | `#303030` |
+| Page Subtitle | 14–16px | 400 | `#7C7C7C` |
+| Section Title | 18–22px | 600–700 | `#303030` |
+| Card Title | 15–17px | 600–700 | `#303030` |
+| KPI Number | 28–34px | 700 | `#303030` |
+| KPI Label | 13–14px | 600 | `#303030` |
+| Body Text | 14–16px | 400 | `#303030` |
+| Table Text | 13–14px | 400–500 | `#303030` |
+| Helper Text | 12–13px | 400 | `#7C7C7C` |
+| Badge Text | 12px | 600 | dynamic |
 
-### 5.4 Mobile Type Scale
+### 4.3 Typography Rules
 
-| Token | Size | Line Height | Usage |
-|---|---:|---:|---|
-| `hero-mobile` | 36px | 44px | Mobile hero title |
-| `title-mobile` | 28px | 36px | Mobile page title |
-| `subtitle-mobile` | 22px | 30px | Mobile section title |
-| `body-mobile` | 16px | 26px | Main content |
-| `small-mobile` | 14px | 22px | Metadata/helper |
-| `micro-mobile` | 12px | 18px | Caption/badge |
-
-### 5.5 Typography Rules
-
-- Jangan gunakan terlalu banyak variasi font size dalam satu halaman.
-- Gunakan `font-semibold` untuk label penting, bukan selalu bold.
-- Gunakan warna `#303030` untuk teks utama.
-- Gunakan `#7C7C7C` untuk teks sekunder.
-- Link menggunakan `#0066AE`, hover `#2FA6FC`.
-- Hindari teks abu-abu muda untuk konten penting.
-- Pastikan line-height cukup lega agar mudah dibaca.
+- Jangan memakai terlalu banyak ukuran font.
+- Gunakan `font-semibold` untuk label penting.
+- Gunakan `font-bold` untuk page title dan KPI number.
+- Hindari heading yang terlalu besar.
+- Pastikan table text tetap mudah dibaca.
+- Gunakan line-height lega: `1.4–1.6`.
 
 ---
 
-## 6. Spacing System
+## 5. Layout System
 
-Gunakan sistem spacing berbasis kelipatan 4px/8px agar konsisten dengan UI modern.
+### 5.1 Global Admin Layout
 
-### 6.1 Spacing Tokens
-
-| Token | Value | Usage |
-|---|---:|---|
-| `space-1` | 4px | Micro gap, icon-text tight gap |
-| `space-2` | 8px | Small gap, badge padding |
-| `space-3` | 12px | Compact component gap |
-| `space-4` | 16px | Default padding mobile/card kecil |
-| `space-5` | 20px | Form field vertical rhythm |
-| `space-6` | 24px | Card padding, grid gap |
-| `space-8` | 32px | Section inner gap |
-| `space-10` | 40px | Large card/hero internal padding |
-| `space-12` | 48px | Section spacing tablet |
-| `space-16` | 64px | Section spacing desktop |
-| `space-20` | 80px | Landing page block spacing |
-| `space-24` | 96px | Hero/major section spacing |
-
-### 6.2 Page Spacing
-
-| Area | Desktop | Tablet | Mobile |
-|---|---:|---:|---:|
-| Page horizontal padding | 32px | 24px | 16px |
-| Section vertical padding | 64–96px | 48–64px | 32–48px |
-| Card padding | 24–32px | 20–24px | 16–20px |
-| Grid gap | 24px | 20px | 16px |
-| Form field gap | 16–20px | 16px | 14–16px |
-
-### 6.3 Density Rules
-
-- Public landing page: spacious, use `64–96px` section spacing.
-- Dashboard/admin page: efficient, use `24–48px` spacing.
-- Table-heavy page: compact but readable, use `12–16px` row padding.
-- Mobile page: avoid cramped UI, minimum page padding `16px`.
-
----
-
-## 7. Grid & Layout
-
-### 7.1 Container
-
-Recommended implementation:
-
-```css
-.container-bca {
-  width: 100%;
-  max-width: 1200px;
-  margin-inline: auto;
-  padding-inline: 16px;
-}
-
-@media (min-width: 768px) {
-  .container-bca {
-    padding-inline: 24px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container-bca {
-    padding-inline: 32px;
-  }
-}
-```
-
-### 7.2 Breakpoints
-
-| Token | Width | Usage |
-|---|---:|---|
-| `sm` | 640px | Large mobile |
-| `md` | 768px | Tablet |
-| `lg` | 1024px | Small desktop |
-| `xl` | 1280px | Desktop |
-| `2xl` | 1536px | Wide desktop |
-
-### 7.3 Column Rules
-
-- Desktop: 12-column grid.
-- Tablet: 8-column grid.
-- Mobile: 4-column grid.
-- Dashboard: sidebar + content layout.
-- Landing page: hero can use 2-column layout on desktop and stacked layout on mobile.
-
-### 7.4 Layout Patterns
-
-#### Public Landing Page
+Semua halaman admin menggunakan struktur dasar:
 
 ```text
-Top Utility Nav
-Main Header / Navbar
-Hero Banner
-Quick Access / Highlight Cards
-Main Content Sections
-Promo / News / Feature Cards
-CTA Section
-Footer
-```
-
-#### Admin Dashboard
-
-```text
-Sidebar
-Topbar
+Blue Sidebar
+White Topbar
+Main Content Area
 Page Header
-KPI Cards
-Filters
-Content Card / Table / Chart
-Pagination
+Page Content
 ```
 
-#### Survey Page
+### 5.2 Desktop Layout
 
 ```text
-Topbar
-Progress Summary
-Question Navigation
-Question Card
-Score Options
-Supporting Document Upload
-Save Draft / Submit Actions
+| Sidebar 270px | Main Content |
+|               | Topbar 72px  |
+|               | Page Content |
 ```
 
----
+Spesifikasi:
 
-## 8. Border Radius
+- Sidebar width: `260px–280px`
+- Topbar height: `72px`
+- Main content padding: `24px–32px`
+- Page gap: `20px–24px`
+- Card gap: `16px–24px`
 
-BCA.co.id uses modern rounded UI treatment. For implementation, use rounded corners consistently.
+### 5.3 Container
 
-| Token | Value | Usage |
-|---|---:|---|
-| `radius-sm` | 6px | Badge, small input addon |
-| `radius-md` | 8px | Input, dropdown, small button |
-| `radius-lg` | 12px | Button, alert, compact card |
-| `radius-xl` | 16px | Default card, modal |
-| `radius-2xl` | 24px | Hero card, feature card |
-| `radius-full` | 999px | Pills, avatar, status badge |
-
-Rules:
-
-- Button: `8–12px`.
-- Card: `16–24px`.
-- Input: `8–12px`.
-- Badge: `999px`.
-- Modal: `16–24px`.
-
----
-
-## 9. Shadows & Elevation
-
-Shadows harus halus. Hindari shadow tebal seperti marketplace atau gaming UI.
-
-### 9.1 Shadow Tokens
+Gunakan full width dengan max content yang nyaman:
 
 ```css
-:root {
-  --shadow-xs: 0 1px 2px rgba(3, 17, 32, 0.06);
-  --shadow-sm: 0 4px 12px rgba(3, 17, 32, 0.08);
-  --shadow-md: 0 8px 24px rgba(3, 17, 32, 0.10);
-  --shadow-lg: 0 16px 40px rgba(3, 17, 32, 0.12);
+.main-content {
+  padding: 24px 32px;
 }
 ```
 
-### 9.2 Usage
+Untuk halaman dengan tabel besar, gunakan full available width.
 
-| Shadow | Usage |
-|---|---|
-| `shadow-xs` | Input, small floating element |
-| `shadow-sm` | Card default |
-| `shadow-md` | Dropdown, popover, sticky header |
-| `shadow-lg` | Modal, drawer, hero floating card |
+### 5.4 Grid
 
-Rules:
+Gunakan 12-column mental model:
 
-- Default card sebaiknya memakai border `#EFEFEF` + `shadow-xs/sm`.
-- Gunakan shadow lebih kuat hanya untuk overlay/modal.
-- Jangan gunakan shadow dengan warna hitam pekat.
+- KPI dashboard: 4 columns desktop
+- Main dashboard: 8 columns kiri, 4 columns kanan
+- Form page: 8 columns form, 4 columns helper panel
+- Listing page: full width table
+- Detail page: 8 columns content, 4 columns summary
 
 ---
 
-## 10. Header & Navigation
+## 6. Sidebar Design
 
-### 10.1 Header Structure
+Sidebar adalah elemen identitas utama dan **wajib berwarna biru**.
 
-BCA.co.id memiliki pola navigasi berlapis:
+### 6.1 Sidebar Container
 
-1. Segment navigation: Individu, Bisnis, Tentang BCA, Karir.
-2. Language selector: ID/EN.
-3. Main navigation: Produk, Layanan, Promo, Webform BCA, Chat.
-4. Login/action area.
-
-Untuk project Desa Wisata BCA, struktur yang disarankan:
-
-```text
-Logo / Project Name
-Dashboard
-Desa Wisata
-Survey
-Dokumen
-Laporan
-Pengaturan
-User Menu
+```css
+.sidebar {
+  width: 270px;
+  background: linear-gradient(180deg, #0066AE 0%, #093967 100%);
+  color: #FFFFFF;
+}
 ```
 
-### 10.2 Header Rules
+Alternatif solid:
 
-- Background header: `#FFFFFF`.
-- Border bottom: `1px solid #EFEFEF`.
-- Height desktop: `72px`.
-- Height mobile: `64px`.
-- Active nav: text `#0066AE`, optional underline/bottom border.
-- Hover nav: text `#2FA6FC` atau background `#F1F5F8`.
-- Sticky header boleh digunakan untuk dashboard.
+```css
+background: #0066AE;
+```
 
-### 10.3 Sidebar Dashboard
+### 6.2 Sidebar Padding
 
-Recommended implementation:
+```css
+padding: 24px 16px;
+```
 
-- Width desktop: `260px–280px`.
-- Background: `#FFFFFF` atau `#F7F7F7`.
-- Active item: background `#F1F5F8`, text `#0066AE`.
-- Icon size: `20px` atau `24px`.
-- Border right: `1px solid #EFEFEF`.
+### 6.3 Sidebar Brand
 
----
+Bagian atas sidebar:
 
-## 11. Buttons
-
-BCA.co.id mendokumentasikan beberapa button style: primary, secondary, text, next button, social media, search, dan switch/filter.
-
-### 11.1 Button Anatomy
-
-Button terdiri dari:
-
-- Container.
-- Label aksi yang jelas.
-- Optional icon.
-- State: active, hover, focus, disabled, loading.
-
-### 11.2 Button Sizes
-
-| Size | Height | Padding | Font |
-|---|---:|---:|---:|
-| `sm` | 36px | 12px 16px | 14px |
-| `md` | 44px | 14px 20px | 14–16px |
-| `lg` | 52px | 16px 24px | 16px |
-
-### 11.3 Primary Button
-
-Usage:
-
-- Submit survey.
-- Save important form.
-- Login.
-- Main CTA.
+```text
+Desa Wisata BCA
+CSR Aggregator Platform
+```
 
 Style:
+
+- Brand name: 20–22px, bold, white
+- Subtitle: 12–13px, semi-transparent white
+- Spacing bawah brand: 32px
+
+```css
+.brand-title {
+  color: #FFFFFF;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.brand-subtitle {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+}
+```
+
+### 6.4 Sidebar Menu
+
+Menu items:
+
+1. Dashboard
+2. Desa Wisata
+3. Template Survey
+4. Survey Assignment
+5. Review Survey
+6. Dokumen
+7. Laporan
+8. User Management
+9. Pengaturan
+
+Item style:
+
+```css
+.sidebar-item {
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+```
+
+Hover:
+
+```css
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: #FFFFFF;
+}
+```
+
+Active:
+
+```css
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+```
+
+Active indicator:
+
+```css
+.sidebar-item.active::before {
+  content: "";
+  width: 3px;
+  height: 24px;
+  border-radius: 999px;
+  background: #FFFFFF;
+}
+```
+
+### 6.5 Sidebar Icons
+
+Gunakan `lucide-react`.
+
+- Size: 20px
+- Stroke width: 1.8–2
+- Default color: `rgba(255,255,255,0.78)`
+- Active color: `#FFFFFF`
+
+### 6.6 Sidebar User Card
+
+Terletak di bagian bawah sidebar.
+
+```css
+.sidebar-user-card {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 12px;
+}
+```
+
+Isi:
+
+- Avatar bulat
+- Name: `Admin CSR`
+- Role: `Super Admin`
+- Dropdown chevron
+
+Text:
+
+- Name: white, 14px, semibold
+- Role: semi-transparent white, 12px
+
+---
+
+## 7. Topbar Design
+
+### 7.1 Topbar Container
+
+```css
+.topbar {
+  height: 72px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #EFEFEF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+```
+
+### 7.2 Search Input
+
+Global search berada di kiri.
+
+```css
+.search-input {
+  height: 44px;
+  width: 420px;
+  border: 1px solid #DADDE3;
+  border-radius: 12px;
+  background: #FFFFFF;
+}
+```
+
+Placeholder example:
+
+```text
+Cari desa, survey, atau dokumen...
+```
+
+Focus:
+
+```css
+.search-input:focus {
+  border-color: #2FA6FC;
+  box-shadow: 0 0 0 3px rgba(47, 166, 252, 0.14);
+}
+```
+
+### 7.3 Topbar Actions
+
+Kanan topbar:
+
+- Notification icon
+- Help icon
+- User avatar
+
+Icon style:
+
+- Size: 22–24px
+- Color: `#303030`
+- Hover background: `#F1F5F8`
+- Button size: 40px
+- Radius: full atau 12px
+
+Notification red dot:
+
+```css
+background: #D81313;
+width: 8px;
+height: 8px;
+border-radius: 999px;
+```
+
+---
+
+## 8. Page Header
+
+Setiap halaman harus memiliki page header.
+
+### 8.1 Structure
+
+```text
+Breadcrumb
+Title + Subtitle
+Action Buttons
+```
+
+### 8.2 Example
+
+```text
+Dashboard
+Dashboard Admin
+Pantau perkembangan assessment, desa wisata binaan, dan aktivitas program CSR.
+```
+
+### 8.3 Style
+
+```css
+.page-header {
+  margin-bottom: 20px;
+}
+
+.breadcrumb {
+  font-size: 13px;
+  color: #7C7C7C;
+}
+
+.page-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #303030;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 15px;
+  color: #7C7C7C;
+}
+```
+
+### 8.4 Page Header Actions
+
+Biasanya maksimal 2 tombol utama:
+
+- Primary action
+- Secondary action
+
+Contoh:
+
+- `Buat Assignment`
+- `Export Laporan`
+
+---
+
+## 9. Spacing System
+
+Gunakan spacing berbasis 4px/8px.
+
+```ts
+spacing: {
+  xs: "4px",
+  sm: "8px",
+  md: "12px",
+  lg: "16px",
+  xl: "20px",
+  "2xl": "24px",
+  "3xl": "32px",
+  "4xl": "40px",
+}
+```
+
+### 9.1 Common Spacing Rules
+
+| Area | Spacing |
+|---|---:|
+| Page padding desktop | 24–32px |
+| Page padding tablet | 20–24px |
+| Page padding mobile | 16px |
+| Section gap | 20–24px |
+| Card padding | 20–24px |
+| Card gap | 16–24px |
+| Table cell padding | 12–16px |
+| Form field gap | 12–16px |
+| Button gap with icon | 8px |
+
+---
+
+## 10. Border Radius
+
+Gunakan radius halus dan konsisten.
+
+| Component | Radius |
+|---|---:|
+| Sidebar item | 12px |
+| Button | 10–12px |
+| Input/select | 10–12px |
+| Card | 16px |
+| KPI icon wrapper | 12px |
+| Badge | 999px |
+| Modal | 18–20px |
+| Table wrapper | 16px |
+
+Tailwind mapping:
+
+```ts
+borderRadius: {
+  md: "10px",
+  lg: "12px",
+  xl: "16px",
+  "2xl": "20px",
+}
+```
+
+---
+
+## 11. Shadow & Border
+
+### 11.1 Default Card Shadow
+
+Gunakan shadow lembut, jangan terlalu tebal.
+
+```css
+box-shadow: 0 4px 12px rgba(3, 17, 32, 0.06);
+```
+
+Untuk card utama:
+
+```css
+box-shadow: 0 6px 18px rgba(3, 17, 32, 0.08);
+```
+
+### 11.2 Border
+
+Default border:
+
+```css
+border: 1px solid #EFEFEF;
+```
+
+Untuk blue-highlight card/callout:
+
+```css
+border: 1px solid #AAD2F8;
+```
+
+---
+
+## 12. Button System
+
+### 12.1 Primary Button
 
 ```css
 .btn-primary {
+  height: 44px;
+  padding: 0 18px;
   background: #0066AE;
   color: #FFFFFF;
-  border: 1px solid #0066AE;
   border-radius: 12px;
   font-weight: 600;
 }
-
-.btn-primary:hover {
-  background: #093967;
-  border-color: #093967;
-}
-
-.btn-primary:disabled {
-  background: #B0B0B0;
-  border-color: #B0B0B0;
-  cursor: not-allowed;
-}
 ```
 
-### 11.4 Secondary Button
+Hover:
 
-Usage:
+```css
+background: #093967;
+```
 
-- Cancel.
-- Back.
-- View detail.
-- Secondary action.
+Use for:
 
-Style:
+- Buat Assignment
+- Tambah Desa Wisata
+- Buat Template Survey
+- Submit Review
+- Simpan Perubahan
+
+### 12.2 Secondary Button
 
 ```css
 .btn-secondary {
+  height: 44px;
+  padding: 0 18px;
   background: #FFFFFF;
   color: #0066AE;
   border: 1px solid #AAD2F8;
   border-radius: 12px;
   font-weight: 600;
 }
-
-.btn-secondary:hover {
-  background: #F1F5F8;
-  border-color: #2FA6FC;
-}
 ```
 
-### 11.5 Text Button
-
-Usage:
-
-- Inline action.
-- Low priority action.
-- Link-like CTA.
-
-Style:
+Hover:
 
 ```css
-.btn-text {
-  background: transparent;
-  color: #0066AE;
-  border: none;
-  font-weight: 600;
-}
+background: #F1F5F8;
+```
 
-.btn-text:hover {
-  color: #2FA6FC;
-  text-decoration: underline;
+Use for:
+
+- Export Laporan
+- Reset
+- Lihat Semua
+- Kembali
+
+### 12.3 Ghost Button
+
+```css
+.btn-ghost {
+  background: transparent;
+  color: #303030;
+  border-radius: 10px;
 }
 ```
 
-### 11.6 Destructive Button
+Hover:
 
-Usage:
+```css
+background: #F1F5F8;
+```
 
-- Delete.
-- Reject.
-- Remove file.
-
-Style:
+### 12.4 Danger Button
 
 ```css
 .btn-danger {
   background: #D81313;
   color: #FFFFFF;
-  border: 1px solid #D81313;
-  border-radius: 12px;
-  font-weight: 600;
 }
 ```
 
-### 11.7 Button Copywriting
+Use only for destructive confirmation.
 
-Gunakan label aksi yang spesifik:
+### 12.5 Warning Button
 
-| Hindari | Gunakan |
-|---|---|
-| OK | Simpan Perubahan |
-| Submit | Kirim Survey |
-| Next | Lanjutkan |
-| Delete | Hapus Dokumen |
-| Process | Proses Review |
+```css
+.btn-warning {
+  background: #FF944C;
+  color: #FFFFFF;
+}
+```
+
+Use for archive/revision action.
 
 ---
 
-## 12. Forms & Inputs
-
-BCA.co.id memiliki pola input text, dropdown, error input, checkbox, dan form fields.
-
-### 12.1 Input Field
-
-```css
-.input {
-  height: 48px;
-  border: 1px solid #B0B0B0;
-  border-radius: 12px;
-  padding: 0 16px;
-  background: #FFFFFF;
-  color: #303030;
-  font-size: 14px;
-}
-
-.input:hover {
-  border-color: #63ACF2;
-}
-
-.input:focus {
-  border-color: #0066AE;
-  box-shadow: 0 0 0 3px rgba(0, 102, 174, 0.12);
-  outline: none;
-}
-
-.input::placeholder {
-  color: #7C7C7C;
-}
-```
-
-### 12.2 Error State
-
-```css
-.input-error {
-  border-color: #D81313;
-}
-
-.helper-error {
-  color: #D81313;
-  font-size: 12px;
-  line-height: 18px;
-}
-```
-
-Rules:
-
-- Tampilkan error message di bawah field.
-- Jangan hanya mengandalkan warna; gunakan icon/text error.
-- Gunakan bahasa error yang jelas.
-
-Contoh:
-
-```text
-Email tidak boleh kosong.
-Format email tidak valid.
-Dokumen pendukung wajib diunggah untuk skor ini.
-```
-
-### 12.3 Label & Helper Text
-
-- Label: 14px, semibold, `#303030`.
-- Optional marker: 12px, regular, `#7C7C7C`.
-- Helper text: 12px, `#7C7C7C`.
-- Error text: 12px, `#D81313`.
-
-### 12.4 Select / Dropdown
-
-Rules:
-
-- Height: 48px.
-- Use chevron icon.
-- Placeholder: `Pilih salah satu`.
-- Dropdown surface: white.
-- Dropdown shadow: `shadow-md`.
-- Option hover: `#F1F5F8`.
-- Selected option: text `#0066AE`, font semibold.
-
-### 12.5 Checkbox / Radio
-
-Rules:
-
-- Size: 16–20px.
-- Active color: `#0066AE`.
-- Border default: `#B0B0B0`.
-- Label clickable.
-- Minimum target size: 40px height.
-
-### 12.6 File Upload
-
-Untuk survey Desa Wisata:
-
-- Gunakan upload card dengan border dashed `#AAD2F8`.
-- Background hover `#F1F5F8`.
-- Icon upload warna `#0066AE`.
-- Tampilkan file name, size, upload progress, dan remove action.
-- Tampilkan accepted formats: PDF, JPG, PNG, DOCX jika diperlukan.
-
----
-
-## 13. Cards
+## 13. Card System
 
 ### 13.1 Default Card
 
@@ -713,602 +718,1067 @@ Untuk survey Desa Wisata:
   background: #FFFFFF;
   border: 1px solid #EFEFEF;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(3, 17, 32, 0.08);
+  box-shadow: 0 4px 12px rgba(3, 17, 32, 0.06);
+  padding: 20px;
+}
+```
+
+### 13.2 Dashboard KPI Card
+
+```css
+.kpi-card {
+  min-height: 128px;
+  padding: 20px;
+}
+```
+
+Structure:
+
+```text
+Icon wrapper
+Label
+Value
+Description / trend
+```
+
+KPI icon wrapper:
+
+```css
+.kpi-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #EAF7FF;
+  color: #0066AE;
+}
+```
+
+### 13.3 Chart Card
+
+```css
+.chart-card {
+  min-height: 260px;
+  padding: 20px;
+}
+```
+
+Rules:
+
+- Title and subtitle at top.
+- Chart should not be overly saturated.
+- Use blue as main chart color.
+- Gridline subtle.
+- Label readable.
+
+### 13.4 Side Panel Card
+
+Use for:
+
+- Prioritas Review
+- Aktivitas Terbaru
+- Quick Actions
+- Summary detail
+- Helper info
+
+```css
+.side-panel-card {
+  padding: 18px;
+  border-radius: 16px;
+}
+```
+
+---
+
+## 14. Info Callout
+
+Gunakan info callout untuk memberi konteks ringan.
+
+```css
+.info-callout {
+  background: #F1F5F8;
+  border: 1px solid #AAD2F8;
+  color: #303030;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+```
+
+Example:
+
+```text
+Dashboard ini menampilkan ringkasan perkembangan desa wisata, status survey, hasil review, dan aktivitas enumerator secara real-time.
+```
+
+Icon:
+
+- Circle info icon
+- Color: `#0066AE`
+- Background: `#0066AE` or transparent depending layout
+
+---
+
+## 15. Table System
+
+Tables are used heavily in this project. Make them clean, readable, and enterprise-grade.
+
+### 15.1 Table Wrapper
+
+```css
+.table-card {
+  background: #FFFFFF;
+  border: 1px solid #EFEFEF;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(3, 17, 32, 0.06);
+  overflow: hidden;
+}
+```
+
+### 15.2 Table Header
+
+```css
+thead {
+  background: #F1F5F8;
+}
+```
+
+Header text:
+
+```css
+font-size: 13px;
+font-weight: 600;
+color: #303030;
+```
+
+### 15.3 Table Row
+
+```css
+tr {
+  height: 56px;
+  border-bottom: 1px solid #EFEFEF;
+}
+```
+
+Hover:
+
+```css
+tr:hover {
+  background: #F7FBFF;
+}
+```
+
+### 15.4 Cell Padding
+
+```css
+td, th {
+  padding: 12px 16px;
+}
+```
+
+### 15.5 Action Column
+
+Use three-dot menu on the right.
+
+Icon:
+
+- `MoreVertical` or `MoreHorizontal`
+- Size 18–20px
+- Muted color
+- Hover background `#F1F5F8`
+
+### 15.6 Empty Table State
+
+```text
+Belum ada data
+Tambahkan data pertama untuk mulai menggunakan fitur ini.
+```
+
+Use icon + short description + primary action.
+
+---
+
+## 16. Badge System
+
+### 16.1 Default Badge
+
+```css
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+```
+
+### 16.2 Badge Variants
+
+```ts
+const badgeVariants = {
+  draft: "bg-[#F7F7F7] text-[#7C7C7C]",
+  assigned: "bg-[#F1F5F8] text-[#0066AE]",
+  inProgress: "bg-[#EAF7FF] text-[#0066AE]",
+  submitted: "bg-[#EAF7FF] text-[#093967]",
+  approved: "bg-[#EAF8F0] text-[#00893D]",
+  needRevision: "bg-[#FFF4EA] text-[#C9681E]",
+  rejected: "bg-[#FDECEC] text-[#D81313]",
+  archived: "bg-[#F1F5F8] text-[#7C7C7C]",
+}
+```
+
+---
+
+## 17. Progress Bar
+
+Use for assessment progress and task completion.
+
+```css
+.progress-track {
+  height: 8px;
+  background: #EFEFEF;
+  border-radius: 999px;
+}
+
+.progress-fill {
+  height: 8px;
+  background: #0066AE;
+  border-radius: 999px;
+}
+```
+
+Rules:
+
+- Always show percentage text near progress bar.
+- Use blue for normal progress.
+- Use green only for completed/approved if needed.
+- Use orange for need revision warning if needed.
+
+---
+
+## 18. Form & Filter System
+
+### 18.1 Input
+
+```css
+.input {
+  height: 44px;
+  border: 1px solid #DADDE3;
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #303030;
+  padding: 0 14px;
+}
+```
+
+Focus:
+
+```css
+border-color: #2FA6FC;
+box-shadow: 0 0 0 3px rgba(47,166,252,0.14);
+```
+
+### 18.2 Select
+
+Same visual as input.
+
+- Height: 44px
+- Radius: 12px
+- Border: `#DADDE3`
+- Background: white
+
+### 18.3 Filter Bar
+
+Used on listing pages.
+
+```css
+.filter-card {
+  background: #FFFFFF;
+  border: 1px solid #EFEFEF;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+```
+
+Filter order:
+
+1. Search input
+2. Status filter
+3. Location/category/type filter
+4. Date/version filter if needed
+5. Apply button
+6. Reset button
+
+---
+
+## 19. Chart Style
+
+Charts should look analytical but calm.
+
+### 19.1 Chart Colors
+
+```ts
+const chartColors = {
+  primary: "#0066AE",
+  secondary: "#2FA6FC",
+  lightBlue: "#AAD2F8",
+  success: "#00893D",
+  warning: "#FF944C",
+  danger: "#D81313",
+  gray: "#B0B0B0",
+}
+```
+
+### 19.2 Chart Rules
+
+- Use clean axis labels.
+- Use subtle gridlines: `#EFEFEF`.
+- Avoid too many chart colors.
+- Use blue as main color.
+- Use status colors only when meaningful.
+- Avoid 3D charts.
+- Avoid heavy shadows inside chart.
+
+### 19.3 Recommended Chart Types
+
+- Bar chart for status distribution
+- Line chart for trend
+- Donut chart for status composition, but use sparingly
+- Area chart for cumulative progress
+
+---
+
+## 20. Iconography
+
+Use `lucide-react`.
+
+### 20.1 Icon Rules
+
+- Style: outline
+- Stroke width: 1.75–2
+- Sidebar icon: 20px
+- Button icon: 16–18px
+- KPI icon: 24px
+- Empty state icon: 40–56px
+
+### 20.2 Recommended Icons
+
+| Feature | Icon |
+|---|---|
+| Dashboard | `LayoutDashboard` |
+| Desa Wisata | `MapPin`, `MapPinned` |
+| Template Survey | `ClipboardList`, `ListChecks` |
+| Survey Assignment | `ClipboardCheck` |
+| Review Survey | `FileSearch` |
+| Dokumen | `FolderOpen` |
+| Laporan | `BarChart3` |
+| User Management | `Users` |
+| Pengaturan | `Settings` |
+| Search | `Search` |
+| Notification | `Bell` |
+| Help | `CircleHelp` |
+| Export | `Download` |
+| Add | `Plus` |
+| Edit | `Pencil` |
+| Delete | `Trash2` |
+| Archive | `Archive` |
+| Detail | `Eye` |
+
+---
+
+## 21. Dropdown Menu
+
+Use for row actions.
+
+### 21.1 Style
+
+```css
+.dropdown {
+  background: #FFFFFF;
+  border: 1px solid #EFEFEF;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(3,17,32,0.12);
+  padding: 6px;
+}
+```
+
+### 21.2 Item
+
+```css
+.dropdown-item {
+  height: 36px;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+```
+
+Hover:
+
+```css
+background: #F1F5F8;
+```
+
+Danger item:
+
+```css
+color: #D81313;
+```
+
+---
+
+## 22. Modal / Dialog
+
+Use for confirmation, delete, archive, submit, review.
+
+### 22.1 Dialog Style
+
+```css
+.dialog {
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(3,17,32,0.18);
   padding: 24px;
 }
 ```
 
-### 13.2 Card Variants
+### 22.2 Confirmation Dialog Rules
 
-| Variant | Usage | Style |
-|---|---|---|
-| Default | General content | White + border + subtle shadow |
-| Highlight | KPI / important summary | Light blue background |
-| Interactive | Clickable card | Hover border blue |
-| Warning | Needs attention | Light orange tint |
-| Success | Completed | Light green tint |
+- Destructive actions must always use confirmation modal.
+- Explain what happens to data.
+- Primary destructive button uses red.
+- Archive action uses warning/orange.
+- Cancel button should be secondary/ghost.
 
-### 13.3 Card Rules
-
-- Jangan memasukkan terlalu banyak informasi dalam satu card.
-- Gunakan title 16–18px semibold.
-- Gunakan metadata 12–14px muted.
-- Gunakan icon untuk mempercepat scanning.
-- Gunakan border dan spacing untuk grouping, bukan garis berlebihan.
-
----
-
-## 14. Badges & Status
-
-### 14.1 Status Badges
-
-| Status | Background | Text | Usage |
-|---|---|---|---|
-| Draft | `#F7F7F7` | `#7C7C7C` | Belum final |
-| Assigned | `#F1F5F8` | `#0066AE` | Survey ditugaskan |
-| In Progress | `#AAD2F8` | `#093967` | Sedang dikerjakan |
-| Submitted | `#EAF7FF` | `#0066AE` | Menunggu review |
-| Approved | `#EAF8F0` | `#00893D` | Disetujui |
-| Rejected | `#FDECEC` | `#D81313` | Ditolak |
-| Need Revision | `#FFF4EA` | `#C9681E` | Perlu revisi |
-
-### 14.2 Badge Rules
-
-- Border radius: full pill.
-- Font size: 12px.
-- Font weight: 600.
-- Padding: 4px 10px.
-- Jangan gunakan warna system sebagai background solid untuk badge kecil; gunakan tint.
-
----
-
-## 15. Tables
-
-Dashboard CSR kemungkinan menggunakan banyak data tabel. Buat tabel yang clean dan mudah discan.
-
-### 15.1 Table Style
-
-- Header background: `#F7F7F7` atau `#F1F5F8`.
-- Header text: 12–14px semibold, uppercase optional.
-- Body text: 14px.
-- Row height: 56–64px.
-- Border bottom: `1px solid #EFEFEF`.
-- Hover row: `#F1F5F8`.
-- Action column sticky jika tabel lebar.
-
-### 15.2 Empty Table
-
-Gunakan empty state dengan:
-
-- Icon/illustration sederhana.
-- Title jelas.
-- Deskripsi singkat.
-- CTA jika diperlukan.
-
-Contoh:
+### 22.3 Example Archive Modal
 
 ```text
-Belum ada data survey
-Mulai tambahkan desa wisata atau buat assignment survey baru.
+Arsipkan Desa Wisata?
+Desa wisata ini akan dipindahkan ke arsip dan tidak muncul sebagai desa aktif. Data survey dan dokumen tetap tersimpan.
 ```
 
 ---
 
-## 16. Icons
+## 23. Dashboard Page Pattern
 
-BCA.co.id mendokumentasikan sistem ikon dalam beberapa ukuran: 16px, 24px, 32px, dan 64px.
+Use this for `Dashboard Admin`.
 
-### 16.1 Icon Size Usage
+### 23.1 Sections
 
-| Size | Usage |
-|---:|---|
-| 16px | Inline text, table action, small indicator |
-| 20px | Default dashboard nav icon |
-| 24px | Button icon, menu icon, card icon |
-| 32px | Feature icon, KPI card icon |
-| 64px | Hero visual, empty state, illustration-like icon |
+```text
+Page Header
+Info Callout
+KPI Cards
+Main Grid:
+  - Progress Survey Chart
+  - Tren Skor Assessment Chart
+  - Assignment Survey Table
+Right Panels:
+  - Prioritas Review
+  - Aktivitas Terbaru
+  - Quick Actions
+```
 
-### 16.2 Icon Style
+### 23.2 KPI Examples
 
-- Gunakan outline/simple icon untuk dashboard.
-- Gunakan icon filled/illustrative untuk landing page atau empty state.
-- Icon harus memiliki stroke yang konsisten.
-- Warna default icon: `#303030` atau `#7C7C7C`.
-- Icon aktif: `#0066AE`.
-- Icon success/error gunakan system color.
+- Total Desa Wisata
+- Survey Berjalan
+- Menunggu Review
+- Rata-rata Skor
+
+### 23.3 Chart Examples
+
+- Progress Survey Desa
+- Tren Skor Assessment
+
+### 23.4 Right Panel Examples
+
+- Prioritas Review
+- Aktivitas Terbaru
+- Quick Actions
 
 ---
 
-## 17. Illustration & Imagery
+## 24. Listing Page Pattern
 
-### 17.1 Image Ratios
+Use this for:
 
-BCA.co.id menyebut penggunaan 3 rasio gambar utama:
+- Daftar Desa Wisata
+- Daftar Template Survey
+- Survey Assignment
+- Dokumen
+- User Management
 
-| Ratio | Usage |
-|---|---|
-| 1:1 | Card thumbnail, profile, promo compact |
-| 16:9 | Hero, banner, news card, video-like content |
-| 4:3 | Article image, feature image, gallery |
+### 24.1 Sections
 
-### 17.2 Photography Style
+```text
+Page Header
+Summary Cards
+Filter Bar
+Data Table
+Pagination
+Confirmation Dialog
+```
 
-- Authentic.
-- Relatable.
-- Optimistic.
-- Natural daily settings.
-- Human-centered, tetapi hindari eksploitasi wajah jika tidak perlu.
-- Untuk subjek manusia, referensi BCA menyarankan menghindari wajah agar pengguna bisa lebih mudah memproyeksikan dirinya ke visual tersebut.
+### 24.2 Listing Page Rules
 
-### 17.3 Desa Wisata Imagery Direction
+- Search must be easy to find.
+- Filter must not dominate the page.
+- Table should be the main focus.
+- Show status badge.
+- Show row action dropdown.
+- Use pagination.
+- Use empty state.
+- Use loading skeleton.
 
-Untuk project Desa Wisata BCA:
+---
 
-- Gunakan foto desa, alam, UMKM, budaya lokal, pelatihan, dan aktivitas masyarakat.
-- Hindari visual terlalu gelap atau dramatis.
-- Gunakan tone hangat tetapi tetap bersih.
-- Pastikan foto tidak menutupi keterbacaan teks.
-- Gunakan overlay biru gelap transparan jika teks berada di atas gambar.
+## 25. Detail Page Pattern
 
-Example overlay:
+Use this for:
+
+- Detail Desa Wisata
+- Detail Assignment
+- Detail Template Survey
+- Detail Dokumen
+- Detail User
+
+### 25.1 Sections
+
+```text
+Page Header with actions
+Summary / status card
+Main detail content
+Related table or timeline
+Right-side metadata panel
+```
+
+### 25.2 Detail Page Rules
+
+- Show important status at the top.
+- Use tabs if content is long.
+- Use right panel for metadata.
+- Use timeline for activity/audit history.
+
+---
+
+## 26. Form Page Pattern
+
+Use this for:
+
+- Tambah/Edit Desa Wisata
+- Buat/Edit Template Survey
+- Buat Assignment
+- Edit User
+- Upload Dokumen
+
+### 26.1 Sections
+
+```text
+Page Header
+Main Form Card
+Right Helper Card
+Footer Action Bar
+```
+
+### 26.2 Form Rules
+
+- Group fields by section.
+- Use clear labels.
+- Use helper text when needed.
+- Required fields should be marked.
+- Save button at top right or sticky bottom.
+- Cancel button always available.
+
+---
+
+## 27. Review Page Pattern
+
+Use this for review survey.
+
+### 27.1 Sections
+
+```text
+Page Header
+Assignment Summary
+Answer List
+Document Evidence Preview
+Score Summary
+Reviewer Action Panel
+```
+
+### 27.2 Review Rules
+
+- Show score and selected rubric clearly.
+- Show uploaded documents/evidence.
+- Reviewer actions should be prominent:
+  - Approve
+  - Request Revision
+  - Reject
+- Use confirmation modal before final decision.
+
+---
+
+## 28. Pagination
+
+Use pagination under tables.
+
+```text
+Menampilkan 1–10 dari 128 data
+[Previous] [1] [2] [3] [Next]
+```
+
+Active page:
 
 ```css
-.hero-image-overlay {
-  background: linear-gradient(
-    90deg,
-    rgba(3, 17, 32, 0.72) 0%,
-    rgba(3, 17, 32, 0.36) 55%,
-    rgba(3, 17, 32, 0.08) 100%
-  );
-}
+background: #0066AE;
+color: #FFFFFF;
+border-radius: 10px;
 ```
 
----
-
-## 18. Page Component Guidelines
-
-### 18.1 Public Homepage
-
-Recommended sections:
-
-1. Header navigation.
-2. Hero with image/banner.
-3. Program summary.
-4. KPI impact cards.
-5. Desa wisata highlight.
-6. Assessment process explanation.
-7. News/features/articles.
-8. CTA.
-9. Footer.
-
-Hero rules:
-
-- Use 16:9 visual on desktop.
-- Use title max 2 lines.
-- Use one primary CTA and one secondary CTA.
-- Keep hero content left aligned.
-- Use BCA Blue as CTA color.
-
-### 18.2 Login Page
-
-Rules:
-
-- Use white card on light blue background.
-- Card width: 420–480px.
-- Logo at top.
-- Input height: 48px.
-- Primary button full width.
-- Add security/support note at bottom.
-
-### 18.3 Admin Dashboard
-
-Rules:
-
-- Use clean white/gray background.
-- KPI cards at top.
-- Use filter bar before table.
-- Keep actions predictable: Detail, Edit, Review, Export.
-- Use status badges consistently.
-- Avoid too many colors in charts.
-
-### 18.4 Survey Assignment Page
-
-Rules:
-
-- Show survey status clearly.
-- Show progress: answered / total questions.
-- Group questions by aspect/category stored in `survey_questions`.
-- Score options should be card/radio style.
-- Supporting document upload appears under each answer.
-- Sticky footer action on mobile: Save Draft / Submit.
-
-### 18.5 Review Page
-
-Rules:
-
-- Show submitted answer, selected score option, document evidence, and answer history.
-- Reviewer actions: Approve, Request Revision, Reject.
-- Use warning color for revision.
-- Use danger color for reject.
-- Require reason/comment for rejection or revision.
-
----
-
-## 19. Accessibility
-
-### 19.1 Contrast
-
-Rules:
-
-- Main text should use `#303030` on white/light background.
-- Avoid using `#B0B0B0` for important text.
-- White text on `#0066AE`, `#093967`, or `#031120` is acceptable.
-- Use orange mainly for accent, not long text.
-
-### 19.2 Focus State
-
-All interactive elements must have visible focus.
+Inactive page:
 
 ```css
-.focus-ring:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 102, 174, 0.24);
-}
+background: #FFFFFF;
+border: 1px solid #EFEFEF;
+color: #303030;
 ```
-
-### 19.3 Touch Target
-
-- Minimum clickable area: 40px.
-- Recommended mobile button height: 44–52px.
-- Checkbox/radio label should be clickable.
-
-### 19.4 Form Accessibility
-
-- Every input must have label.
-- Error message must be associated with field.
-- Do not rely on placeholder as label.
-- Use aria attributes for invalid fields.
 
 ---
 
-## 20. Motion & Interaction
+## 29. Empty State
 
-Gunakan motion yang subtle.
+Use when no data exists.
 
-### 20.1 Duration
-
-| Motion | Duration |
-|---|---:|
-| Hover | 120–180ms |
-| Dropdown open | 160–220ms |
-| Modal open | 200–280ms |
-| Page transition | 250–320ms |
-
-### 20.2 Easing
-
-```css
---ease-standard: cubic-bezier(0.2, 0, 0, 1);
---ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
-```
-
-### 20.3 Interaction Rules
-
-- Hover card: slight translateY `-2px` + border blue.
-- Button hover: darken background.
-- Loading button: spinner + disabled state.
-- Avoid excessive animation on dashboard/admin pages.
-
----
-
-## 21. Data Visualization
-
-Untuk dashboard CSR:
-
-### 21.1 Chart Colors
-
-Use limited palette:
+### 29.1 Structure
 
 ```text
-Primary: #0066AE
-Secondary: #2FA6FC
-Light Blue: #AAD2F8
-Success: #00893D
-Warning: #FF944C
-Danger: #D81313
-Neutral: #B0B0B0
+Icon
+Title
+Description
+Primary action
 ```
 
-### 21.2 Chart Rules
+### 29.2 Style
 
-- Maksimal 5–6 warna dalam satu chart.
-- Gunakan label langsung jika memungkinkan.
-- Jangan hanya mengandalkan warna; gunakan legend/text.
-- Untuk trend, gunakan line chart.
-- Untuk komposisi status, gunakan donut/bar chart.
-- Untuk ranking desa, gunakan horizontal bar chart.
+- Icon wrapper: light blue background
+- Icon: blue
+- Title: 18px semibold
+- Description: 14px muted
+- Center aligned inside card
 
----
-
-## 22. Content Tone & Microcopy
-
-### 22.1 Voice
-
-- Profesional.
-- Jelas.
-- Ramah.
-- Tidak terlalu formal.
-- Tidak menggunakan istilah teknis berlebihan.
-
-### 22.2 Bahasa
-
-Gunakan Bahasa Indonesia sebagai default. Untuk istilah teknis, boleh gunakan English jika umum di dashboard.
-
-Contoh:
-
-| Context | Recommended Copy |
-|---|---|
-| Save draft | Simpan Draft |
-| Submit survey | Kirim Survey |
-| Review | Review Jawaban |
-| Approve | Setujui |
-| Reject | Tolak |
-| Revision | Minta Revisi |
-| Upload | Unggah Dokumen |
-| Empty state | Belum ada data |
-| Error | Terjadi kesalahan. Silakan coba lagi. |
-
-### 22.3 Error Message
-
-Error harus menjelaskan masalah dan solusi.
-
-Bad:
+Example:
 
 ```text
-Error.
-Invalid.
-Failed.
-```
-
-Good:
-
-```text
-Dokumen gagal diunggah. Pastikan format file PDF, JPG, atau PNG dan ukuran maksimal 5MB.
+Belum ada desa wisata
+Tambahkan desa wisata pertama untuk mulai mengelola program CSR.
 ```
 
 ---
 
-## 23. Responsive Rules
+## 30. Loading State
 
-### 23.1 Desktop
+Use skeleton loading.
 
-- Use sidebar for admin.
-- Use 12-column grid.
-- Table can show more columns.
-- Header navigation visible.
+### 30.1 Skeleton Rules
 
-### 23.2 Tablet
+- Use for KPI cards, table rows, filter bar, and chart placeholder.
+- Background: `#F1F5F8`
+- Animation: subtle pulse
+- Avoid spinner-only loading for large content.
+
+---
+
+## 31. Responsive Design
+
+### 31.1 Desktop
+
+- Sidebar fixed visible.
+- Topbar full width.
+- KPI cards 4 columns.
+- Dashboard main grid: 2 columns.
+- Tables full width.
+
+### 31.2 Tablet
 
 - Sidebar can collapse.
-- Use 2-column cards.
-- Keep filters in wrapped layout.
+- KPI cards 2 columns.
+- Filters wrap.
+- Table horizontal scroll.
 
-### 23.3 Mobile
+### 31.3 Mobile
 
-- Use bottom/sticky action for form-heavy survey pages.
-- Hide non-essential table columns.
-- Use card list instead of wide table.
-- Header uses hamburger/menu drawer.
-- CTA buttons can be full width.
+- Sidebar becomes drawer/sheet.
+- Topbar search can be compact.
+- KPI cards 1 column or 2 columns.
+- Filter stack vertical.
+- Tables become horizontal scroll or card list.
+- Primary actions can become full width.
 
 ---
 
-## 24. shadcn/ui Implementation Mapping
+## 32. Accessibility
 
-Recommended component mapping:
+### 32.1 Contrast
 
-| Need | shadcn/ui Component |
-|---|---|
-| Button | `Button` |
-| Card | `Card`, `CardHeader`, `CardContent` |
-| Input | `Input` |
-| Select | `Select` |
-| Textarea | `Textarea` |
-| Checkbox | `Checkbox` |
-| Radio score option | `RadioGroup` |
-| Dialog | `Dialog` |
-| Sheet/sidebar mobile | `Sheet` |
-| Badge status | `Badge` |
-| Table | `Table` |
-| Tabs | `Tabs` |
-| Toast | `Sonner` |
-| Dropdown menu | `DropdownMenu` |
-| Upload | Custom component |
+- Ensure text has enough contrast.
+- Do not use light blue text on light blue background.
+- Sidebar text must remain readable.
 
-### 24.1 shadcn Theme Suggestion
+### 32.2 Interaction
+
+- Every button must have clear label.
+- Click target minimum 40px.
+- Focus ring must be visible.
+- Destructive actions need confirmation.
+
+### 32.3 Status
+
+Never rely on color only. Always include status text in badge.
+
+---
+
+## 33. Motion & Interaction
+
+Use subtle interaction only.
 
 ```css
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 19%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 19%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 19%;
-
-    --primary: 205 100% 34%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 204 59% 96%;
-    --secondary-foreground: 209 84% 22%;
-
-    --muted: 0 0% 97%;
-    --muted-foreground: 0 0% 49%;
-
-    --accent: 204 96% 96%;
-    --accent-foreground: 205 100% 34%;
-
-    --destructive: 0 84% 46%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 94%;
-    --input: 0 0% 69%;
-    --ring: 205 100% 34%;
-
-    --radius: 0.75rem;
-  }
-}
+transition: all 150ms ease;
 ```
+
+Allowed:
+
+- Button hover
+- Sidebar hover
+- Card hover for clickable cards
+- Dropdown open
+- Modal fade/scale
+- Table row hover
+
+Avoid:
+
+- Excessive animation
+- Parallax
+- Bouncy transitions
+- Overly playful motion
 
 ---
 
-## 25. Tailwind Config Suggestion
+## 34. Tailwind Implementation Guide
+
+### 34.1 Suggested Tailwind Tokens
 
 ```ts
 // tailwind.config.ts
-import type { Config } from "tailwindcss";
-
-const config: Config = {
+export default {
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["Open Sans", "Arial", "Helvetica", "sans-serif"],
-      },
       colors: {
         bca: {
-          blue: {
-            100: "#F1F5F8",
-            200: "#AAD2F8",
-            300: "#63ACF2",
-            400: "#2FA6FC",
-            500: "#0066AE",
-            700: "#093967",
-            900: "#031120",
-          },
-          orange: "#FF944C",
-          tosca: "#2ECACC",
-          webform: "#28B4E8",
+          blue100: "#F1F5F8",
+          blue200: "#AAD2F8",
+          blue300: "#63ACF2",
+          blue400: "#2FA6FC",
+          blue500: "#0066AE",
+          blue700: "#093967",
+          blue900: "#031120",
         },
-        neutralBca: {
-          100: "#F7F7F7",
-          200: "#EFEFEF",
-          400: "#B0B0B0",
-          600: "#7C7C7C",
-          900: "#303030",
+        app: {
+          background: "#F7F7F7",
+          surface: "#FFFFFF",
+          border: "#EFEFEF",
+          text: "#303030",
+          muted: "#7C7C7C",
         },
-        system: {
-          danger: "#D81313",
-          success: "#00893D",
-          warning: "#FF944C",
-          info: "#2FA6FC",
-        },
+        success: "#00893D",
+        warning: "#FF944C",
+        danger: "#D81313",
+      },
+      fontFamily: {
+        sans: ["Open Sans", "Inter", "Arial", "sans-serif"],
       },
       boxShadow: {
-        bcaXs: "0 1px 2px rgba(3, 17, 32, 0.06)",
-        bcaSm: "0 4px 12px rgba(3, 17, 32, 0.08)",
-        bcaMd: "0 8px 24px rgba(3, 17, 32, 0.10)",
-        bcaLg: "0 16px 40px rgba(3, 17, 32, 0.12)",
+        soft: "0 4px 12px rgba(3, 17, 32, 0.06)",
+        card: "0 6px 18px rgba(3, 17, 32, 0.08)",
+        dropdown: "0 12px 28px rgba(3, 17, 32, 0.12)",
       },
       borderRadius: {
-        bca: "0.75rem",
-        bcaCard: "1rem",
-        bcaHero: "1.5rem",
+        card: "16px",
+        button: "12px",
       },
     },
   },
-};
+}
+```
 
-export default config;
+### 34.2 Common Class Recipes
+
+Sidebar:
+
+```tsx
+<aside className="w-[270px] bg-gradient-to-b from-bca-blue500 to-bca-blue700 text-white">
+```
+
+Card:
+
+```tsx
+<Card className="rounded-card border border-app-border bg-white shadow-soft">
+```
+
+Primary button:
+
+```tsx
+<Button className="h-11 rounded-button bg-bca-blue500 text-white hover:bg-bca-blue700">
+```
+
+Secondary button:
+
+```tsx
+<Button variant="outline" className="h-11 rounded-button border-bca-blue200 text-bca-blue500 hover:bg-bca-blue100">
+```
+
+Input:
+
+```tsx
+<Input className="h-11 rounded-button border-[#DADDE3] focus-visible:ring-bca-blue400/20">
+```
+
+Table header:
+
+```tsx
+<TableHeader className="bg-bca-blue100">
+```
+
+Badge:
+
+```tsx
+<Badge className="rounded-full px-2.5 py-1 text-xs font-semibold">
 ```
 
 ---
 
-## 26. Example Component Rules for Desa Wisata BCA
+## 35. shadcn/ui Usage
 
-### 26.1 KPI Card
+Recommended components:
 
-```text
-Card background: white
-Border: #EFEFEF
-Radius: 16px
-Padding: 24px
-Icon container: #F1F5F8
-Icon color: #0066AE
-Value: 32px / bold / #303030
-Label: 14px / #7C7C7C
-Trend badge: success/warning/danger tint
-```
+- `Button`
+- `Card`
+- `Input`
+- `Select`
+- `Badge`
+- `Table`
+- `DropdownMenu`
+- `Dialog`
+- `Sheet`
+- `Avatar`
+- `Progress`
+- `Skeleton`
+- `Tabs`
+- `Separator`
+- `Tooltip`
 
-### 26.2 Survey Question Card
+### 35.1 shadcn Styling Rule
 
-```text
-Card background: white
-Question title: 18px / semibold
-Aspect badge: blue tint
-Score option: radio card
-Selected option: border #0066AE, background #F1F5F8
-Document upload: dashed border #AAD2F8
-Action area: sticky bottom on mobile
-```
+Use shadcn as base component, but override styling with Tailwind classes to match this design system.
 
-### 26.3 Village Detail Page
-
-```text
-Hero/header: light blue section
-Village name: 32px / bold
-Location metadata: 14px muted
-Status badge: pill
-Tabs: Overview, Survey, Dokumen, Riwayat, Laporan
-Content cards: white with subtle shadow
-```
-
-### 26.4 Review Panel
-
-```text
-Left: answer/question detail
-Right: review action panel
-Document preview card
-History timeline
-Approve button: primary/success
-Revision button: warning outline
-Reject button: danger
-```
+Do not use default shadcn gray-heavy look without adapting colors, radius, and spacing.
 
 ---
 
-## 27. Do & Don’t
+## 36. Page-Specific Navigation Active State
+
+Every page must set sidebar active item correctly:
+
+| Page | Active Menu |
+|---|---|
+| Dashboard Admin | Dashboard |
+| Daftar Desa Wisata | Desa Wisata |
+| Detail Desa Wisata | Desa Wisata |
+| Daftar Template Survey | Template Survey |
+| Detail Template Survey | Template Survey |
+| Survey Assignment | Survey Assignment |
+| Review Survey | Review Survey |
+| Dokumen | Dokumen |
+| Laporan | Laporan |
+| User Management | User Management |
+| Pengaturan | Pengaturan |
+
+---
+
+## 37. Content Tone
+
+Use Bahasa Indonesia for UI copy.
+
+Tone:
+
+- Jelas
+- Profesional
+- Singkat
+- Tidak terlalu teknis
+- Ramah untuk admin, reviewer, dan stakeholder CSR
+
+Examples:
+
+- `Pantau perkembangan assessment desa wisata.`
+- `Kelola data desa wisata binaan.`
+- `Survey siap ditinjau reviewer.`
+- `Dokumen pendukung belum diverifikasi.`
+- `Buat Assignment`
+- `Export Laporan`
+
+Avoid:
+
+- Slang
+- Copy terlalu panjang
+- Terlalu banyak istilah teknis tanpa konteks
+
+---
+
+## 38. Do & Don't
 
 ### Do
 
-- Use BCA blue as main identity color.
-- Use Open Sans.
-- Use clean white/light blue surfaces.
-- Use consistent spacing and border radius.
-- Use subtle shadows.
-- Make status clear with badge and text.
-- Use authentic social impact imagery.
-- Keep dashboard readable and efficient.
+- Gunakan sidebar biru konsisten.
+- Gunakan white cards di atas background light gray.
+- Gunakan shadow lembut.
+- Gunakan spacing lega.
+- Gunakan status badge.
+- Gunakan table yang readable.
+- Gunakan icon outline.
+- Gunakan BCA blue untuk primary action.
+- Gunakan confirmation dialog untuk destructive action.
 
-### Don’t
+### Don't
 
-- Do not stretch or modify BCA logo.
-- Do not overuse orange as primary color.
-- Do not use too many gradients.
-- Do not use playful fonts.
-- Do not use low contrast text.
-- Do not make admin tables too dense.
-- Do not rely only on color for status.
-- Do not use heavy shadows or glossy effects.
+- Jangan gunakan sidebar putih untuk admin layout utama.
+- Jangan gunakan terlalu banyak warna.
+- Jangan gunakan gradient selain sidebar kecuali sangat halus.
+- Jangan gunakan shadow terlalu tebal.
+- Jangan membuat card terlalu padat.
+- Jangan menggunakan warna merah kecuali error/destructive.
+- Jangan memakai animasi berlebihan.
+- Jangan menghapus data tanpa modal konfirmasi.
+- Jangan menggunakan logo resmi BCA tanpa izin.
 
 ---
 
-## 28. Source References
+## 39. Recommended File Structure
 
-Public references used to create this guideline:
+```text
+resources/js/
+├── Components/
+│   └── Admin/
+│       ├── AdminLayout.tsx
+│       ├── AdminSidebar.tsx
+│       ├── AdminTopbar.tsx
+│       ├── PageHeader.tsx
+│       ├── StatCard.tsx
+│       ├── StatusBadge.tsx
+│       ├── DataTable.tsx
+│       ├── FilterBar.tsx
+│       ├── EmptyState.tsx
+│       └── ConfirmDialog.tsx
+├── Pages/
+│   └── Admin/
+│       ├── Dashboard/
+│       │   └── Index.tsx
+│       ├── Villages/
+│       │   ├── Index.tsx
+│       │   ├── Show.tsx
+│       │   └── Form.tsx
+│       ├── SurveyTemplates/
+│       │   ├── Index.tsx
+│       │   ├── Show.tsx
+│       │   └── Form.tsx
+│       ├── SurveyAssignments/
+│       │   ├── Index.tsx
+│       │   └── Show.tsx
+│       └── ReviewSurvey/
+│           └── Index.tsx
+```
 
-- BCA homepage: `https://www.bca.co.id/`
-- BCA Brand Assets: `https://www.bca.co.id/id/tentang-bca/media-riset/pressroom/Brand-Assets`
-- BCA Icon System / Design System page: `https://www.bca.co.id/id/Icon-system-bcacoid`
+---
 
+## 40. Design Checklist Before Shipping
+
+Use this checklist for every page:
+
+- [ ] Sidebar uses blue gradient.
+- [ ] Active sidebar menu is correct.
+- [ ] Topbar is white with search and actions.
+- [ ] Page header has breadcrumb, title, subtitle, and actions.
+- [ ] Cards use white background, radius 16px, soft border, soft shadow.
+- [ ] Main content uses light gray background.
+- [ ] Typography follows Open Sans/corporate scale.
+- [ ] Primary action uses `#0066AE`.
+- [ ] Dangerous action uses confirmation modal.
+- [ ] Status uses badge with text label.
+- [ ] Tables have readable row height and clear header.
+- [ ] Filters are easy to use and not overcrowded.
+- [ ] Empty state and loading state exist.
+- [ ] Responsive behavior is considered.
+- [ ] UI copy uses Bahasa Indonesia.
+- [ ] No unauthorized official BCA asset is used.
+
+---
+
+## 41. Example Page Blueprint
+
+### Dashboard Admin
+
+```text
+AdminLayout
+├── Sidebar active="Dashboard"
+├── Topbar
+└── Main
+    ├── PageHeader
+    │   ├── Breadcrumb: Dashboard
+    │   ├── Title: Dashboard Admin
+    │   ├── Subtitle
+    │   ├── Button: Buat Assignment
+    │   └── Button: Export Laporan
+    ├── InfoCallout
+    ├── KPIGrid
+    ├── ContentGrid
+    │   ├── LeftColumn
+    │   │   ├── ProgressSurveyChart
+    │   │   ├── ScoreTrendChart
+    │   │   └── AssignmentSurveyTable
+    │   └── RightColumn
+    │       ├── PrioritasReview
+    │       ├── AktivitasTerbaru
+    │       └── QuickActions
+```
+
+### Listing Page
+
+```text
+AdminLayout
+├── Sidebar active="{current module}"
+├── Topbar
+└── Main
+    ├── PageHeader
+    ├── SummaryCards
+    ├── FilterBar
+    ├── TableCard
+    └── Pagination
+```
+
+---
+
+## 42. Final UI Direction
+
+All pages should look like one unified system:
+
+- Blue sidebar as strong brand identity
+- White topbar and white cards
+- Light gray dashboard background
+- Clean enterprise dashboard layout
+- Calm BCA-inspired blue accents
+- Clear data hierarchy
+- Reusable components
+- Professional CSR/social impact tone
+
+This design system should be used as the baseline for every admin page in the Desa Wisata BCA / Social Impact CSR Aggregator platform.
