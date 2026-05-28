@@ -245,16 +245,6 @@ export default function Dashboard() {
                         </div>
                     </header>
 
-                    <div className="flex items-start gap-3 rounded-xl border border-[#AAD2F8] bg-[#F1F5F8] px-3 py-2.5 text-[13px] leading-5 text-[#303030] sm:px-4 sm:py-3 sm:text-sm sm:leading-6">
-                        <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-[#0066AE] text-white">
-                            <Info className="size-4" strokeWidth={2.2} />
-                        </span>
-                        <p className="min-w-0">
-                            Ringkasan perkembangan desa wisata, status survey,
-                            hasil review, dan aktivitas enumerator terbaru.
-                        </p>
-                    </div>
-
                     <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         {kpis.map((kpi) => {
                             const Icon = kpi.icon;

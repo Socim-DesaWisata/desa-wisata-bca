@@ -29,6 +29,7 @@ const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+const SIDEBAR_LOGO_SRC = "/logo/logo-bca-white.svg"
 
 type SidebarContext = {
   state: "expanded" | "collapsed"
@@ -331,6 +332,21 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="sidebar-header"
       data-sidebar="header"
       className={cn("flex flex-col gap-2 p-2", className)}
+      {...props}
+    />
+  )
+}
+
+function SidebarLogo({
+  className,
+  alt = "BCA",
+  ...props
+}: React.ComponentProps<"img">) {
+  return (
+    <img
+      src={SIDEBAR_LOGO_SRC}
+      alt={alt}
+      className={cn("block h-auto w-full shrink-0 object-contain", className)}
       {...props}
     />
   )
@@ -702,6 +718,7 @@ export {
   SidebarHeader,
   SidebarInput,
   SidebarInset,
+  SidebarLogo,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuBadge,

@@ -4,6 +4,7 @@ import { Bell, CircleHelp, Menu, Search } from 'lucide-react';
 import { AdminSidebarContent } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { SidebarLogo } from '@/components/ui/sidebar';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function AppSidebarHeader({
@@ -64,10 +65,10 @@ export function AppSidebarHeader({
                 </button>
                 <button
                     type="button"
-                    className="flex size-9 items-center justify-center rounded-full bg-[#0066ae] text-white shadow-[0_4px_10px_rgba(0,102,174,0.24)]"
+                    className="flex size-9 items-center justify-center rounded-full bg-[#0066ae] px-1.5 text-white shadow-[0_4px_10px_rgba(0,102,174,0.24)]"
                     aria-label={breadcrumbs[0]?.title ?? 'Akun admin'}
                 >
-                    <span className="size-5 rounded-full bg-white" />
+                    <SidebarLogo className="max-h-3.5" />
                 </button>
             </div>
         </header>

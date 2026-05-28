@@ -1,26 +1,36 @@
-import { Link } from '@inertiajs/react';
-import type { ComponentType } from 'react';
+import { Link, usePage } from '@inertiajs/react';
 import {
-    BarChart3,
     ChevronDown,
-    ClipboardList,
     ClipboardCheck,
+    ClipboardList,
     FileSearch,
     FolderOpen,
-    Landmark,
     LayoutDashboard,
     MapPinned,
+    BarChart3,
     Settings,
+    UserCog,
     Users,
 } from 'lucide-react';
 
-import { dashboard } from '@/routes';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarLogo } from '@/components/ui/sidebar';
+import { UserMenuContent } from '@/components/user-menu-content';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+import {
+    dashboard,
+    questions,
+    users as usersRoute,
+    villages,
+} from '@/routes';
+import profile from '@/routes/profile';
+import type { NavItem } from '@/types';
 
-type SidebarNavItem = {
-    title: string;
-    href: ReturnType<typeof dashboard> | string;
-    icon: ComponentType<{ className?: string; strokeWidth?: number }>;
-    active?: boolean;
+type SidebarNavItem = NavItem & {
     badge?: string;
     warning?: boolean;
 };
@@ -38,16 +48,23 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Dashboard',
                 href: dashboard(),
                 icon: LayoutDashboard,
-                active: true,
             },
         ],
     },
     {
         label: 'Program',
         items: [
-            { title: 'Desa Wisata', href: '#', icon: MapPinned },
-            { title: 'Template Survey', href: '#', icon: ClipboardList },
-            { title: 'Survey Assignment', href: '#', icon: ClipboardCheck },
+            { title: 'Desa Wisata', href: villages(), icon: MapPinned },
+            {
+                title: 'Template Survey',
+                href: questions(),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Survey Assignment',
+                href: '#',
+                icon: ClipboardCheck,
+            },
             {
                 title: 'Review Survey',
                 href: '#',
@@ -67,8 +84,18 @@ const navGroups: SidebarNavGroup[] = [
                 warning: true,
             },
             { title: 'Laporan', href: '#', icon: BarChart3 },
-            { title: 'User Management', href: '#', icon: Users },
+            { title: 'User Management', href: usersRoute(), icon: Users },
             { title: 'Pengaturan', href: '#', icon: Settings },
+        ],
+    },
+    {
+        label: 'Pengaturan',
+        items: [
+            {
+                title: 'Profile',
+                href: profile.edit(),
+                icon: UserCog,
+            },
         ],
     },
 ];
@@ -78,6 +105,9 @@ export function AdminSidebarContent({
 }: {
     onNavigate?: () => void;
 }) {
+    const { auth } = usePage().props;
+    const { isCurrentOrParentUrl, isCurrentUrl } = useCurrentUrl();
+
     return (
         <div className="relative flex h-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(47,166,252,0.45),transparent_34%),linear-gradient(180deg,#0066AE_0%,#00508F_42%,#093967_100%)] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_28%,rgba(255,255,255,0.04)_100%)]" />
@@ -87,19 +117,10 @@ export function AdminSidebarContent({
                     href={dashboard()}
                     prefetch
                     onClick={onNavigate}
-                    className="flex items-center gap-3 px-2 pt-1 pb-4"
+                    className="flex items-center justify-center pt-1 pr-5 pb-5"
+                    aria-label="BCA"
                 >
-                    <span className="flex size-[38px] shrink-0 items-center justify-center rounded-xl border border-white/18 bg-white/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
-                        <Landmark className="size-[20px]" strokeWidth={1.9} />
-                    </span>
-                    <span className="min-w-0">
-                        <span className="block truncate text-[15px] leading-5 font-bold tracking-[-0.01em]">
-                            Desa Wisata BCA
-                        </span>
-                        <span className="mt-0.5 block truncate text-[11px] leading-4 text-white/68">
-                            CSR Aggregator Platform
-                        </span>
-                    </span>
+                    <SidebarLogo className="h-auto max-h-none w-[100px]" />
                 </Link>
                 <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.24),transparent)]" />
             </div>
@@ -116,30 +137,33 @@ export function AdminSidebarContent({
                         <div className="space-y-1">
                             {group.items.map((item) => {
                                 const Icon = item.icon;
+                                const isPlaceholder = item.href === '#';
+                                const href =
+                                    !isPlaceholder &&
+                                    typeof item.href !== 'string'
+                                        ? item.href
+                                        : null;
+                                const isActive =
+                                    href && href.url === questions().url
+                                        ? isCurrentOrParentUrl(href)
+                                        : href
+                                          ? isCurrentUrl(href)
+                                          : false;
 
-                                return (
-                                    <Link
-                                        key={item.title}
-                                        href={item.href}
-                                        prefetch={item.href !== '#'}
-                                        onClick={onNavigate}
-                                        className={[
-                                            'group relative flex h-[42px] items-center gap-2.5 rounded-xl px-3 text-[13.5px] leading-5 transition-all duration-150',
-                                            item.active
-                                                ? 'bg-gradient-to-r from-white/22 to-white/12 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_rgba(3,17,32,0.16)]'
-                                                : 'font-medium text-white/72 hover:translate-x-0.5 hover:bg-white/10 hover:text-white',
-                                        ].join(' ')}
-                                    >
-                                        {item.active && (
+                                const content = (
+                                    <>
+                                        {isActive && (
                                             <>
                                                 <span className="absolute left-0 h-[22px] w-[3px] rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.75)]" />
                                                 <span className="pointer-events-none absolute right-2 size-8 rounded-full bg-[#2FA6FC]/18 blur-md" />
                                             </>
                                         )}
-                                        <Icon
-                                            className="relative size-[18px] shrink-0"
-                                            strokeWidth={1.9}
-                                        />
+                                        {Icon && (
+                                            <Icon
+                                                className="relative size-[18px] shrink-0"
+                                                strokeWidth={1.9}
+                                            />
+                                        )}
                                         <span className="relative min-w-0 flex-1 truncate">
                                             {item.title}
                                         </span>
@@ -155,6 +179,38 @@ export function AdminSidebarContent({
                                                 {item.badge}
                                             </span>
                                         )}
+                                    </>
+                                );
+
+                                const className = [
+                                    'group relative flex h-[42px] items-center gap-2.5 rounded-xl px-3 text-[13.5px] leading-5 transition-all duration-150',
+                                    isActive
+                                        ? 'bg-gradient-to-r from-white/22 to-white/12 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_rgba(3,17,32,0.16)]'
+                                        : isPlaceholder
+                                          ? 'cursor-default font-medium text-white/42'
+                                          : 'font-medium text-white/72 hover:translate-x-0.5 hover:bg-white/10 hover:text-white',
+                                ].join(' ');
+
+                                return isPlaceholder ? (
+                                    <div
+                                        key={item.title}
+                                        className={className}
+                                        aria-disabled="true"
+                                    >
+                                        {content}
+                                    </div>
+                                ) : (
+                                    <Link
+                                        key={item.title}
+                                        href={item.href}
+                                        prefetch
+                                        onClick={onNavigate}
+                                        className={className}
+                                        aria-current={
+                                            isActive ? 'page' : undefined
+                                        }
+                                    >
+                                        {content}
                                     </Link>
                                 );
                             })}
@@ -167,24 +223,45 @@ export function AdminSidebarContent({
                 <div className="mb-2 px-2 text-[10px] font-semibold tracking-[0.08em] text-white/45 uppercase">
                     CSR Dashboard
                 </div>
-                <button className="flex w-full items-center gap-2.5 rounded-2xl border border-white/16 bg-white/12 p-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur transition duration-150 hover:bg-white/16">
-                    <span className="relative flex size-[34px] shrink-0 items-center justify-center rounded-full border-2 border-white/35 bg-gradient-to-br from-white to-[#AAD2F8] text-[13px] font-bold text-[#0066AE] shadow-[0_6px_16px_rgba(3,17,32,0.16)]">
-                        A
-                        <span className="absolute right-[-1px] bottom-[-1px] size-2 rounded-full border-2 border-[#093967] bg-[#22c55e]" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] leading-4 font-bold text-white">
-                            Admin CSR
-                        </span>
-                        <span className="mt-0.5 block truncate text-[11px] leading-4 text-white/65">
-                            Super Admin
-                        </span>
-                    </span>
-                    <ChevronDown
-                        className="size-4 text-white/70"
-                        strokeWidth={1.8}
-                    />
-                </button>
+                {auth.user && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex w-full items-center gap-2.5 rounded-2xl border border-white/16 bg-white/12 p-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur transition duration-150 hover:bg-white/16">
+                                <span className="relative flex size-[34px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/35 bg-gradient-to-br from-white to-[#AAD2F8] text-[13px] font-bold text-[#0066AE] shadow-[0_6px_16px_rgba(3,17,32,0.16)]">
+                                    {auth.user.avatar ? (
+                                        <img
+                                            src={auth.user.avatar}
+                                            alt={auth.user.name}
+                                            className="size-full object-cover"
+                                        />
+                                    ) : (
+                                        auth.user.name.charAt(0).toUpperCase()
+                                    )}
+                                    <span className="absolute right-[-1px] bottom-[-1px] size-2 rounded-full border-2 border-[#093967] bg-[#22c55e]" />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[13px] leading-4 font-bold text-white">
+                                        {auth.user.name}
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-[11px] leading-4 text-white/65">
+                                        {auth.user.email}
+                                    </span>
+                                </span>
+                                <ChevronDown
+                                    className="size-4 text-white/70"
+                                    strokeWidth={1.8}
+                                />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            className="w-56 rounded-xl"
+                            side="top"
+                            align="end"
+                        >
+                            <UserMenuContent user={auth.user} />
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
                 <div className="mt-2 px-2 text-[10px] leading-4 text-white/40">
                     v1.0.0
                 </div>
