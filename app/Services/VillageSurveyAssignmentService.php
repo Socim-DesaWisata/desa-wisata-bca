@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\SurveyQuestion;
 use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
 use App\Models\User;
 use App\Models\VillageSurveyAssignment;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class VillageSurveyAssignmentService
@@ -92,6 +94,72 @@ class VillageSurveyAssignmentService
     public function create(array $data): VillageSurveyAssignment
     {
         return VillageSurveyAssignment::query()->create($data);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getTakeSurveyData(VillageSurveyAssignment $assignment): array
+    {
+        $assignment->load([
+            'village:id,code,name,province,city,district,subdistrict',
+            'template' => fn ($query) => $query->select(['id', 'title', 'description', 'status', 'published_at']),
+            'template.questions' => fn ($query) => $query
+                ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
+                ->orderBy('aspect')
+                ->orderBy('sort_order')
+                ->orderBy('id'),
+            'template.questions.options' => fn ($query) => $query
+                ->select(['id', 'survey_question_id', 'score', 'label', 'sort_order'])
+                ->orderBy('sort_order')
+                ->orderBy('score')
+                ->orderBy('id'),
+            'assignedBy:id,name,email',
+        ]);
+
+        $questions = $assignment->template?->questions ?? collect();
+        $aspects = $this->formatSurveyAspects($questions);
+
+        return [
+            'assignment' => [
+                'id' => $assignment->id,
+                'code' => 'ASG-'.str_pad((string) $assignment->id, 3, '0', STR_PAD_LEFT),
+                'status' => $assignment->status,
+                'status_label' => $this->labelFor($assignment->status, $this->statusOptions()),
+                'assigned_at' => $this->formatDate($assignment->assigned_at),
+                'started_at' => $this->formatDate($assignment->started_at),
+                'last_saved_at' => $this->formatDate($assignment->last_saved_at),
+                'village' => [
+                    'id' => $assignment->village?->id,
+                    'code' => $assignment->village?->code,
+                    'name' => $assignment->village?->name ?? '-',
+                    'location' => collect([
+                        $assignment->village?->subdistrict,
+                        $assignment->village?->district,
+                        $assignment->village?->city,
+                        $assignment->village?->province,
+                    ])->filter()->implode(', ') ?: '-',
+                ],
+                'assigned_by' => [
+                    'id' => $assignment->assignedBy?->id,
+                    'name' => $assignment->assignedBy?->name ?? '-',
+                    'email' => $assignment->assignedBy?->email,
+                ],
+            ],
+            'template' => [
+                'id' => $assignment->template?->id,
+                'title' => $assignment->template?->title ?? '-',
+                'description' => $assignment->template?->description,
+                'status' => $assignment->template?->status,
+                'published_at' => $this->formatDate($assignment->template?->published_at),
+            ],
+            'aspects' => $aspects,
+            'summary' => [
+                'total_aspects' => count($aspects),
+                'total_questions' => $questions->count(),
+                'total_options' => $questions->sum(fn ($question): int => $question->options->count()),
+            ],
+        ];
     }
 
     /**
@@ -225,6 +293,40 @@ class VillageSurveyAssignmentService
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
         ];
+    }
+
+    /**
+     * @param  Collection<int, SurveyQuestion>  $questions
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatSurveyAspects(Collection $questions): array
+    {
+        return $questions
+            ->groupBy('aspect')
+            ->map(fn (Collection $aspectQuestions, string $aspect): array => [
+                'name' => $aspect,
+                'questions' => $aspectQuestions
+                    ->values()
+                    ->map(fn ($question): array => [
+                        'id' => $question->id,
+                        'code' => $question->code,
+                        'question_text' => $question->question_text,
+                        'document_hint' => $question->document_hint,
+                        'sort_order' => $question->sort_order,
+                        'options' => $question->options
+                            ->map(fn ($option): array => [
+                                'id' => $option->id,
+                                'score' => (int) $option->score,
+                                'label' => $option->label,
+                                'sort_order' => $option->sort_order,
+                            ])
+                            ->values()
+                            ->all(),
+                    ])
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

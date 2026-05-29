@@ -1,10 +1,9 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Activity,
     CheckCircle2,
-    ChevronDown,
     ClipboardCheck,
+    ClipboardList,
     Download,
     Eye,
     FileSearch,
@@ -15,6 +14,8 @@ import {
     Search,
     Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 import {
     Dialog,
@@ -32,7 +33,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard, surveyAssignments } from '@/routes';
-import { store as storeSurveyAssignment } from '@/routes/survey-assignments';
+import {
+    store as storeSurveyAssignment,
+    takeSurvey,
+} from '@/routes/survey-assignments';
 
 type StatCard = {
     label: string;
@@ -615,6 +619,19 @@ export default function SurveyAssignmentIndex({
                                                         <DropdownMenuItem className="gap-2 text-xs">
                                                             <Eye className="size-4 text-[#303030]" />
                                                             Lihat Detail
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            asChild
+                                                            className="gap-2 text-xs"
+                                                        >
+                                                            <Link
+                                                                href={takeSurvey.url(
+                                                                    assignment.id,
+                                                                )}
+                                                            >
+                                                                <ClipboardList className="size-4 text-[#303030]" />
+                                                                Take Survey
+                                                            </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem className="gap-2 text-xs">
                                                             <Pencil className="size-4 text-[#303030]" />

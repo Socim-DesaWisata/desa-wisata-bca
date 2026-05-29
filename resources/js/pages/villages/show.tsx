@@ -274,9 +274,9 @@ function ArmchairIcon({ className }: { className?: string }) {
 
 function LogoMark() {
     return (
-        <div className="flex items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-xl bg-[#EAF3FF] text-[#0066AE]">
-                <svg className="size-8" fill="none" viewBox="0 0 40 40">
+        <div className="flex min-w-0 items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#EAF3FF] text-[#0066AE]">
+                <svg className="size-7" fill="none" viewBox="0 0 40 40">
                     <path
                         d="M20 5 7 15l4 3 9-7 9 7 4-3L20 5Z"
                         fill="currentColor"
@@ -293,7 +293,7 @@ function LogoMark() {
                     />
                 </svg>
             </div>
-            <span className="text-[22px] font-extrabold text-[#0066AE]">
+            <span className="truncate text-lg font-extrabold text-[#0066AE] sm:text-[22px]">
                 Desa Wisata BCA
             </span>
         </div>
@@ -303,7 +303,7 @@ function LogoMark() {
 function NavBar() {
     return (
         <header className="sticky top-0 z-30 border-b border-[#E9EEF5] bg-white/95 shadow-[0_2px_14px_rgba(3,17,32,0.06)] backdrop-blur">
-            <div className="mx-auto flex h-[70px] max-w-[1320px] items-center justify-between px-5">
+            <div className="mx-auto flex h-[70px] max-w-[1320px] items-center justify-between gap-4 px-4 sm:px-5">
                 <LogoMark />
                 <nav className="hidden items-center gap-10 text-[13px] font-bold text-[#071B3D] lg:flex">
                     <a href="#">Beranda</a>
@@ -324,10 +324,11 @@ function NavBar() {
                         Masuk
                     </a>
                     <a
-                        className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#0066D9] px-6 text-sm font-extrabold text-white shadow-[0_8px_18px_rgba(0,102,217,0.24)] transition hover:bg-[#093967]"
+                        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#0066D9] px-4 text-sm font-extrabold text-white shadow-[0_8px_18px_rgba(0,102,217,0.18)] transition hover:bg-[#093967] sm:h-11 sm:px-6"
                         href="#"
                     >
-                        Jelajahi Desa <ArrowRight className="size-4" />
+                        <span className="hidden sm:inline">Jelajahi Desa</span>
+                        <ArrowRight className="size-4" />
                     </a>
                 </div>
             </div>
@@ -337,7 +338,7 @@ function NavBar() {
 
 function Hero() {
     return (
-        <section className="relative min-h-[520px] overflow-hidden">
+        <section className="relative overflow-hidden">
             <img
                 className="absolute inset-0 size-full object-cover"
                 src={villageImages.hero}
@@ -345,39 +346,39 @@ function Hero() {
             />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,17,32,0.20),rgba(3,17,32,0.02)_42%,rgba(3,17,32,0.24))]" />
 
-            <div className="relative mx-auto grid max-w-[1320px] gap-9 px-5 py-9 lg:grid-cols-[1fr_420px] lg:items-center">
-                <div className="max-w-[470px] rounded-2xl bg-white/95 p-8 shadow-[0_18px_48px_rgba(3,17,32,0.18)] ring-1 ring-white/80 backdrop-blur">
-                    <div className="mb-5 flex items-center gap-2 text-sm font-semibold text-[#406080]">
+            <div className="relative mx-auto grid max-w-[1320px] gap-8 px-4 py-8 sm:px-5 sm:py-10 lg:min-h-[500px] lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
+                <div className="max-w-[520px] rounded-2xl bg-white/95 p-5 shadow-[0_16px_40px_rgba(3,17,32,0.14)] ring-1 ring-white/80 backdrop-blur sm:p-7">
+                    <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#406080]">
                         <MapPin className="size-5 text-[#0066D9]" />
                         Bangli, Bali
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                        <span className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#0066D9] px-4 text-sm font-extrabold text-white">
+                    <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex h-8 items-center gap-2 rounded-lg bg-[#0066D9] px-3 text-xs font-extrabold text-white sm:text-sm">
                             <ShieldCheck className="size-4" /> Desa Wisata
                             Unggulan
                         </span>
-                        <span className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#0C8C34] px-4 text-sm font-extrabold text-white">
+                        <span className="inline-flex h-8 items-center gap-2 rounded-lg bg-[#0C8C34] px-3 text-xs font-extrabold text-white sm:text-sm">
                             <Leaf className="size-4" /> Binaan CSR
                         </span>
                     </div>
-                    <h1 className="mt-6 text-[42px] leading-[1.12] font-extrabold tracking-[-0.02em] text-[#071B3D] md:text-[56px]">
+                    <h1 className="mt-5 text-[34px] leading-[1.12] font-extrabold tracking-[-0.02em] text-[#071B3D] sm:text-[44px] lg:text-[52px]">
                         Desa Wisata Penglipuran
                     </h1>
-                    <p className="mt-5 max-w-[42ch] text-[16px] leading-7 font-medium text-[#3C4A5E]">
+                    <p className="mt-4 max-w-[52ch] text-sm leading-6 font-medium text-[#3C4A5E] sm:text-[16px] sm:leading-7">
                         Desa adat yang terjaga keasliannya selama ratusan tahun.
                         Terkenal dengan kebersihan, arsitektur tradisional, dan
                         budaya yang lestari serta komitmen pada pariwisata
                         berkelanjutan.
                     </p>
-                    <div className="mt-7 flex flex-col gap-4 sm:flex-row">
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                         <a
-                            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#0066D9] px-7 text-sm font-extrabold text-white shadow-[0_8px_18px_rgba(0,102,217,0.24)]"
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066D9] px-5 text-sm font-extrabold text-white shadow-[0_8px_18px_rgba(0,102,217,0.18)]"
                             href="#"
                         >
                             Lihat Paket Wisata <ArrowRight className="size-4" />
                         </a>
                         <a
-                            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-[#B8D4F7] bg-white px-7 text-sm font-extrabold text-[#0066D9]"
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#B8D4F7] bg-white px-5 text-sm font-extrabold text-[#0066D9]"
                             href="#"
                         >
                             <MessageCircle className="size-4" /> Hubungi
@@ -386,26 +387,26 @@ function Hero() {
                     </div>
                 </div>
 
-                <div className="hidden grid-cols-[1.1fr_.9fr] gap-4 lg:grid">
-                    <div className="relative h-[340px] overflow-hidden rounded-[18px] border-[6px] border-white shadow-[0_16px_40px_rgba(3,17,32,0.24)]">
+                <div className="hidden min-w-0 grid-cols-[1.1fr_.9fr] gap-4 lg:grid">
+                    <div className="relative h-[320px] overflow-hidden rounded-[18px] border-[6px] border-white shadow-[0_16px_40px_rgba(3,17,32,0.20)]">
                         <img
                             className="size-full object-cover"
                             src={villageImages.temple}
                             alt="Gerbang tradisional Penglipuran"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#031120]/60 via-transparent" />
-                        <p className="absolute bottom-10 left-7 max-w-[150px] text-2xl leading-7 font-extrabold text-white">
+                        <p className="absolute bottom-8 left-6 max-w-[180px] text-2xl leading-7 font-extrabold text-white">
                             Desa Wisata Penglipuran
                         </p>
                     </div>
                     <div className="grid gap-4">
                         <img
-                            className="h-[162px] w-full rounded-[18px] border-[6px] border-white object-cover shadow-[0_16px_40px_rgba(3,17,32,0.22)]"
+                            className="h-[152px] w-full rounded-[18px] border-[6px] border-white object-cover shadow-[0_16px_40px_rgba(3,17,32,0.18)]"
                             src={villageImages.valley}
                             alt="Lanskap hijau Bali"
                         />
                         <img
-                            className="h-[162px] w-full rounded-[18px] border-[6px] border-white object-cover shadow-[0_16px_40px_rgba(3,17,32,0.22)]"
+                            className="h-[152px] w-full rounded-[18px] border-[6px] border-white object-cover shadow-[0_16px_40px_rgba(3,17,32,0.18)]"
                             src={villageImages.home}
                             alt="Rumah adat Bali"
                         />
@@ -418,7 +419,7 @@ function Hero() {
 
 function StatsBar() {
     return (
-        <section className="relative z-20 mx-auto -mt-16 max-w-[820px] rounded-xl border border-[#E3EAF3] bg-white shadow-[0_12px_34px_rgba(3,17,32,0.14)]">
+        <section className="relative z-20 mx-4 mt-4 max-w-[900px] rounded-xl border border-[#E3EAF3] bg-white shadow-[0_8px_24px_rgba(3,17,32,0.10)] sm:mx-5 lg:mx-auto lg:-mt-10">
             <div className="grid grid-cols-2 divide-x-0 divide-y divide-[#E3EAF3] md:grid-cols-4 md:divide-x md:divide-y-0">
                 {stats.map((item) => {
                     const Icon = item.icon;
@@ -426,14 +427,14 @@ function StatsBar() {
                     return (
                         <div
                             key={item.label}
-                            className="flex items-center gap-4 px-7 py-5"
+                            className="flex min-w-0 items-center gap-3 px-4 py-4 sm:px-5"
                         >
-                            <Icon className="size-8 shrink-0 text-[#0066D9]" />
-                            <div>
-                                <p className="text-[22px] leading-6 font-extrabold text-[#071B3D]">
+                            <Icon className="size-7 shrink-0 text-[#0066D9]" />
+                            <div className="min-w-0">
+                                <p className="text-[20px] leading-6 font-extrabold text-[#071B3D]">
                                     {item.value}
                                 </p>
-                                <p className="mt-1 text-[12px] font-bold text-[#374B63]">
+                                <p className="mt-1 text-[11px] font-bold text-[#374B63]">
                                     {item.label}
                                 </p>
                                 <p className="text-[11px] font-medium text-[#66788F]">
@@ -450,24 +451,24 @@ function StatsBar() {
 
 function QuickFacts() {
     return (
-        <section className="mx-auto mt-5 grid max-w-[1320px] grid-cols-1 gap-4 px-5 sm:grid-cols-2 lg:grid-cols-6">
+        <section className="mx-auto mt-5 grid max-w-[1320px] grid-cols-1 gap-3 px-4 sm:grid-cols-2 sm:px-5 lg:grid-cols-3 xl:grid-cols-6">
             {quickFacts.map((fact) => {
                 const Icon = fact.icon;
 
                 return (
                     <article
                         key={fact.title}
-                        className="flex min-h-[70px] items-center gap-4 rounded-lg border border-[#E3EAF3] bg-white px-6 shadow-[0_5px_14px_rgba(3,17,32,0.06)]"
+                        className="flex min-h-[70px] min-w-0 items-center gap-3 rounded-lg border border-[#E3EAF3] bg-white px-4 shadow-[0_4px_12px_rgba(3,17,32,0.05)]"
                     >
                         <Icon
-                            className={`size-8 shrink-0 ${fact.success ? 'text-[#0C8C34]' : 'text-[#0066D9]'}`}
+                            className={`size-7 shrink-0 ${fact.success ? 'text-[#0C8C34]' : 'text-[#0066D9]'}`}
                         />
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-[11px] font-bold text-[#7A8BA0]">
                                 {fact.title}
                             </p>
                             <p
-                                className={`text-sm font-extrabold ${fact.success ? 'text-[#0C8C34]' : 'text-[#071B3D]'}`}
+                                className={`truncate text-sm font-extrabold ${fact.success ? 'text-[#0C8C34]' : 'text-[#071B3D]'}`}
                             >
                                 {fact.value}
                             </p>
@@ -481,17 +482,17 @@ function QuickFacts() {
 
 function Tabs() {
     return (
-        <div className="mx-auto mt-5 max-w-[1320px] px-5">
-            <div className="grid overflow-hidden rounded-lg border border-[#E3EAF3] bg-white shadow-[0_5px_14px_rgba(3,17,32,0.05)] md:grid-cols-8">
+        <div className="mx-auto mt-5 max-w-[1320px] px-4 sm:px-5">
+            <div className="flex overflow-x-auto rounded-lg border border-[#E3EAF3] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.05)]">
                 {tabs.map((tab, index) => (
                     <a
                         key={tab}
-                        className={`relative flex h-12 items-center justify-center text-sm font-extrabold ${index === 0 ? 'text-[#0066D9]' : 'text-[#34465C]'}`}
+                        className={`relative flex h-12 min-w-max flex-1 items-center justify-center px-4 text-sm font-extrabold ${index === 0 ? 'text-[#0066D9]' : 'text-[#34465C]'}`}
                         href="#"
                     >
                         {tab}
                         {index === 0 && (
-                            <span className="absolute bottom-0 h-[3px] w-[110px] rounded-t-full bg-[#0066D9]" />
+                            <span className="absolute bottom-0 h-[3px] w-[72%] rounded-t-full bg-[#0066D9]" />
                         )}
                     </a>
                 ))}
@@ -509,7 +510,7 @@ function Card({
 }) {
     return (
         <section
-            className={`rounded-xl border border-[#E3EAF3] bg-white shadow-[0_5px_14px_rgba(3,17,32,0.06)] ${className}`}
+            className={`min-w-0 rounded-xl border border-[#E3EAF3] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.05)] ${className}`}
         >
             {children}
         </section>
@@ -518,7 +519,7 @@ function Card({
 
 function SectionTitle({ title, action }: { title: string; action?: string }) {
     return (
-        <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-xl font-extrabold text-[#071B3D]">{title}</h2>
             {action && (
                 <a
@@ -567,7 +568,7 @@ function InfoGrid() {
     ];
 
     return (
-        <div className="grid gap-4 lg:grid-cols-[1.55fr_1fr_1fr_1fr]">
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
             <Card className="p-6">
                 <h2 className="text-xl font-extrabold text-[#071B3D]">
                     Profil Desa
@@ -644,17 +645,17 @@ function Facilities() {
     return (
         <Card className="p-5">
             <SectionTitle title="Fasilitas" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8">
                 {facilities.map((facility) => {
                     const Icon = facility.icon;
 
                     return (
                         <div
                             key={facility.label}
-                            className="grid h-[92px] place-items-center rounded-xl border border-[#E3EAF3] bg-white text-center"
+                            className="grid min-h-[92px] place-items-center gap-2 rounded-xl border border-[#E3EAF3] bg-white p-3 text-center"
                         >
                             <Icon className="size-8 text-[#0066D9]" />
-                            <p className="text-[11px] font-extrabold text-[#071B3D]">
+                            <p className="text-[11px] leading-4 font-extrabold text-[#071B3D]">
                                 {facility.label}
                             </p>
                         </div>
@@ -672,7 +673,7 @@ function AttractionCards() {
                 title="Atraksi Unggulan"
                 action="Lihat Semua Atraksi"
             />
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {attractions.map((item) => (
                     <article
                         key={item.title}
@@ -684,10 +685,10 @@ function AttractionCards() {
                             alt={item.title}
                         />
                         <div className="p-4">
-                            <h3 className="font-extrabold text-[#071B3D]">
+                            <h3 className="leading-5 font-extrabold text-[#071B3D]">
                                 {item.title}
                             </h3>
-                            <p className="mt-2 min-h-[48px] text-xs leading-5 font-medium text-[#53657B]">
+                            <p className="mt-2 text-xs leading-5 font-medium text-[#53657B]">
                                 {item.desc}
                             </p>
                             <p className="mt-3 flex items-center gap-1 text-xs font-bold text-[#53657B]">
@@ -709,7 +710,7 @@ function HomestayCards() {
                 title="Homestay Populer"
                 action="Lihat Semua Homestay"
             />
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {homestays.map((item) => (
                     <article
                         key={item.name}
@@ -721,14 +722,14 @@ function HomestayCards() {
                             alt={item.name}
                         />
                         <div className="p-4">
-                            <h3 className="font-extrabold text-[#071B3D]">
+                            <h3 className="leading-5 font-extrabold text-[#071B3D]">
                                 {item.name}
                             </h3>
                             <p className="mt-2 flex items-center gap-1 text-xs font-bold text-[#53657B]">
                                 <Star className="size-4 fill-[#F7B500] text-[#F7B500]" />{' '}
                                 {item.rating} (216)
                             </p>
-                            <div className="mt-2 flex items-center gap-3 text-[11px] font-medium text-[#53657B]">
+                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium text-[#53657B]">
                                 <span>AC</span>
                                 <span>Wi-Fi</span>
                                 <span>Sarapan</span>
@@ -758,13 +759,13 @@ function Packages() {
                 title="Paket Wisata Pilihan"
                 action="Lihat Semua Paket"
             />
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {packages.map((item) => (
                     <article
                         key={item.name}
                         className="rounded-xl border border-[#E3EAF3] p-5"
                     >
-                        <h3 className="min-h-[44px] leading-5 font-extrabold text-[#071B3D]">
+                        <h3 className="leading-5 font-extrabold text-[#071B3D]">
                             {item.name}
                         </h3>
                         <p className="mt-1 text-sm font-extrabold text-[#0066D9]">
@@ -805,7 +806,7 @@ function Souvenirs() {
                 title="Souvenir Khas Penglipuran"
                 action="Lihat Semua Souvenir"
             />
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {souvenirs.map((item) => (
                     <article
                         key={item.name}
@@ -817,10 +818,10 @@ function Souvenirs() {
                             alt={item.name}
                         />
                         <div className="p-4">
-                            <h3 className="min-h-[42px] text-sm leading-5 font-extrabold text-[#071B3D]">
+                            <h3 className="text-sm leading-5 font-extrabold text-[#071B3D]">
                                 {item.name}
                             </h3>
-                            <p className="mt-5 text-lg font-extrabold text-[#071B3D]">
+                            <p className="mt-3 text-lg font-extrabold text-[#071B3D]">
                                 {item.price}
                             </p>
                         </div>
@@ -855,7 +856,7 @@ function Statistics() {
     return (
         <Card className="p-5">
             <SectionTitle title="Statistik & Informasi Desa" />
-            <div className="grid gap-4 rounded-xl border border-[#E3EAF3] p-5 sm:grid-cols-5">
+            <div className="grid gap-4 rounded-xl border border-[#E3EAF3] p-5 sm:grid-cols-2 lg:grid-cols-5">
                 {topStats.map((item) => {
                     const Icon = item.icon;
 
@@ -897,8 +898,8 @@ function Contact() {
     return (
         <Card className="p-5">
             <SectionTitle title="Lokasi & Kontak" />
-            <div className="grid gap-5 md:grid-cols-[1.2fr_.8fr]">
-                <div className="relative min-h-[300px] overflow-hidden rounded-xl bg-[#EAF3E8]">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,.8fr)]">
+                <div className="relative min-h-[280px] overflow-hidden rounded-xl bg-[#EAF3E8]">
                     <div className="absolute inset-0 [background-image:linear-gradient(#C6D9C9_1px,transparent_1px),linear-gradient(90deg,#C6D9C9_1px,transparent_1px)] [background-size:36px_36px] opacity-80" />
                     <div className="absolute top-[18%] left-[18%] h-3 w-[50%] rotate-[-12deg] rounded-full bg-[#F2D49B]" />
                     <div className="absolute top-[36%] left-[36%] h-3 w-[46%] rotate-[28deg] rounded-full bg-[#F2D49B]" />
@@ -911,28 +912,28 @@ function Contact() {
                             Penglipuran
                         </p>
                     </div>
-                    <button className="absolute bottom-7 left-1/2 inline-flex h-12 -translate-x-1/2 items-center gap-3 rounded-lg bg-[#0066D9] px-10 text-sm font-extrabold text-white">
+                    <button className="absolute bottom-6 left-1/2 inline-flex h-11 -translate-x-1/2 items-center gap-3 rounded-lg bg-[#0066D9] px-8 text-sm font-extrabold whitespace-nowrap text-white">
                         Lihat Rute <Navigation className="size-4" />
                     </button>
                 </div>
-                <div className="rounded-xl border border-[#E3EAF3] p-6">
+                <div className="min-w-0 rounded-xl border border-[#E3EAF3] p-5 sm:p-6">
                     <h3 className="text-lg font-extrabold text-[#071B3D]">
                         Kontak Pengelola
                     </h3>
                     <div className="mt-5 space-y-4 text-sm font-semibold text-[#314158]">
-                        <p className="flex gap-3">
+                        <p className="flex min-w-0 gap-3">
                             <Phone className="size-5 text-[#0066D9]" /> +62
                             812-3456-7890
                         </p>
-                        <p className="flex gap-3">
+                        <p className="flex min-w-0 gap-3 break-all">
                             <Mail className="size-5 text-[#0066D9]" />{' '}
                             info@penglipuran.desa.id
                         </p>
-                        <p className="flex gap-3">
+                        <p className="flex min-w-0 gap-3">
                             <MapPin className="size-5 text-[#0066D9]" /> Desa
                             Penglipuran, Kec. Bangli, Kab. Bangli, Bali 80613
                         </p>
-                        <p className="flex gap-3">
+                        <p className="flex min-w-0 gap-3 break-all">
                             <Globe2 className="size-5 text-[#0066D9]" />{' '}
                             www.penglipuran.desa.id
                         </p>
@@ -973,7 +974,7 @@ function RelatedVillages() {
                 {relatedVillages.map((item) => (
                     <article
                         key={item.name}
-                        className="relative h-[150px] overflow-hidden rounded-xl"
+                        className="relative min-h-[170px] overflow-hidden rounded-xl"
                     >
                         <img
                             className="size-full object-cover"
@@ -981,8 +982,8 @@ function RelatedVillages() {
                             alt={item.name}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#031120]/75 via-[#031120]/10" />
-                        <div className="absolute bottom-4 left-5 text-white">
-                            <h3 className="text-lg font-extrabold">
+                        <div className="absolute right-4 bottom-4 left-5 text-white">
+                            <h3 className="text-lg leading-6 font-extrabold">
                                 {item.name}
                             </h3>
                             <p className="text-sm font-semibold">
@@ -1003,7 +1004,7 @@ function RelatedVillages() {
 function Footer() {
     return (
         <footer className="mt-8 bg-gradient-to-r from-[#093967] to-[#0066AE] text-white">
-            <div className="mx-auto grid max-w-[1320px] gap-10 px-5 py-11 md:grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr]">
+            <div className="mx-auto grid max-w-[1320px] gap-8 px-5 py-11 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr]">
                 <div>
                     <div className="flex items-center gap-3">
                         <div className="grid size-11 place-items-center rounded-xl text-white ring-1 ring-white/30">
@@ -1102,21 +1103,15 @@ export default function VillageShow() {
                 <QuickFacts />
                 <Tabs />
 
-                <main className="mx-auto mt-6 max-w-[1320px] space-y-6 px-5">
+                <main className="mx-auto mt-6 max-w-[1320px] space-y-6 px-4 sm:px-5">
                     <InfoGrid />
-                    <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-                        <div className="space-y-6">
-                            <Facilities />
-                            <AttractionCards />
-                            <Packages />
-                            <Statistics />
-                        </div>
-                        <div className="space-y-6">
-                            <HomestayCards />
-                            <Souvenirs />
-                            <Contact />
-                        </div>
-                    </div>
+                    <Facilities />
+                    <AttractionCards />
+                    <HomestayCards />
+                    <Packages />
+                    <Souvenirs />
+                    <Statistics />
+                    <Contact />
                     <RelatedVillages />
                 </main>
                 <Footer />

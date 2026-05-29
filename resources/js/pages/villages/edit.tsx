@@ -209,8 +209,8 @@ function MiniMap({
 }) {
     const position = useMemo<LatLngExpression>(
         () => [
-            parseCoordinate(latitude, -7.26616),
-            parseCoordinate(longitude, 112.819123),
+            parseCoordinate(latitude, -7.3223551),
+            parseCoordinate(longitude, 112.7034573),
         ],
         [latitude, longitude],
     );
@@ -648,9 +648,10 @@ export default function VillageEdit({
                 items={activeCategory.items}
                 errors={formErrors}
                 onAdd={() => addProfileItem(activeCategory.option)}
-                onChange={updateProfileItem}
-                onRemove={removeProfileItem}
-            />
+                                onChange={updateProfileItem}
+                                onRemove={removeProfileItem}
+                                mediaOptions={media_type_options}
+                            />
         ) : (
             <SectionCard
                 id="main"
@@ -1068,6 +1069,7 @@ function ProfileItemsSection({
     onAdd,
     onChange,
     onRemove,
+    mediaOptions,
 }: {
     id: string;
     icon: typeof Info;
@@ -1078,6 +1080,7 @@ function ProfileItemsSection({
     onAdd: () => void;
     onChange: (index: number, item: ProfileItemForm) => void;
     onRemove: (index: number) => void;
+    mediaOptions: Option[];
 }) {
     return (
         <SectionCard
@@ -1117,6 +1120,7 @@ function ProfileItemsSection({
                             prefix={`profile_items.${index}`}
                             onChange={(next) => onChange(index, next)}
                             onRemove={() => onRemove(index)}
+                            mediaOptions={mediaOptions}
                         />
                     ))
                 )}
@@ -1132,6 +1136,7 @@ function ProfileItemEditor({
     prefix,
     onChange,
     onRemove,
+    mediaOptions,
 }: {
     item: ProfileItemForm;
     index: number;
@@ -1139,7 +1144,24 @@ function ProfileItemEditor({
     prefix: string;
     onChange: (item: ProfileItemForm) => void;
     onRemove: () => void;
+    mediaOptions: Option[];
 }) {
+    function updateItemMedia(mediaIndex: number, media: MediaForm) {
+        onChange({
+            ...item,
+            media: item.media.map((mediaItem, itemIndex) =>
+                itemIndex === mediaIndex ? media : mediaItem,
+            ),
+        });
+    }
+
+    function removeItemMedia(mediaIndex: number) {
+        onChange({
+            ...item,
+            media: item.media.filter((_, itemIndex) => itemIndex !== mediaIndex),
+        });
+    }
+
     return (
         <div className="rounded-lg border border-[#DDE4EC] bg-[#FCFDFF] p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -1200,27 +1222,53 @@ function ProfileItemEditor({
                         error={errors[`${prefix}.address`]}
                     />
                 </div>
-                <Field
-                    label="Latitude"
-                    value={item.latitude}
-                    onChange={(value) => onChange({ ...item, latitude: value })}
-                    placeholder="-7.3223551"
-                    error={errors[`${prefix}.latitude`]}
-                />
-                <Field
-                    label="Longitude"
-                    value={item.longitude}
-                    onChange={(value) => onChange({ ...item, longitude: value })}
-                    placeholder="112.7034573"
-                    error={errors[`${prefix}.longitude`]}
-                />
-                <Field
-                    label="Maps URL"
-                    value={item.maps_url}
-                    onChange={(value) => onChange({ ...item, maps_url: value })}
-                    placeholder="https://maps.app.goo.gl/..."
-                    error={errors[`${prefix}.maps_url`]}
-                />
+                <div className="grid gap-4 md:col-span-3 lg:grid-cols-[minmax(0,1fr)_270px]">
+                    <div className="grid gap-3 md:grid-cols-3">
+                        <Field
+                            label="Latitude"
+                            value={item.latitude}
+                            onChange={(value) => onChange({ ...item, latitude: value })}
+                            placeholder="-7.3223551"
+                            error={errors[`${prefix}.latitude`]}
+                        />
+                        <Field
+                            label="Longitude"
+                            value={item.longitude}
+                            onChange={(value) => onChange({ ...item, longitude: value })}
+                            placeholder="112.7034573"
+                            error={errors[`${prefix}.longitude`]}
+                        />
+                        <Field
+                            label="Maps URL"
+                            value={item.maps_url}
+                            onChange={(value) => onChange({ ...item, maps_url: value })}
+                            placeholder="https://maps.app.goo.gl/..."
+                            error={errors[`${prefix}.maps_url`]}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <MiniMap
+                            latitude={item.latitude}
+                            longitude={item.longitude}
+                            onPick={(latitude, longitude) =>
+                                onChange({
+                                    ...item,
+                                    latitude,
+                                    longitude,
+                                    maps_url: googleMapsUrl(latitude, longitude),
+                                })
+                            }
+                        />
+                        <a
+                            href={item.maps_url || '#'}
+                            target="_blank"
+                            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white text-sm font-bold text-[#0066AE]"
+                        >
+                            Buka Google Maps
+                            <ChevronRight className="size-3.5" />
+                        </a>
+                    </div>
+                </div>
                 <Field
                     label="Nama Kontak"
                     value={item.contact_name}
@@ -1243,6 +1291,37 @@ function ProfileItemEditor({
                     />
                     Aktif
                 </label>
+                <div className="space-y-3 md:col-span-3">
+                    <button
+                        type="button"
+                        onClick={() =>
+                            onChange({
+                                ...item,
+                                media: [...item.media, blankMedia(item.media.length)],
+                            })
+                        }
+                        className="flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#AAD2F8] bg-white p-4 text-center text-[#0066AE] transition hover:bg-[#EAF4FB]"
+                    >
+                        <Upload className="size-5" />
+                        <span className="mt-2 text-sm font-bold">Tambah Gambar / Media</span>
+                        <span className="text-xs text-[#7C7C7C]">
+                            Gunakan upload file untuk gambar, video, atau dokumen pendukung.
+                        </span>
+                    </button>
+
+                    {item.media.map((media, mediaIndex) => (
+                        <MediaEditor
+                            key={mediaIndex}
+                            media={media}
+                            index={mediaIndex}
+                            options={mediaOptions}
+                            errors={errors}
+                            prefix={`${prefix}.media.${mediaIndex}`}
+                            onChange={(next) => updateItemMedia(mediaIndex, next)}
+                            onRemove={() => removeItemMedia(mediaIndex)}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );

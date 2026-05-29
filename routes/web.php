@@ -11,8 +11,6 @@ Route::inertia('/', 'welcome')->name('home');
 Route::get('/users', [UserController::class, 'index'])->name('users');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password.update');
-Route::inertia('take-survey', 'survey/take-survey')->name('take-survey');
-
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/villages', [TourismVillageController::class, 'index'])->name('villages');
     Route::post('/villages', [TourismVillageController::class, 'store'])->name('villages.store');
@@ -21,6 +19,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
     Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
     Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
+    Route::get('/survey-assignments/{assignment}/take-survey', [VillageSurveyAssignmentController::class, 'takeSurvey'])
+        ->name('survey-assignments.take-survey');
 });
 Route::get('/questions', SurveyQuestionController::class)->name('questions');
 Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])
