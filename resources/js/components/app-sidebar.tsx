@@ -24,6 +24,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import {
     dashboard,
     questions,
+    surveyAssignments,
     users as usersRoute,
     villages,
 } from '@/routes';
@@ -62,7 +63,7 @@ const navGroups: SidebarNavGroup[] = [
             },
             {
                 title: 'Survey Assignment',
-                href: '#',
+                href: surveyAssignments(),
                 icon: ClipboardCheck,
             },
             {

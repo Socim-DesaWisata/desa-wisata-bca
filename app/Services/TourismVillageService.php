@@ -4,9 +4,15 @@ namespace App\Services;
 
 use App\Models\TourismVillage;
 use App\Models\User;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Arr;
+use App\Models\VillageMedia;
+use App\Models\VillageProfileItem;
+use App\Models\VillageProfileItemCategory;
+use App\Models\VillageSurveyAssignment;
 use Carbon\CarbonInterface;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class TourismVillageService
@@ -107,6 +113,77 @@ class TourismVillageService
         ]);
     }
 
+    public function getDetailData(TourismVillage $village): array
+    {
+        $village->load([
+            'creator:id,name',
+            'media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
+            'profileItems' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('name'),
+            'profileItems.category:id,name,slug',
+            'profileItems.media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
+            'surveyAssignment.template:id,title,status',
+            'surveyAssignment.assignedBy:id,name',
+            'surveyAssignment.submittedBy:id,name',
+            'surveyAssignment.reviewedBy:id,name',
+            'enumerators:id,name,email',
+        ])->loadCount(['enumeratorAssignments', 'media', 'profileItems']);
+
+        return [
+            'village' => $this->formatVillageDetail($village),
+        ];
+    }
+
+    public function getEditData(TourismVillage $village): array
+    {
+        $village->load([
+            'creator:id,name',
+            'media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
+            'profileItems' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
+            'profileItems.category:id,name,slug',
+            'profileItems.media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
+        ]);
+
+        return [
+            'village' => $this->formatVillageForm($village),
+            'status_options' => $this->statusOptions(),
+            'profile_category_options' => $this->profileCategoryOptions(),
+            'media_type_options' => $this->mediaTypeOptions(),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function update(TourismVillage $village, array $data, User $actor): TourismVillage
+    {
+        DB::transaction(function () use ($village, $data, $actor): void {
+            $village->update([
+                'code' => $data['code'],
+                'name' => $data['name'],
+                'slug' => $data['slug'],
+                'description' => $data['description'] ?? null,
+                'province' => $data['province'] ?? null,
+                'city' => $data['city'] ?? null,
+                'district' => $data['district'] ?? null,
+                'subdistrict' => $data['subdistrict'] ?? null,
+                'address' => $data['address'] ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
+                'maps_url' => $data['maps_url'] ?? null,
+                'manager_name' => $data['manager_name'] ?? null,
+                'manager_phone' => $data['manager_phone'] ?? null,
+                'manager_email' => $data['manager_email'] ?? null,
+                'status' => $data['status'],
+            ]);
+
+            $this->syncVillageMedia($village, $data['media'] ?? [], $actor);
+            $this->syncProfileItems($village, $data['profile_items'] ?? [], $actor);
+        });
+
+        return $village;
+    }
+
     /**
      * @return array<int, array<string, string>>
      */
@@ -118,6 +195,33 @@ class TourismVillageService
             ['value' => 'verified', 'label' => 'Terverifikasi'],
             ['value' => 'review', 'label' => 'Perlu Review'],
             ['value' => 'archived', 'label' => 'Diarsipkan'],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function profileCategoryOptions(): array
+    {
+        return [
+            ['slug' => 'fasilitas', 'name' => 'Fasilitas'],
+            ['slug' => 'atraksi', 'name' => 'Atraksi'],
+            ['slug' => 'suvenir', 'name' => 'Suvenir'],
+            ['slug' => 'homestay', 'name' => 'Homestay'],
+            ['slug' => 'paket-wisata', 'name' => 'Paket Wisata'],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function mediaTypeOptions(): array
+    {
+        return [
+            ['value' => 'image', 'label' => 'Gambar'],
+            ['value' => 'video', 'label' => 'Video'],
+            ['value' => 'document', 'label' => 'Dokumen'],
+            ['value' => 'url', 'label' => 'URL Eksternal'],
         ];
     }
 
@@ -204,6 +308,335 @@ class TourismVillageService
             'score' => $progress >= 100 ? 'Siap review' : 'Belum final',
             'created_by' => $village->creator?->name ?? '-',
             'updated_at' => $this->formatDate($village->updated_at),
+            'media' => $village->media->map(fn (VillageMedia $media): array => $this->formatMedia($media))->values(),
+            'profile_items' => $village->profileItems->map(fn (VillageProfileItem $item): array => $this->formatProfileItemForForm($item))->values(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatVillageDetail(TourismVillage $village): array
+    {
+        return [
+            ...$this->formatVillage($village),
+            'address' => $village->address ?: '-',
+            'postal_code' => $village->postal_code ?: '-',
+            'manager_phone' => $village->manager_phone ?: '-',
+            'manager_email' => $village->manager_email ?: '-',
+            'created_at' => $this->formatDate($village->created_at),
+            'media' => $village->media->map(fn (VillageMedia $media): array => $this->formatMedia($media))->values(),
+            'cover' => $village->media->firstWhere('is_cover', true)
+                ? $this->formatMedia($village->media->firstWhere('is_cover', true))
+                : null,
+            'profile_items' => $village->profileItems
+                ->groupBy(fn (VillageProfileItem $item): string => $item->category?->name ?? 'Lainnya')
+                ->map(fn ($items, string $category): array => [
+                    'category' => $category,
+                    'items' => $items->map(fn (VillageProfileItem $item): array => $this->formatProfileItem($item))->values(),
+                ])
+                ->values(),
+            'survey_assignment' => $village->surveyAssignment
+                ? $this->formatSurveyAssignment($village->surveyAssignment)
+                : null,
+            'enumerator_list' => $village->enumerators
+                ->map(fn (User $user): array => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ])
+                ->values(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatVillageForm(TourismVillage $village): array
+    {
+        return [
+            'id' => $village->id,
+            'code' => $village->code,
+            'name' => $village->name,
+            'slug' => $village->slug,
+            'description' => $village->description ?? '',
+            'province' => $village->province ?? '',
+            'city' => $village->city ?? '',
+            'district' => $village->district ?? '',
+            'subdistrict' => $village->subdistrict ?? '',
+            'address' => $village->address ?? '',
+            'postal_code' => $village->postal_code ?? '',
+            'latitude' => (string) ($village->latitude ?? ''),
+            'longitude' => (string) ($village->longitude ?? ''),
+            'maps_url' => $village->maps_url ?? '',
+            'manager_name' => $village->manager_name ?? '',
+            'manager_phone' => $village->manager_phone ?? '',
+            'manager_email' => $village->manager_email ?? '',
+            'status' => $village->status,
+            'created_by' => $village->creator?->name ?? '-',
+            'updated_at' => $this->formatDate($village->updated_at),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatMedia(object $media): array
+    {
+        return [
+            'id' => $media->id,
+            'type' => $media->type,
+            'title' => $media->title,
+            'caption' => $media->caption,
+            'file_path' => $media->file_path,
+            'file' => null,
+            'external_url' => $media->external_url,
+            'url' => $this->mediaUrl($media->file_path, $media->external_url),
+            'is_cover' => $media->is_cover,
+        ];
+    }
+
+    private function mediaUrl(?string $filePath, ?string $externalUrl): ?string
+    {
+        if ($externalUrl) {
+            return $externalUrl;
+        }
+
+        if (! $filePath) {
+            return null;
+        }
+
+        return Str::startsWith($filePath, ['http://', 'https://', '/storage/'])
+            ? $filePath
+            : Storage::url($filePath);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatProfileItem(VillageProfileItem $item): array
+    {
+        return [
+            'id' => $item->id,
+            'name' => $item->name,
+            'description' => $item->description,
+            'address' => $item->address,
+            'maps_url' => $item->maps_url,
+            'price_text' => $item->price_text,
+            'opening_hours' => $item->opening_hours,
+            'contact_name' => $item->contact_name,
+            'contact_phone' => $item->contact_phone,
+            'media' => $item->media->map(fn ($media): array => $this->formatMedia($media))->values(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatProfileItemForForm(VillageProfileItem $item): array
+    {
+        return [
+            'id' => $item->id,
+            'category_slug' => $item->category?->slug ?? 'fasilitas',
+            'category_name' => $item->category?->name ?? 'Fasilitas',
+            'name' => $item->name,
+            'description' => $item->description ?? '',
+            'address' => $item->address ?? '',
+            'latitude' => (string) ($item->latitude ?? ''),
+            'longitude' => (string) ($item->longitude ?? ''),
+            'maps_url' => $item->maps_url ?? '',
+            'price_min' => (string) ($item->price_min ?? ''),
+            'price_max' => (string) ($item->price_max ?? ''),
+            'price_text' => $item->price_text ?? '',
+            'opening_hours' => $item->opening_hours ?? '',
+            'contact_name' => $item->contact_name ?? '',
+            'contact_phone' => $item->contact_phone ?? '',
+            'is_active' => $item->is_active,
+            'sort_order' => $item->sort_order,
+            'media' => $item->media->map(fn ($media): array => $this->formatMedia($media))->values(),
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $mediaItems
+     */
+    private function syncVillageMedia(TourismVillage $village, array $mediaItems, User $actor): void
+    {
+        $keptIds = collect($mediaItems)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+
+        $village->media()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($mediaItems as $index => $media) {
+            $payload = $this->mediaPayload($media, $actor, $index);
+
+            if (! empty($media['id'])) {
+                $village->media()->whereKey($media['id'])->update($payload);
+
+                continue;
+            }
+
+            $village->media()->create($payload);
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private function syncProfileItems(TourismVillage $village, array $items, User $actor): void
+    {
+        $keptIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+
+        $village->profileItems()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($items as $index => $item) {
+            $category = $this->resolveProfileCategory($item);
+            $payload = [
+                'category_id' => $category->id,
+                'created_by' => $actor->id,
+                'name' => $item['name'],
+                'description' => $item['description'] ?? null,
+                'address' => $item['address'] ?? null,
+                'latitude' => $item['latitude'] ?? null,
+                'longitude' => $item['longitude'] ?? null,
+                'maps_url' => $item['maps_url'] ?? null,
+                'price_min' => $item['price_min'] ?? null,
+                'price_max' => $item['price_max'] ?? null,
+                'price_text' => $item['price_text'] ?? null,
+                'opening_hours' => $item['opening_hours'] ?? null,
+                'contact_name' => $item['contact_name'] ?? null,
+                'contact_phone' => $item['contact_phone'] ?? null,
+                'is_active' => (bool) ($item['is_active'] ?? true),
+                'sort_order' => (int) ($item['sort_order'] ?? $index),
+            ];
+
+            $profileItem = ! empty($item['id'])
+                ? $village->profileItems()->whereKey($item['id'])->first()
+                : null;
+
+            if ($profileItem) {
+                $profileItem->update($payload);
+            } else {
+                $profileItem = $village->profileItems()->create($payload);
+            }
+
+            $this->syncProfileItemMedia($profileItem, $item['media'] ?? [], $actor);
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $mediaItems
+     */
+    private function syncProfileItemMedia(VillageProfileItem $profileItem, array $mediaItems, User $actor): void
+    {
+        $keptIds = collect($mediaItems)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+
+        $profileItem->media()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($mediaItems as $index => $media) {
+            $payload = $this->mediaPayload($media, $actor, $index);
+
+            if (! empty($media['id'])) {
+                $profileItem->media()->whereKey($media['id'])->update($payload);
+
+                continue;
+            }
+
+            $profileItem->media()->create($payload);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $media
+     * @return array<string, mixed>
+     */
+    private function mediaPayload(array $media, User $actor, int $index): array
+    {
+        return [
+            'uploaded_by' => $actor->id,
+            'type' => $media['type'],
+            'title' => $media['title'] ?? null,
+            'caption' => $media['caption'] ?? null,
+            'file_path' => $this->storedFilePath($media, $media['file_path'] ?? null),
+            'external_url' => $media['external_url'] ?? null,
+            'mime_type' => $this->uploadedMimeType($media, $media['mime_type'] ?? null),
+            'file_size' => $this->uploadedFileSize($media),
+            'is_cover' => (bool) ($media['is_cover'] ?? false),
+            'sort_order' => (int) ($media['sort_order'] ?? $index),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $media
+     */
+    private function storedFilePath(array $media, ?string $fallback): ?string
+    {
+        $file = $media['file'] ?? null;
+
+        return $file instanceof UploadedFile
+            ? $file->store('villages', 'public')
+            : $fallback;
+    }
+
+    /**
+     * @param  array<string, mixed>  $media
+     */
+    private function uploadedMimeType(array $media, ?string $fallback): ?string
+    {
+        $file = $media['file'] ?? null;
+
+        return $file instanceof UploadedFile ? $file->getMimeType() : $fallback;
+    }
+
+    /**
+     * @param  array<string, mixed>  $media
+     */
+    private function uploadedFileSize(array $media): ?int
+    {
+        $file = $media['file'] ?? null;
+
+        return $file instanceof UploadedFile ? $file->getSize() : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private function resolveProfileCategory(array $item): VillageProfileItemCategory
+    {
+        return VillageProfileItemCategory::query()->firstOrCreate(
+            ['slug' => $item['category_slug']],
+            [
+                'name' => $item['category_name'],
+                'description' => null,
+                'is_active' => true,
+                'sort_order' => collect($this->profileCategoryOptions())->search(fn ($category) => $category['slug'] === $item['category_slug']) ?: 0,
+            ]
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatSurveyAssignment(VillageSurveyAssignment $assignment): array
+    {
+        return [
+            'id' => $assignment->id,
+            'status' => $assignment->status,
+            'template' => $assignment->template?->title ?? '-',
+            'assigned_by' => $assignment->assignedBy?->name ?? '-',
+            'submitted_by' => $assignment->submittedBy?->name ?? '-',
+            'reviewed_by' => $assignment->reviewedBy?->name ?? '-',
+            'assigned_at' => $this->formatDate($assignment->assigned_at),
+            'submitted_at' => $this->formatDate($assignment->submitted_at),
+            'reviewed_at' => $this->formatDate($assignment->reviewed_at),
         ];
     }
 

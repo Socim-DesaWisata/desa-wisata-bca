@@ -3,6 +3,7 @@
 use App\Http\Controllers\SurveyQuestionController;
 use App\Http\Controllers\TourismVillageController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VillageSurveyAssignmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -10,10 +11,16 @@ Route::inertia('/', 'welcome')->name('home');
 Route::get('/users', [UserController::class, 'index'])->name('users');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password.update');
+Route::inertia('take-survey', 'survey/take-survey')->name('take-survey');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/villages', [TourismVillageController::class, 'index'])->name('villages');
     Route::post('/villages', [TourismVillageController::class, 'store'])->name('villages.store');
+    Route::get('/villages/{village}', [TourismVillageController::class, 'show'])->name('villages.show');
+    Route::get('/villages/{village}/edit', [TourismVillageController::class, 'edit'])->name('villages.edit');
+    Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
+    Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
+    Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
 });
 Route::get('/questions', SurveyQuestionController::class)->name('questions');
 Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])

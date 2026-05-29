@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
@@ -11,7 +11,6 @@ import {
 } from 'react-leaflet';
 import {
     Archive,
-    BarChart3,
     Building2,
     CheckCircle2,
     ChevronDown,
@@ -44,6 +43,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard, villages as villagesRoute } from '@/routes';
+import { edit as editVillage, show as showVillage } from '@/routes/villages';
 
 type StatCard = {
     label: string;
@@ -73,10 +73,6 @@ type VillageRow = {
     manager_email: string | null;
     status: string;
     status_label: string;
-    category_label: string;
-    enumerators: string;
-    survey_progress: number;
-    score: string;
     created_by: string;
     updated_at: string;
 };
@@ -163,6 +159,9 @@ const statIcons = {
     file: FileText,
 };
 
+const initialLatitude = '-7.3223551';
+const initialLongitude = '112.7034573';
+
 const defaultForm: VillageForm = {
     code: '',
     name: '',
@@ -174,18 +173,58 @@ const defaultForm: VillageForm = {
     subdistrict: '',
     address: '',
     postal_code: '',
-    latitude: '',
-    longitude: '',
-    maps_url: '',
+    latitude: initialLatitude,
+    longitude: initialLongitude,
+    maps_url: `https://www.google.com/maps?q=${initialLatitude},${initialLongitude}`,
     manager_name: '',
     manager_phone: '',
     manager_email: '',
     status: 'draft',
 };
 
-const defaultMapCenter: LatLngExpression = [-2.5489, 118.0149];
-const defaultMapZoom = 5;
+const defaultMapCenter: LatLngExpression = [
+    Number(initialLatitude),
+    Number(initialLongitude),
+];
+const defaultMapZoom = 14;
 const selectedMapZoom = 14;
+
+const provinceTranslations: Record<string, string> = {
+    Aceh: 'Aceh',
+    Bali: 'Bali',
+    'Bangka Belitung Islands': 'Kepulauan Bangka Belitung',
+    Banten: 'Banten',
+    Bengkulu: 'Bengkulu',
+    'Central Java': 'Jawa Tengah',
+    'Central Kalimantan': 'Kalimantan Tengah',
+    'Central Sulawesi': 'Sulawesi Tengah',
+    'East Java': 'Jawa Timur',
+    'East Kalimantan': 'Kalimantan Timur',
+    'East Nusa Tenggara': 'Nusa Tenggara Timur',
+    Gorontalo: 'Gorontalo',
+    Jakarta: 'DKI Jakarta',
+    Jambi: 'Jambi',
+    Lampung: 'Lampung',
+    Maluku: 'Maluku',
+    'North Kalimantan': 'Kalimantan Utara',
+    'North Maluku': 'Maluku Utara',
+    'North Sulawesi': 'Sulawesi Utara',
+    'North Sumatra': 'Sumatera Utara',
+    Papua: 'Papua',
+    Riau: 'Riau',
+    'Riau Islands': 'Kepulauan Riau',
+    'South Kalimantan': 'Kalimantan Selatan',
+    'South Sulawesi': 'Sulawesi Selatan',
+    'South Sumatra': 'Sumatera Selatan',
+    'Southeast Sulawesi': 'Sulawesi Tenggara',
+    'Special Region of Yogyakarta': 'DI Yogyakarta',
+    'West Java': 'Jawa Barat',
+    'West Kalimantan': 'Kalimantan Barat',
+    'West Nusa Tenggara': 'Nusa Tenggara Barat',
+    'West Papua': 'Papua Barat',
+    'West Sulawesi': 'Sulawesi Barat',
+    'West Sumatra': 'Sumatera Barat',
+};
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
@@ -211,17 +250,6 @@ function statusClass(status: string) {
     );
 }
 
-function categoryClass(category: string) {
-    return (
-        {
-            Mandiri: 'bg-[#EAF3FF] text-[#0066AE]',
-            Maju: 'bg-[#E8FAFA] text-[#0B7778]',
-            Berkembang: 'bg-[#FFF4EA] text-[#C9681E]',
-            Rintisan: 'bg-[#FDECEC] text-[#D81313]',
-        }[category] ?? 'bg-[#F1F5F8] text-[#7C7C7C]'
-    );
-}
-
 function paginationLabel(label: string) {
     return label
         .replace('&laquo; Previous', 'Previous')
@@ -244,23 +272,6 @@ function Badge({
     );
 }
 
-function ProgressBar({ value }: { value: number }) {
-    return (
-        <div className="min-w-[130px]">
-            <div className="mb-1 flex items-center justify-between text-[11px] font-bold text-[#303030]">
-                <span>Progress</span>
-                <span>{value}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-[#EFEFEF]">
-                <div
-                    className="h-2 rounded-full bg-[#0066AE]"
-                    style={{ width: `${value}%` }}
-                />
-            </div>
-        </div>
-    );
-}
-
 function FieldError({ message }: { message?: string }) {
     if (!message) {
         return null;
@@ -275,6 +286,14 @@ function coordinateValue(value: number) {
 
 function googleMapsUrl(latitude: string, longitude: string) {
     return `https://www.google.com/maps?q=${latitude},${longitude}`;
+}
+
+function provinceName(value?: string) {
+    if (!value) {
+        return undefined;
+    }
+
+    return provinceTranslations[value] ?? value;
 }
 
 function parseCoordinates(latitude: string, longitude: string) {
@@ -489,7 +508,7 @@ export default function VillagesIndex({
 
                 setData((current) => ({
                     ...current,
-                    province: address.state ?? current.province,
+                    province: provinceName(address.state) ?? current.province,
                     city:
                         address.city ??
                         address.town ??
@@ -673,7 +692,8 @@ export default function VillagesIndex({
                         onSubmit={submitFilters}
                         className="rounded-xl border border-[#EFEFEF] bg-white p-4 shadow-[0_4px_12px_rgba(3,17,32,0.05)]"
                     >
-                        <div className="grid items-end gap-3 md:grid-cols-2 xl:grid-cols-[minmax(300px,1fr)_170px_170px_130px_auto_auto]">
+                        <div className="grid items-end gap-3 md:grid-cols-2 xl:grid-cols-[minmax(300px,1fr)_170px_170px_auto_auto]">
+                            
                             <label className="flex h-11 min-w-0 items-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-[#7C7C7C]">
                                 <Search className="size-4" />
                                 <input
@@ -738,28 +758,6 @@ export default function VillagesIndex({
                                 </select>
                             </label>
 
-                            <label className="space-y-1">
-                                <span className="block text-[11px] font-semibold text-[#7C7C7C]">
-                                    Per Page
-                                </span>
-                                <select
-                                    value={filterForm.per_page}
-                                    onChange={(event) =>
-                                        setFilterForm((current) => ({
-                                            ...current,
-                                            per_page: event.target.value,
-                                        }))
-                                    }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
-                                >
-                                    {per_page_options.map((option) => (
-                                        <option key={option} value={option}>
-                                            {option}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
                             <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan
                             </button>
@@ -773,7 +771,7 @@ export default function VillagesIndex({
                         </div>
                     </form>
 
-                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
+                    <div className="grid grid-cols-1 gap-4">
                         <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
                             <div className="border-b border-[#EFEFEF] px-5 py-4">
                                 <h2 className="text-lg font-bold text-[#303030]">
@@ -786,17 +784,13 @@ export default function VillagesIndex({
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[1140px] border-collapse text-left text-sm">
+                                <table className="w-full min-w-[780px] border-collapse text-left text-sm">
                                     <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
                                         <tr>
                                             {[
                                                 'Desa Wisata',
                                                 'Pengelola',
                                                 'Status',
-                                                'Kategori',
-                                                'Enumerator',
-                                                'Progress',
-                                                'Skor',
                                                 'Dibuat Oleh',
                                                 'Diperbarui',
                                                 'Aksi',
@@ -857,30 +851,6 @@ export default function VillagesIndex({
                                                         {village.status_label}
                                                     </Badge>
                                                 </td>
-                                                <td className="px-3 py-3">
-                                                    <Badge
-                                                        className={categoryClass(
-                                                            village.category_label,
-                                                        )}
-                                                    >
-                                                        {
-                                                            village.category_label
-                                                        }
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-3 py-3 font-bold text-[#0066AE]">
-                                                    {village.enumerators}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <ProgressBar
-                                                        value={
-                                                            village.survey_progress
-                                                        }
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-3 font-bold text-[#303030]">
-                                                    {village.score}
-                                                </td>
                                                 <td className="px-3 py-3 font-medium text-[#303030]">
                                                     {village.created_by}
                                                 </td>
@@ -900,13 +870,32 @@ export default function VillagesIndex({
                                                             align="end"
                                                             className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                         >
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Eye className="size-4 text-[#303030]" />
-                                                                Lihat Detail
+                                                            <DropdownMenuItem
+                                                                asChild
+                                                                className="gap-2 text-xs"
+                                                            >
+                                                                <Link
+                                                                    href={showVillage(
+                                                                        village.id,
+                                                                    )}
+                                                                >
+                                                                    <Eye className="size-4 text-[#303030]" />
+                                                                    Lihat
+                                                                    Detail
+                                                                </Link>
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Pencil className="size-4 text-[#303030]" />
-                                                                Edit Desa
+                                                            <DropdownMenuItem
+                                                                asChild
+                                                                className="gap-2 text-xs"
+                                                            >
+                                                                <Link
+                                                                    href={editVillage(
+                                                                        village.id,
+                                                                    )}
+                                                                >
+                                                                    <Pencil className="size-4 text-[#303030]" />
+                                                                    Edit Desa
+                                                                </Link>
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem className="gap-2 text-xs">
                                                                 <ClipboardCheck className="size-4 text-[#303030]" />
@@ -954,91 +943,85 @@ export default function VillagesIndex({
                                 </div>
                             )}
 
-                            <div className="flex flex-col gap-3 border-t border-[#EFEFEF] px-5 py-4 text-sm text-[#303030] sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-3 border-t border-[#EFEFEF] px-5 py-4 text-sm text-[#303030] lg:flex-row lg:items-center lg:justify-between">
                                 <span>
                                     Menampilkan {villages.from ?? 0}-
                                     {villages.to ?? 0} dari {villages.total}{' '}
                                     desa
                                 </span>
-                                <div className="flex flex-wrap gap-2">
-                                    {villages.links.map((link, index) => (
-                                        <button
-                                            key={`${link.label}-${index}`}
-                                            type="button"
-                                            disabled={!link.url}
-                                            onClick={() =>
-                                                link.url &&
-                                                router.visit(link.url, {
-                                                    preserveScroll: true,
-                                                    preserveState: true,
-                                                })
-                                            }
-                                            className={classNames(
-                                                'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',
-                                                link.active
-                                                    ? 'border-[#0066AE] bg-[#0066AE] text-white'
-                                                    : 'border-[#DDE4EC] bg-white text-[#303030]',
-                                            )}
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                    <label className="flex items-center gap-2 text-sm font-semibold text-[#303030]">
+                                        <span>Per page</span>
+                                        <select
+                                            value={filterForm.per_page}
+                                            onChange={(event) => {
+                                                const perPage =
+                                                    event.target.value;
+
+                                                setFilterForm((current) => ({
+                                                    ...current,
+                                                    per_page: perPage,
+                                                }));
+
+                                                router.get(
+                                                    villagesRoute.url(),
+                                                    {
+                                                        search:
+                                                            filterForm.search ||
+                                                            undefined,
+                                                        status:
+                                                            filterForm.status ||
+                                                            undefined,
+                                                        province:
+                                                            filterForm.province ||
+                                                            undefined,
+                                                        per_page: perPage,
+                                                    },
+                                                    {
+                                                        preserveState: true,
+                                                        preserveScroll: true,
+                                                    },
+                                                );
+                                            }}
+                                            className="h-9 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030] outline-none"
                                         >
-                                            {paginationLabel(link.label)}
-                                        </button>
-                                    ))}
+                                            {per_page_options.map((option) => (
+                                                <option
+                                                    key={option}
+                                                    value={option}
+                                                >
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {villages.links.map((link, index) => (
+                                            <button
+                                                key={`${link.label}-${index}`}
+                                                type="button"
+                                                disabled={!link.url}
+                                                onClick={() =>
+                                                    link.url &&
+                                                    router.visit(link.url, {
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                    })
+                                                }
+                                                className={classNames(
+                                                    'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',
+                                                    link.active
+                                                        ? 'border-[#0066AE] bg-[#0066AE] text-white'
+                                                        : 'border-[#DDE4EC] bg-white text-[#303030]',
+                                                )}
+                                            >
+                                                {paginationLabel(link.label)}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </section>
-
-                        <aside className="rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
-                            <h2 className="text-lg font-bold text-[#303030]">
-                                Komposisi Status
-                            </h2>
-                            <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
-                                Ringkasan desa berdasarkan status data saat ini.
-                            </p>
-                            <div className="mt-4 space-y-3">
-                                {status_options.map((option) => (
-                                    <div
-                                        key={option.value}
-                                        className="flex items-center justify-between rounded-xl border border-[#EFEFEF] p-3"
-                                    >
-                                        <Badge
-                                            className={statusClass(
-                                                option.value,
-                                            )}
-                                        >
-                                            {option.label}
-                                        </Badge>
-                                        <span className="text-sm font-bold text-[#303030]">
-                                            {
-                                                villages.data.filter(
-                                                    (village) =>
-                                                        village.status ===
-                                                        option.value,
-                                                ).length
-                                            }{' '}
-                                            tampil
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="mt-5 rounded-xl bg-[#F8FBFF] p-4">
-                                <div className="flex items-center gap-2 text-sm font-bold text-[#303030]">
-                                    <BarChart3 className="size-4 text-[#0066AE]" />
-                                    Metadata Desa
-                                </div>
-                                <div className="mt-4 space-y-3 text-xs leading-5 text-[#7C7C7C]">
-                                    <p>
-                                        Seluruh field utama dari tabel
-                                        tourism_villages bisa diinput melalui
-                                        modal Tambah Desa.
-                                    </p>
-                                    <p>
-                                        Data pembuat desa otomatis memakai user
-                                        login agar audit data tetap konsisten.
-                                    </p>
-                                </div>
-                            </div>
-                        </aside>
                     </div>
                 </div>
             </main>
@@ -1159,13 +1142,33 @@ export default function VillagesIndex({
 
                         <div className="grid gap-4 md:grid-cols-2">
                             {[
-                                ['province', 'Provinsi'],
-                                ['city', 'Kota / Kabupaten'],
-                                ['district', 'Kecamatan'],
-                                ['subdistrict', 'Kelurahan / Desa'],
-                                ['postal_code', 'Kode Pos'],
-                                ['maps_url', 'URL Google Maps'],
-                            ].map(([key, label]) => (
+                                [
+                                    'province',
+                                    'Provinsi',
+                                    'Contoh: Jawa Timur',
+                                ],
+                                [
+                                    'city',
+                                    'Kota / Kabupaten',
+                                    'Contoh: Surabaya',
+                                ],
+                                [
+                                    'district',
+                                    'Kecamatan',
+                                    'Contoh: Gayungan',
+                                ],
+                                [
+                                    'subdistrict',
+                                    'Kelurahan / Desa',
+                                    'Contoh: Ketintang',
+                                ],
+                                ['postal_code', 'Kode Pos', 'Contoh: 60231'],
+                                [
+                                    'maps_url',
+                                    'URL Google Maps',
+                                    'https://www.google.com/maps?q=-7.3223551,112.7034573',
+                                ],
+                            ].map(([key, label, placeholder]) => (
                                 <label key={key} className="space-y-1.5">
                                     <span className="text-sm font-bold text-[#303030]">
                                         {label}
@@ -1179,6 +1182,7 @@ export default function VillagesIndex({
                                             )
                                         }
                                         className="h-11 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#2FA6FC]"
+                                        placeholder={placeholder}
                                     />
                                     <FieldError
                                         message={
@@ -1197,6 +1201,7 @@ export default function VillagesIndex({
                                         setData('address', event.target.value)
                                     }
                                     className="min-h-20 w-full rounded-lg border border-[#DDE4EC] px-3 py-2 text-sm outline-none focus:border-[#2FA6FC]"
+                                    placeholder="Contoh: Jl. Ketintang Madya, Surabaya, Jawa Timur"
                                 />
                                 <FieldError message={errors.address} />
                             </label>
@@ -1204,10 +1209,22 @@ export default function VillagesIndex({
 
                         <div className="grid gap-4 md:grid-cols-3">
                             {[
-                                ['manager_name', 'Nama Pengelola'],
-                                ['manager_phone', 'Telepon Pengelola'],
-                                ['manager_email', 'Email Pengelola'],
-                            ].map(([key, label]) => (
+                                [
+                                    'manager_name',
+                                    'Nama Pengelola',
+                                    'Contoh: Budi Santoso',
+                                ],
+                                [
+                                    'manager_phone',
+                                    'Telepon Pengelola',
+                                    'Contoh: 081234567890',
+                                ],
+                                [
+                                    'manager_email',
+                                    'Email Pengelola',
+                                    'Contoh: pengelola@desawisata.id',
+                                ],
+                            ].map(([key, label, placeholder]) => (
                                 <label key={key} className="space-y-1.5">
                                     <span className="text-sm font-bold text-[#303030]">
                                         {label}
@@ -1221,6 +1238,7 @@ export default function VillagesIndex({
                                             )
                                         }
                                         className="h-11 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#2FA6FC]"
+                                        placeholder={placeholder}
                                     />
                                     <FieldError
                                         message={
