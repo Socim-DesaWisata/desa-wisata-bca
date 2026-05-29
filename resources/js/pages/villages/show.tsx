@@ -1091,12 +1091,7 @@ export default function VillageShow() {
     return (
         <>
             <Head title="Desa Wisata Penglipuran" />
-            <div
-                className="min-h-screen bg-[#F7FAFD] text-[#071B3D]"
-                style={{
-                    fontFamily: '"Open Sans", Arial, Helvetica, sans-serif',
-                }}
-            >
+            <div className="min-h-screen bg-[#F7FAFD] text-[#071B3D]">
                 <NavBar />
                 <Hero />
                 <StatsBar />

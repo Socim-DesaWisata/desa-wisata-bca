@@ -277,7 +277,9 @@ function FieldError({ message }: { message?: string }) {
         return null;
     }
 
-    return <p className="mt-1 text-xs font-semibold text-[#D81313]">{message}</p>;
+    return (
+        <p className="mt-1 text-xs font-semibold text-[#D81313]">{message}</p>
+    );
 }
 
 function coordinateValue(value: number) {
@@ -503,7 +505,8 @@ export default function VillagesIndex({
                     throw new Error('Reverse geocode failed.');
                 }
 
-                const payload = (await response.json()) as ReverseGeocodeResponse;
+                const payload =
+                    (await response.json()) as ReverseGeocodeResponse;
                 const address = payload.address ?? {};
 
                 setData((current) => ({
@@ -613,12 +616,7 @@ export default function VillagesIndex({
     return (
         <>
             <Head title="Manajemen Desa Wisata" />
-            <main
-                className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6"
-                style={{
-                    fontFamily: '"Open Sans", Arial, Helvetica, sans-serif',
-                }}
-            >
+            <main className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
                 <div className="mx-auto max-w-[1500px] space-y-4">
                     <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
@@ -693,7 +691,6 @@ export default function VillagesIndex({
                         className="rounded-xl border border-[#EFEFEF] bg-white p-4 shadow-[0_4px_12px_rgba(3,17,32,0.05)]"
                     >
                         <div className="grid items-end gap-3 md:grid-cols-2 xl:grid-cols-[minmax(300px,1fr)_170px_170px_auto_auto]">
-                            
                             <label className="flex h-11 min-w-0 items-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-[#7C7C7C]">
                                 <Search className="size-4" />
                                 <input
@@ -832,9 +829,7 @@ export default function VillagesIndex({
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <span className="block font-medium text-[#303030]">
-                                                        {
-                                                            village.manager_name
-                                                        }
+                                                        {village.manager_name}
                                                     </span>
                                                     <span className="block text-[12px] leading-4 text-[#7C7C7C]">
                                                         {village.manager_email ??
@@ -880,8 +875,7 @@ export default function VillagesIndex({
                                                                     )}
                                                                 >
                                                                     <Eye className="size-4 text-[#303030]" />
-                                                                    Lihat
-                                                                    Detail
+                                                                    Lihat Detail
                                                                 </Link>
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
@@ -1142,21 +1136,13 @@ export default function VillagesIndex({
 
                         <div className="grid gap-4 md:grid-cols-2">
                             {[
-                                [
-                                    'province',
-                                    'Provinsi',
-                                    'Contoh: Jawa Timur',
-                                ],
+                                ['province', 'Provinsi', 'Contoh: Jawa Timur'],
                                 [
                                     'city',
                                     'Kota / Kabupaten',
                                     'Contoh: Surabaya',
                                 ],
-                                [
-                                    'district',
-                                    'Kecamatan',
-                                    'Contoh: Gayungan',
-                                ],
+                                ['district', 'Kecamatan', 'Contoh: Gayungan'],
                                 [
                                     'subdistrict',
                                     'Kelurahan / Desa',

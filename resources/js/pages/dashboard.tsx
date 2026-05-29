@@ -204,12 +204,7 @@ export default function Dashboard() {
     return (
         <>
             <Head title="Dashboard Admin" />
-            <div
-                className="min-w-0 bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6"
-                style={{
-                    fontFamily: '"Open Sans", Arial, Helvetica, sans-serif',
-                }}
-            >
+            <div className="min-w-0 bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
                 <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
                     <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="min-w-0">

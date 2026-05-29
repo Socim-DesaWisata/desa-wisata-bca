@@ -267,12 +267,7 @@ export default function UsersIndex({
     return (
         <>
             <Head title="Manajemen User" />
-            <main
-                className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6"
-                style={{
-                    fontFamily: '"Open Sans", Arial, Helvetica, sans-serif',
-                }}
-            >
+            <main className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
                 <div className="mx-auto max-w-[1500px] space-y-4">
                     <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
@@ -289,8 +284,8 @@ export default function UsersIndex({
                                 Manajemen User
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
-                                Kelola akun admin dan enumerator yang
-                                terlibat dalam program assessment desa wisata.
+                                Kelola akun admin dan enumerator yang terlibat
+                                dalam program assessment desa wisata.
                             </p>
                         </div>
 
@@ -567,7 +562,8 @@ export default function UsersIndex({
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem className="gap-2 text-xs">
                                                                     <CheckCircle2 className="size-4 text-[#303030]" />
-                                                                    Arsipkan User
+                                                                    Arsipkan
+                                                                    User
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
@@ -816,7 +812,10 @@ export default function UsersIndex({
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={Boolean(resetUser)} onOpenChange={() => setResetUser(null)}>
+            <Dialog
+                open={Boolean(resetUser)}
+                onOpenChange={() => setResetUser(null)}
+            >
                 <DialogContent className="max-w-[460px] rounded-xl border-[#EFEFEF] bg-white p-0">
                     <form onSubmit={submitResetPassword}>
                         <DialogHeader className="border-b border-[#EFEFEF] px-5 py-4">
@@ -851,9 +850,7 @@ export default function UsersIndex({
                                 </span>
                                 <Input
                                     type="password"
-                                    value={
-                                        resetForm.data.password_confirmation
-                                    }
+                                    value={resetForm.data.password_confirmation}
                                     onChange={(event) =>
                                         resetForm.setData(
                                             'password_confirmation',

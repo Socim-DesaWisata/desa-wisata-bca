@@ -36,12 +36,7 @@ import {
 } from 'lucide-react';
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
-import {
-    MapContainer,
-    Marker,
-    TileLayer,
-    useMapEvents,
-} from 'react-leaflet';
+import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
 
 type Option = {
     value?: string;
@@ -180,7 +175,9 @@ function blankProfileItem(category: Option, sortOrder = 0): ProfileItemForm {
 
 function errorText(errors: Partial<Record<string, string>>, key: string) {
     return errors[key] ? (
-        <p className="mt-1 text-xs font-semibold text-[#D81313]">{errors[key]}</p>
+        <p className="mt-1 text-xs font-semibold text-[#D81313]">
+            {errors[key]}
+        </p>
     ) : null;
 }
 
@@ -227,13 +224,20 @@ function MiniMap({
 
     return (
         <div className="h-[168px] overflow-hidden rounded-lg border border-[#AAD2F8] bg-[#EAF4FB]">
-            <MapContainer center={position} zoom={14} className="h-full w-full" scrollWheelZoom>
+            <MapContainer
+                center={position}
+                zoom={14}
+                className="h-full w-full"
+                scrollWheelZoom
+            >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <MapClickHandler
-                    onPick={(lat, lng) => onPick(lat.toFixed(7), lng.toFixed(7))}
+                    onPick={(lat, lng) =>
+                        onPick(lat.toFixed(7), lng.toFixed(7))
+                    }
                 />
                 <Marker
                     draggable
@@ -242,7 +246,10 @@ function MiniMap({
                     eventHandlers={{
                         dragend(event) {
                             const latLng = event.target.getLatLng();
-                            onPick(latLng.lat.toFixed(7), latLng.lng.toFixed(7));
+                            onPick(
+                                latLng.lat.toFixed(7),
+                                latLng.lng.toFixed(7),
+                            );
                         },
                     }}
                 />
@@ -285,7 +292,9 @@ function Field({
 }) {
     return (
         <label className="block">
-            <span className="mb-1 block text-sm font-bold text-[#303030]">{label}</span>
+            <span className="mb-1 block text-sm font-bold text-[#303030]">
+                {label}
+            </span>
             <span className="relative block">
                 {Icon && (
                     <Icon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0066AE]" />
@@ -293,11 +302,15 @@ function Field({
                 <input
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
-                    className={`h-11 w-full rounded-lg border border-[#DDE4EC] bg-white text-sm text-[#303030] outline-none transition placeholder:text-[#7C7C7C] focus:border-[#2FA6FC] focus:ring-2 focus:ring-[#2FA6FC]/15 ${Icon ? 'pr-3 pl-9' : 'px-3'}`}
+                    className={`h-11 w-full rounded-lg border border-[#DDE4EC] bg-white text-sm text-[#303030] transition outline-none placeholder:text-[#7C7C7C] focus:border-[#2FA6FC] focus:ring-2 focus:ring-[#2FA6FC]/15 ${Icon ? 'pr-3 pl-9' : 'px-3'}`}
                     placeholder={placeholder}
                 />
             </span>
-            {error && <p className="mt-1 text-xs font-semibold text-[#D81313]">{error}</p>}
+            {error && (
+                <p className="mt-1 text-xs font-semibold text-[#D81313]">
+                    {error}
+                </p>
+            )}
         </label>
     );
 }
@@ -315,7 +328,9 @@ function SelectField({
 }) {
     return (
         <label className="block">
-            <span className="mb-1 block text-sm font-bold text-[#303030]">{label}</span>
+            <span className="mb-1 block text-sm font-bold text-[#303030]">
+                {label}
+            </span>
             <select
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
@@ -346,14 +361,20 @@ function TextAreaField({
 }) {
     return (
         <label className="block">
-            <span className="mb-1 block text-sm font-bold text-[#303030]">{label}</span>
+            <span className="mb-1 block text-sm font-bold text-[#303030]">
+                {label}
+            </span>
             <textarea
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                className="min-h-24 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-sm leading-5 text-[#303030] outline-none transition placeholder:text-[#7C7C7C] focus:border-[#2FA6FC] focus:ring-2 focus:ring-[#2FA6FC]/15"
+                className="min-h-24 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-sm leading-5 text-[#303030] transition outline-none placeholder:text-[#7C7C7C] focus:border-[#2FA6FC] focus:ring-2 focus:ring-[#2FA6FC]/15"
                 placeholder={placeholder}
             />
-            {error && <p className="mt-1 text-xs font-semibold text-[#D81313]">{error}</p>}
+            {error && (
+                <p className="mt-1 text-xs font-semibold text-[#D81313]">
+                    {error}
+                </p>
+            )}
         </label>
     );
 }
@@ -376,7 +397,11 @@ function CompletionPill({
               ? 'text-[#FF944C]'
               : 'text-[#B0B0B0]';
     const Dot =
-        state === 'complete' ? Check : state === 'partial' ? CircleAlert : Clock3;
+        state === 'complete'
+            ? Check
+            : state === 'partial'
+              ? CircleAlert
+              : Clock3;
 
     return (
         <button
@@ -388,12 +413,20 @@ function CompletionPill({
                     : 'border-transparent hover:border-[#DDE4EC] hover:bg-[#F8FBFF]'
             }`}
         >
-            <span className={`flex size-5 items-center justify-center rounded-full ${style}`}>
+            <span
+                className={`flex size-5 items-center justify-center rounded-full ${style}`}
+            >
                 <Dot className="size-3.5" />
             </span>
-                            <span className="text-xs leading-4 font-bold text-[#303030]">{label}</span>
+            <span className="text-xs leading-4 font-bold text-[#303030]">
+                {label}
+            </span>
             <span className={`text-[9px] font-bold ${style}`}>
-                {state === 'complete' ? 'Complete' : state === 'partial' ? 'Partial' : 'Empty'}
+                {state === 'complete'
+                    ? 'Complete'
+                    : state === 'partial'
+                      ? 'Partial'
+                      : 'Empty'}
             </span>
         </button>
     );
@@ -406,27 +439,28 @@ export default function VillageEdit({
     media_type_options,
 }: EditProps) {
     const [activeSection, setActiveSection] = useState('main');
-    const { data, setData, patch, processing, errors, isDirty } = useForm<VillagePayload>({
-        code: village.code,
-        name: village.name,
-        slug: village.slug,
-        description: village.description,
-        province: village.province,
-        city: village.city,
-        district: village.district,
-        subdistrict: village.subdistrict,
-        address: village.address,
-        postal_code: village.postal_code,
-        latitude: village.latitude,
-        longitude: village.longitude,
-        maps_url: village.maps_url,
-        manager_name: village.manager_name,
-        manager_phone: village.manager_phone,
-        manager_email: village.manager_email,
-        status: village.status,
-        media: village.media ?? [],
-        profile_items: village.profile_items ?? [],
-    });
+    const { data, setData, patch, processing, errors, isDirty } =
+        useForm<VillagePayload>({
+            code: village.code,
+            name: village.name,
+            slug: village.slug,
+            description: village.description,
+            province: village.province,
+            city: village.city,
+            district: village.district,
+            subdistrict: village.subdistrict,
+            address: village.address,
+            postal_code: village.postal_code,
+            latitude: village.latitude,
+            longitude: village.longitude,
+            maps_url: village.maps_url,
+            manager_name: village.manager_name,
+            manager_phone: village.manager_phone,
+            manager_email: village.manager_email,
+            status: village.status,
+            media: village.media ?? [],
+            profile_items: village.profile_items ?? [],
+        });
 
     const formErrors = errors as Partial<Record<string, string>>;
     const profileCount = data.profile_items.length;
@@ -466,7 +500,9 @@ export default function VillageEdit({
     function updateMedia(index: number, media: MediaForm) {
         setData(
             'media',
-            data.media.map((item, itemIndex) => (itemIndex === index ? media : item)),
+            data.media.map((item, itemIndex) =>
+                itemIndex === index ? media : item,
+            ),
         );
     }
 
@@ -505,15 +541,44 @@ export default function VillageEdit({
     }
 
     const categoryMeta = [
-        { slug: 'fasilitas', label: 'Fasilitas', icon: Store, description: 'Kelola fasilitas pendukung yang tersedia di desa wisata.' },
-        { slug: 'atraksi', label: 'Atraksi', icon: Sparkles, description: 'Kelola atraksi, aktivitas, dan pengalaman wisata unggulan.' },
-        { slug: 'suvenir', label: 'Suvenir', icon: Gift, description: 'Kelola produk suvenir dan ekonomi kreatif desa.' },
-        { slug: 'homestay', label: 'Homestay', icon: BedDouble, description: 'Kelola akomodasi, homestay, dan informasi kontaknya.' },
-        { slug: 'paket-wisata', label: 'Paket Wisata', icon: Package, description: 'Kelola paket wisata, harga, dan jadwal operasional.' },
+        {
+            slug: 'fasilitas',
+            label: 'Fasilitas',
+            icon: Store,
+            description:
+                'Kelola fasilitas pendukung yang tersedia di desa wisata.',
+        },
+        {
+            slug: 'atraksi',
+            label: 'Atraksi',
+            icon: Sparkles,
+            description:
+                'Kelola atraksi, aktivitas, dan pengalaman wisata unggulan.',
+        },
+        {
+            slug: 'suvenir',
+            label: 'Suvenir',
+            icon: Gift,
+            description: 'Kelola produk suvenir dan ekonomi kreatif desa.',
+        },
+        {
+            slug: 'homestay',
+            label: 'Homestay',
+            icon: BedDouble,
+            description: 'Kelola akomodasi, homestay, dan informasi kontaknya.',
+        },
+        {
+            slug: 'paket-wisata',
+            label: 'Paket Wisata',
+            icon: Package,
+            description: 'Kelola paket wisata, harga, dan jadwal operasional.',
+        },
     ] as const;
 
     const categories = categoryMeta.map((meta) => {
-        const option = profile_category_options.find((category) => category.slug === meta.slug);
+        const option = profile_category_options.find(
+            (category) => category.slug === meta.slug,
+        );
 
         return {
             ...meta,
@@ -525,18 +590,42 @@ export default function VillageEdit({
     });
 
     const stateForCategory = (slug: string): SectionState => {
-        const items = data.profile_items.filter((item) => item.category_slug === slug);
+        const items = data.profile_items.filter(
+            (item) => item.category_slug === slug,
+        );
 
         if (items.length === 0) return 'empty';
 
-        return items.every((item) => item.name && item.description) ? 'complete' : 'partial';
+        return items.every((item) => item.name && item.description)
+            ? 'complete'
+            : 'partial';
     };
 
     const sections = [
-        { id: 'main', label: 'Informasi Utama', icon: Info, state: 'complete' as SectionState },
-        { id: 'location', label: 'Lokasi', icon: MapPin, state: 'complete' as SectionState },
-        { id: 'manager', label: 'Kontak Pengelola', icon: User, state: 'complete' as SectionState },
-        { id: 'media', label: 'Media Desa', icon: FileImage, state: (mediaCount > 0 ? 'partial' : 'empty') as SectionState },
+        {
+            id: 'main',
+            label: 'Informasi Utama',
+            icon: Info,
+            state: 'complete' as SectionState,
+        },
+        {
+            id: 'location',
+            label: 'Lokasi',
+            icon: MapPin,
+            state: 'complete' as SectionState,
+        },
+        {
+            id: 'manager',
+            label: 'Kontak Pengelola',
+            icon: User,
+            state: 'complete' as SectionState,
+        },
+        {
+            id: 'media',
+            label: 'Media Desa',
+            icon: FileImage,
+            state: (mediaCount > 0 ? 'partial' : 'empty') as SectionState,
+        },
         ...categoryMeta.map((category) => ({
             id: category.slug,
             label: category.label,
@@ -545,7 +634,9 @@ export default function VillageEdit({
         })),
     ];
 
-    const activeCategory = categories.find((category) => category.slug === activeSection);
+    const activeCategory = categories.find(
+        (category) => category.slug === activeSection,
+    );
 
     const activePanel =
         activeSection === 'location' ? (
@@ -558,17 +649,71 @@ export default function VillageEdit({
             >
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_270px]">
                     <div className="grid gap-3 md:grid-cols-3">
-                        <Field label="Provinsi" value={data.province} onChange={(value) => setData('province', value)} placeholder="Jawa Timur" error={formErrors.province} />
-                        <Field label="Kota/Kabupaten" value={data.city} onChange={(value) => setData('city', value)} placeholder="Surabaya" error={formErrors.city} />
-                        <Field label="Kecamatan" value={data.district} onChange={(value) => setData('district', value)} placeholder="Sukolilo" error={formErrors.district} />
-                        <Field label="Kelurahan/Desa" value={data.subdistrict} onChange={(value) => setData('subdistrict', value)} placeholder="Keputih" error={formErrors.subdistrict} />
-                        <Field label="Kode Pos" value={data.postal_code} onChange={(value) => setData('postal_code', value)} placeholder="60111" error={formErrors.postal_code} />
+                        <Field
+                            label="Provinsi"
+                            value={data.province}
+                            onChange={(value) => setData('province', value)}
+                            placeholder="Jawa Timur"
+                            error={formErrors.province}
+                        />
+                        <Field
+                            label="Kota/Kabupaten"
+                            value={data.city}
+                            onChange={(value) => setData('city', value)}
+                            placeholder="Surabaya"
+                            error={formErrors.city}
+                        />
+                        <Field
+                            label="Kecamatan"
+                            value={data.district}
+                            onChange={(value) => setData('district', value)}
+                            placeholder="Sukolilo"
+                            error={formErrors.district}
+                        />
+                        <Field
+                            label="Kelurahan/Desa"
+                            value={data.subdistrict}
+                            onChange={(value) => setData('subdistrict', value)}
+                            placeholder="Keputih"
+                            error={formErrors.subdistrict}
+                        />
+                        <Field
+                            label="Kode Pos"
+                            value={data.postal_code}
+                            onChange={(value) => setData('postal_code', value)}
+                            placeholder="60111"
+                            error={formErrors.postal_code}
+                        />
                         <div className="md:col-span-3">
-                            <TextAreaField label="Alamat Lengkap" value={data.address} onChange={(value) => setData('address', value)} placeholder="Jl. Keputih Tegal Timur..." error={formErrors.address} />
+                            <TextAreaField
+                                label="Alamat Lengkap"
+                                value={data.address}
+                                onChange={(value) => setData('address', value)}
+                                placeholder="Jl. Keputih Tegal Timur..."
+                                error={formErrors.address}
+                            />
                         </div>
-                        <Field label="Latitude" value={data.latitude} onChange={(value) => setData('latitude', value)} placeholder="-7.266160" error={formErrors.latitude} />
-                        <Field label="Longitude" value={data.longitude} onChange={(value) => setData('longitude', value)} placeholder="112.819123" error={formErrors.longitude} />
-                        <Field label="Google Maps URL" value={data.maps_url} onChange={(value) => setData('maps_url', value)} placeholder="https://maps.app.goo.gl/..." error={formErrors.maps_url} />
+                        <Field
+                            label="Latitude"
+                            value={data.latitude}
+                            onChange={(value) => setData('latitude', value)}
+                            placeholder="-7.266160"
+                            error={formErrors.latitude}
+                        />
+                        <Field
+                            label="Longitude"
+                            value={data.longitude}
+                            onChange={(value) => setData('longitude', value)}
+                            placeholder="112.819123"
+                            error={formErrors.longitude}
+                        />
+                        <Field
+                            label="Google Maps URL"
+                            value={data.maps_url}
+                            onChange={(value) => setData('maps_url', value)}
+                            placeholder="https://maps.app.goo.gl/..."
+                            error={formErrors.maps_url}
+                        />
                     </div>
                     <div className="space-y-2">
                         <MiniMap
@@ -579,7 +724,10 @@ export default function VillageEdit({
                                     ...current,
                                     latitude,
                                     longitude,
-                                    maps_url: googleMapsUrl(latitude, longitude),
+                                    maps_url: googleMapsUrl(
+                                        latitude,
+                                        longitude,
+                                    ),
                                 }))
                             }
                         />
@@ -603,9 +751,28 @@ export default function VillageEdit({
                 complete
             >
                 <div className="grid gap-3 md:grid-cols-3">
-                    <Field icon={User} label="Nama Pengelola" value={data.manager_name} onChange={(value) => setData('manager_name', value)} placeholder="Slamet Widodo" error={formErrors.manager_name} />
-                    <Field label="Nomor HP" value={data.manager_phone} onChange={(value) => setData('manager_phone', value)} placeholder="0812-3456-7890" error={formErrors.manager_phone} />
-                    <Field label="Email Pengelola" value={data.manager_email} onChange={(value) => setData('manager_email', value)} placeholder="pengelola@keputihasli.id" error={formErrors.manager_email} />
+                    <Field
+                        icon={User}
+                        label="Nama Pengelola"
+                        value={data.manager_name}
+                        onChange={(value) => setData('manager_name', value)}
+                        placeholder="Slamet Widodo"
+                        error={formErrors.manager_name}
+                    />
+                    <Field
+                        label="Nomor HP"
+                        value={data.manager_phone}
+                        onChange={(value) => setData('manager_phone', value)}
+                        placeholder="0812-3456-7890"
+                        error={formErrors.manager_phone}
+                    />
+                    <Field
+                        label="Email Pengelola"
+                        value={data.manager_email}
+                        onChange={(value) => setData('manager_email', value)}
+                        placeholder="pengelola@keputihasli.id"
+                        error={formErrors.manager_email}
+                    />
                 </div>
             </SectionCard>
         ) : activeSection === 'media' ? (
@@ -618,12 +785,21 @@ export default function VillageEdit({
                 <div className="space-y-3">
                     <button
                         type="button"
-                        onClick={() => setData('media', [...data.media, blankMedia(data.media.length)])}
+                        onClick={() =>
+                            setData('media', [
+                                ...data.media,
+                                blankMedia(data.media.length),
+                            ])
+                        }
                         className="flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#AAD2F8] bg-[#F8FBFF] p-5 text-center text-[#0066AE] transition hover:bg-[#EAF4FB]"
                     >
                         <Upload className="size-6" />
-                        <span className="mt-2 text-sm font-bold">Tambah Media Desa</span>
-                        <span className="text-xs text-[#7C7C7C]">Upload file atau gunakan external URL</span>
+                        <span className="mt-2 text-sm font-bold">
+                            Tambah Media Desa
+                        </span>
+                        <span className="text-xs text-[#7C7C7C]">
+                            Upload file atau gunakan external URL
+                        </span>
                     </button>
                     {data.media.map((media, index) => (
                         <MediaEditor
@@ -648,10 +824,10 @@ export default function VillageEdit({
                 items={activeCategory.items}
                 errors={formErrors}
                 onAdd={() => addProfileItem(activeCategory.option)}
-                                onChange={updateProfileItem}
-                                onRemove={removeProfileItem}
-                                mediaOptions={media_type_options}
-                            />
+                onChange={updateProfileItem}
+                onRemove={removeProfileItem}
+                mediaOptions={media_type_options}
+            />
         ) : (
             <SectionCard
                 id="main"
@@ -673,7 +849,8 @@ export default function VillageEdit({
                         value={data.name}
                         onChange={(value) => {
                             setData('name', value);
-                            if (data.slug === '') setData('slug', slugify(value));
+                            if (data.slug === '')
+                                setData('slug', slugify(value));
                         }}
                         placeholder="Keputih Asli"
                         error={formErrors.name}
@@ -707,15 +884,18 @@ export default function VillageEdit({
     return (
         <>
             <Head title={`Edit ${village.name}`} />
-            <main
-                className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 pb-24 text-[#303030] sm:px-5 lg:px-6"
-                style={{ fontFamily: '"Open Sans", Arial, Helvetica, sans-serif' }}
-            >
-                <form onSubmit={submit} className="mx-auto max-w-[1500px] space-y-3">
+            <main className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 pb-24 text-[#303030] sm:px-5 lg:px-6">
+                <form
+                    onSubmit={submit}
+                    className="mx-auto max-w-[1500px] space-y-3"
+                >
                     <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <nav className="mb-1.5 flex items-center gap-2 text-xs font-bold">
-                                <Link href={villagesRoute()} className="text-[#0066AE]">
+                                <Link
+                                    href={villagesRoute()}
+                                    className="text-[#0066AE]"
+                                >
                                     Desa Wisata
                                 </Link>
                                 <span className="text-[#7C7C7C]">/</span>
@@ -725,15 +905,33 @@ export default function VillageEdit({
                                 Edit Desa Wisata
                             </h1>
                             <p className="mt-1 max-w-3xl text-sm leading-5 text-[#7C7C7C]">
-                                Kelola informasi utama, media, fasilitas, atraksi, suvenir,
-                                homestay, dan paket wisata desa.
+                                Kelola informasi utama, media, fasilitas,
+                                atraksi, suvenir, homestay, dan paket wisata
+                                desa.
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">
-                                <InfoBadge icon={Landmark} label={`Kode: ${data.code || '-'}`} />
-                                <InfoBadge icon={ShieldCheck} label={`Status: ${data.status || '-'}`} green />
-                                <InfoBadge icon={CalendarDays} label={`Terakhir diperbarui: ${village.updated_at}`} />
-                                <InfoBadge icon={Image} label={`${mediaCount} Media`} />
-                                <InfoBadge icon={Sparkles} label={`${profileCount} Potensi Desa`} orange />
+                                <InfoBadge
+                                    icon={Landmark}
+                                    label={`Kode: ${data.code || '-'}`}
+                                />
+                                <InfoBadge
+                                    icon={ShieldCheck}
+                                    label={`Status: ${data.status || '-'}`}
+                                    green
+                                />
+                                <InfoBadge
+                                    icon={CalendarDays}
+                                    label={`Terakhir diperbarui: ${village.updated_at}`}
+                                />
+                                <InfoBadge
+                                    icon={Image}
+                                    label={`${mediaCount} Media`}
+                                />
+                                <InfoBadge
+                                    icon={Sparkles}
+                                    label={`${profileCount} Potensi Desa`}
+                                    orange
+                                />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -749,7 +947,9 @@ export default function VillageEdit({
                                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967] disabled:opacity-60"
                             >
                                 <Save className="size-4" />
-                                {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                {processing
+                                    ? 'Menyimpan...'
+                                    : 'Simpan Perubahan'}
                             </button>
                         </div>
                     </header>
@@ -768,7 +968,9 @@ export default function VillageEdit({
                                     </h2>
                                     <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-[#0066AE]">
                                         <MapPin className="size-3.5" />
-                                        {[data.city, data.province].filter(Boolean).join(', ') || '-'}
+                                        {[data.city, data.province]
+                                            .filter(Boolean)
+                                            .join(', ') || '-'}
                                     </p>
                                     <div className="mt-2">
                                         <StatusBadge status={data.status} />
@@ -780,7 +982,9 @@ export default function VillageEdit({
                                         <span className="h-2 w-[210px] overflow-hidden rounded-full bg-[#E2E8F0]">
                                             <span
                                                 className="block h-full rounded-full bg-[#0066AE]"
-                                                style={{ width: `${progress}%` }}
+                                                style={{
+                                                    width: `${progress}%`,
+                                                }}
                                             />
                                         </span>
                                     </div>
@@ -818,7 +1022,9 @@ export default function VillageEdit({
                                             type="button"
                                             role="tab"
                                             aria-selected={active}
-                                            onClick={() => goToSection(section.id)}
+                                            onClick={() =>
+                                                goToSection(section.id)
+                                            }
                                             className={`flex h-11 w-full items-center gap-2 border-l-[3px] px-3 text-left text-sm font-bold transition ${
                                                 active
                                                     ? 'border-[#0066AE] bg-[#0066AE] text-white'
@@ -826,12 +1032,15 @@ export default function VillageEdit({
                                             }`}
                                         >
                                             <Icon className="size-4" />
-                                            <span className="min-w-0 flex-1 truncate">{section.label}</span>
+                                            <span className="min-w-0 flex-1 truncate">
+                                                {section.label}
+                                            </span>
                                             <span
                                                 className={`size-2 rounded-full ${
                                                     section.state === 'complete'
                                                         ? 'bg-[#00893D]'
-                                                        : section.state === 'partial'
+                                                        : section.state ===
+                                                            'partial'
                                                           ? 'bg-[#FF944C]'
                                                           : 'bg-[#B0B0B0]'
                                                 }`}
@@ -842,7 +1051,11 @@ export default function VillageEdit({
                             </div>
                         </aside>
 
-                        <div id="village-edit-panel" className="min-w-0 space-y-3" role="tabpanel">
+                        <div
+                            id="village-edit-panel"
+                            className="min-w-0 space-y-3"
+                            role="tabpanel"
+                        >
                             <div
                                 className="flex gap-2 overflow-x-auto rounded-xl border border-[#DDE4EC] bg-white p-2 shadow-[0_8px_24px_rgba(3,17,32,0.07)] xl:hidden"
                                 role="tablist"
@@ -858,7 +1071,9 @@ export default function VillageEdit({
                                             type="button"
                                             role="tab"
                                             aria-selected={active}
-                                            onClick={() => goToSection(section.id)}
+                                            onClick={() =>
+                                                goToSection(section.id)
+                                            }
                                             className={`flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-bold transition ${
                                                 active
                                                     ? 'bg-[#0066AE] text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)]'
@@ -877,41 +1092,100 @@ export default function VillageEdit({
 
                         <aside className="hidden xl:block">
                             <div className="sticky top-4 space-y-3">
-                                <RightPanel title="Status Perubahan" icon={Clock3}>
+                                <RightPanel
+                                    title="Status Perubahan"
+                                    icon={Clock3}
+                                >
                                     <p className="text-sm font-bold text-[#FF944C]">
-                                        {isDirty ? 'Ada perubahan belum disimpan' : 'Tidak ada perubahan baru'}
+                                        {isDirty
+                                            ? 'Ada perubahan belum disimpan'
+                                            : 'Tidak ada perubahan baru'}
                                     </p>
-                                    <p className="mt-1 text-xs text-[#7C7C7C]">Last saved: 2 jam lalu</p>
+                                    <p className="mt-1 text-xs text-[#7C7C7C]">
+                                        Last saved: 2 jam lalu
+                                    </p>
                                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E2E8F0]">
-                                        <div className="h-full rounded-full bg-[#0066AE]" style={{ width: `${progress}%` }} />
+                                        <div
+                                            className="h-full rounded-full bg-[#0066AE]"
+                                            style={{ width: `${progress}%` }}
+                                        />
                                     </div>
-                                    <button className="mt-3 h-9 w-full rounded-lg border border-[#DDE4EC] bg-white text-sm font-bold text-[#303030]">Simpan Draft</button>
-                                    <button className="mt-2 h-9 w-full rounded-lg bg-[#0066AE] text-sm font-bold text-white">Simpan Perubahan</button>
+                                    <button className="mt-3 h-9 w-full rounded-lg border border-[#DDE4EC] bg-white text-sm font-bold text-[#303030]">
+                                        Simpan Draft
+                                    </button>
+                                    <button className="mt-2 h-9 w-full rounded-lg bg-[#0066AE] text-sm font-bold text-white">
+                                        Simpan Perubahan
+                                    </button>
                                 </RightPanel>
 
-                                <RightPanel title="Kelengkapan Data" icon={FileText}>
+                                <RightPanel
+                                    title="Kelengkapan Data"
+                                    icon={FileText}
+                                >
                                     <div className="space-y-1">
                                         {sections.slice(0, 7).map((section) => (
-                                            <div key={section.id} className="flex items-center justify-between text-xs">
-                                                <span className="font-semibold text-[#303030]">{section.label}</span>
-                                                <span className={section.state === 'complete' ? 'text-[#00893D]' : section.state === 'partial' ? 'text-[#FF944C]' : 'text-[#B0B0B0]'}>
-                                                    {section.state === 'complete' ? 'Complete' : section.state === 'partial' ? 'Partial' : 'Empty'}
+                                            <div
+                                                key={section.id}
+                                                className="flex items-center justify-between text-xs"
+                                            >
+                                                <span className="font-semibold text-[#303030]">
+                                                    {section.label}
+                                                </span>
+                                                <span
+                                                    className={
+                                                        section.state ===
+                                                        'complete'
+                                                            ? 'text-[#00893D]'
+                                                            : section.state ===
+                                                                'partial'
+                                                              ? 'text-[#FF944C]'
+                                                              : 'text-[#B0B0B0]'
+                                                    }
+                                                >
+                                                    {section.state ===
+                                                    'complete'
+                                                        ? 'Complete'
+                                                        : section.state ===
+                                                            'partial'
+                                                          ? 'Partial'
+                                                          : 'Empty'}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
-                                    <button type="button" className="mt-3 flex w-full items-center justify-center gap-1 text-xs font-bold text-[#0066AE]">
+                                    <button
+                                        type="button"
+                                        className="mt-3 flex w-full items-center justify-center gap-1 text-xs font-bold text-[#0066AE]"
+                                    >
                                         Lihat detail kelengkapan
                                         <ChevronRight className="size-3" />
                                     </button>
                                 </RightPanel>
 
                                 <RightPanel title="Quick Actions" icon={Zap}>
-                                    <QuickAction icon={Eye} label="Lihat Detail Desa" href={showVillage(village.id)} />
-                                    <QuickAction icon={Image} label="Tambah Media" onClick={() => goToSection('media')} />
-                                    <QuickAction icon={Sparkles} label="Tambah Potensi Desa" onClick={() => goToSection('fasilitas')} />
-                                    <button type="button" className="flex h-9 w-full items-center justify-between rounded-lg border border-[#F4C8C8] bg-white px-3 text-sm font-bold text-[#D81313]">
-                                        <span className="flex items-center gap-2"><Archive className="size-4" />Arsipkan Desa</span>
+                                    <QuickAction
+                                        icon={Eye}
+                                        label="Lihat Detail Desa"
+                                        href={showVillage(village.id)}
+                                    />
+                                    <QuickAction
+                                        icon={Image}
+                                        label="Tambah Media"
+                                        onClick={() => goToSection('media')}
+                                    />
+                                    <QuickAction
+                                        icon={Sparkles}
+                                        label="Tambah Potensi Desa"
+                                        onClick={() => goToSection('fasilitas')}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="flex h-9 w-full items-center justify-between rounded-lg border border-[#F4C8C8] bg-white px-3 text-sm font-bold text-[#D81313]"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Archive className="size-4" />
+                                            Arsipkan Desa
+                                        </span>
                                         <ChevronRight className="size-4" />
                                     </button>
                                 </RightPanel>
@@ -924,11 +1198,15 @@ export default function VillageEdit({
             <div className="fixed right-0 bottom-0 left-0 z-30 border-t border-[#DDE4EC] bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(3,17,32,0.08)] backdrop-blur lg:left-[232px]">
                 <div className="mx-auto flex max-w-[1500px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-sm font-bold text-[#7C7C7C]">
-                        {isDirty ? 'Ada perubahan belum disimpan' : 'Tidak ada perubahan baru'}
+                        {isDirty
+                            ? 'Ada perubahan belum disimpan'
+                            : 'Tidak ada perubahan baru'}
                     </span>
                     <button
                         type="button"
-                        onClick={() => document.querySelector('form')?.requestSubmit()}
+                        onClick={() =>
+                            document.querySelector('form')?.requestSubmit()
+                        }
                         disabled={processing}
                         className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:opacity-60"
                     >
@@ -954,7 +1232,9 @@ function InfoBadge({
 }) {
     return (
         <span className="inline-flex h-8 items-center gap-2 rounded-md border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#303030] shadow-[0_4px_10px_rgba(3,17,32,0.04)]">
-            <Icon className={`size-3.5 ${green ? 'text-[#00893D]' : orange ? 'text-[#FF944C]' : 'text-[#0066AE]'}`} />
+            <Icon
+                className={`size-3.5 ${green ? 'text-[#00893D]' : orange ? 'text-[#FF944C]' : 'text-[#0066AE]'}`}
+            />
             {label}
         </span>
     );
@@ -976,15 +1256,22 @@ function SectionCard({
     complete?: boolean;
 }) {
     return (
-        <section id={id} className="rounded-xl border border-[#DDE4EC] bg-white shadow-[0_8px_24px_rgba(3,17,32,0.07)]">
+        <section
+            id={id}
+            className="rounded-xl border border-[#DDE4EC] bg-white shadow-[0_8px_24px_rgba(3,17,32,0.07)]"
+        >
             <div className="flex items-start justify-between gap-4 border-b border-[#EFEFEF] px-5 py-4">
                 <div className="flex gap-3">
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FB] text-[#0066AE]">
                         <Icon className="size-5" />
                     </span>
                     <div>
-                        <h2 className="text-lg font-bold text-[#303030]">{title}</h2>
-                        <p className="mt-0.5 text-sm leading-5 text-[#7C7C7C]">{description}</p>
+                        <h2 className="text-lg font-bold text-[#303030]">
+                            {title}
+                        </h2>
+                        <p className="mt-0.5 text-sm leading-5 text-[#7C7C7C]">
+                            {description}
+                        </p>
                     </div>
                 </div>
                 {complete && (
@@ -1018,41 +1305,91 @@ function MediaEditor({
     return (
         <div className="rounded-lg border border-[#DDE4EC] bg-[#FCFDFF] p-4">
             <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-bold text-[#303030]">Media #{index + 1}</p>
-                <button type="button" onClick={onRemove} className="text-[#D81313]">
+                <p className="text-sm font-bold text-[#303030]">
+                    Media #{index + 1}
+                </p>
+                <button
+                    type="button"
+                    onClick={onRemove}
+                    className="text-[#D81313]"
+                >
                     <Trash2 className="size-4" />
                 </button>
             </div>
             <div className="grid gap-3 md:grid-cols-4">
                 <label>
-                    <span className="mb-1 block text-sm font-bold text-[#303030]">Tipe</span>
+                    <span className="mb-1 block text-sm font-bold text-[#303030]">
+                        Tipe
+                    </span>
                     <select
                         value={media.type}
-                        onChange={(event) => onChange({ ...media, type: event.target.value })}
+                        onChange={(event) =>
+                            onChange({ ...media, type: event.target.value })
+                        }
                         className="h-11 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold text-[#303030]"
                     >
                         {options.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
                         ))}
                     </select>
                 </label>
-                <Field label="Judul" value={media.title} onChange={(value) => onChange({ ...media, title: value })} placeholder="Foto desa" error={errors[`${prefix}.title`]} />
+                <Field
+                    label="Judul"
+                    value={media.title}
+                    onChange={(value) => onChange({ ...media, title: value })}
+                    placeholder="Foto desa"
+                    error={errors[`${prefix}.title`]}
+                />
                 <label className="md:col-span-2">
-                    <span className="mb-1 block text-sm font-bold text-[#303030]">Upload File</span>
+                    <span className="mb-1 block text-sm font-bold text-[#303030]">
+                        Upload File
+                    </span>
                     <input
                         type="file"
-                        onChange={(event) => onChange({ ...media, file: event.target.files?.[0] ?? null })}
+                        onChange={(event) =>
+                            onChange({
+                                ...media,
+                                file: event.target.files?.[0] ?? null,
+                            })
+                        }
                         className="block h-11 w-full rounded-lg border border-[#DDE4EC] px-2 py-2 text-sm file:mr-2 file:rounded file:border-0 file:bg-[#EAF4FB] file:px-2 file:text-xs file:font-bold file:text-[#0066AE]"
                     />
                     {errorText(errors, `${prefix}.file`)}
                 </label>
-                <Field label="External URL" value={media.external_url} onChange={(value) => onChange({ ...media, external_url: value })} placeholder="https://..." error={errors[`${prefix}.external_url`]} />
+                <Field
+                    label="External URL"
+                    value={media.external_url}
+                    onChange={(value) =>
+                        onChange({ ...media, external_url: value })
+                    }
+                    placeholder="https://..."
+                    error={errors[`${prefix}.external_url`]}
+                />
                 <label className="flex items-center gap-2 pt-5 text-sm font-bold text-[#303030]">
-                    <input type="checkbox" checked={media.is_cover} onChange={(event) => onChange({ ...media, is_cover: event.target.checked })} />
+                    <input
+                        type="checkbox"
+                        checked={media.is_cover}
+                        onChange={(event) =>
+                            onChange({
+                                ...media,
+                                is_cover: event.target.checked,
+                            })
+                        }
+                    />
                     Jadikan cover
                 </label>
                 <div className="md:col-span-4">
-                    <TextAreaField label="Caption" value={media.caption} onChange={(value) => onChange({ ...media, caption: value })} placeholder="Keterangan media..." error={errors[`${prefix}.caption`]} />
+                    <TextAreaField
+                        label="Caption"
+                        value={media.caption}
+                        onChange={(value) =>
+                            onChange({ ...media, caption: value })
+                        }
+                        placeholder="Keterangan media..."
+                        error={errors[`${prefix}.caption`]}
+                    />
                 </div>
             </div>
         </div>
@@ -1097,9 +1434,12 @@ function ProfileItemsSection({
                     className="flex w-full items-center justify-between rounded-lg border border-dashed border-[#AAD2F8] bg-[#F8FBFF] px-4 py-3 text-left text-[#0066AE] transition hover:bg-[#EAF4FB]"
                 >
                     <span>
-                        <span className="block text-sm font-bold">Tambah {title}</span>
+                        <span className="block text-sm font-bold">
+                            Tambah {title}
+                        </span>
                         <span className="text-xs font-semibold text-[#7C7C7C]">
-                            Buat item baru dengan detail, harga, kontak, dan lokasi.
+                            Buat item baru dengan detail, harga, kontak, dan
+                            lokasi.
                         </span>
                     </span>
                     <Plus className="size-5" />
@@ -1107,8 +1447,12 @@ function ProfileItemsSection({
 
                 {items.length === 0 ? (
                     <div className="rounded-lg border border-[#EFEFEF] bg-[#FCFDFF] px-4 py-5 text-center">
-                        <p className="text-sm font-bold text-[#303030]">Belum ada data {title.toLowerCase()}</p>
-                        <p className="mt-1 text-xs text-[#7C7C7C]">Tambahkan data agar profil desa lebih lengkap.</p>
+                        <p className="text-sm font-bold text-[#303030]">
+                            Belum ada data {title.toLowerCase()}
+                        </p>
+                        <p className="mt-1 text-xs text-[#7C7C7C]">
+                            Tambahkan data agar profil desa lebih lengkap.
+                        </p>
                     </div>
                 ) : (
                     items.map(({ item, index }) => (
@@ -1158,7 +1502,9 @@ function ProfileItemEditor({
     function removeItemMedia(mediaIndex: number) {
         onChange({
             ...item,
-            media: item.media.filter((_, itemIndex) => itemIndex !== mediaIndex),
+            media: item.media.filter(
+                (_, itemIndex) => itemIndex !== mediaIndex,
+            ),
         });
     }
 
@@ -1193,14 +1539,18 @@ function ProfileItemEditor({
                 <Field
                     label="Jam Operasional"
                     value={item.opening_hours}
-                    onChange={(value) => onChange({ ...item, opening_hours: value })}
+                    onChange={(value) =>
+                        onChange({ ...item, opening_hours: value })
+                    }
                     placeholder="08.00 - 17.00 WIB"
                     error={errors[`${prefix}.opening_hours`]}
                 />
                 <Field
                     label="Harga"
                     value={item.price_text}
-                    onChange={(value) => onChange({ ...item, price_text: value })}
+                    onChange={(value) =>
+                        onChange({ ...item, price_text: value })
+                    }
                     placeholder="Mulai Rp25.000"
                     error={errors[`${prefix}.price_text`]}
                 />
@@ -1208,7 +1558,9 @@ function ProfileItemEditor({
                     <TextAreaField
                         label="Deskripsi"
                         value={item.description}
-                        onChange={(value) => onChange({ ...item, description: value })}
+                        onChange={(value) =>
+                            onChange({ ...item, description: value })
+                        }
                         placeholder="Jelaskan fasilitas, atraksi, produk, atau layanan ini."
                         error={errors[`${prefix}.description`]}
                     />
@@ -1217,7 +1569,9 @@ function ProfileItemEditor({
                     <TextAreaField
                         label="Alamat"
                         value={item.address}
-                        onChange={(value) => onChange({ ...item, address: value })}
+                        onChange={(value) =>
+                            onChange({ ...item, address: value })
+                        }
                         placeholder="Lokasi spesifik item di area desa wisata."
                         error={errors[`${prefix}.address`]}
                     />
@@ -1227,21 +1581,27 @@ function ProfileItemEditor({
                         <Field
                             label="Latitude"
                             value={item.latitude}
-                            onChange={(value) => onChange({ ...item, latitude: value })}
+                            onChange={(value) =>
+                                onChange({ ...item, latitude: value })
+                            }
                             placeholder="-7.3223551"
                             error={errors[`${prefix}.latitude`]}
                         />
                         <Field
                             label="Longitude"
                             value={item.longitude}
-                            onChange={(value) => onChange({ ...item, longitude: value })}
+                            onChange={(value) =>
+                                onChange({ ...item, longitude: value })
+                            }
                             placeholder="112.7034573"
                             error={errors[`${prefix}.longitude`]}
                         />
                         <Field
                             label="Maps URL"
                             value={item.maps_url}
-                            onChange={(value) => onChange({ ...item, maps_url: value })}
+                            onChange={(value) =>
+                                onChange({ ...item, maps_url: value })
+                            }
                             placeholder="https://maps.app.goo.gl/..."
                             error={errors[`${prefix}.maps_url`]}
                         />
@@ -1255,7 +1615,10 @@ function ProfileItemEditor({
                                     ...item,
                                     latitude,
                                     longitude,
-                                    maps_url: googleMapsUrl(latitude, longitude),
+                                    maps_url: googleMapsUrl(
+                                        latitude,
+                                        longitude,
+                                    ),
                                 })
                             }
                         />
@@ -1272,14 +1635,18 @@ function ProfileItemEditor({
                 <Field
                     label="Nama Kontak"
                     value={item.contact_name}
-                    onChange={(value) => onChange({ ...item, contact_name: value })}
+                    onChange={(value) =>
+                        onChange({ ...item, contact_name: value })
+                    }
                     placeholder="Budi Santoso"
                     error={errors[`${prefix}.contact_name`]}
                 />
                 <Field
                     label="Nomor Kontak"
                     value={item.contact_phone}
-                    onChange={(value) => onChange({ ...item, contact_phone: value })}
+                    onChange={(value) =>
+                        onChange({ ...item, contact_phone: value })
+                    }
                     placeholder="0812-3456-7890"
                     error={errors[`${prefix}.contact_phone`]}
                 />
@@ -1287,7 +1654,12 @@ function ProfileItemEditor({
                     <input
                         type="checkbox"
                         checked={item.is_active}
-                        onChange={(event) => onChange({ ...item, is_active: event.target.checked })}
+                        onChange={(event) =>
+                            onChange({
+                                ...item,
+                                is_active: event.target.checked,
+                            })
+                        }
                     />
                     Aktif
                 </label>
@@ -1297,15 +1669,21 @@ function ProfileItemEditor({
                         onClick={() =>
                             onChange({
                                 ...item,
-                                media: [...item.media, blankMedia(item.media.length)],
+                                media: [
+                                    ...item.media,
+                                    blankMedia(item.media.length),
+                                ],
                             })
                         }
                         className="flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#AAD2F8] bg-white p-4 text-center text-[#0066AE] transition hover:bg-[#EAF4FB]"
                     >
                         <Upload className="size-5" />
-                        <span className="mt-2 text-sm font-bold">Tambah Gambar / Media</span>
+                        <span className="mt-2 text-sm font-bold">
+                            Tambah Gambar / Media
+                        </span>
                         <span className="text-xs text-[#7C7C7C]">
-                            Gunakan upload file untuk gambar, video, atau dokumen pendukung.
+                            Gunakan upload file untuk gambar, video, atau
+                            dokumen pendukung.
                         </span>
                     </button>
 
@@ -1317,7 +1695,9 @@ function ProfileItemEditor({
                             options={mediaOptions}
                             errors={errors}
                             prefix={`${prefix}.media.${mediaIndex}`}
-                            onChange={(next) => updateItemMedia(mediaIndex, next)}
+                            onChange={(next) =>
+                                updateItemMedia(mediaIndex, next)
+                            }
                             onRemove={() => removeItemMedia(mediaIndex)}
                         />
                     ))}
@@ -1370,14 +1750,21 @@ function QuickAction({
 
     if (href) {
         return (
-            <Link href={href} className="mb-2 flex h-9 w-full items-center justify-between rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030]">
+            <Link
+                href={href}
+                className="mb-2 flex h-9 w-full items-center justify-between rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030]"
+            >
                 {content}
             </Link>
         );
     }
 
     return (
-        <button type="button" onClick={onClick} className="mb-2 flex h-9 w-full items-center justify-between rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030]">
+        <button
+            type="button"
+            onClick={onClick}
+            className="mb-2 flex h-9 w-full items-center justify-between rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030]"
+        >
             {content}
         </button>
     );

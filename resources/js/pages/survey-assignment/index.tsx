@@ -287,12 +287,7 @@ export default function SurveyAssignmentIndex({
     return (
         <>
             <Head title="Survey Assignment" />
-            <main
-                className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6"
-                style={{
-                    fontFamily: '"Open Sans", Arial, Helvetica, sans-serif',
-                }}
-            >
+            <main className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
                 <div className="mx-auto max-w-[1500px] space-y-4">
                     <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
