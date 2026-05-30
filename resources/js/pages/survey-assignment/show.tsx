@@ -81,6 +81,7 @@ type SurveyQuestion = {
     code: string;
     question_text: string;
     document_hint: string | null;
+    sort_order: number;
     max_score: number;
     answer: {
         id: number;
@@ -572,7 +573,7 @@ function AnswerDetailModal({
                                     <div
                                         key={option.id}
                                         className={classNames(
-                                            'grid gap-3 px-4 py-3 text-sm sm:grid-cols-[72px_1fr_110px]',
+                                            'grid gap-3 px-4 py-3 text-sm sm:grid-cols-[72px_1fr]',
                                             selected && 'bg-[#EAF3FF]',
                                         )}
                                     >
@@ -581,16 +582,6 @@ function AnswerDetailModal({
                                         </span>
                                         <span className="font-semibold text-[#303030]">
                                             {option.label}
-                                        </span>
-                                        <span
-                                            className={classNames(
-                                                'w-fit rounded-full px-3 py-1 text-xs font-bold',
-                                                selected
-                                                    ? 'bg-[#0066AE] text-white'
-                                                    : 'bg-[#F1F5F8] text-[#7C7C7C]',
-                                            )}
-                                        >
-                                            {selected ? 'Dipilih' : 'Opsi'}
                                         </span>
                                     </div>
                                 );
@@ -726,16 +717,24 @@ export default function SurveyAssignmentShow({
                 )
                 .map((aspect) => ({
                     ...aspect,
-                    questions: aspect.questions.filter((question) => {
-                        const value = search.toLowerCase();
+                    questions: aspect.questions
+                        .filter((question) => {
+                            const value = search.toLowerCase();
 
-                        return (
-                            value === '' ||
-                            aspect.name.toLowerCase().includes(value) ||
-                            question.code.toLowerCase().includes(value) ||
-                            question.question_text.toLowerCase().includes(value)
-                        );
-                    }),
+                            return (
+                                value === '' ||
+                                aspect.name.toLowerCase().includes(value) ||
+                                question.code.toLowerCase().includes(value) ||
+                                question.question_text
+                                    .toLowerCase()
+                                    .includes(value)
+                            );
+                        })
+                        .sort(
+                            (first, second) =>
+                                first.sort_order - second.sort_order ||
+                                first.id - second.id,
+                        ),
                 }))
                 .filter((aspect) => aspect.questions.length > 0),
         [aspectFilter, aspects, search],

@@ -572,6 +572,7 @@ class VillageSurveyAssignmentService
                             'code' => $question->code ?? 'Q-'.$question->id,
                             'question_text' => $question->question_text,
                             'document_hint' => $question->document_hint,
+                            'sort_order' => $question->sort_order,
                             'max_score' => $maxScore,
                             'answer' => $answer ? [
                                 'id' => $answer->id,
