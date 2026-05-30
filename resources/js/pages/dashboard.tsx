@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     ArrowDownToLine,
     ArrowUpRight,
@@ -17,7 +17,12 @@ import {
     UserRound,
 } from 'lucide-react';
 
-import { dashboard } from '@/routes';
+import {
+    dashboard,
+    surveyAssignments,
+    villages as villagesRoute,
+} from '@/routes';
+import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 
 const colors = {
     blue100: '#F1F5F8',
@@ -33,153 +38,118 @@ const colors = {
     danger: '#D81313',
 };
 
-const kpis = [
-    {
-        title: 'Total Desa Wisata',
-        value: '128',
-        desc: 'Desa binaan terdaftar',
-        trend: '+12 bulan ini',
-        icon: MapPin,
-        trendColor: 'text-[#00893D]',
-    },
-    {
-        title: 'Survey Berjalan',
-        value: '42',
-        desc: 'Assignment aktif',
-        trend: '+8 minggu ini',
-        icon: ClipboardCheck,
-        trendColor: 'text-[#00893D]',
-    },
-    {
-        title: 'Menunggu Review',
-        value: '18',
-        desc: 'Siap ditinjau reviewer',
-        trend: '+5 minggu ini',
-        icon: FileSearch,
-        trendColor: 'text-[#FF944C]',
-    },
-    {
-        title: 'Rata-rata Skor',
-        value: '82.4',
-        desc: 'Naik dari periode lalu',
-        trend: '+4.2 poin',
-        icon: TrendingUp,
-        trendColor: 'text-[#00893D]',
-    },
-];
+type Kpi = {
+    title: string;
+    value: string;
+    desc: string;
+    trend: string;
+    icon: 'map' | 'clipboard' | 'search' | 'trending';
+    tone: 'success' | 'warning';
+};
 
-const bars = [
-    { label: 'Draft', value: 12, color: '#B0B0B0' },
-    { label: 'Assigned', value: 20, color: '#AAD2F8' },
-    { label: 'Progress', value: 42, color: '#0066AE' },
-    { label: 'Submitted', value: 28, color: '#2FA6FC' },
-    { label: 'Approved', value: 16, color: '#00893D' },
-    { label: 'Revision', value: 10, color: '#FF944C' },
-];
+type StatusBar = {
+    label: string;
+    value: number;
+    color: string;
+};
 
-const tableRows = [
-    [
-        'Desa Wisata Sade',
-        'Lombok Tengah',
-        '86%',
-        'In Progress',
-        '3 enumerator',
-        '2 jam lalu',
-    ],
-    [
-        'Desa Wisata Nglanggeran',
-        'Gunungkidul',
-        '100%',
-        'Submitted',
-        '2 enumerator',
-        'Hari ini',
-    ],
-    [
-        'Desa Wisata Penglipuran',
-        'Bangli',
-        '100%',
-        'Approved',
-        '4 enumerator',
-        'Kemarin',
-    ],
-    [
-        'Desa Wisata Osing',
-        'Banyuwangi',
-        '64%',
-        'Need Revision',
-        '2 enumerator',
-        '3 hari lalu',
-    ],
-    [
-        'Desa Wisata Wae Rebo',
-        'Manggarai',
-        '32%',
-        'Draft',
-        '1 enumerator',
-        '5 hari lalu',
-    ],
-];
+type ScoreTrend = {
+    label: string;
+    value: number;
+};
 
-const priorities = [
-    {
-        value: '6',
-        text: 'Survey butuh review hari ini',
-        icon: ClipboardCheck,
-        color: colors.blue500,
-    },
-    {
-        value: '3',
-        text: 'Dokumen belum diverifikasi',
-        icon: FileText,
-        color: colors.warning,
-    },
-    {
-        value: '2',
-        text: 'Assignment melewati deadline',
-        icon: CalendarDays,
-        color: colors.danger,
-    },
-];
+type RecentAssignment = {
+    id: number;
+    village: string;
+    location: string;
+    progress: number;
+    status: string;
+    status_label: string;
+    enumerators: number;
+    updated_at: string;
+};
 
-const activities = [
-    {
-        title: 'Enumerator Rani menyimpan draft survey Desa Sade',
-        time: '10 menit lalu',
-        icon: UserRound,
-        color: colors.success,
-    },
-    {
-        title: 'Reviewer menyetujui survey Desa Penglipuran',
-        time: '1 jam lalu',
-        icon: CheckCircle2,
-        color: colors.blue500,
-    },
-    {
-        title: 'Dokumen pendukung baru diunggah untuk Desa Osing',
-        time: 'Hari ini',
-        icon: FileText,
-        color: colors.warning,
-    },
-    {
-        title: 'Assignment baru dibuat untuk Desa Wae Rebo',
-        time: 'Hari ini',
-        icon: Plus,
-        color: colors.blue500,
-    },
-];
+type Priority = {
+    value: string;
+    text: string;
+    icon: 'clipboard' | 'file' | 'calendar';
+    tone: 'blue' | 'warning' | 'danger';
+};
+
+type Activity = {
+    title: string;
+    time: string;
+    icon: 'user' | 'check' | 'file' | 'plus' | 'clipboard';
+    tone: 'success' | 'blue' | 'warning';
+};
+
+type DashboardProps = {
+    kpis: Kpi[];
+    status_bars: StatusBar[];
+    score_trend: ScoreTrend[];
+    recent_assignments: RecentAssignment[];
+    priorities: Priority[];
+    activities: Activity[];
+};
+
+const kpiIcons = {
+    map: MapPin,
+    clipboard: ClipboardCheck,
+    search: FileSearch,
+    trending: TrendingUp,
+};
+
+const priorityIcons = {
+    clipboard: ClipboardCheck,
+    file: FileText,
+    calendar: CalendarDays,
+};
+
+const activityIcons = {
+    user: UserRound,
+    check: CheckCircle2,
+    file: FileText,
+    plus: Plus,
+    clipboard: ClipboardCheck,
+};
+
+const toneColors = {
+    success: colors.success,
+    blue: colors.blue500,
+    warning: colors.warning,
+    danger: colors.danger,
+};
 
 const quickActions = [
-    { label: 'Tambah Desa', icon: MapPin },
-    { label: 'Buat Survey', icon: ClipboardCheck },
-    { label: 'Review Jawaban', icon: Search },
-    { label: 'Export Laporan', icon: ArrowDownToLine },
+    { label: 'Tambah Desa', icon: MapPin, href: villagesRoute.url() },
+    {
+        label: 'Buat Survey',
+        icon: ClipboardCheck,
+        href: surveyAssignments.url(),
+    },
+    {
+        label: 'Review Jawaban',
+        icon: Search,
+        href: surveyAssignments.url({ query: { status: 'submitted' } }),
+    },
+    {
+        label: 'Export Laporan',
+        icon: ArrowDownToLine,
+        href: surveyAssignments.url(),
+    },
 ];
 
 function statusClass(status: string) {
-    if (status === 'Submitted') return 'bg-[#EAF7FF] text-[#0066AE]';
-    if (status === 'Approved') return 'bg-[#EAF8F0] text-[#00893D]';
-    if (status === 'Need Revision') return 'bg-[#FFF4EA] text-[#C9681E]';
-    if (status === 'Draft') return 'bg-[#F7F7F7] text-[#7C7C7C]';
+    if (status === 'submitted' || status === 'Submitted')
+        return 'bg-[#EAF7FF] text-[#0066AE]';
+    if (status === 'approved' || status === 'Approved')
+        return 'bg-[#EAF8F0] text-[#00893D]';
+    if (status === 'need_revision' || status === 'Need Revision')
+        return 'bg-[#FFF4EA] text-[#C9681E]';
+    if (status === 'rejected' || status === 'Rejected')
+        return 'bg-[#FDECEC] text-[#D81313]';
+    if (status === 'assigned' || status === 'Draft')
+        return 'bg-[#F7F7F7] text-[#7C7C7C]';
 
     return 'bg-[#F1F5F8] text-[#0066AE]';
 }
@@ -200,7 +170,37 @@ function Panel({
     );
 }
 
-export default function Dashboard() {
+export default function Dashboard({
+    kpis,
+    status_bars,
+    score_trend,
+    recent_assignments,
+    priorities,
+    activities,
+}: DashboardProps) {
+    const maxStatusValue = Math.max(...status_bars.map((bar) => bar.value), 1);
+    const trendPoints = score_trend.map((point, index) => {
+        const x =
+            score_trend.length > 1
+                ? 58 + index * (410 / (score_trend.length - 1))
+                : 58;
+        const y = 184 - (Number(point.value) / 100) * 150;
+
+        return {
+            ...point,
+            x,
+            y,
+        };
+    });
+    const trendPath = trendPoints
+        .map(
+            (point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`,
+        )
+        .join(' ');
+    const trendAreaPath = trendPoints.length
+        ? `${trendPath} L${trendPoints[trendPoints.length - 1].x} 184 L${trendPoints[0].x} 184 Z`
+        : '';
+
     return (
         <>
             <Head title="Dashboard Admin" />
@@ -226,23 +226,33 @@ export default function Dashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:shrink-0">
-                            <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-semibold text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] active:translate-y-[1px] sm:w-auto">
+                            <Link
+                                href={surveyAssignments.url()}
+                                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-semibold text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] active:translate-y-[1px] sm:w-auto"
+                            >
                                 <Plus className="size-4" strokeWidth={2} />
                                 Buat Assignment
-                            </button>
-                            <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#AAD2F8] bg-white px-4 text-sm font-semibold text-[#0066AE] transition hover:bg-[#F1F5F8] active:translate-y-[1px] sm:w-auto">
+                            </Link>
+                            <Link
+                                href={surveyAssignments.url()}
+                                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#AAD2F8] bg-white px-4 text-sm font-semibold text-[#0066AE] transition hover:bg-[#F1F5F8] active:translate-y-[1px] sm:w-auto"
+                            >
                                 <ArrowDownToLine
                                     className="size-4"
                                     strokeWidth={2}
                                 />
                                 Export Laporan
-                            </button>
+                            </Link>
                         </div>
                     </header>
 
                     <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         {kpis.map((kpi) => {
-                            const Icon = kpi.icon;
+                            const Icon = kpiIcons[kpi.icon];
+                            const trendColor =
+                                kpi.tone === 'success'
+                                    ? 'text-[#00893D]'
+                                    : 'text-[#FF944C]';
 
                             return (
                                 <Panel key={kpi.title} className="p-3.5 sm:p-4">
@@ -266,7 +276,7 @@ export default function Dashboard() {
                                         </span>
                                     </div>
                                     <p
-                                        className={`mt-3 flex items-center gap-1 text-xs font-semibold ${kpi.trendColor}`}
+                                        className={`mt-3 flex items-center gap-1 text-xs font-semibold ${trendColor}`}
                                     >
                                         <ArrowUpRight
                                             className="size-3.5"
@@ -307,7 +317,7 @@ export default function Dashboard() {
                                             </div>
                                         ))}
                                         <div className="absolute right-0 bottom-7 left-10 flex h-[170px] items-end justify-between gap-1.5 sm:gap-2">
-                                            {bars.map((bar) => (
+                                            {status_bars.map((bar) => (
                                                 <div
                                                     key={bar.label}
                                                     className="flex min-w-0 flex-1 flex-col items-center"
@@ -318,7 +328,7 @@ export default function Dashboard() {
                                                     <span
                                                         className="w-full max-w-10 rounded-t-md"
                                                         style={{
-                                                            height: `${Math.max((bar.value / 80) * 170, 14)}px`,
+                                                            height: `${Math.max((bar.value / maxStatusValue) * 170, bar.value > 0 ? 14 : 4)}px`,
                                                             backgroundColor:
                                                                 bar.color,
                                                         }}
@@ -369,60 +379,52 @@ export default function Dashboard() {
                                                     </g>
                                                 ),
                                             )}
-                                            <path
-                                                d="M58 150 L140 138 L222 128 L304 120 L386 108 L468 96"
-                                                fill="none"
-                                                stroke="#0066AE"
-                                                strokeWidth="3"
-                                                strokeLinecap="round"
-                                            />
-                                            <path
-                                                d="M58 150 L140 138 L222 128 L304 120 L386 108 L468 96 L468 184 L58 184 Z"
-                                                fill="#2FA6FC"
-                                                opacity="0.10"
-                                            />
-                                            {[
-                                                ['74.1', 58, 150],
-                                                ['76.8', 140, 138],
-                                                ['79.2', 222, 128],
-                                                ['80.3', 304, 120],
-                                                ['81.6', 386, 108],
-                                                ['82.4', 468, 96],
-                                            ].map(([label, x, y]) => (
-                                                <g key={label}>
+                                            {trendPath && (
+                                                <>
+                                                    <path
+                                                        d={trendPath}
+                                                        fill="none"
+                                                        stroke="#0066AE"
+                                                        strokeWidth="3"
+                                                        strokeLinecap="round"
+                                                    />
+                                                    <path
+                                                        d={trendAreaPath}
+                                                        fill="#2FA6FC"
+                                                        opacity="0.10"
+                                                    />
+                                                </>
+                                            )}
+                                            {trendPoints.map((point) => (
+                                                <g key={point.label}>
                                                     <circle
-                                                        cx={x}
-                                                        cy={y}
+                                                        cx={point.x}
+                                                        cy={point.y}
                                                         r="4.5"
                                                         fill="#0066AE"
                                                     />
                                                     <text
-                                                        x={Number(x) - 12}
-                                                        y={Number(y) - 12}
+                                                        x={point.x - 12}
+                                                        y={point.y - 12}
                                                         fontSize="11"
                                                         fontWeight="700"
                                                         fill="#303030"
                                                     >
-                                                        {label}
+                                                        {Number(
+                                                            point.value,
+                                                        ).toFixed(1)}
                                                     </text>
                                                 </g>
                                             ))}
-                                            {[
-                                                'Jan',
-                                                'Feb',
-                                                'Mar',
-                                                'Apr',
-                                                'Mei',
-                                                'Jun',
-                                            ].map((label, index) => (
+                                            {trendPoints.map((point) => (
                                                 <text
-                                                    key={label}
-                                                    x={54 + index * 82}
+                                                    key={point.label}
+                                                    x={point.x - 4}
                                                     y="205"
                                                     fontSize="11"
                                                     fill="#7C7C7C"
                                                 >
-                                                    {label}
+                                                    {point.label}
                                                 </text>
                                             ))}
                                         </svg>
@@ -440,31 +442,34 @@ export default function Dashboard() {
                                             Daftar progress assessment terbaru.
                                         </p>
                                     </div>
-                                    <button className="hidden h-9 items-center gap-2 rounded-lg border border-[#AAD2F8] px-3 text-xs font-semibold text-[#0066AE] hover:bg-[#F1F5F8] md:inline-flex">
+                                    <Link
+                                        href={surveyAssignments.url()}
+                                        className="hidden h-9 items-center gap-2 rounded-lg border border-[#AAD2F8] px-3 text-xs font-semibold text-[#0066AE] hover:bg-[#F1F5F8] md:inline-flex"
+                                    >
                                         Lihat Semua
                                         <ChevronRight className="size-4" />
-                                    </button>
+                                    </Link>
                                 </div>
 
                                 <div className="space-y-3 md:hidden">
-                                    {tableRows.map((row) => (
+                                    {recent_assignments.map((row) => (
                                         <article
-                                            key={row[0]}
+                                            key={row.id}
                                             className="rounded-2xl border border-[#EFEFEF] bg-white p-4 shadow-[0_4px_14px_rgba(3,17,32,0.05)]"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0">
                                                     <h3 className="truncate text-sm leading-5 font-bold text-[#303030]">
-                                                        {row[0]}
+                                                        {row.village}
                                                     </h3>
                                                     <p className="mt-0.5 text-xs leading-5 text-[#7C7C7C]">
-                                                        {row[1]}
+                                                        {row.location}
                                                     </p>
                                                 </div>
                                                 <span
-                                                    className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-[11px] font-bold ${statusClass(row[3])}`}
+                                                    className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-[11px] font-bold ${statusClass(row.status)}`}
                                                 >
-                                                    {row[3]}
+                                                    {row.status_label}
                                                 </span>
                                             </div>
                                             <div className="mt-4">
@@ -473,14 +478,14 @@ export default function Dashboard() {
                                                         Progress
                                                     </span>
                                                     <span className="font-bold text-[#0066AE]">
-                                                        {row[2]}
+                                                        {row.progress}%
                                                     </span>
                                                 </div>
                                                 <div className="h-2 overflow-hidden rounded-full bg-[#E6EEF5]">
                                                     <div
                                                         className="h-full rounded-full bg-[#0066AE]"
                                                         style={{
-                                                            width: row[2],
+                                                            width: `${row.progress}%`,
                                                         }}
                                                     />
                                                 </div>
@@ -488,24 +493,30 @@ export default function Dashboard() {
                                             <div className="mt-4 grid grid-cols-2 gap-3 text-xs leading-5 text-[#7C7C7C]">
                                                 <div>
                                                     <span className="block font-semibold text-[#303030]">
-                                                        {row[4]}
+                                                        {row.enumerators}{' '}
+                                                        enumerator
                                                     </span>
                                                     Enumerator
                                                 </div>
                                                 <div>
                                                     <span className="block font-semibold text-[#303030]">
-                                                        {row[5]}
+                                                        {row.updated_at}
                                                     </span>
                                                     Diperbarui
                                                 </div>
                                             </div>
                                             <div className="mt-4 flex gap-2">
-                                                <button className="h-9 flex-1 rounded-lg bg-[#0066AE] px-3 text-xs font-semibold text-white">
+                                                <Link
+                                                    href={showSurveyAssignment.url(
+                                                        row.id,
+                                                    )}
+                                                    className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-[#0066AE] px-3 text-xs font-semibold text-white"
+                                                >
                                                     Lihat Detail
-                                                </button>
+                                                </Link>
                                                 <button
                                                     className="flex size-9 items-center justify-center rounded-lg border border-[#EFEFEF] text-[#7C7C7C]"
-                                                    aria-label={`Aksi ${row[0]}`}
+                                                    aria-label={`Aksi ${row.village}`}
                                                 >
                                                     <MoreVertical className="size-4" />
                                                 </button>
@@ -537,27 +548,27 @@ export default function Dashboard() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#EFEFEF] bg-white">
-                                            {tableRows.map((row) => (
+                                            {recent_assignments.map((row) => (
                                                 <tr
-                                                    key={row[0]}
+                                                    key={row.id}
                                                     className="h-12 hover:bg-[#F7F7F7]"
                                                 >
                                                     <td className="px-4 font-semibold whitespace-nowrap text-[#303030]">
-                                                        {row[0]}
+                                                        {row.village}
                                                     </td>
                                                     <td className="px-4 whitespace-nowrap text-[#303030]">
-                                                        {row[1]}
+                                                        {row.location}
                                                     </td>
                                                     <td className="px-4">
                                                         <div className="flex items-center gap-3">
                                                             <span className="w-9 text-xs font-semibold text-[#303030]">
-                                                                {row[2]}
+                                                                {row.progress}%
                                                             </span>
                                                             <span className="h-2 w-24 overflow-hidden rounded-full bg-[#E6EEF5]">
                                                                 <span
                                                                     className="block h-full rounded-full bg-[#0066AE]"
                                                                     style={{
-                                                                        width: row[2],
+                                                                        width: `${row.progress}%`,
                                                                     }}
                                                                 />
                                                             </span>
@@ -565,24 +576,28 @@ export default function Dashboard() {
                                                     </td>
                                                     <td className="px-4">
                                                         <span
-                                                            className={`inline-flex h-6 min-w-24 items-center justify-center rounded-full px-3 text-xs font-bold ${statusClass(row[3])}`}
+                                                            className={`inline-flex h-6 min-w-24 items-center justify-center rounded-full px-3 text-xs font-bold ${statusClass(row.status)}`}
                                                         >
-                                                            {row[3]}
+                                                            {row.status_label}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 whitespace-nowrap text-[#303030]">
-                                                        {row[4]}
+                                                        {row.enumerators}{' '}
+                                                        enumerator
                                                     </td>
                                                     <td className="px-4 whitespace-nowrap text-[#303030]">
-                                                        {row[5]}
+                                                        {row.updated_at}
                                                     </td>
                                                     <td className="px-4 text-center">
-                                                        <button
+                                                        <Link
+                                                            href={showSurveyAssignment.url(
+                                                                row.id,
+                                                            )}
                                                             className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-[#F1F5F8]"
-                                                            aria-label={`Aksi ${row[0]}`}
+                                                            aria-label={`Detail ${row.village}`}
                                                         >
                                                             <MoreVertical className="size-4 text-[#7C7C7C]" />
-                                                        </button>
+                                                        </Link>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -599,7 +614,8 @@ export default function Dashboard() {
                                 </h2>
                                 <div className="divide-y divide-[#EFEFEF]">
                                     {priorities.map((item) => {
-                                        const Icon = item.icon;
+                                        const Icon = priorityIcons[item.icon];
+                                        const color = toneColors[item.tone];
                                         return (
                                             <button
                                                 key={item.text}
@@ -608,7 +624,7 @@ export default function Dashboard() {
                                                 <span
                                                     className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F8]"
                                                     style={{
-                                                        color: item.color,
+                                                        color,
                                                     }}
                                                 >
                                                     <Icon
@@ -619,7 +635,7 @@ export default function Dashboard() {
                                                 <span
                                                     className="text-xl leading-none font-bold"
                                                     style={{
-                                                        color: item.color,
+                                                        color,
                                                     }}
                                                 >
                                                     {item.value}
@@ -640,7 +656,8 @@ export default function Dashboard() {
                                 </h2>
                                 <div className="space-y-4">
                                     {activities.map((item) => {
-                                        const Icon = item.icon;
+                                        const Icon = activityIcons[item.icon];
+                                        const color = toneColors[item.tone];
                                         return (
                                             <div
                                                 key={item.title}
@@ -649,7 +666,7 @@ export default function Dashboard() {
                                                 <span
                                                     className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F8]"
                                                     style={{
-                                                        color: item.color,
+                                                        color,
                                                     }}
                                                 >
                                                     <Icon
@@ -679,7 +696,8 @@ export default function Dashboard() {
                                     {quickActions.map((item) => {
                                         const Icon = item.icon;
                                         return (
-                                            <button
+                                            <Link
+                                                href={item.href}
                                                 key={item.label}
                                                 className="flex min-h-16 flex-col items-start justify-between rounded-lg border border-[#EFEFEF] bg-white p-3 text-left transition hover:border-[#AAD2F8] hover:bg-[#F1F5F8]"
                                             >
@@ -690,7 +708,7 @@ export default function Dashboard() {
                                                 <span className="mt-2 text-xs leading-4 font-bold text-[#303030]">
                                                     {item.label}
                                                 </span>
-                                            </button>
+                                            </Link>
                                         );
                                     })}
                                 </div>

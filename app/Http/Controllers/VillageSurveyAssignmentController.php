@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreSurveyAnswerDraftRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreVillageSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateVillageSurveyAssignmentRequest;
 use App\Models\SurveyAnswerDocument;
 use App\Models\VillageSurveyAssignment;
 use App\Services\VillageSurveyAssignmentService;
@@ -25,7 +26,7 @@ class VillageSurveyAssignmentController extends Controller
         StoreVillageSurveyAssignmentRequest $request,
         VillageSurveyAssignmentService $service
     ): RedirectResponse {
-        $service->create($request->validated());
+        $service->create($request->validated(), $request->user());
 
         return back()->with('success', 'Survey assignment berhasil dibuat.');
     }
@@ -35,6 +36,16 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show', $service->getShowData($assignment));
+    }
+
+    public function update(
+        UpdateVillageSurveyAssignmentRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->update($assignment, $request->validated(), $request->user());
+
+        return back()->with('success', 'Survey assignment berhasil diperbarui.');
     }
 
     public function takeSurvey(

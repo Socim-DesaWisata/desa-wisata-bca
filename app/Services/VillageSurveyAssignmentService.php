@@ -17,6 +17,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class VillageSurveyAssignmentService
 {
@@ -97,9 +98,67 @@ class VillageSurveyAssignmentService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data): VillageSurveyAssignment
+    public function create(array $data, User $user): VillageSurveyAssignment
     {
-        return VillageSurveyAssignment::query()->create($data);
+        $template = SurveyTemplate::query()
+            ->select(['id'])
+            ->where('status', 'published')
+            ->latest('published_at')
+            ->latest('id')
+            ->first();
+
+        if (! $template) {
+            throw ValidationException::withMessages([
+                'village_id' => 'Template survey aktif belum tersedia.',
+            ]);
+        }
+
+        return VillageSurveyAssignment::query()->create([
+            'village_id' => $data['village_id'],
+            'survey_template_id' => $template->id,
+            'status' => 'assigned',
+            'assigned_by' => $user->id,
+            'assigned_at' => now(),
+            'started_at' => $data['started_at'] ?? null,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function update(VillageSurveyAssignment $assignment, array $data, User $user): VillageSurveyAssignment
+    {
+        return DB::transaction(function () use ($assignment, $data, $user): VillageSurveyAssignment {
+            $fromStatus = $assignment->status;
+
+            $assignment->update([
+                'village_id' => $data['village_id'],
+                'survey_template_id' => $data['survey_template_id'],
+                'status' => $data['status'],
+                'assigned_by' => $data['assigned_by'],
+                'submitted_by' => $data['submitted_by'] ?? null,
+                'reviewed_by' => $data['reviewed_by'] ?? null,
+                'assigned_at' => $data['assigned_at'] ?? null,
+                'started_at' => $data['started_at'] ?? null,
+                'last_saved_at' => $data['last_saved_at'] ?? null,
+                'submitted_at' => $data['submitted_at'] ?? null,
+                'reviewed_at' => $data['reviewed_at'] ?? null,
+            ]);
+
+            $assignment->logs()->create([
+                'actor_id' => $user->id,
+                'action' => 'assignment_updated',
+                'from_status' => $fromStatus,
+                'to_status' => $assignment->status,
+                'description' => 'Survey assignment diperbarui.',
+                'metadata' => [
+                    'changed' => array_keys($assignment->getChanges()),
+                ],
+                'created_at' => now(),
+            ]);
+
+            return $assignment;
+        });
     }
 
     /**
@@ -219,6 +278,25 @@ class VillageSurveyAssignmentService
             'summary' => $summary,
             'aspects' => $aspects,
             'activities' => $this->formatAssignmentActivities($assignment),
+            'edit_options' => [
+                'status_options' => $this->statusOptions(),
+                'template_options' => $this->templateOptions(),
+                'village_options' => $this->villageOptionsForAssignment($assignment),
+                'user_options' => $this->userOptions(),
+            ],
+            'edit_values' => [
+                'village_id' => (string) $assignment->village_id,
+                'survey_template_id' => (string) $assignment->survey_template_id,
+                'status' => $assignment->status,
+                'assigned_by' => (string) $assignment->assigned_by,
+                'submitted_by' => $assignment->submitted_by ? (string) $assignment->submitted_by : '',
+                'reviewed_by' => $assignment->reviewed_by ? (string) $assignment->reviewed_by : '',
+                'assigned_at' => $this->formatDateTimeLocal($assignment->assigned_at),
+                'started_at' => $this->formatDateTimeLocal($assignment->started_at),
+                'last_saved_at' => $this->formatDateTimeLocal($assignment->last_saved_at),
+                'submitted_at' => $this->formatDateTimeLocal($assignment->submitted_at),
+                'reviewed_at' => $this->formatDateTimeLocal($assignment->reviewed_at),
+            ],
         ];
     }
 
@@ -402,6 +480,28 @@ class VillageSurveyAssignmentService
         return TourismVillage::query()
             ->select(['id', 'code', 'name', 'city', 'province'])
             ->whereDoesntHave('surveyAssignment')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (TourismVillage $village): array => [
+                'value' => (string) $village->id,
+                'label' => "{$village->name} ({$village->code})",
+                'description' => collect([$village->city, $village->province])->filter()->implode(', '),
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function villageOptionsForAssignment(VillageSurveyAssignment $assignment): array
+    {
+        return TourismVillage::query()
+            ->select(['id', 'code', 'name', 'city', 'province'])
+            ->where(function ($query) use ($assignment): void {
+                $query
+                    ->whereDoesntHave('surveyAssignment')
+                    ->orWhere('id', $assignment->village_id);
+            })
             ->orderBy('name')
             ->get()
             ->map(fn (TourismVillage $village): array => [
@@ -759,5 +859,10 @@ class VillageSurveyAssignmentService
     private function formatDate(?CarbonInterface $date): string
     {
         return $date?->translatedFormat('d M Y H:i') ?? '-';
+    }
+
+    private function formatDateTimeLocal(?CarbonInterface $date): string
+    {
+        return $date?->format('Y-m-d\TH:i') ?? '';
     }
 }

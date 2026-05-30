@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -15,14 +15,18 @@ import {
     Flag,
     Folder,
     MapPin,
+    PanelRightOpen,
     RefreshCcw,
+    Save,
     Search,
     ShieldCheck,
     Star,
     Trophy,
     UserRound,
+    X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 
 import {
     Dialog,
@@ -38,7 +42,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard, surveyAssignments } from '@/routes';
-import { takeSurvey } from '@/routes/survey-assignments';
+import {
+    takeSurvey,
+    update as updateSurveyAssignment,
+} from '@/routes/survey-assignments';
 
 type UserSummary = {
     id: string | null;
@@ -167,6 +174,33 @@ type SurveyAssignmentShowProps = {
         actor: string;
         type: string;
     }>;
+    edit_options: {
+        status_options: Option[];
+        template_options: Option[];
+        village_options: Option[];
+        user_options: Option[];
+    };
+    edit_values: AssignmentEditForm;
+};
+
+type Option = {
+    value: string;
+    label: string;
+    description?: string;
+};
+
+type AssignmentEditForm = {
+    village_id: string;
+    survey_template_id: string;
+    status: string;
+    assigned_by: string;
+    submitted_by: string;
+    reviewed_by: string;
+    assigned_at: string;
+    started_at: string;
+    last_saved_at: string;
+    submitted_at: string;
+    reviewed_at: string;
 };
 
 function classNames(...classes: Array<string | false | null | undefined>) {
@@ -227,6 +261,16 @@ function Button({
         >
             {children}
         </span>
+    );
+}
+
+function FieldError({ message }: { message?: string }) {
+    if (!message) {
+        return null;
+    }
+
+    return (
+        <p className="mt-1 text-xs font-semibold text-[#D81313]">{message}</p>
     );
 }
 
@@ -696,6 +740,8 @@ export default function SurveyAssignmentShow({
     summary,
     aspects,
     activities,
+    edit_options,
+    edit_values,
 }: SurveyAssignmentShowProps) {
     const [search, setSearch] = useState('');
     const [aspectFilter, setAspectFilter] = useState('all');
@@ -707,6 +753,9 @@ export default function SurveyAssignmentShow({
     const [closedAspects, setClosedAspects] = useState<Record<string, boolean>>(
         {},
     );
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const { data, setData, patch, processing, errors, clearErrors, reset } =
+        useForm<AssignmentEditForm>(edit_values);
 
     const filteredAspects = useMemo(
         () =>
@@ -747,6 +796,27 @@ export default function SurveyAssignmentShow({
             ...current,
             [aspectName]: !current[aspectName],
         }));
+    }
+
+    function openEditSidebar() {
+        setData({ ...edit_values });
+        clearErrors();
+        setIsEditOpen(true);
+    }
+
+    function closeEditSidebar() {
+        setIsEditOpen(false);
+        reset();
+        clearErrors();
+    }
+
+    function submitAssignment(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        patch(updateSurveyAssignment.url(assignment.id), {
+            preserveScroll: true,
+            onSuccess: () => setIsEditOpen(false),
+        });
     }
 
     return (
@@ -790,6 +860,12 @@ export default function SurveyAssignmentShow({
                                     Kembali
                                 </Button>
                             </Link>
+                            <button type="button" onClick={openEditSidebar}>
+                                <Button>
+                                    <PanelRightOpen size={16} />
+                                    Edit Assignment
+                                </Button>
+                            </button>
                             <Link href={takeSurvey.url(assignment.id)}>
                                 <Button variant="primary">
                                     <ClipboardList size={16} />
@@ -1267,6 +1343,237 @@ export default function SurveyAssignmentShow({
                     </div>
                 </div>
             </main>
+
+            <div
+                className={classNames(
+                    'fixed inset-0 z-40 bg-[#031120]/35 transition-opacity',
+                    isEditOpen
+                        ? 'pointer-events-auto opacity-100'
+                        : 'pointer-events-none opacity-0',
+                )}
+                onClick={closeEditSidebar}
+            />
+            <aside
+                className={classNames(
+                    'fixed top-0 right-0 z-50 flex h-dvh w-full max-w-[440px] flex-col border-l border-[#DDE4EC] bg-white shadow-[-18px_0_40px_rgba(3,17,32,0.18)] transition-transform duration-300',
+                    isEditOpen ? 'translate-x-0' : 'translate-x-full',
+                )}
+                aria-hidden={!isEditOpen}
+            >
+                <div className="flex items-start justify-between gap-4 border-b border-[#EFEFEF] px-5 py-4">
+                    <div>
+                        <p className="text-xs font-bold text-[#0066AE]">
+                            ASG-{String(assignment.id).padStart(3, '0')}
+                        </p>
+                        <h2 className="mt-1 text-lg font-bold text-[#303030]">
+                            Edit Survey Assignment
+                        </h2>
+                        <p className="mt-1 text-xs leading-5 font-semibold text-[#7C7C7C]">
+                            Ubah data assignment sesuai tabel database.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={closeEditSidebar}
+                        className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#DDE4EC] text-[#303030] transition hover:bg-[#F1F5F8]"
+                        aria-label="Tutup edit assignment"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <form
+                    onSubmit={submitAssignment}
+                    className="flex min-h-0 flex-1 flex-col"
+                >
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+                        <label className="block space-y-1.5">
+                            <span className="text-sm font-bold text-[#303030]">
+                                Desa
+                            </span>
+                            <select
+                                value={data.village_id}
+                                onChange={(event) =>
+                                    setData('village_id', event.target.value)
+                                }
+                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                            >
+                                {edit_options.village_options.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.description
+                                            ? `${option.label} - ${option.description}`
+                                            : option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={errors.village_id} />
+                        </label>
+
+                        <label className="block space-y-1.5">
+                            <span className="text-sm font-bold text-[#303030]">
+                                Template Survey
+                            </span>
+                            <select
+                                value={data.survey_template_id}
+                                onChange={(event) =>
+                                    setData(
+                                        'survey_template_id',
+                                        event.target.value,
+                                    )
+                                }
+                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                            >
+                                {edit_options.template_options.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={errors.survey_template_id} />
+                        </label>
+
+                        <label className="block space-y-1.5">
+                            <span className="text-sm font-bold text-[#303030]">
+                                Status
+                            </span>
+                            <select
+                                value={data.status}
+                                onChange={(event) =>
+                                    setData('status', event.target.value)
+                                }
+                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                            >
+                                {edit_options.status_options.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={errors.status} />
+                        </label>
+
+                        <label className="block space-y-1.5">
+                            <span className="text-sm font-bold text-[#303030]">
+                                Assigned By
+                            </span>
+                            <select
+                                value={data.assigned_by}
+                                onChange={(event) =>
+                                    setData('assigned_by', event.target.value)
+                                }
+                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                            >
+                                {edit_options.user_options.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.description
+                                            ? `${option.label} - ${option.description}`
+                                            : option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={errors.assigned_by} />
+                        </label>
+
+                        {[
+                            ['submitted_by', 'Submitted By'],
+                            ['reviewed_by', 'Reviewed By'],
+                        ].map(([key, label]) => (
+                            <label key={key} className="block space-y-1.5">
+                                <span className="text-sm font-bold text-[#303030]">
+                                    {label}
+                                </span>
+                                <select
+                                    value={
+                                        data[key as keyof AssignmentEditForm]
+                                    }
+                                    onChange={(event) =>
+                                        setData(
+                                            key as keyof AssignmentEditForm,
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                                >
+                                    <option value="">Tidak Ada</option>
+                                    {edit_options.user_options.map((option) => (
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.description
+                                                ? `${option.label} - ${option.description}`
+                                                : option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <FieldError
+                                    message={
+                                        errors[key as keyof AssignmentEditForm]
+                                    }
+                                />
+                            </label>
+                        ))}
+
+                        {[
+                            ['assigned_at', 'Assigned At'],
+                            ['started_at', 'Started At'],
+                            ['last_saved_at', 'Last Saved At'],
+                            ['submitted_at', 'Submitted At'],
+                            ['reviewed_at', 'Reviewed At'],
+                        ].map(([key, label]) => (
+                            <label key={key} className="block space-y-1.5">
+                                <span className="text-sm font-bold text-[#303030]">
+                                    {label}
+                                </span>
+                                <input
+                                    type="datetime-local"
+                                    value={
+                                        data[key as keyof AssignmentEditForm]
+                                    }
+                                    onChange={(event) =>
+                                        setData(
+                                            key as keyof AssignmentEditForm,
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                                />
+                                <FieldError
+                                    message={
+                                        errors[key as keyof AssignmentEditForm]
+                                    }
+                                />
+                            </label>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 border-t border-[#EFEFEF] px-5 py-4">
+                        <button type="button" onClick={closeEditSidebar}>
+                            <Button>Batal</Button>
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] disabled:opacity-60"
+                        >
+                            <Save size={16} />
+                            {processing ? 'Menyimpan...' : 'Simpan'}
+                        </button>
+                    </div>
+                </form>
+            </aside>
 
             <AnswerDetailModal
                 question={detailQuestion}

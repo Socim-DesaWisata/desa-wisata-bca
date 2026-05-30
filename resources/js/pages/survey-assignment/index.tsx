@@ -114,16 +114,7 @@ type SurveyAssignmentIndexProps = {
 
 type AssignmentForm = {
     village_id: string;
-    survey_template_id: string;
-    status: string;
-    assigned_by: string;
-    submitted_by: string;
-    reviewed_by: string;
-    assigned_at: string;
     started_at: string;
-    last_saved_at: string;
-    submitted_at: string;
-    reviewed_at: string;
 };
 
 const statIcons = {
@@ -135,16 +126,7 @@ const statIcons = {
 
 const defaultForm: AssignmentForm = {
     village_id: '',
-    survey_template_id: '',
-    status: 'assigned',
-    assigned_by: '',
-    submitted_by: '',
-    reviewed_by: '',
-    assigned_at: '',
     started_at: '',
-    last_saved_at: '',
-    submitted_at: '',
-    reviewed_at: '',
 };
 
 function classNames(...classes: Array<string | false | null | undefined>) {
@@ -203,7 +185,6 @@ export default function SurveyAssignmentIndex({
     status_options,
     template_options,
     village_options,
-    user_options,
     per_page_options,
 }: SurveyAssignmentIndexProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -661,9 +642,9 @@ export default function SurveyAssignmentIndex({
                     <DialogHeader>
                         <DialogTitle>Tambah Survey Assignment</DialogTitle>
                         <DialogDescription>
-                            Buat assignment survey untuk desa yang belum
-                            memiliki assignment. Semua field mengikuti tabel
-                            database.
+                            Pilih desa dan jadwal mulai. Template aktif terbaru,
+                            status, assigned by, dan assigned at diisi otomatis
+                            oleh sistem.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -700,158 +681,21 @@ export default function SurveyAssignmentIndex({
 
                             <label className="space-y-1.5">
                                 <span className="text-sm font-bold text-[#303030]">
-                                    Template Survey
+                                    Started At
                                 </span>
-                                <select
-                                    value={data.survey_template_id}
+                                <input
+                                    type="datetime-local"
+                                    value={data.started_at}
                                     onChange={(event) =>
                                         setData(
-                                            'survey_template_id',
+                                            'started_at',
                                             event.target.value,
                                         )
                                     }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
-                                >
-                                    <option value="">Pilih Template</option>
-                                    {template_options.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <FieldError
-                                    message={errors.survey_template_id}
+                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#2FA6FC]"
                                 />
+                                <FieldError message={errors.started_at} />
                             </label>
-
-                            <label className="space-y-1.5">
-                                <span className="text-sm font-bold text-[#303030]">
-                                    Status
-                                </span>
-                                <select
-                                    value={data.status}
-                                    onChange={(event) =>
-                                        setData('status', event.target.value)
-                                    }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
-                                >
-                                    {status_options.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <FieldError message={errors.status} />
-                            </label>
-
-                            <label className="space-y-1.5">
-                                <span className="text-sm font-bold text-[#303030]">
-                                    Assigned By
-                                </span>
-                                <select
-                                    value={data.assigned_by}
-                                    onChange={(event) =>
-                                        setData(
-                                            'assigned_by',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
-                                >
-                                    <option value="">Pilih User</option>
-                                    {user_options.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.description
-                                                ? `${option.label} - ${option.description}`
-                                                : option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <FieldError message={errors.assigned_by} />
-                            </label>
-
-                            {[
-                                ['submitted_by', 'Submitted By'],
-                                ['reviewed_by', 'Reviewed By'],
-                            ].map(([key, label]) => (
-                                <label key={key} className="space-y-1.5">
-                                    <span className="text-sm font-bold text-[#303030]">
-                                        {label}
-                                    </span>
-                                    <select
-                                        value={
-                                            data[key as keyof AssignmentForm]
-                                        }
-                                        onChange={(event) =>
-                                            setData(
-                                                key as keyof AssignmentForm,
-                                                event.target.value,
-                                            )
-                                        }
-                                        className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
-                                    >
-                                        <option value="">Tidak Ada</option>
-                                        {user_options.map((option) => (
-                                            <option
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.description
-                                                    ? `${option.label} - ${option.description}`
-                                                    : option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <FieldError
-                                        message={
-                                            errors[key as keyof AssignmentForm]
-                                        }
-                                    />
-                                </label>
-                            ))}
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                            {[
-                                ['assigned_at', 'Assigned At'],
-                                ['started_at', 'Started At'],
-                                ['last_saved_at', 'Last Saved At'],
-                                ['submitted_at', 'Submitted At'],
-                                ['reviewed_at', 'Reviewed At'],
-                            ].map(([key, label]) => (
-                                <label key={key} className="space-y-1.5">
-                                    <span className="text-sm font-bold text-[#303030]">
-                                        {label}
-                                    </span>
-                                    <input
-                                        type="datetime-local"
-                                        value={
-                                            data[key as keyof AssignmentForm]
-                                        }
-                                        onChange={(event) =>
-                                            setData(
-                                                key as keyof AssignmentForm,
-                                                event.target.value,
-                                            )
-                                        }
-                                        className="h-11 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#2FA6FC]"
-                                    />
-                                    <FieldError
-                                        message={
-                                            errors[key as keyof AssignmentForm]
-                                        }
-                                    />
-                                </label>
-                            ))}
                         </div>
 
                         <DialogFooter>
