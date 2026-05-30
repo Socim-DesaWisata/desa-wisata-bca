@@ -391,8 +391,11 @@ class TourismVillageService
             'file_path' => $media->file_path,
             'file' => null,
             'external_url' => $media->external_url,
+            'mime_type' => $media->mime_type,
+            'file_size' => $media->file_size,
             'url' => $this->mediaUrl($media->file_path, $media->external_url),
             'is_cover' => $media->is_cover,
+            'sort_order' => $media->sort_order,
         ];
     }
 
@@ -451,6 +454,7 @@ class TourismVillageService
             'opening_hours' => $item->opening_hours ?? '',
             'contact_name' => $item->contact_name ?? '',
             'contact_phone' => $item->contact_phone ?? '',
+            'metadata' => $item->metadata ? json_encode($item->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '',
             'is_active' => $item->is_active,
             'sort_order' => $item->sort_order,
             'media' => $item->media->map(fn ($media): array => $this->formatMedia($media))->values(),
@@ -511,6 +515,7 @@ class TourismVillageService
                 'opening_hours' => $item['opening_hours'] ?? null,
                 'contact_name' => $item['contact_name'] ?? null,
                 'contact_phone' => $item['contact_phone'] ?? null,
+                'metadata' => $this->metadataPayload($item['metadata'] ?? null),
                 'is_active' => (bool) ($item['is_active'] ?? true),
                 'sort_order' => (int) ($item['sort_order'] ?? $index),
             ];
@@ -572,6 +577,15 @@ class TourismVillageService
             'is_cover' => (bool) ($media['is_cover'] ?? false),
             'sort_order' => (int) ($media['sort_order'] ?? $index),
         ];
+    }
+
+    private function metadataPayload(?string $metadata): ?array
+    {
+        if (! $metadata) {
+            return null;
+        }
+
+        return json_decode($metadata, true);
     }
 
     /**

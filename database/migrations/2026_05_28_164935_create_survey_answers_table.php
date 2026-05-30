@@ -14,9 +14,9 @@ return new class extends Migration
             $table->foreignId('survey_question_id');
             $table->foreignId('survey_question_option_id');
             $table->integer('score');
-            $table->string('aspect_snapshot', 150)->nullable();
+            $table->text('aspect_snapshot')->nullable();
             $table->text('question_text_snapshot')->nullable();
-            $table->string('option_label_snapshot')->nullable();
+            $table->text('option_label_snapshot')->nullable();
             $table->foreignId('answered_by')->constrained('users');
             $table->foreignId('last_edited_by')->constrained('users');
             $table->timestamp('answered_at')->nullable();

@@ -54,6 +54,8 @@ type MediaForm = {
     file: File | null;
     external_url: string;
     mime_type: string;
+    file_size: number | null;
+    url: string | null;
     is_cover: boolean;
     sort_order: number;
 };
@@ -74,6 +76,7 @@ type ProfileItemForm = {
     opening_hours: string;
     contact_name: string;
     contact_phone: string;
+    metadata: string;
     is_active: boolean;
     sort_order: number;
     media: MediaForm[];
@@ -117,6 +120,9 @@ type SectionState = 'complete' | 'partial' | 'empty';
 
 type LinkHref = ComponentProps<typeof Link>['href'];
 
+const defaultLatitude = '-7.2965549';
+const defaultLongitude = '112.7927000';
+
 function slugify(value: string) {
     return value
         .toLowerCase()
@@ -131,8 +137,30 @@ function parseCoordinate(value: string, fallback: number) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function hasZeroCoordinates(latitude: string, longitude: string) {
+    return Number(latitude) === 0 && Number(longitude) === 0;
+}
+
+function normalizeLatitude(latitude: string, longitude: string) {
+    return !latitude || hasZeroCoordinates(latitude, longitude) ? defaultLatitude : latitude;
+}
+
+function normalizeLongitude(latitude: string, longitude: string) {
+    return !longitude || hasZeroCoordinates(latitude, longitude) ? defaultLongitude : longitude;
+}
+
 function googleMapsUrl(latitude: string, longitude: string) {
     return `https://www.google.com/maps?q=${latitude},${longitude}`;
+}
+
+function formatFileSize(size: number | null) {
+    if (!size) return '-';
+
+    if (size < 1024 * 1024) {
+        return `${Math.round(size / 1024)} KB`;
+    }
+
+    return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function blankMedia(sortOrder = 0): MediaForm {
@@ -145,12 +173,19 @@ function blankMedia(sortOrder = 0): MediaForm {
         file: null,
         external_url: '',
         mime_type: '',
+        file_size: null,
+        url: null,
         is_cover: false,
         sort_order: sortOrder,
     };
 }
 
-function blankProfileItem(category: Option, sortOrder = 0): ProfileItemForm {
+function blankProfileItem(
+    category: Option,
+    sortOrder = 0,
+    latitude = defaultLatitude,
+    longitude = defaultLongitude,
+): ProfileItemForm {
     return {
         id: null,
         category_slug: category.slug ?? 'fasilitas',
@@ -158,15 +193,16 @@ function blankProfileItem(category: Option, sortOrder = 0): ProfileItemForm {
         name: '',
         description: '',
         address: '',
-        latitude: '',
-        longitude: '',
-        maps_url: '',
+        latitude,
+        longitude,
+        maps_url: googleMapsUrl(latitude, longitude),
         price_min: '',
         price_max: '',
         price_text: '',
         opening_hours: '',
         contact_name: '',
         contact_phone: '',
+        metadata: '',
         is_active: true,
         sort_order: sortOrder,
         media: [],
@@ -198,18 +234,41 @@ function MapClickHandler({
 function MiniMap({
     latitude,
     longitude,
+    fallbackLatitude,
+    fallbackLongitude,
     onPick,
 }: {
     latitude: string;
     longitude: string;
+    fallbackLatitude: string;
+    fallbackLongitude: string;
     onPick: (latitude: string, longitude: string) => void;
 }) {
     const position = useMemo<LatLngExpression>(
-        () => [
-            parseCoordinate(latitude, -7.3223551),
-            parseCoordinate(longitude, 112.7034573),
-        ],
-        [latitude, longitude],
+        () => {
+            const normalizedFallbackLatitude = normalizeLatitude(
+                fallbackLatitude,
+                fallbackLongitude,
+            );
+            const normalizedFallbackLongitude = normalizeLongitude(
+                fallbackLatitude,
+                fallbackLongitude,
+            );
+            const normalizedLatitude = normalizeLatitude(latitude, longitude);
+            const normalizedLongitude = normalizeLongitude(latitude, longitude);
+
+            return [
+                parseCoordinate(
+                    normalizedLatitude,
+                    parseCoordinate(normalizedFallbackLatitude, Number(defaultLatitude)),
+                ),
+                parseCoordinate(
+                    normalizedLongitude,
+                    parseCoordinate(normalizedFallbackLongitude, Number(defaultLongitude)),
+                ),
+            ];
+        },
+        [fallbackLatitude, fallbackLongitude, latitude, longitude],
     );
     const markerIcon = useMemo(
         () =>
@@ -451,15 +510,30 @@ export default function VillageEdit({
             subdistrict: village.subdistrict,
             address: village.address,
             postal_code: village.postal_code,
-            latitude: village.latitude,
-            longitude: village.longitude,
-            maps_url: village.maps_url,
+            latitude: normalizeLatitude(village.latitude, village.longitude),
+            longitude: normalizeLongitude(village.latitude, village.longitude),
+            maps_url:
+                village.maps_url ||
+                googleMapsUrl(
+                    normalizeLatitude(village.latitude, village.longitude),
+                    normalizeLongitude(village.latitude, village.longitude),
+                ),
             manager_name: village.manager_name,
             manager_phone: village.manager_phone,
             manager_email: village.manager_email,
             status: village.status,
             media: village.media ?? [],
-            profile_items: village.profile_items ?? [],
+            profile_items: (village.profile_items ?? []).map((item) => ({
+                ...item,
+                latitude: normalizeLatitude(item.latitude, item.longitude),
+                longitude: normalizeLongitude(item.latitude, item.longitude),
+                maps_url:
+                    item.maps_url ||
+                    googleMapsUrl(
+                        normalizeLatitude(item.latitude, item.longitude),
+                        normalizeLongitude(item.latitude, item.longitude),
+                    ),
+            })),
         });
 
     const formErrors = errors as Partial<Record<string, string>>;
@@ -530,9 +604,12 @@ export default function VillageEdit({
     }
 
     function addProfileItem(category: Option) {
+        const latitude = normalizeLatitude(data.latitude, data.longitude);
+        const longitude = normalizeLongitude(data.latitude, data.longitude);
+
         setData('profile_items', [
             ...data.profile_items,
-            blankProfileItem(category, data.profile_items.length),
+            blankProfileItem(category, data.profile_items.length, latitude, longitude),
         ]);
     }
 
@@ -697,14 +774,14 @@ export default function VillageEdit({
                             label="Latitude"
                             value={data.latitude}
                             onChange={(value) => setData('latitude', value)}
-                            placeholder="-7.266160"
+                            placeholder={defaultLatitude}
                             error={formErrors.latitude}
                         />
                         <Field
                             label="Longitude"
                             value={data.longitude}
                             onChange={(value) => setData('longitude', value)}
-                            placeholder="112.819123"
+                            placeholder={defaultLongitude}
                             error={formErrors.longitude}
                         />
                         <Field
@@ -719,6 +796,8 @@ export default function VillageEdit({
                         <MiniMap
                             latitude={data.latitude}
                             longitude={data.longitude}
+                            fallbackLatitude={village.latitude}
+                            fallbackLongitude={village.longitude}
                             onPick={(latitude, longitude) =>
                                 setData((current) => ({
                                     ...current,
@@ -827,6 +906,8 @@ export default function VillageEdit({
                 onChange={updateProfileItem}
                 onRemove={removeProfileItem}
                 mediaOptions={media_type_options}
+                villageLatitude={data.latitude}
+                villageLongitude={data.longitude}
             />
         ) : (
             <SectionCard
@@ -1305,9 +1386,20 @@ function MediaEditor({
     return (
         <div className="rounded-lg border border-[#DDE4EC] bg-[#FCFDFF] p-4">
             <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-bold text-[#303030]">
-                    Media #{index + 1}
-                </p>
+                <div className="min-w-0">
+                    <p className="text-sm font-bold text-[#303030]">
+                        Media #{index + 1}
+                    </p>
+                    {media.url && (
+                        <a
+                            href={media.url}
+                            target="_blank"
+                            className="block truncate text-xs font-semibold text-[#0066AE]"
+                        >
+                            Lihat file tersimpan
+                        </a>
+                    )}
+                </div>
                 <button
                     type="button"
                     onClick={onRemove}
@@ -1317,6 +1409,15 @@ function MediaEditor({
                 </button>
             </div>
             <div className="grid gap-3 md:grid-cols-4">
+                {media.url && media.type === 'image' && (
+                    <div className="md:col-span-4">
+                        <img
+                            src={media.url}
+                            alt={media.title || `Media ${index + 1}`}
+                            className="h-36 w-full rounded-lg border border-[#DDE4EC] object-cover"
+                        />
+                    </div>
+                )}
                 <label>
                     <span className="mb-1 block text-sm font-bold text-[#303030]">
                         Tipe
@@ -1367,6 +1468,27 @@ function MediaEditor({
                     placeholder="https://..."
                     error={errors[`${prefix}.external_url`]}
                 />
+                <Field
+                    label="Urutan"
+                    value={String(media.sort_order ?? 0)}
+                    onChange={(value) =>
+                        onChange({ ...media, sort_order: Number(value) || 0 })
+                    }
+                    placeholder="0"
+                    error={errors[`${prefix}.sort_order`]}
+                />
+                <div>
+                    <span className="mb-1 block text-sm font-bold text-[#303030]">
+                        File tersimpan
+                    </span>
+                    <div className="min-h-11 rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-xs leading-5 text-[#7C7C7C]">
+                        <p className="truncate">{media.file_path || '-'}</p>
+                        <p>
+                            {media.mime_type || '-'} ·{' '}
+                            {formatFileSize(media.file_size)}
+                        </p>
+                    </div>
+                </div>
                 <label className="flex items-center gap-2 pt-5 text-sm font-bold text-[#303030]">
                     <input
                         type="checkbox"
@@ -1407,6 +1529,8 @@ function ProfileItemsSection({
     onChange,
     onRemove,
     mediaOptions,
+    villageLatitude,
+    villageLongitude,
 }: {
     id: string;
     icon: typeof Info;
@@ -1418,6 +1542,8 @@ function ProfileItemsSection({
     onChange: (index: number, item: ProfileItemForm) => void;
     onRemove: (index: number) => void;
     mediaOptions: Option[];
+    villageLatitude: string;
+    villageLongitude: string;
 }) {
     return (
         <SectionCard
@@ -1465,6 +1591,8 @@ function ProfileItemsSection({
                             onChange={(next) => onChange(index, next)}
                             onRemove={() => onRemove(index)}
                             mediaOptions={mediaOptions}
+                            villageLatitude={villageLatitude}
+                            villageLongitude={villageLongitude}
                         />
                     ))
                 )}
@@ -1481,6 +1609,8 @@ function ProfileItemEditor({
     onChange,
     onRemove,
     mediaOptions,
+    villageLatitude,
+    villageLongitude,
 }: {
     item: ProfileItemForm;
     index: number;
@@ -1489,6 +1619,8 @@ function ProfileItemEditor({
     onChange: (item: ProfileItemForm) => void;
     onRemove: () => void;
     mediaOptions: Option[];
+    villageLatitude: string;
+    villageLongitude: string;
 }) {
     function updateItemMedia(mediaIndex: number, media: MediaForm) {
         onChange({
@@ -1554,6 +1686,29 @@ function ProfileItemEditor({
                     placeholder="Mulai Rp25.000"
                     error={errors[`${prefix}.price_text`]}
                 />
+                <Field
+                    label="Harga Minimum"
+                    value={item.price_min}
+                    onChange={(value) => onChange({ ...item, price_min: value })}
+                    placeholder="25000"
+                    error={errors[`${prefix}.price_min`]}
+                />
+                <Field
+                    label="Harga Maksimum"
+                    value={item.price_max}
+                    onChange={(value) => onChange({ ...item, price_max: value })}
+                    placeholder="150000"
+                    error={errors[`${prefix}.price_max`]}
+                />
+                <Field
+                    label="Urutan"
+                    value={String(item.sort_order ?? 0)}
+                    onChange={(value) =>
+                        onChange({ ...item, sort_order: Number(value) || 0 })
+                    }
+                    placeholder="0"
+                    error={errors[`${prefix}.sort_order`]}
+                />
                 <div className="md:col-span-3">
                     <TextAreaField
                         label="Deskripsi"
@@ -1584,7 +1739,7 @@ function ProfileItemEditor({
                             onChange={(value) =>
                                 onChange({ ...item, latitude: value })
                             }
-                            placeholder="-7.3223551"
+                            placeholder={defaultLatitude}
                             error={errors[`${prefix}.latitude`]}
                         />
                         <Field
@@ -1593,7 +1748,7 @@ function ProfileItemEditor({
                             onChange={(value) =>
                                 onChange({ ...item, longitude: value })
                             }
-                            placeholder="112.7034573"
+                            placeholder={defaultLongitude}
                             error={errors[`${prefix}.longitude`]}
                         />
                         <Field
@@ -1610,6 +1765,8 @@ function ProfileItemEditor({
                         <MiniMap
                             latitude={item.latitude}
                             longitude={item.longitude}
+                            fallbackLatitude={villageLatitude}
+                            fallbackLongitude={villageLongitude}
                             onPick={(latitude, longitude) =>
                                 onChange({
                                     ...item,
@@ -1663,6 +1820,17 @@ function ProfileItemEditor({
                     />
                     Aktif
                 </label>
+                <div className="md:col-span-3">
+                    <TextAreaField
+                        label="Metadata JSON"
+                        value={item.metadata}
+                        onChange={(value) =>
+                            onChange({ ...item, metadata: value })
+                        }
+                        placeholder='{"kapasitas": "20 orang", "catatan": "Opsional"}'
+                        error={errors[`${prefix}.metadata`]}
+                    />
+                </div>
                 <div className="space-y-3 md:col-span-3">
                     <button
                         type="button"

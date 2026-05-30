@@ -1,18 +1,30 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
+    CloudUpload,
     ChevronRight,
     ClipboardList,
+    Eye,
     FileText,
     MapPin,
     MoreVertical,
     Save,
+    Trash2,
     UserRound,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from 'react';
 
 import { surveyAssignments } from '@/routes';
+import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
+import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
 
 type SurveyOption = {
     id: number;
@@ -27,7 +39,21 @@ type SurveyQuestion = {
     question_text: string;
     document_hint: string | null;
     sort_order: number;
+    answer: {
+        id: number;
+        selected_option_id: number;
+        score: number;
+        documents: SurveyDocument[];
+    } | null;
     options: SurveyOption[];
+};
+
+type SurveyDocument = {
+    id: number;
+    file_name: string;
+    file_url: string;
+    mime_type: string | null;
+    file_size: number | null;
 };
 
 type SurveyAspect = {
@@ -75,8 +101,337 @@ const colors = {
     background: '#F7F7F7',
 };
 
+const draftDbName = 'desa-wisata-survey-drafts';
+const draftDbVersion = 1;
+const draftFileStore = 'files';
+
+type DraftFileRecord = {
+    id: string;
+    assignmentId: number;
+    questionId: number;
+    fileName: string;
+    lastModified: number;
+    size: number;
+    file: File;
+};
+
+type SurveyDraftContextValue = {
+    selectedOptions: Record<number, number>;
+    documents: Record<number, File[]>;
+    selectOption: (questionId: number, optionId: number) => void;
+    setQuestionFiles: (questionId: number, files: File[]) => void;
+    removeQuestionFile: (questionId: number, file: File) => void;
+    clearPendingFiles: () => void;
+};
+
+type QuestionDraftStatus = {
+    label: string;
+    description: string;
+    className: string;
+};
+
+const SurveyDraftContext = createContext<SurveyDraftContextValue | null>(null);
+
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
+}
+
+function selectedOptionsStorageKey(assignmentId: number) {
+    return `survey-draft:${assignmentId}:selected-options`;
+}
+
+function draftFileId(assignmentId: number, questionId: number, file: File) {
+    return [
+        assignmentId,
+        questionId,
+        file.name,
+        file.lastModified,
+        file.size,
+    ].join(':');
+}
+
+function getInitialSelectedOptions(aspects: SurveyAspect[]) {
+    return Object.fromEntries(
+        aspects
+            .flatMap((aspect) => aspect.questions)
+            .filter((question) => question.answer)
+            .map((question) => [
+                question.id,
+                question.answer?.selected_option_id,
+            ]),
+    ) as Record<number, number>;
+}
+
+function openDraftDatabase() {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+        return Promise.resolve(null);
+    }
+
+    return new Promise<IDBDatabase | null>((resolve, reject) => {
+        const request = window.indexedDB.open(draftDbName, draftDbVersion);
+
+        request.onupgradeneeded = () => {
+            const database = request.result;
+
+            if (!database.objectStoreNames.contains(draftFileStore)) {
+                database.createObjectStore(draftFileStore, { keyPath: 'id' });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function loadDraftFiles(assignmentId: number) {
+    const database = await openDraftDatabase();
+
+    if (!database) {
+        return {};
+    }
+
+    return new Promise<Record<number, File[]>>((resolve, reject) => {
+        const transaction = database.transaction(draftFileStore, 'readonly');
+        const request = transaction.objectStore(draftFileStore).getAll();
+
+        request.onsuccess = () => {
+            const records = (request.result as DraftFileRecord[]).filter(
+                (record) => record.assignmentId === assignmentId,
+            );
+            const files = records.reduce<Record<number, File[]>>(
+                (grouped, record) => ({
+                    ...grouped,
+                    [record.questionId]: [
+                        ...(grouped[record.questionId] ?? []),
+                        record.file,
+                    ],
+                }),
+                {},
+            );
+
+            resolve(files);
+        };
+        request.onerror = () => reject(request.error);
+        transaction.oncomplete = () => database.close();
+        transaction.onerror = () => reject(transaction.error);
+    });
+}
+
+async function saveDraftFile(
+    assignmentId: number,
+    questionId: number,
+    file: File,
+) {
+    const database = await openDraftDatabase();
+
+    if (!database) {
+        return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+        const transaction = database.transaction(draftFileStore, 'readwrite');
+        const record: DraftFileRecord = {
+            id: draftFileId(assignmentId, questionId, file),
+            assignmentId,
+            questionId,
+            fileName: file.name,
+            lastModified: file.lastModified,
+            size: file.size,
+            file,
+        };
+
+        transaction.objectStore(draftFileStore).put(record);
+        transaction.oncomplete = () => {
+            database.close();
+            resolve();
+        };
+        transaction.onerror = () => reject(transaction.error);
+    });
+}
+
+async function deleteDraftFile(
+    assignmentId: number,
+    questionId: number,
+    file: File,
+) {
+    const database = await openDraftDatabase();
+
+    if (!database) {
+        return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+        const transaction = database.transaction(draftFileStore, 'readwrite');
+
+        transaction
+            .objectStore(draftFileStore)
+            .delete(draftFileId(assignmentId, questionId, file));
+        transaction.oncomplete = () => {
+            database.close();
+            resolve();
+        };
+        transaction.onerror = () => reject(transaction.error);
+    });
+}
+
+async function clearDraftFiles(assignmentId: number) {
+    const database = await openDraftDatabase();
+
+    if (!database) {
+        return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+        const transaction = database.transaction(draftFileStore, 'readwrite');
+        const store = transaction.objectStore(draftFileStore);
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            (request.result as DraftFileRecord[])
+                .filter((record) => record.assignmentId === assignmentId)
+                .forEach((record) => store.delete(record.id));
+        };
+        request.onerror = () => reject(request.error);
+        transaction.oncomplete = () => {
+            database.close();
+            resolve();
+        };
+        transaction.onerror = () => reject(transaction.error);
+    });
+}
+
+function readStoredSelectedOptions(assignmentId: number) {
+    if (typeof window === 'undefined') {
+        return {};
+    }
+
+    try {
+        const stored = window.localStorage.getItem(
+            selectedOptionsStorageKey(assignmentId),
+        );
+
+        return stored ? (JSON.parse(stored) as Record<number, number>) : {};
+    } catch {
+        return {};
+    }
+}
+
+function SurveyDraftProvider({
+    assignmentId,
+    initialSelectedOptions,
+    children,
+}: {
+    assignmentId: number;
+    initialSelectedOptions: Record<number, number>;
+    children: React.ReactNode;
+}) {
+    const [selectedOptions, setSelectedOptions] = useState<
+        Record<number, number>
+    >(() => ({
+        ...initialSelectedOptions,
+        ...readStoredSelectedOptions(assignmentId),
+    }));
+    const [documents, setDocuments] = useState<Record<number, File[]>>({});
+
+    useEffect(() => {
+        let mounted = true;
+
+        loadDraftFiles(assignmentId)
+            .then((files) => {
+                if (mounted) {
+                    setDocuments(files);
+                }
+            })
+            .catch(() => undefined);
+
+        return () => {
+            mounted = false;
+        };
+    }, [assignmentId]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.localStorage.setItem(
+            selectedOptionsStorageKey(assignmentId),
+            JSON.stringify(selectedOptions),
+        );
+    }, [assignmentId, selectedOptions]);
+
+    const selectOption = useCallback((questionId: number, optionId: number) => {
+        setSelectedOptions((current) => ({
+            ...current,
+            [questionId]: optionId,
+        }));
+    }, []);
+
+    const setQuestionFiles = useCallback(
+        (questionId: number, files: File[]) => {
+            if (files.length === 0) {
+                return;
+            }
+
+            setDocuments((current) => ({
+                ...current,
+                [questionId]: [...(current[questionId] ?? []), ...files],
+            }));
+
+            files.forEach((file) => {
+                void saveDraftFile(assignmentId, questionId, file);
+            });
+        },
+        [assignmentId],
+    );
+
+    const removeQuestionFile = useCallback(
+        (questionId: number, file: File) => {
+            setDocuments((current) => ({
+                ...current,
+                [questionId]: (current[questionId] ?? []).filter(
+                    (item) =>
+                        item.name !== file.name ||
+                        item.lastModified !== file.lastModified ||
+                        item.size !== file.size,
+                ),
+            }));
+
+            void deleteDraftFile(assignmentId, questionId, file);
+        },
+        [assignmentId],
+    );
+
+    const clearPendingFiles = useCallback(() => {
+        setDocuments({});
+        void clearDraftFiles(assignmentId);
+    }, [assignmentId]);
+
+    return (
+        <SurveyDraftContext.Provider
+            value={{
+                selectedOptions,
+                documents,
+                selectOption,
+                setQuestionFiles,
+                removeQuestionFile,
+                clearPendingFiles,
+            }}
+        >
+            {children}
+        </SurveyDraftContext.Provider>
+    );
+}
+
+function useSurveyDraft() {
+    const context = useContext(SurveyDraftContext);
+
+    if (!context) {
+        throw new Error(
+            'useSurveyDraft must be used within SurveyDraftProvider',
+        );
+    }
+
+    return context;
 }
 
 function InfoRow({
@@ -137,19 +492,81 @@ function statusClass(status: string) {
     );
 }
 
+function getQuestionDraftStatus(
+    question: SurveyQuestion,
+    selectedOptionId: number | undefined,
+    localFilesCount: number,
+): QuestionDraftStatus {
+    if (!selectedOptionId && localFilesCount === 0) {
+        return {
+            label: 'Belum diisi',
+            description: 'Belum ada jawaban',
+            className: 'bg-[#F7F7F7] text-[#7C7C7C]',
+        };
+    }
+
+    if (!question.answer) {
+        return {
+            label: 'Draft lokal',
+            description: 'Tersimpan di browser, belum masuk database',
+            className: 'bg-[#FFF4EA] text-[#C9681E]',
+        };
+    }
+
+    if (selectedOptionId !== question.answer.selected_option_id) {
+        return {
+            label: 'Diubah lokal',
+            description: 'Berbeda dari jawaban database, belum disimpan',
+            className: 'bg-[#FDECEC] text-[#D81313]',
+        };
+    }
+
+    if (localFilesCount > 0) {
+        return {
+            label: 'Ada draft lokal',
+            description: 'Jawaban sama dengan database, ada dokumen baru',
+            className: 'bg-[#FFF4EA] text-[#C9681E]',
+        };
+    }
+
+    return {
+        label: 'Tersimpan database',
+        description: 'Jawaban sudah tersimpan di database',
+        className: 'bg-[#EAF8F0] text-[#00893D]',
+    };
+}
+
 function QuestionCard({
     aspect,
     question,
     questionNumber,
     selectedOptionId,
+    files,
     onSelectOption,
+    onFilesChange,
+    onPreviewFile,
+    onRemoveFile,
+    onDeleteDocument,
 }: {
     aspect: string;
     question: SurveyQuestion;
     questionNumber: number;
     selectedOptionId?: number;
+    files: File[];
     onSelectOption: (optionId: number) => void;
+    onFilesChange: (files: File[]) => void;
+    onPreviewFile: (file: File) => void;
+    onRemoveFile: (file: File) => void;
+    onDeleteDocument: (document: SurveyDocument) => void;
 }) {
+    const hasDocuments =
+        (question.answer?.documents.length ?? 0) > 0 || files.length > 0;
+    const draftStatus = getQuestionDraftStatus(
+        question,
+        selectedOptionId,
+        files.length,
+    );
+
     return (
         <article className="rounded-2xl border border-[#EFEFEF] bg-white px-4 py-5 sm:px-6">
             <div className="flex flex-wrap items-center gap-2">
@@ -161,6 +578,15 @@ function QuestionCard({
                 </span>
                 <span className="rounded-md bg-[#FDECEC] px-2.5 py-1 text-xs font-bold text-[#D81313]">
                     Wajib isi
+                </span>
+                <span
+                    className={classNames(
+                        'rounded-md px-2.5 py-1 text-xs font-bold',
+                        draftStatus.className,
+                    )}
+                    title={draftStatus.description}
+                >
+                    {draftStatus.label}
                 </span>
             </div>
 
@@ -175,6 +601,117 @@ function QuestionCard({
                     {question.document_hint}
                 </p>
             )}
+            <p
+                className={classNames(
+                    'mt-3 inline-flex rounded-lg px-3 py-2 text-xs font-semibold',
+                    draftStatus.className,
+                )}
+            >
+                {draftStatus.description}
+            </p>
+
+            <div className="mt-6 border-t border-[#EFEFEF] pt-5">
+                <SectionTitle
+                    title="Dokumen pendukung"
+                    subtitle="Enumerator dapat mengunggah banyak foto atau dokumen untuk pertanyaan ini."
+                />
+
+                <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F1F5F8] px-4 py-4 text-left transition hover:bg-[#EAF3FF] active:scale-[0.995]">
+                    <CloudUpload
+                        size={32}
+                        strokeWidth={2.1}
+                        className="shrink-0 text-[#0066AE]"
+                    />
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-[#0066AE]">
+                            Unggah foto atau dokumen
+                        </span>
+                        <span className="block text-xs font-medium text-[#7C7C7C]">
+                            JPG, PNG, WEBP, atau PDF. Maksimal 5 MB per file.
+                        </span>
+                    </span>
+                    <input
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                        onChange={(event) =>
+                            onFilesChange(Array.from(event.target.files ?? []))
+                        }
+                        className="sr-only"
+                    />
+                </label>
+
+                {hasDocuments && (
+                    <div className="mt-3 space-y-2">
+                        {question.answer?.documents.map((document) => (
+                            <div
+                                key={document.id}
+                                className="flex items-center gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2 text-sm font-semibold text-[#303030] transition hover:border-[#AAD2F8] hover:bg-[#F8FBFF]"
+                            >
+                                <FileText className="size-5 shrink-0 text-[#0066AE]" />
+                                <span className="min-w-0 flex-1 truncate">
+                                    {document.file_name}
+                                </span>
+                                <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-xs font-bold text-[#00893D]">
+                                    Database
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        window.open(
+                                            document.file_url,
+                                            '_blank',
+                                            'noopener,noreferrer',
+                                        )
+                                    }
+                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
+                                    aria-label={`Preview ${document.file_name}`}
+                                >
+                                    <Eye className="size-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onDeleteDocument(document)}
+                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
+                                    aria-label={`Hapus ${document.file_name}`}
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </div>
+                        ))}
+                        {files.map((file) => (
+                            <div
+                                key={`${file.name}-${file.lastModified}`}
+                                className="flex items-center gap-3 rounded-xl border border-[#AAD2F8] bg-[#F8FBFF] px-3 py-2 text-sm font-semibold text-[#303030]"
+                            >
+                                <FileText className="size-5 shrink-0 text-[#0066AE]" />
+                                <span className="min-w-0 flex-1 truncate">
+                                    {file.name}
+                                </span>
+                                <span className="rounded-md bg-[#FFF4EA] px-2 py-1 text-xs font-bold text-[#C9681E]">
+                                    Draft lokal
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => onPreviewFile(file)}
+                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
+                                    aria-label={`Preview ${file.name}`}
+                                >
+                                    <Eye className="size-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onRemoveFile(file)}
+                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
+                                    aria-label={`Hapus ${file.name}`}
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             <div className="mt-6 border-t border-[#EFEFEF] pt-5">
                 <SectionTitle
@@ -185,6 +722,8 @@ function QuestionCard({
                 <div className="mt-3 divide-y divide-[#EFEFEF]">
                     {question.options.map((option) => {
                         const selected = selectedOptionId === option.id;
+                        const isDatabaseAnswer =
+                            question.answer?.selected_option_id === option.id;
 
                         return (
                             <label
@@ -226,6 +765,24 @@ function QuestionCard({
                                     >
                                         {option.score} - {option.label}
                                     </span>
+                                    {selected && (
+                                        <span
+                                            className={classNames(
+                                                'mt-1 inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold',
+                                                isDatabaseAnswer
+                                                    ? 'bg-[#EAF8F0] text-[#00893D]'
+                                                    : question.answer
+                                                      ? 'bg-[#FDECEC] text-[#D81313]'
+                                                      : 'bg-[#FFF4EA] text-[#C9681E]',
+                                            )}
+                                        >
+                                            {isDatabaseAnswer
+                                                ? 'Jawaban database'
+                                                : question.answer
+                                                  ? 'Perubahan lokal'
+                                                  : 'Draft lokal'}
+                                        </span>
+                                    )}
                                 </span>
                             </label>
                         );
@@ -242,10 +799,42 @@ export default function TakeSurvey({
     aspects,
     summary,
 }: TakeSurveyProps) {
+    const initialSelectedOptions = useMemo(
+        () => getInitialSelectedOptions(aspects),
+        [aspects],
+    );
+
+    return (
+        <SurveyDraftProvider
+            assignmentId={assignment.id}
+            initialSelectedOptions={initialSelectedOptions}
+        >
+            <TakeSurveyContent
+                assignment={assignment}
+                template={template}
+                aspects={aspects}
+                summary={summary}
+            />
+        </SurveyDraftProvider>
+    );
+}
+
+function TakeSurveyContent({
+    assignment,
+    template,
+    aspects,
+    summary,
+}: TakeSurveyProps) {
     const [activeAspectIndex, setActiveAspectIndex] = useState(0);
-    const [selectedOptions, setSelectedOptions] = useState<
-        Record<number, number>
-    >({});
+    const [processing, setProcessing] = useState(false);
+    const {
+        selectedOptions,
+        documents,
+        selectOption,
+        setQuestionFiles,
+        removeQuestionFile,
+        clearPendingFiles,
+    } = useSurveyDraft();
 
     const activeAspect = aspects[activeAspectIndex] ?? null;
     const hasAspects = aspects.length > 0;
@@ -260,13 +849,6 @@ export default function TakeSurvey({
         [activeAspectIndex, aspects],
     );
 
-    function selectOption(questionId: number, optionId: number) {
-        setSelectedOptions((current) => ({
-            ...current,
-            [questionId]: optionId,
-        }));
-    }
-
     function previousAspect() {
         setActiveAspectIndex((current) => Math.max(current - 1, 0));
     }
@@ -275,6 +857,56 @@ export default function TakeSurvey({
         setActiveAspectIndex((current) =>
             Math.min(current + 1, aspects.length - 1),
         );
+    }
+
+    function previewFile(file: File) {
+        const url = URL.createObjectURL(file);
+
+        window.open(url, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
+
+    function deleteStoredDocument(document: SurveyDocument) {
+        router.delete(
+            destroySurveyDocument.url({
+                assignment: assignment.id,
+                document: document.id,
+            }),
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+    function submitDraft() {
+        const selectedQuestionIds = Object.keys(selectedOptions);
+
+        if (selectedQuestionIds.length === 0) {
+            return;
+        }
+
+        const formData = new FormData();
+
+        selectedQuestionIds.forEach((questionId, index) => {
+            formData.append(`answers[${index}][question_id]`, questionId);
+            formData.append(
+                `answers[${index}][survey_question_option_id]`,
+                String(selectedOptions[Number(questionId)]),
+            );
+
+            (documents[Number(questionId)] ?? []).forEach((file) => {
+                formData.append(`answers[${index}][documents][]`, file);
+            });
+        });
+
+        setProcessing(true);
+
+        router.post(storeSurveyDraft.url(assignment.id), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => setProcessing(false),
+            onSuccess: clearPendingFiles,
+        });
     }
 
     return (
@@ -309,6 +941,8 @@ export default function TakeSurvey({
                             <button
                                 type="button"
                                 aria-label="Simpan"
+                                disabled={processing}
+                                onClick={submitDraft}
                                 className="flex size-9 items-center justify-center rounded-lg transition hover:bg-[#F1F5F8] active:scale-95"
                             >
                                 <Save size={22} strokeWidth={2.1} />
@@ -453,9 +1087,18 @@ export default function TakeSurvey({
                                 question={question}
                                 questionNumber={currentStartNumber + index + 1}
                                 selectedOptionId={selectedOptions[question.id]}
+                                files={documents[question.id] ?? []}
                                 onSelectOption={(optionId) =>
                                     selectOption(question.id, optionId)
                                 }
+                                onFilesChange={(files) =>
+                                    setQuestionFiles(question.id, files)
+                                }
+                                onPreviewFile={previewFile}
+                                onRemoveFile={(file) =>
+                                    removeQuestionFile(question.id, file)
+                                }
+                                onDeleteDocument={deleteStoredDocument}
                             />
                         ))}
 
@@ -520,9 +1163,11 @@ export default function TakeSurvey({
 
                         <button
                             type="button"
+                            disabled={processing}
+                            onClick={submitDraft}
                             className="h-11 rounded-xl px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-[0.98]"
                         >
-                            Simpan Draft
+                            {processing ? 'Menyimpan...' : 'Simpan Draft'}
                         </button>
 
                         <button

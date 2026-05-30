@@ -19,8 +19,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
     Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
     Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
+    Route::get('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'show'])
+        ->name('survey-assignments.show');
     Route::get('/survey-assignments/{assignment}/take-survey', [VillageSurveyAssignmentController::class, 'takeSurvey'])
         ->name('survey-assignments.take-survey');
+    Route::post('/survey-assignments/{assignment}/take-survey', [VillageSurveyAssignmentController::class, 'storeSurveyDraft'])
+        ->name('survey-assignments.take-survey.store');
+    Route::delete('/survey-assignments/{assignment}/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroySurveyDocument'])
+        ->name('survey-assignments.take-survey.documents.destroy');
 });
 Route::get('/questions', SurveyQuestionController::class)->name('questions');
 Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])

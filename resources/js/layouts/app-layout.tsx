@@ -1,5 +1,12 @@
+import { useFlashToast } from '@/hooks/use-flash-toast';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import type { BreadcrumbItem } from '@/types';
+
+function FlashToastListener() {
+    useFlashToast();
+
+    return null;
+}
 
 export default function AppLayout({
     breadcrumbs = [],
@@ -10,6 +17,7 @@ export default function AppLayout({
 }) {
     return (
         <AppLayoutTemplate breadcrumbs={breadcrumbs}>
+            <FlashToastListener />
             {children}
         </AppLayoutTemplate>
     );

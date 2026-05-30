@@ -75,6 +75,7 @@ class UpdateTourismVillageRequest extends FormRequest
             'profile_items.*.opening_hours' => ['nullable', 'string', 'max:150'],
             'profile_items.*.contact_name' => ['nullable', 'string', 'max:150'],
             'profile_items.*.contact_phone' => ['nullable', 'string', 'max:30'],
+            'profile_items.*.metadata' => ['nullable', 'json'],
             'profile_items.*.is_active' => ['boolean'],
             'profile_items.*.sort_order' => ['nullable', 'integer'],
             'profile_items.*.media' => ['nullable', 'array'],

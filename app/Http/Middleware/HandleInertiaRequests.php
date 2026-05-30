@@ -41,7 +41,35 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'success' => fn (): ?string => $request->session()->get('success'),
+                'error' => fn (): ?string => $request->session()->get('error'),
+                'warning' => fn (): ?string => $request->session()->get('warning'),
+                'info' => fn (): ?string => $request->session()->get('info'),
+                'toast' => fn (): ?array => $this->toast($request),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * Return the first supported flash message as a normalized toast payload.
+     *
+     * @return array{type: string, message: string}|null
+     */
+    private function toast(Request $request): ?array
+    {
+        foreach (['success', 'error', 'warning', 'info'] as $type) {
+            $message = $request->session()->get($type);
+
+            if (is_string($message) && $message !== '') {
+                return [
+                    'type' => $type,
+                    'message' => $message,
+                ];
+            }
+        }
+
+        return null;
     }
 }

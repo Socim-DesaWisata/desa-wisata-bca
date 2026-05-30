@@ -2,14 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\SurveyAnswer;
+use App\Models\SurveyAnswerDocument;
 use App\Models\SurveyQuestion;
+use App\Models\SurveyQuestionOption;
 use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
 use App\Models\User;
 use App\Models\VillageSurveyAssignment;
 use Carbon\CarbonInterface;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class VillageSurveyAssignmentService
@@ -99,6 +105,126 @@ class VillageSurveyAssignmentService
     /**
      * @return array<string, mixed>
      */
+    public function getShowData(VillageSurveyAssignment $assignment): array
+    {
+        $assignment->load([
+            'village:id,code,name,description,province,city,district,subdistrict,address,postal_code,latitude,longitude,maps_url,manager_name,manager_phone,manager_email,status',
+            'village.media' => fn ($query) => $query
+                ->select(['id', 'village_id', 'type', 'title', 'file_path', 'external_url', 'mime_type', 'file_size', 'is_cover', 'sort_order'])
+                ->orderByDesc('is_cover')
+                ->orderBy('sort_order')
+                ->orderBy('id'),
+            'template:id,title,description,status,published_at',
+            'template.questions' => fn ($query) => $query
+                ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
+                ->orderBy('aspect')
+                ->orderBy('sort_order')
+                ->orderBy('id'),
+            'template.questions.options' => fn ($query) => $query
+                ->select(['id', 'survey_question_id', 'score', 'label', 'sort_order'])
+                ->orderBy('sort_order')
+                ->orderBy('score')
+                ->orderBy('id'),
+            'answers' => fn ($query) => $query->select([
+                'id',
+                'village_survey_assignment_id',
+                'survey_question_id',
+                'survey_question_option_id',
+                'score',
+                'aspect_snapshot',
+                'question_text_snapshot',
+                'option_label_snapshot',
+                'answered_by',
+                'last_edited_by',
+                'answered_at',
+                'last_edited_at',
+            ]),
+            'answers.answeredBy:id,name,email',
+            'answers.lastEditedBy:id,name,email',
+            'answers.option:id,score,label',
+            'answers.documents:id,survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,created_at',
+            'answers.documents.uploadedBy:id,name,email',
+            'answers.histories' => fn ($query) => $query
+                ->select([
+                    'id',
+                    'survey_answer_id',
+                    'village_survey_assignment_id',
+                    'survey_question_id',
+                    'actor_id',
+                    'action',
+                    'old_score',
+                    'new_score',
+                    'old_option_label',
+                    'new_option_label',
+                    'created_at',
+                ])
+                ->with('actor:id,name,email')
+                ->latest('created_at'),
+            'assignedBy:id,name,email',
+            'submittedBy:id,name,email',
+            'reviewedBy:id,name,email',
+            'logs' => fn ($query) => $query
+                ->with('actor:id,name,email')
+                ->latest('created_at')
+                ->limit(10),
+            'answerHistories' => fn ($query) => $query
+                ->with(['actor:id,name,email', 'question:id,code,question_text'])
+                ->latest('created_at')
+                ->limit(10),
+        ]);
+        $assignment->loadCount(['answers', 'documents']);
+
+        $questions = $assignment->template?->questions ?? collect();
+        $answersByQuestion = $assignment->answers->keyBy('survey_question_id');
+        $aspects = $this->formatAssignmentDetailAspects($questions, $answersByQuestion);
+        $summary = $this->buildAssignmentSummary($questions, $answersByQuestion, $aspects);
+        $cover = $assignment->village?->media->first();
+
+        return [
+            'assignment' => [
+                ...$this->formatAssignment($assignment),
+                'village' => [
+                    'id' => $assignment->village?->id,
+                    'code' => $assignment->village?->code,
+                    'name' => $assignment->village?->name ?? '-',
+                    'description' => $assignment->village?->description,
+                    'status' => $assignment->village?->status,
+                    'address' => $assignment->village?->address,
+                    'postal_code' => $assignment->village?->postal_code,
+                    'latitude' => $assignment->village?->latitude,
+                    'longitude' => $assignment->village?->longitude,
+                    'maps_url' => $assignment->village?->maps_url,
+                    'manager_name' => $assignment->village?->manager_name,
+                    'manager_phone' => $assignment->village?->manager_phone,
+                    'manager_email' => $assignment->village?->manager_email,
+                    'location' => collect([
+                        $assignment->village?->subdistrict,
+                        $assignment->village?->district,
+                        $assignment->village?->city,
+                        $assignment->village?->province,
+                    ])->filter()->implode(', ') ?: '-',
+                    'cover_url' => $cover ? $this->mediaUrl($cover->file_path, $cover->external_url) : null,
+                ],
+                'template' => [
+                    'id' => $assignment->template?->id,
+                    'title' => $assignment->template?->title ?? '-',
+                    'description' => $assignment->template?->description,
+                    'status' => $assignment->template?->status,
+                    'published_at' => $this->formatDate($assignment->template?->published_at),
+                ],
+                'assigned_by_user' => $this->formatUser($assignment->assignedBy),
+                'submitted_by_user' => $this->formatUser($assignment->submittedBy),
+                'reviewed_by_user' => $this->formatUser($assignment->reviewedBy),
+            ],
+            'summary' => $summary,
+            'aspects' => $aspects,
+            'activities' => $this->formatAssignmentActivities($assignment),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function getTakeSurveyData(VillageSurveyAssignment $assignment): array
     {
         $assignment->load([
@@ -114,11 +240,22 @@ class VillageSurveyAssignmentService
                 ->orderBy('sort_order')
                 ->orderBy('score')
                 ->orderBy('id'),
+            'answers' => fn ($query) => $query->select([
+                'id',
+                'village_survey_assignment_id',
+                'survey_question_id',
+                'survey_question_option_id',
+                'score',
+                'answered_at',
+                'last_edited_at',
+            ]),
+            'answers.option:id,score,label',
+            'answers.documents:id,survey_answer_id,file_name,file_path,mime_type,file_size,created_at',
             'assignedBy:id,name,email',
         ]);
 
         $questions = $assignment->template?->questions ?? collect();
-        $aspects = $this->formatSurveyAspects($questions);
+        $aspects = $this->formatSurveyAspects($questions, $assignment->answers->keyBy('survey_question_id'));
 
         return [
             'assignment' => [
@@ -160,6 +297,70 @@ class VillageSurveyAssignmentService
                 'total_options' => $questions->sum(fn ($question): int => $question->options->count()),
             ],
         ];
+    }
+
+    /**
+     * @param  array{answers: array<int, array<string, mixed>>}  $data
+     */
+    public function saveSurveyDraft(VillageSurveyAssignment $assignment, array $data, User $user): void
+    {
+        DB::transaction(function () use ($assignment, $data, $user): void {
+            foreach ($data['answers'] as $answerData) {
+                $option = SurveyQuestionOption::query()
+                    ->with('question:id,aspect,question_text')
+                    ->findOrFail($answerData['survey_question_option_id']);
+
+                $answer = SurveyAnswer::query()->updateOrCreate(
+                    [
+                        'village_survey_assignment_id' => $assignment->id,
+                        'survey_question_id' => $answerData['question_id'],
+                    ],
+                    [
+                        'survey_question_option_id' => $option->id,
+                        'score' => (int) $option->score,
+                        'aspect_snapshot' => $option->question?->aspect,
+                        'question_text_snapshot' => $option->question?->question_text,
+                        'option_label_snapshot' => $option->label,
+                        'answered_by' => $user->id,
+                        'last_edited_by' => $user->id,
+                        'answered_at' => now(),
+                        'last_edited_at' => now(),
+                    ]
+                );
+
+                foreach (Arr::wrap($answerData['documents'] ?? []) as $document) {
+                    if (! $document instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $path = $document->storePublicly("survey-answers/{$assignment->id}/{$answer->id}", 'public');
+
+                    $answer->documents()->create([
+                        'uploaded_by' => $user->id,
+                        'file_name' => $document->getClientOriginalName(),
+                        'file_path' => $path,
+                        'mime_type' => $document->getClientMimeType(),
+                        'file_size' => $document->getSize(),
+                    ]);
+                }
+            }
+
+            $assignment->update([
+                'status' => $assignment->status === 'assigned' ? 'in_progress' : $assignment->status,
+                'started_at' => $assignment->started_at ?? now(),
+                'last_saved_at' => now(),
+            ]);
+        });
+    }
+
+    public function deleteSurveyDocument(VillageSurveyAssignment $assignment, SurveyAnswerDocument $document): void
+    {
+        $document->loadMissing('answer:id,village_survey_assignment_id');
+
+        abort_unless($document->answer?->village_survey_assignment_id === $assignment->id, 404);
+
+        Storage::disk('public')->delete($document->file_path);
+        $document->delete();
     }
 
     /**
@@ -297,9 +498,10 @@ class VillageSurveyAssignmentService
 
     /**
      * @param  Collection<int, SurveyQuestion>  $questions
+     * @param  Collection<int, SurveyAnswer>  $answersByQuestion
      * @return array<int, array<string, mixed>>
      */
-    private function formatSurveyAspects(Collection $questions): array
+    private function formatSurveyAspects(Collection $questions, Collection $answersByQuestion): array
     {
         return $questions
             ->groupBy('aspect')
@@ -307,26 +509,242 @@ class VillageSurveyAssignmentService
                 'name' => $aspect,
                 'questions' => $aspectQuestions
                     ->values()
-                    ->map(fn ($question): array => [
-                        'id' => $question->id,
-                        'code' => $question->code,
-                        'question_text' => $question->question_text,
-                        'document_hint' => $question->document_hint,
-                        'sort_order' => $question->sort_order,
-                        'options' => $question->options
-                            ->map(fn ($option): array => [
-                                'id' => $option->id,
-                                'score' => (int) $option->score,
-                                'label' => $option->label,
-                                'sort_order' => $option->sort_order,
-                            ])
-                            ->values()
-                            ->all(),
-                    ])
+                    ->map(function (SurveyQuestion $question) use ($answersByQuestion): array {
+                        $answer = $answersByQuestion->get($question->id);
+
+                        return [
+                            'id' => $question->id,
+                            'code' => $question->code,
+                            'question_text' => $question->question_text,
+                            'document_hint' => $question->document_hint,
+                            'sort_order' => $question->sort_order,
+                            'answer' => $answer ? [
+                                'id' => $answer->id,
+                                'selected_option_id' => $answer->survey_question_option_id,
+                                'score' => (int) $answer->score,
+                                'documents' => $answer->documents
+                                    ->map(fn ($document): array => [
+                                        'id' => $document->id,
+                                        'file_name' => $document->file_name,
+                                        'file_url' => Storage::disk('public')->url($document->file_path),
+                                        'mime_type' => $document->mime_type,
+                                        'file_size' => $document->file_size,
+                                    ])
+                                    ->values()
+                                    ->all(),
+                            ] : null,
+                            'options' => $question->options
+                                ->map(fn ($option): array => [
+                                    'id' => $option->id,
+                                    'score' => (int) $option->score,
+                                    'label' => $option->label,
+                                    'sort_order' => $option->sort_order,
+                                ])
+                                ->values()
+                                ->all(),
+                        ];
+                    })
                     ->all(),
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  Collection<int, SurveyQuestion>  $questions
+     * @param  Collection<int, SurveyAnswer>  $answersByQuestion
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatAssignmentDetailAspects(Collection $questions, Collection $answersByQuestion): array
+    {
+        return $questions
+            ->groupBy('aspect')
+            ->map(function (Collection $aspectQuestions, string $aspect) use ($answersByQuestion): array {
+                $questionRows = $aspectQuestions
+                    ->values()
+                    ->map(function (SurveyQuestion $question, int $index) use ($answersByQuestion): array {
+                        $answer = $answersByQuestion->get($question->id);
+                        $maxScore = (int) $question->options->max('score');
+
+                        return [
+                            'id' => $question->id,
+                            'number' => $index + 1,
+                            'code' => $question->code ?? 'Q-'.$question->id,
+                            'question_text' => $question->question_text,
+                            'document_hint' => $question->document_hint,
+                            'max_score' => $maxScore,
+                            'answer' => $answer ? [
+                                'id' => $answer->id,
+                                'survey_question_option_id' => $answer->survey_question_option_id,
+                                'score' => (int) $answer->score,
+                                'score_label' => $answer->option_label_snapshot ?? $answer->option?->label ?? '-',
+                                'answered_at' => $this->formatDate($answer->answered_at),
+                                'last_edited_at' => $this->formatDate($answer->last_edited_at),
+                                'answered_by' => $this->formatUser($answer->answeredBy),
+                                'last_edited_by' => $this->formatUser($answer->lastEditedBy),
+                                'documents' => $answer->documents
+                                    ->map(fn (SurveyAnswerDocument $document): array => $this->formatDocument($document))
+                                    ->values()
+                                    ->all(),
+                                'histories' => $answer->histories
+                                    ->map(fn ($history): array => [
+                                        'id' => $history->id,
+                                        'action' => Str::headline($history->action),
+                                        'actor' => $this->formatUser($history->actor),
+                                        'old_score' => $history->old_score ? (string) $history->old_score : null,
+                                        'new_score' => $history->new_score ? (string) $history->new_score : null,
+                                        'old_option_label' => $history->old_option_label,
+                                        'new_option_label' => $history->new_option_label,
+                                        'created_at' => $this->formatDate($history->created_at),
+                                    ])
+                                    ->values()
+                                    ->all(),
+                            ] : null,
+                            'options' => $question->options
+                                ->map(fn ($option): array => [
+                                    'id' => $option->id,
+                                    'score' => (int) $option->score,
+                                    'label' => $option->label,
+                                    'sort_order' => $option->sort_order,
+                                ])
+                                ->values()
+                                ->all(),
+                        ];
+                    });
+
+                $answeredCount = $questionRows->whereNotNull('answer')->count();
+                $documentsCount = $questionRows->sum(fn (array $question): int => count($question['answer']['documents'] ?? []));
+                $score = $questionRows->sum(fn (array $question): int => (int) ($question['answer']['score'] ?? 0));
+                $maxScore = $questionRows->sum(fn (array $question): int => (int) $question['max_score']);
+                $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 1) : 0.0;
+
+                return [
+                    'name' => $aspect,
+                    'question_count' => $questionRows->count(),
+                    'answered_count' => $answeredCount,
+                    'documents_count' => $documentsCount,
+                    'score' => $score,
+                    'max_score' => $maxScore,
+                    'score_percent' => $percent,
+                    'questions' => $questionRows->values()->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, SurveyQuestion>  $questions
+     * @param  Collection<int, SurveyAnswer>  $answersByQuestion
+     * @param  array<int, array<string, mixed>>  $aspects
+     * @return array<string, mixed>
+     */
+    private function buildAssignmentSummary(Collection $questions, Collection $answersByQuestion, array $aspects): array
+    {
+        $totalScore = $answersByQuestion->sum(fn (SurveyAnswer $answer): int => (int) $answer->score);
+        $maxScore = $questions->sum(fn (SurveyQuestion $question): int => (int) $question->options->max('score'));
+        $finalScore = $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0;
+        $rankedAspects = collect($aspects)->filter(fn (array $aspect): bool => (int) $aspect['max_score'] > 0);
+        $highestAspect = $rankedAspects->sortByDesc('score_percent')->first();
+        $lowestAspect = $rankedAspects->sortBy('score_percent')->first();
+
+        return [
+            'total_questions' => $questions->count(),
+            'answered_questions' => $answersByQuestion->count(),
+            'unanswered_questions' => max($questions->count() - $answersByQuestion->count(), 0),
+            'total_documents' => $answersByQuestion->sum(fn (SurveyAnswer $answer): int => $answer->documents->count()),
+            'total_score' => $totalScore,
+            'max_score' => $maxScore,
+            'final_score' => $finalScore,
+            'highest_aspect' => $highestAspect ? [
+                'name' => $highestAspect['name'],
+                'score_percent' => $highestAspect['score_percent'],
+            ] : null,
+            'lowest_aspect' => $lowestAspect ? [
+                'name' => $lowestAspect['name'],
+                'score_percent' => $lowestAspect['score_percent'],
+            ] : null,
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function formatAssignmentActivities(VillageSurveyAssignment $assignment): array
+    {
+        $logs = $assignment->logs
+            ->map(fn ($log): array => [
+                'date' => $this->formatDate($log->created_at),
+                'title' => $log->description ?: Str::headline($log->action),
+                'actor' => $log->actor?->name ?? '-',
+                'type' => 'assignment',
+            ]);
+
+        $histories = $assignment->answerHistories
+            ->map(fn ($history): array => [
+                'date' => $this->formatDate($history->created_at),
+                'title' => trim(($history->question?->code ? "{$history->question->code} - " : '').Str::headline($history->action)),
+                'actor' => $history->actor?->name ?? '-',
+                'type' => 'answer',
+            ]);
+
+        return $logs
+            ->merge($histories)
+            ->sortByDesc('date')
+            ->values()
+            ->take(10)
+            ->all();
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function formatUser(?User $user): array
+    {
+        return [
+            'id' => $user?->id ? (string) $user->id : null,
+            'name' => $user?->name ?? '-',
+            'email' => $user?->email,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatDocument(SurveyAnswerDocument $document): array
+    {
+        return [
+            'id' => $document->id,
+            'file_name' => $document->file_name,
+            'file_url' => Storage::disk('public')->url($document->file_path),
+            'mime_type' => $document->mime_type,
+            'file_size' => $document->file_size,
+            'file_size_label' => $this->formatFileSize($document->file_size),
+            'uploaded_at' => $this->formatDate($document->created_at),
+            'uploaded_by' => $this->formatUser($document->uploadedBy),
+        ];
+    }
+
+    private function mediaUrl(?string $filePath, ?string $externalUrl): ?string
+    {
+        if ($externalUrl) {
+            return $externalUrl;
+        }
+
+        return $filePath ? Storage::disk('public')->url($filePath) : null;
+    }
+
+    private function formatFileSize(?int $bytes): string
+    {
+        if (! $bytes) {
+            return '-';
+        }
+
+        if ($bytes < 1024 * 1024) {
+            return round($bytes / 1024, 1).' KB';
+        }
+
+        return round($bytes / (1024 * 1024), 1).' MB';
     }
 
     /**

@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { dashboard, surveyAssignments } from '@/routes';
 import {
+    show as showSurveyAssignment,
     store as storeSurveyAssignment,
     takeSurvey,
 } from '@/routes/survey-assignments';
@@ -448,33 +449,20 @@ export default function SurveyAssignmentIndex({
                                 Daftar Survey Assignment
                             </h2>
                             <p className="mt-0.5 text-sm text-[#7C7C7C]">
-                                Semua kolom utama dari tabel
-                                village_survey_assignments ditampilkan di daftar
-                                ini.
+                                Ringkasan assignment survey desa wisata dan
+                                progress pengisiannya.
                             </p>
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1680px] border-collapse text-left text-sm">
+                            <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                                 <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
                                     <tr>
                                         {[
                                             'ID',
                                             'Desa',
-                                            'Village ID',
-                                            'Template',
-                                            'Template ID',
                                             'Status',
-                                            'Assigned By',
-                                            'Submitted By',
-                                            'Reviewed By',
-                                            'Assigned At',
-                                            'Started At',
-                                            'Last Saved At',
-                                            'Submitted At',
-                                            'Reviewed At',
                                             'Created At',
-                                            'Updated At',
                                             'Progress',
                                             'Aksi',
                                         ].map((head) => (
@@ -509,21 +497,6 @@ export default function SurveyAssignmentIndex({
                                                     }
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.village_id}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-bold text-[#303030]">
-                                                    {assignment.template_title}
-                                                </span>
-                                                <span className="block text-[12px] leading-4 text-[#7C7C7C]">
-                                                    Status template:{' '}
-                                                    {assignment.template_status}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.survey_template_id}
-                                            </td>
                                             <td className="px-3 py-3">
                                                 <Badge
                                                     className={statusClass(
@@ -533,60 +506,8 @@ export default function SurveyAssignmentIndex({
                                                     {assignment.status_label}
                                                 </Badge>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-medium text-[#303030]">
-                                                    {
-                                                        assignment.assigned_by_name
-                                                    }
-                                                </span>
-                                                <span className="block text-[12px] text-[#7C7C7C]">
-                                                    ID {assignment.assigned_by}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-medium text-[#303030]">
-                                                    {
-                                                        assignment.submitted_by_name
-                                                    }
-                                                </span>
-                                                <span className="block text-[12px] text-[#7C7C7C]">
-                                                    {assignment.submitted_by
-                                                        ? `ID ${assignment.submitted_by}`
-                                                        : '-'}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-medium text-[#303030]">
-                                                    {
-                                                        assignment.reviewed_by_name
-                                                    }
-                                                </span>
-                                                <span className="block text-[12px] text-[#7C7C7C]">
-                                                    {assignment.reviewed_by
-                                                        ? `ID ${assignment.reviewed_by}`
-                                                        : '-'}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.assigned_at}
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.started_at}
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.last_saved_at}
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.submitted_at}
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.reviewed_at}
-                                            </td>
                                             <td className="px-3 py-3 font-medium text-[#303030]">
                                                 {assignment.created_at}
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.updated_at}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#0066AE]">
@@ -611,9 +532,18 @@ export default function SurveyAssignmentIndex({
                                                         align="end"
                                                         className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                     >
-                                                        <DropdownMenuItem className="gap-2 text-xs">
-                                                            <Eye className="size-4 text-[#303030]" />
-                                                            Lihat Detail
+                                                        <DropdownMenuItem
+                                                            asChild
+                                                            className="gap-2 text-xs"
+                                                        >
+                                                            <Link
+                                                                href={showSurveyAssignment.url(
+                                                                    assignment.id,
+                                                                )}
+                                                            >
+                                                                <Eye className="size-4 text-[#303030]" />
+                                                                Lihat Detail
+                                                            </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             asChild

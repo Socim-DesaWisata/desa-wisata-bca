@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\StoreSurveyAnswerDraftRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreVillageSurveyAssignmentRequest;
+use App\Models\SurveyAnswerDocument;
 use App\Models\VillageSurveyAssignment;
 use App\Services\VillageSurveyAssignmentService;
 use Illuminate\Http\RedirectResponse;
@@ -28,10 +30,37 @@ class VillageSurveyAssignmentController extends Controller
         return back()->with('success', 'Survey assignment berhasil dibuat.');
     }
 
+    public function show(
+        VillageSurveyAssignment $assignment,
+        VillageSurveyAssignmentService $service
+    ): Response {
+        return Inertia::render('survey-assignment/show', $service->getShowData($assignment));
+    }
+
     public function takeSurvey(
         VillageSurveyAssignment $assignment,
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey/take-survey', $service->getTakeSurveyData($assignment));
+    }
+
+    public function storeSurveyDraft(
+        StoreSurveyAnswerDraftRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->saveSurveyDraft($assignment, $request->validated(), $request->user());
+
+        return back()->with('success', 'Draft survey berhasil disimpan.');
+    }
+
+    public function destroySurveyDocument(
+        VillageSurveyAssignment $assignment,
+        SurveyAnswerDocument $document,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->deleteSurveyDocument($assignment, $document);
+
+        return back()->with('success', 'Dokumen survey berhasil dihapus.');
     }
 }
