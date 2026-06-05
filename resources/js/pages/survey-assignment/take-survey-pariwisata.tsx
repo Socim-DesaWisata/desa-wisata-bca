@@ -2,8 +2,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
-    CloudUpload,
     ChevronRight,
+    CloudUpload,
     ClipboardList,
     Eye,
     FileText,
@@ -24,29 +24,17 @@ import {
 } from 'react';
 
 import { surveyAssignments } from '@/routes';
-import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
-import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
+import { show as showPariwisata } from '@/routes/survey-assignments/pariwisata';
+import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
+import { destroy as destroyPariwisataSurveyDocument } from '@/routes/survey-assignments/pariwisata/take-survey/documents';
 
 type SurveyOption = {
     id: number;
     score: number;
+    level: string;
     label: string;
+    description: string;
     sort_order: number;
-};
-
-type SurveyQuestion = {
-    id: number;
-    code: string | null;
-    question_text: string;
-    document_hint: string | null;
-    sort_order: number;
-    answer: {
-        id: number;
-        selected_option_id: number;
-        score: number;
-        documents: SurveyDocument[];
-    } | null;
-    options: SurveyOption[];
 };
 
 type SurveyDocument = {
@@ -55,14 +43,46 @@ type SurveyDocument = {
     file_url: string;
     mime_type: string | null;
     file_size: number | null;
+    file_size_label: string;
 };
 
-type SurveyAspect = {
-    name: string;
+type SurveyQuestion = {
+    id: number;
+    category_code: string | null;
+    category_name: string | null;
+    sub_category_code: string | null;
+    sub_category_name: string | null;
+    criteria_code: string | null;
+    criteria_name: string | null;
+    criteria_description: string | null;
+    indicator_code: string;
+    indicator_name: string;
+    indicator_description: string | null;
+    supporting_evidence: string | null;
+    document_required: boolean;
+    document_hint: string | null;
+    sort_order: number;
+    answer: {
+        id: number;
+        selected_option_id: number;
+        score: number;
+        notes: string | null;
+        documents: SurveyDocument[];
+    } | null;
+    options: SurveyOption[];
+};
+
+type SurveySubCategory = {
+    sub_category_code: string;
+    sub_category_name: string;
+    category_code: string | null;
+    category_name: string | null;
+    question_count: number;
+    answered_count: number;
     questions: SurveyQuestion[];
 };
 
-type TakeSurveyProps = {
+type TakePariwisataSurveyProps = {
     assignment: {
         id: number;
         code: string;
@@ -78,46 +98,46 @@ type TakeSurveyProps = {
             location: string;
         };
         assigned_by: {
-            id: number | null;
+            id: string | null;
             name: string;
             email: string | null;
         };
     };
+    pariwisata: {
+        id: number;
+        name: string;
+        status_label: string;
+        address: string | null;
+        categories: Array<{ id: number; value: string; label: string }>;
+    };
     template: {
-        id: number | null;
+        id: number;
         title: string;
         description: string | null;
         status: string | null;
         published_at: string;
-    };
-    aspects: SurveyAspect[];
+    } | null;
+    sub_categories: SurveySubCategory[];
     summary: {
-        total_aspects: number;
+        total_sub_categories: number;
         total_questions: number;
+        answered_questions: number;
         total_options: number;
     };
 };
 
-const colors = {
-    background: '#F7F7F7',
-};
-
 type SurveyDraftContextValue = {
     selectedOptions: Record<number, number>;
+    notes: Record<number, string>;
     documents: Record<number, File[]>;
     dirtyQuestionIds: Set<number>;
     hasUnsavedChanges: boolean;
     selectOption: (questionId: number, optionId: number) => void;
+    setNote: (questionId: number, note: string) => void;
     setQuestionFiles: (questionId: number, files: File[]) => void;
     removeQuestionFile: (questionId: number, file: File) => void;
     clearPendingFiles: () => void;
     clearSavedChanges: () => void;
-};
-
-type QuestionDraftStatus = {
-    label: string;
-    description: string;
-    className: string;
 };
 
 const SurveyDraftContext = createContext<SurveyDraftContextValue | null>(null);
@@ -126,10 +146,10 @@ function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
 }
 
-function getInitialSelectedOptions(aspects: SurveyAspect[]) {
+function getInitialSelectedOptions(subCategories: SurveySubCategory[]) {
     return Object.fromEntries(
-        aspects
-            .flatMap((aspect) => aspect.questions)
+        subCategories
+            .flatMap((subCategory) => subCategory.questions)
             .filter((question) => question.answer)
             .map((question) => [
                 question.id,
@@ -138,16 +158,30 @@ function getInitialSelectedOptions(aspects: SurveyAspect[]) {
     ) as Record<number, number>;
 }
 
+function getInitialNotes(subCategories: SurveySubCategory[]) {
+    return Object.fromEntries(
+        subCategories
+            .flatMap((subCategory) => subCategory.questions)
+            .filter((question) => question.answer?.notes)
+            .map((question) => [question.id, question.answer?.notes ?? '']),
+    ) as Record<number, string>;
+}
+
 function SurveyDraftProvider({
     initialSelectedOptions,
+    initialNotes,
     children,
 }: {
     initialSelectedOptions: Record<number, number>;
+    initialNotes: Record<number, string>;
     children: React.ReactNode;
 }) {
     const [selectedOptions, setSelectedOptions] = useState<
         Record<number, number>
     >(() => ({ ...initialSelectedOptions }));
+    const [notes, setNotes] = useState<Record<number, string>>(() => ({
+        ...initialNotes,
+    }));
     const [documents, setDocuments] = useState<Record<number, File[]>>({});
     const [dirtyQuestionIds, setDirtyQuestionIds] = useState<Set<number>>(
         () => new Set(),
@@ -160,6 +194,11 @@ function SurveyDraftProvider({
             ...current,
             [questionId]: optionId,
         }));
+        setDirtyQuestionIds((current) => new Set(current).add(questionId));
+    }, []);
+
+    const setNote = useCallback((questionId: number, note: string) => {
+        setNotes((current) => ({ ...current, [questionId]: note }));
         setDirtyQuestionIds((current) => new Set(current).add(questionId));
     }, []);
 
@@ -205,10 +244,12 @@ function SurveyDraftProvider({
         <SurveyDraftContext.Provider
             value={{
                 selectedOptions,
+                notes,
                 documents,
                 dirtyQuestionIds,
                 hasUnsavedChanges,
                 selectOption,
+                setNote,
                 setQuestionFiles,
                 removeQuestionFile,
                 clearPendingFiles,
@@ -230,6 +271,19 @@ function useSurveyDraft() {
     }
 
     return context;
+}
+
+function statusClass(status: string) {
+    return (
+        {
+            assigned: 'bg-[#F1F5F8] text-[#0066AE]',
+            in_progress: 'bg-[#EAF7FF] text-[#0066AE]',
+            submitted: 'bg-[#EAF3FF] text-[#093967]',
+            approved: 'bg-[#EAF8F0] text-[#00893D]',
+            need_revision: 'bg-[#FFF4EA] text-[#C9681E]',
+            rejected: 'bg-[#FDECEC] text-[#D81313]',
+        }[status] ?? 'bg-[#F1F5F8] text-[#7C7C7C]'
+    );
 }
 
 function InfoRow({
@@ -258,125 +312,63 @@ function InfoRow({
     );
 }
 
-function SectionTitle({
-    title,
-    subtitle,
-}: {
-    title: string;
-    subtitle?: string;
-}) {
-    return (
-        <div>
-            <h2 className="text-base font-bold text-[#0066AE]">{title}</h2>
-            {subtitle && (
-                <p className="mt-1 text-xs font-medium text-[#7C7C7C]">
-                    {subtitle}
-                </p>
-            )}
-        </div>
-    );
-}
-
-function statusClass(status: string) {
-    return (
-        {
-            assigned: 'bg-[#F1F5F8] text-[#0066AE]',
-            in_progress: 'bg-[#EAF7FF] text-[#0066AE]',
-            submitted: 'bg-[#EAF3FF] text-[#093967]',
-            approved: 'bg-[#EAF8F0] text-[#00893D]',
-            need_revision: 'bg-[#FFF4EA] text-[#C9681E]',
-            rejected: 'bg-[#FDECEC] text-[#D81313]',
-        }[status] ?? 'bg-[#F1F5F8] text-[#7C7C7C]'
-    );
-}
-
-function getQuestionDraftStatus(
-    question: SurveyQuestion,
-    selectedOptionId: number | undefined,
-    localFilesCount: number,
-): QuestionDraftStatus {
-    if (!selectedOptionId && localFilesCount === 0) {
-        return {
-            label: 'Belum diisi',
-            description: 'Belum ada jawaban',
-            className: 'bg-[#F7F7F7] text-[#7C7C7C]',
-        };
-    }
-
-    if (!question.answer) {
-        return {
-            label: 'Draft lokal',
-            description: 'Aktif di halaman ini, belum masuk database',
-            className: 'bg-[#FFF4EA] text-[#C9681E]',
-        };
-    }
-
-    if (selectedOptionId !== question.answer.selected_option_id) {
-        return {
-            label: 'Diubah lokal',
-            description: 'Berbeda dari jawaban database, belum disimpan',
-            className: 'bg-[#FDECEC] text-[#D81313]',
-        };
-    }
-
-    if (localFilesCount > 0) {
-        return {
-            label: 'Ada draft lokal',
-            description: 'Ada dokumen baru di halaman ini, belum disimpan',
-            className: 'bg-[#FFF4EA] text-[#C9681E]',
-        };
-    }
-
-    return {
-        label: 'Tersimpan database',
-        description: 'Jawaban sudah tersimpan di database',
-        className: 'bg-[#EAF8F0] text-[#00893D]',
-    };
-}
-
 function QuestionCard({
-    aspect,
     question,
+    questionNumber,
     selectedOptionId,
+    note,
     files,
     onSelectOption,
+    onNoteChange,
     onFilesChange,
     onPreviewFile,
     onRemoveFile,
     onDeleteDocument,
 }: {
-    aspect: string;
     question: SurveyQuestion;
+    questionNumber: number;
     selectedOptionId?: number;
+    note: string;
     files: File[];
     onSelectOption: (optionId: number) => void;
+    onNoteChange: (note: string) => void;
     onFilesChange: (files: File[]) => void;
     onPreviewFile: (file: File) => void;
     onRemoveFile: (file: File) => void;
     onDeleteDocument: (document: SurveyDocument) => void;
 }) {
-    const hasDocuments =
-        (question.answer?.documents.length ?? 0) > 0 || files.length > 0;
-    const draftStatus = getQuestionDraftStatus(
-        question,
-        selectedOptionId,
-        files.length,
-    );
+    const localChanged =
+        Boolean(selectedOptionId) &&
+        selectedOptionId !== question.answer?.selected_option_id;
+    const draftStatus = !selectedOptionId
+        ? 'Belum diisi'
+        : !question.answer
+          ? 'Draft lokal'
+          : localChanged ||
+              files.length > 0 ||
+              note !== (question.answer.notes ?? '')
+            ? 'Diubah lokal'
+            : 'Tersimpan database';
 
     return (
         <article className="rounded-2xl border border-[#EFEFEF] bg-white px-4 py-5 sm:px-6">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-[#F1F5F8] px-2.5 py-1 text-xs font-bold text-[#0066AE]">
-                    {aspect}
+                <span className="rounded-md bg-[#F1F5F8] px-2.5 py-1 text-xs font-semibold text-[#093967]">
+                    {question.indicator_code}
                 </span>
                 <span
                     className={classNames(
                         'rounded-md px-2.5 py-1 text-xs font-bold',
-                        draftStatus.className,
+                        draftStatus === 'Tersimpan database' &&
+                            'bg-[#EAF8F0] text-[#00893D]',
+                        draftStatus === 'Belum diisi' &&
+                            'bg-[#F7F7F7] text-[#7C7C7C]',
+                        draftStatus !== 'Tersimpan database' &&
+                            draftStatus !== 'Belum diisi' &&
+                            'bg-[#FFF4EA] text-[#C9681E]',
                     )}
-                    title={draftStatus.description}
                 >
-                    {draftStatus.label}
+                    {draftStatus}
                 </span>
             </div>
 
@@ -384,33 +376,30 @@ function QuestionCard({
                 Pertanyaan survey
             </p>
             <h2 className="mt-2 max-w-3xl text-2xl leading-tight font-bold text-[#303030] sm:text-[26px]">
-                {question.question_text}
+                {questionNumber}. {question.indicator_name}
             </h2>
-            {question.document_hint && (
-                <p className="mt-3 max-w-2xl text-sm leading-6 font-medium text-[#7C7C7C] sm:text-[15px]">
-                    {question.document_hint}
+            {question.indicator_description && (
+                <p className="mt-3 max-w-3xl text-sm leading-6 font-medium text-[#7C7C7C] sm:text-[15px]">
+                    {question.indicator_description}
                 </p>
             )}
-            <p
-                className={classNames(
-                    'mt-3 inline-flex rounded-lg px-3 py-2 text-xs font-semibold',
-                    draftStatus.className,
-                )}
-            >
-                {draftStatus.description}
-            </p>
+            <div className="mt-3 grid gap-2 text-xs font-semibold text-[#7C7C7C] sm:grid-cols-2">
+                <p className="rounded-lg bg-[#F8FBFF] px-3 py-2">
+                    Kriteria: {question.criteria_code ?? '-'} ·{' '}
+                    {question.criteria_name ?? '-'}
+                </p>
+                <p className="rounded-lg bg-[#F8FBFF] px-3 py-2">
+                    Kategori: {question.category_name ?? '-'}
+                </p>
+            </div>
 
             <div className="mt-6 border-t border-[#EFEFEF] pt-5">
-                <SectionTitle
-                    title="Pilih skor"
-                    subtitle="Pilih satu nilai yang paling sesuai kondisi lapangan."
-                />
-
+                <h3 className="text-base font-bold text-[#0066AE]">
+                    Pilih skor
+                </h3>
                 <div className="mt-3 divide-y divide-[#EFEFEF]">
                     {question.options.map((option) => {
                         const selected = selectedOptionId === option.id;
-                        const isDatabaseAnswer =
-                            question.answer?.selected_option_id === option.id;
 
                         return (
                             <label
@@ -429,7 +418,6 @@ function QuestionCard({
                                     className="sr-only"
                                 />
                                 <span
-                                    aria-hidden="true"
                                     className={classNames(
                                         'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2',
                                         selected
@@ -450,26 +438,11 @@ function QuestionCard({
                                                 : 'text-[#303030]',
                                         )}
                                     >
-                                        {option.score} - {option.label}
+                                        {option.label}
                                     </span>
-                                    {selected && (
-                                        <span
-                                            className={classNames(
-                                                'mt-1 inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold',
-                                                isDatabaseAnswer
-                                                    ? 'bg-[#EAF8F0] text-[#00893D]'
-                                                    : question.answer
-                                                      ? 'bg-[#FDECEC] text-[#D81313]'
-                                                      : 'bg-[#FFF4EA] text-[#C9681E]',
-                                            )}
-                                        >
-                                            {isDatabaseAnswer
-                                                ? 'Jawaban database'
-                                                : question.answer
-                                                  ? 'Perubahan lokal'
-                                                  : 'Draft lokal'}
-                                        </span>
-                                    )}
+                                    <span className="mt-1 block text-xs leading-5 font-semibold text-[#7C7C7C]">
+                                        {option.description}
+                                    </span>
                                 </span>
                             </label>
                         );
@@ -478,10 +451,14 @@ function QuestionCard({
             </div>
 
             <div className="mt-6 border-t border-[#EFEFEF] pt-5">
-                <SectionTitle
-                    title="Dokumen pendukung"
-                    subtitle="Unggah foto atau dokumen pendukung setelah memilih opsi jawaban."
-                />
+                <h3 className="text-base font-bold text-[#0066AE]">
+                    Dokumen pendukung
+                </h3>
+                <p className="mt-1 text-xs font-medium text-[#7C7C7C]">
+                    {question.document_hint ??
+                        question.supporting_evidence ??
+                        'Unggah bukti jika tersedia.'}
+                </p>
 
                 <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F1F5F8] px-4 py-4 text-left transition hover:bg-[#EAF3FF] active:scale-[0.995]">
                     <CloudUpload
@@ -491,7 +468,7 @@ function QuestionCard({
                     />
                     <span className="min-w-0 flex-1">
                         <span className="block text-sm font-bold text-[#0066AE]">
-                            Unggah foto atau dokumen pendukung
+                            Unggah foto atau dokumen
                         </span>
                         <span className="block text-xs font-medium text-[#7C7C7C]">
                             JPG, PNG, WEBP, atau PDF. Maksimal 5 MB per file.
@@ -508,129 +485,161 @@ function QuestionCard({
                     />
                 </label>
 
-                {hasDocuments && (
-                    <div className="mt-3 space-y-2">
-                        {question.answer?.documents.map((document) => (
-                            <div
-                                key={document.id}
-                                className="flex items-center gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2 text-sm font-semibold text-[#303030] transition hover:border-[#AAD2F8] hover:bg-[#F8FBFF]"
+                <div className="mt-3 space-y-2">
+                    {question.answer?.documents.map((document) => (
+                        <div
+                            key={document.id}
+                            className="flex items-center gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2 text-sm font-semibold text-[#303030]"
+                        >
+                            <FileText className="size-5 shrink-0 text-[#0066AE]" />
+                            <span className="min-w-0 flex-1 truncate">
+                                {document.file_name}
+                            </span>
+                            <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-xs font-bold text-[#00893D]">
+                                Database
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    window.open(
+                                        document.file_url,
+                                        '_blank',
+                                        'noopener,noreferrer',
+                                    )
+                                }
+                                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
                             >
-                                <FileText className="size-5 shrink-0 text-[#0066AE]" />
-                                <span className="min-w-0 flex-1 truncate">
-                                    {document.file_name}
-                                </span>
-                                <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-xs font-bold text-[#00893D]">
-                                    Database
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        window.open(
-                                            document.file_url,
-                                            '_blank',
-                                            'noopener,noreferrer',
-                                        )
-                                    }
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
-                                    aria-label={`Preview ${document.file_name}`}
-                                >
-                                    <Eye className="size-4" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onDeleteDocument(document)}
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
-                                    aria-label={`Hapus ${document.file_name}`}
-                                >
-                                    <Trash2 className="size-4" />
-                                </button>
-                            </div>
-                        ))}
-                        {files.map((file) => (
-                            <div
-                                key={`${file.name}-${file.lastModified}`}
-                                className="flex items-center gap-3 rounded-xl border border-[#AAD2F8] bg-[#F8FBFF] px-3 py-2 text-sm font-semibold text-[#303030]"
+                                <Eye className="size-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onDeleteDocument(document)}
+                                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
                             >
-                                <FileText className="size-5 shrink-0 text-[#0066AE]" />
-                                <span className="min-w-0 flex-1 truncate">
-                                    {file.name}
-                                </span>
-                                <span className="rounded-md bg-[#FFF4EA] px-2 py-1 text-xs font-bold text-[#C9681E]">
-                                    Draft lokal
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => onPreviewFile(file)}
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
-                                    aria-label={`Preview ${file.name}`}
-                                >
-                                    <Eye className="size-4" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onRemoveFile(file)}
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
-                                    aria-label={`Hapus ${file.name}`}
-                                >
-                                    <Trash2 className="size-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                                <Trash2 className="size-4" />
+                            </button>
+                        </div>
+                    ))}
+                    {files.map((file) => (
+                        <div
+                            key={`${file.name}-${file.lastModified}`}
+                            className="flex items-center gap-3 rounded-xl border border-[#AAD2F8] bg-[#F8FBFF] px-3 py-2 text-sm font-semibold text-[#303030]"
+                        >
+                            <FileText className="size-5 shrink-0 text-[#0066AE]" />
+                            <span className="min-w-0 flex-1 truncate">
+                                {file.name}
+                            </span>
+                            <span className="rounded-md bg-[#FFF4EA] px-2 py-1 text-xs font-bold text-[#C9681E]">
+                                Draft lokal
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => onPreviewFile(file)}
+                                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
+                            >
+                                <Eye className="size-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onRemoveFile(file)}
+                                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
+                            >
+                                <Trash2 className="size-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="mt-6 border-t border-[#EFEFEF] pt-5">
+                <label className="text-base font-bold text-[#0066AE]">
+                    Catatan survey
+                </label>
+                <textarea
+                    value={note}
+                    onChange={(event) => onNoteChange(event.target.value)}
+                    className="mt-3 min-h-28 w-full rounded-xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-semibold text-[#303030] transition outline-none focus:border-[#0066AE]"
+                    placeholder="Tulis catatan lapangan untuk indikator ini..."
+                />
             </div>
         </article>
     );
 }
 
-export default function TakeSurvey({
+export default function TakeSurveyPariwisata({
     assignment,
+    pariwisata,
     template,
-    aspects,
+    sub_categories,
     summary,
-}: TakeSurveyProps) {
+}: TakePariwisataSurveyProps) {
     const initialSelectedOptions = useMemo(
-        () => getInitialSelectedOptions(aspects),
-        [aspects],
+        () => getInitialSelectedOptions(sub_categories),
+        [sub_categories],
+    );
+    const initialNotes = useMemo(
+        () => getInitialNotes(sub_categories),
+        [sub_categories],
     );
 
     return (
-        <SurveyDraftProvider initialSelectedOptions={initialSelectedOptions}>
-            <TakeSurveyContent
+        <SurveyDraftProvider
+            initialSelectedOptions={initialSelectedOptions}
+            initialNotes={initialNotes}
+        >
+            <TakeSurveyPariwisataContent
                 assignment={assignment}
+                pariwisata={pariwisata}
                 template={template}
-                aspects={aspects}
+                sub_categories={sub_categories}
                 summary={summary}
             />
         </SurveyDraftProvider>
     );
 }
 
-function TakeSurveyContent({
+function TakeSurveyPariwisataContent({
     assignment,
+    pariwisata,
     template,
-    aspects,
+    sub_categories,
     summary,
-}: TakeSurveyProps) {
-    const [activeAspectIndex, setActiveAspectIndex] = useState(0);
+}: TakePariwisataSurveyProps) {
+    const [activeSubCategoryIndex, setActiveSubCategoryIndex] = useState(0);
     const [processing, setProcessing] = useState(false);
     const isSubmittingRef = useRef(false);
     const {
         selectedOptions,
+        notes,
         documents,
         dirtyQuestionIds,
         hasUnsavedChanges,
         selectOption,
+        setNote,
         setQuestionFiles,
         removeQuestionFile,
         clearSavedChanges,
     } = useSurveyDraft();
 
-    const activeAspect = aspects[activeAspectIndex] ?? null;
-    const hasAspects = aspects.length > 0;
-    const progress = hasAspects
-        ? Math.round(((activeAspectIndex + 1) / aspects.length) * 100)
+    const activeSubCategory = sub_categories[activeSubCategoryIndex] ?? null;
+    const hasSubCategories = sub_categories.length > 0;
+    const progress = hasSubCategories
+        ? Math.round(
+              ((activeSubCategoryIndex + 1) / sub_categories.length) * 100,
+          )
         : 0;
+    const currentStartNumber = useMemo(
+        () =>
+            sub_categories
+                .slice(0, activeSubCategoryIndex)
+                .reduce(
+                    (total, subCategory) =>
+                        total + subCategory.questions.length,
+                    0,
+                ),
+        [activeSubCategoryIndex, sub_categories],
+    );
+
     useEffect(() => {
         if (!hasUnsavedChanges) {
             return;
@@ -652,13 +661,13 @@ function TakeSurveyContent({
         };
     }, [hasUnsavedChanges]);
 
-    function previousAspect() {
-        setActiveAspectIndex((current) => Math.max(current - 1, 0));
+    function previousSubCategory() {
+        setActiveSubCategoryIndex((current) => Math.max(current - 1, 0));
     }
 
-    function nextAspect() {
-        setActiveAspectIndex((current) =>
-            Math.min(current + 1, aspects.length - 1),
+    function nextSubCategory() {
+        setActiveSubCategoryIndex((current) =>
+            Math.min(current + 1, sub_categories.length - 1),
         );
     }
 
@@ -671,13 +680,12 @@ function TakeSurveyContent({
 
     function deleteStoredDocument(document: SurveyDocument) {
         router.delete(
-            destroySurveyDocument.url({
+            destroyPariwisataSurveyDocument.url({
                 assignment: assignment.id,
+                pariwisata: pariwisata.id,
                 document: document.id,
             }),
-            {
-                preserveScroll: true,
-            },
+            { preserveScroll: true },
         );
     }
 
@@ -698,8 +706,12 @@ function TakeSurveyContent({
                 String(questionId),
             );
             formData.append(
-                `answers[${index}][survey_question_option_id]`,
+                `answers[${index}][pariwisata_suvey_option_id]`,
                 String(selectedOptions[questionId]),
+            );
+            formData.append(
+                `answers[${index}][notes]`,
+                notes[questionId] ?? '',
             );
 
             (documents[questionId] ?? []).forEach((file) => {
@@ -710,30 +722,37 @@ function TakeSurveyContent({
         setProcessing(true);
         isSubmittingRef.current = true;
 
-        router.post(storeSurveyDraft.url(assignment.id), formData, {
-            forceFormData: true,
-            preserveScroll: true,
-            onFinish: () => {
-                setProcessing(false);
-                isSubmittingRef.current = false;
+        router.post(
+            storePariwisataSurveyDraft.url({
+                assignment: assignment.id,
+                pariwisata: pariwisata.id,
+            }),
+            formData,
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onFinish: () => {
+                    setProcessing(false);
+                    isSubmittingRef.current = false;
+                },
+                onSuccess: clearSavedChanges,
             },
-            onSuccess: clearSavedChanges,
-        });
+        );
     }
 
     return (
         <>
-            <Head title={`Isi Survey - ${template.title}`} />
+            <Head title={`Survey Pariwisata - ${pariwisata.name}`} />
 
-            <div
-                className="min-h-[100dvh] font-sans text-[#303030]"
-                style={{ backgroundColor: colors.background }}
-            >
+            <div className="min-h-[100dvh] bg-[#F7F7F7] font-sans text-[#303030]">
                 <header className="bg-white">
                     <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4 sm:px-6">
                         <div className="flex min-w-0 items-center gap-3">
                             <Link
-                                href={surveyAssignments.url()}
+                                href={showPariwisata.url({
+                                    assignment: assignment.id,
+                                    pariwisata: pariwisata.id,
+                                })}
                                 aria-label="Kembali"
                                 className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-95"
                             >
@@ -741,10 +760,11 @@ function TakeSurveyContent({
                             </Link>
                             <div className="min-w-0">
                                 <h1 className="truncate text-xl leading-tight font-bold text-[#303030]">
-                                    Isi Survey
+                                    Isi Survey Pariwisata
                                 </h1>
                                 <p className="truncate text-sm font-medium text-[#7C7C7C]">
-                                    {template.title}
+                                    {template?.title ??
+                                        'Template belum tersedia'}
                                 </p>
                             </div>
                         </div>
@@ -767,7 +787,7 @@ function TakeSurveyContent({
                                 aria-label="Simpan"
                                 disabled={processing}
                                 onClick={submitDraft}
-                                className="flex size-9 items-center justify-center rounded-lg transition hover:bg-[#F1F5F8] active:scale-95"
+                                className="flex size-9 items-center justify-center rounded-lg transition hover:bg-[#F1F5F8] active:scale-95 disabled:opacity-50"
                             >
                                 <Save size={22} strokeWidth={2.1} />
                             </button>
@@ -783,18 +803,20 @@ function TakeSurveyContent({
                 </header>
 
                 <main className="mx-auto w-full max-w-4xl px-4 pt-4 pb-6 sm:px-6 sm:pt-6">
-                    <nav
-                        aria-label="Breadcrumb"
-                        className="mb-4 flex items-center gap-2 text-sm font-semibold"
-                    >
-                        <span className="text-[#0066AE]">Survey</span>
+                    <nav className="mb-4 flex items-center gap-2 text-sm font-semibold">
+                        <Link
+                            href={surveyAssignments.url()}
+                            className="text-[#0066AE]"
+                        >
+                            Assignment
+                        </Link>
                         <ChevronRight
                             size={16}
                             strokeWidth={2.4}
                             className="text-[#B0B0B0]"
                         />
                         <span className="text-[#303030]">
-                            {activeAspect?.name ?? 'Belum Ada Aspect'}
+                            {activeSubCategory?.sub_category_code ?? 'Survey'}
                         </span>
                     </nav>
 
@@ -806,10 +828,11 @@ function TakeSurveyContent({
                                 </span>
                                 <div className="min-w-0">
                                     <h2 className="truncate text-lg leading-tight font-bold text-[#303030] sm:text-xl">
-                                        {assignment.village.name}
+                                        {pariwisata.name}
                                     </h2>
                                     <p className="mt-1 text-sm font-medium text-[#7C7C7C]">
-                                        {template.title}
+                                        {assignment.village.name} ·{' '}
+                                        {assignment.village.location}
                                     </p>
                                 </div>
                             </div>
@@ -844,7 +867,10 @@ function TakeSurveyContent({
                             <InfoRow
                                 icon={<MapPin size={20} strokeWidth={2.1} />}
                                 label="Lokasi"
-                                value={assignment.village.location}
+                                value={
+                                    pariwisata.address ??
+                                    assignment.village.location
+                                }
                             />
                         </div>
                     </section>
@@ -853,13 +879,16 @@ function TakeSurveyContent({
                         <div className="flex flex-col gap-3 border-t border-[#EFEFEF] pt-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm font-bold text-[#303030]">
-                                    Aspect{' '}
-                                    {hasAspects ? activeAspectIndex + 1 : 0}{' '}
-                                    dari {summary.total_aspects}
+                                    Sub kategori{' '}
+                                    {hasSubCategories
+                                        ? activeSubCategoryIndex + 1
+                                        : 0}{' '}
+                                    dari {summary.total_sub_categories}
                                 </p>
                                 <p className="mt-0.5 text-xs font-medium text-[#7C7C7C]">
-                                    {summary.total_questions} pertanyaan dari{' '}
-                                    {summary.total_options} pilihan jawaban
+                                    {summary.answered_questions} /{' '}
+                                    {summary.total_questions} pertanyaan
+                                    tersimpan
                                 </p>
                             </div>
                             <div className="h-2 w-full overflow-hidden rounded-full bg-[#F1F5F8] sm:w-72">
@@ -873,30 +902,31 @@ function TakeSurveyContent({
 
                     <section className="bg-white px-4 pb-5 sm:px-6">
                         <div className="border-t border-[#EFEFEF] pt-5">
-                            <SectionTitle
-                                title="Aspect Survey"
-                                subtitle={
-                                    activeAspect
-                                        ? activeAspect.name
-                                        : 'Template survey belum memiliki pertanyaan.'
-                                }
-                            />
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {aspects.map((aspect, index) => (
+                            <h2 className="text-base font-bold text-[#0066AE]">
+                                Sub Kategori Survey
+                            </h2>
+                            <p className="mt-1 text-xs font-medium text-[#7C7C7C]">
+                                Satu halaman menampilkan pertanyaan dengan
+                                sub_category_code yang sama.
+                            </p>
+                            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                                {sub_categories.map((subCategory, index) => (
                                     <button
-                                        key={aspect.name}
+                                        key={subCategory.sub_category_code}
                                         type="button"
                                         onClick={() =>
-                                            setActiveAspectIndex(index)
+                                            setActiveSubCategoryIndex(index)
                                         }
                                         className={classNames(
-                                            'h-9 rounded-lg px-3 text-xs font-bold transition active:scale-[0.98]',
-                                            index === activeAspectIndex
+                                            'h-9 shrink-0 rounded-lg px-3 text-xs font-bold transition active:scale-[0.98]',
+                                            index === activeSubCategoryIndex
                                                 ? 'bg-[#0066AE] text-white'
                                                 : 'bg-[#F1F5F8] text-[#0066AE]',
                                         )}
                                     >
-                                        {index + 1}. {aspect.name}
+                                        {subCategory.sub_category_code} ·{' '}
+                                        {subCategory.answered_count}/
+                                        {subCategory.question_count}
                                     </button>
                                 ))}
                             </div>
@@ -904,15 +934,19 @@ function TakeSurveyContent({
                     </section>
 
                     <section className="space-y-4 bg-white px-4 pb-5 sm:px-6">
-                        {activeAspect?.questions.map((question) => (
+                        {activeSubCategory?.questions.map((question, index) => (
                             <QuestionCard
                                 key={question.id}
-                                aspect={activeAspect.name}
                                 question={question}
+                                questionNumber={currentStartNumber + index + 1}
                                 selectedOptionId={selectedOptions[question.id]}
+                                note={notes[question.id] ?? ''}
                                 files={documents[question.id] ?? []}
                                 onSelectOption={(optionId) =>
                                     selectOption(question.id, optionId)
+                                }
+                                onNoteChange={(value) =>
+                                    setNote(question.id, value)
                                 }
                                 onFilesChange={(files) =>
                                     setQuestionFiles(question.id, files)
@@ -925,15 +959,16 @@ function TakeSurveyContent({
                             />
                         ))}
 
-                        {!activeAspect && (
+                        {!activeSubCategory && (
                             <div className="rounded-2xl border border-dashed border-[#AAD2F8] bg-[#F8FBFF] px-6 py-12 text-center">
                                 <FileText className="mx-auto size-12 text-[#0066AE]" />
                                 <h2 className="mt-4 text-lg font-bold text-[#303030]">
-                                    Template survey belum memiliki pertanyaan
+                                    Template survey pariwisata belum memiliki
+                                    pertanyaan
                                 </h2>
                                 <p className="mt-1 text-sm font-medium text-[#7C7C7C]">
-                                    Tambahkan pertanyaan pada template ini
-                                    sebelum survey diisi.
+                                    Jalankan seeder atau publish template
+                                    pariwisata terlebih dahulu.
                                 </p>
                             </div>
                         )}
@@ -941,13 +976,20 @@ function TakeSurveyContent({
 
                     <section className="rounded-b-3xl bg-white px-4 pb-5 sm:px-6">
                         <div className="border-t border-[#EFEFEF] pt-5">
-                            <SectionTitle title="Informasi survey" />
-
+                            <h2 className="text-base font-bold text-[#0066AE]">
+                                Informasi survey
+                            </h2>
                             <div className="mt-3 grid gap-2.5 text-sm">
                                 {[
-                                    ['Template', template.title],
-                                    ['Status template', template.status ?? '-'],
-                                    ['Published at', template.published_at],
+                                    ['Template', template?.title ?? '-'],
+                                    [
+                                        'Status template',
+                                        template?.status ?? '-',
+                                    ],
+                                    [
+                                        'Published at',
+                                        template?.published_at ?? '-',
+                                    ],
                                     ['Assigned at', assignment.assigned_at],
                                     ['Last saved at', assignment.last_saved_at],
                                 ].map(([label, value]) => (
@@ -976,8 +1018,11 @@ function TakeSurveyContent({
                     <footer className="mt-4 grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center">
                         <button
                             type="button"
-                            disabled={!hasAspects || activeAspectIndex === 0}
-                            onClick={previousAspect}
+                            disabled={
+                                !hasSubCategories ||
+                                activeSubCategoryIndex === 0
+                            }
+                            onClick={previousSubCategory}
                             className="flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <ArrowLeft size={20} strokeWidth={2.2} />
@@ -988,7 +1033,7 @@ function TakeSurveyContent({
                             type="button"
                             disabled={processing}
                             onClick={submitDraft}
-                            className="h-11 rounded-xl px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-[0.98]"
+                            className="h-11 rounded-xl px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-[0.98] disabled:opacity-50"
                         >
                             {processing ? 'Menyimpan...' : 'Simpan Draft'}
                         </button>
@@ -996,16 +1041,15 @@ function TakeSurveyContent({
                         <button
                             type="button"
                             disabled={
-                                !hasAspects ||
-                                activeAspectIndex === aspects.length - 1
+                                !hasSubCategories ||
+                                activeSubCategoryIndex ===
+                                    sub_categories.length - 1
                             }
-                            onClick={nextAspect}
+                            onClick={nextSubCategory}
                             className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.16)] transition hover:bg-[#093967] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {activeAspectIndex === aspects.length - 1
-                                ? 'Selesai'
-                                : 'Selanjutnya'}
-                            <ChevronRight size={20} strokeWidth={2.3} />
+                            Berikutnya
+                            <ChevronRight size={20} strokeWidth={2.2} />
                         </button>
                     </footer>
                 </main>
@@ -1013,5 +1057,3 @@ function TakeSurveyContent({
         </>
     );
 }
-
-TakeSurvey.layout = null;

@@ -15,15 +15,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-       User::create([
-        'name' => 'Admin',
-        'email' => 'admin@gmail.com',
-        'password' => 'admin123',
-        'role' => 'admin'
-       ]);
+        User::query()->firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => 'admin123',
+                'role' => 'admin',
+                'status' => 'active',
+            ],
+        );
 
-       $this->call([
-        TemplateQuestionSeeder::class
-       ]);
+        $this->call([
+            TemplateQuestionSeeder::class,
+            UMKMSurveySeeder::class,
+            PariwisataSurveySeeder::class,
+        ]);
     }
 }

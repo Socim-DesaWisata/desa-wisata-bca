@@ -35,4 +35,14 @@ class SurveyTemplate extends Model
     {
         return $this->hasMany(VillageSurveyAssignment::class, 'survey_template_id');
     }
+
+    public function umkmSurveyQuestions(): HasMany
+    {
+        return $this->hasMany(UmkmSurveyQuestion::class, 'survey_template_id');
+    }
+
+    public function pariwisataSurveyQuestions(): HasMany
+    {
+        return $this->hasMany(PariwisataSurveyQuestion::class, 'survey_template_id');
+    }
 }

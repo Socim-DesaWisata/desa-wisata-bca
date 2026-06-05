@@ -20,6 +20,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
     Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
     Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
+    Route::get('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'createUmkm'])
+        ->name('survey-assignments.create-umkm');
+    Route::post('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'storeUmkm'])
+        ->name('survey-assignments.create-umkm.store');
+    Route::get('/survey-assignments/{assignment}/create/pariwisata', [VillageSurveyAssignmentController::class, 'createPariwisata'])
+        ->name('survey-assignments.create-pariwisata');
+    Route::post('/survey-assignments/{assignment}/create/pariwisata', [VillageSurveyAssignmentController::class, 'storePariwisata'])
+        ->name('survey-assignments.create-pariwisata.store');
+    Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}/take-survey', [VillageSurveyAssignmentController::class, 'takePariwisataSurvey'])
+        ->name('survey-assignments.pariwisata.take-survey');
+    Route::post('/survey-assignments/{assignment}/pariwisata/{pariwisata}/take-survey', [VillageSurveyAssignmentController::class, 'storePariwisataSurveyDraft'])
+        ->name('survey-assignments.pariwisata.take-survey.store');
+    Route::delete('/survey-assignments/{assignment}/pariwisata/{pariwisata}/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyPariwisataSurveyDocument'])
+        ->name('survey-assignments.pariwisata.take-survey.documents.destroy');
+    Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}', [VillageSurveyAssignmentController::class, 'showPariwisata'])
+        ->name('survey-assignments.pariwisata.show');
+    Route::get('/survey-assignments/{assignment}/umkm/{umkm}', [VillageSurveyAssignmentController::class, 'showUmkm'])
+        ->name('survey-assignments.umkm.show');
+    Route::patch('/survey-assignments/{assignment}/umkm/{umkm}', [VillageSurveyAssignmentController::class, 'updateUmkm'])
+        ->name('survey-assignments.umkm.update');
+    Route::patch('/survey-assignments/{assignment}/umkm/{umkm}/answers/{answer}', [VillageSurveyAssignmentController::class, 'updateUmkmSurveyAnswer'])
+        ->name('survey-assignments.umkm.answers.update');
+    Route::post('/survey-assignments/{assignment}/umkm/{umkm}/documents', [VillageSurveyAssignmentController::class, 'storeUmkmDocument'])
+        ->name('survey-assignments.umkm.documents.store');
+    Route::patch('/survey-assignments/{assignment}/umkm/{umkm}/documents/{document}', [VillageSurveyAssignmentController::class, 'updateUmkmDocument'])
+        ->name('survey-assignments.umkm.documents.update');
+    Route::delete('/survey-assignments/{assignment}/umkm/{umkm}/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyUmkmDocument'])
+        ->name('survey-assignments.umkm.documents.destroy');
     Route::get('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'show'])
         ->name('survey-assignments.show');
     Route::patch('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'update'])

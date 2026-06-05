@@ -67,6 +67,16 @@ class TourismVillage extends Model
         return $this->hasMany(VillageProfileItem::class, 'village_id');
     }
 
+    public function umkms(): HasMany
+    {
+        return $this->hasMany(VillageUmkm::class, 'village_id');
+    }
+
+    public function pariwisataVillages(): HasMany
+    {
+        return $this->hasMany(PariwisataVillage::class, 'village_id');
+    }
+
     public function surveyAssignment(): HasOne
     {
         return $this->hasOne(VillageSurveyAssignment::class, 'village_id');

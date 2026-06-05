@@ -3,11 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreSurveyAnswerDraftRequest;
+use App\Http\Requests\VillageSurveyAssignments\StoreUmkmSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\StoreVillageUmkmDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreVillageSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAnswerRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateVillageUmkmDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageSurveyAssignmentRequest;
+use App\Models\PariwisataSurveyAnswerDocument;
+use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswerDocument;
+use App\Models\UmkmSurveyAnswer;
 use App\Models\VillageSurveyAssignment;
+use App\Models\VillageUmkm;
+use App\Models\VillageUmkmDocument;
+use App\Services\PariwisataSurveyAssignmentService;
+use App\Services\UmkmSurveyAssignmentService;
 use App\Services\VillageSurveyAssignmentService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -31,11 +45,148 @@ class VillageSurveyAssignmentController extends Controller
         return back()->with('success', 'Survey assignment berhasil dibuat.');
     }
 
+    public function createUmkm(
+        VillageSurveyAssignment $assignment,
+        UmkmSurveyAssignmentService $service
+    ): Response {
+        return Inertia::render('survey-assignment/create-umkm', $service->getCreateData($assignment));
+    }
+
+    public function storeUmkm(
+        StoreUmkmSurveyAssignmentRequest $request,
+        VillageSurveyAssignment $assignment,
+        UmkmSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->createWithSurvey($request->validated(), $request->user(), $assignment);
+
+        return back()->with('success', 'Data UMKM dan assessment berhasil disimpan.');
+    }
+
+    public function createPariwisata(
+        VillageSurveyAssignment $assignment,
+        PariwisataSurveyAssignmentService $service
+    ): Response {
+        return Inertia::render('survey-assignment/create-pariwisata', $service->getCreateData($assignment));
+    }
+
+    public function storePariwisata(
+        StorePariwisataSurveyAssignmentRequest $request,
+        VillageSurveyAssignment $assignment,
+        PariwisataSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->create($request->validated(), $assignment);
+
+        return back()->with('success', 'Data pariwisata berhasil disimpan.');
+    }
+
     public function show(
         VillageSurveyAssignment $assignment,
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show', $service->getShowData($assignment));
+    }
+
+    public function showPariwisata(
+        VillageSurveyAssignment $assignment,
+        PariwisataVillage $pariwisata,
+        VillageSurveyAssignmentService $service
+    ): Response {
+        return Inertia::render('survey-assignment/show-pariwisata', $service->getPariwisataShowData($assignment, $pariwisata));
+    }
+
+    public function showUmkm(
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        VillageSurveyAssignmentService $service
+    ): Response {
+        return Inertia::render('survey-assignment/show-umkm', $service->getUmkmShowData($assignment, $umkm));
+    }
+
+    public function updateUmkm(
+        UpdateUmkmSurveyAssignmentRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        UmkmSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->updateMaster($request->validated(), $assignment, $umkm);
+
+        return back()->with('success', 'Data master UMKM berhasil diperbarui.');
+    }
+
+    public function updateUmkmSurveyAnswer(
+        UpdateUmkmSurveyAnswerRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        UmkmSurveyAnswer $answer,
+        UmkmSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->updateAnswer($request->validated(), $request->user(), $assignment, $umkm, $answer);
+
+        return back()->with('success', 'Jawaban survey UMKM berhasil diperbarui.');
+    }
+
+    public function storeUmkmDocument(
+        StoreVillageUmkmDocumentRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        UmkmSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->createDocument($request->validated(), $request->user(), $assignment, $umkm);
+
+        return back()->with('success', 'Dokumen UMKM berhasil ditambahkan.');
+    }
+
+    public function updateUmkmDocument(
+        UpdateVillageUmkmDocumentRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        VillageUmkmDocument $document,
+        UmkmSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->updateDocument($request->validated(), $assignment, $umkm, $document);
+
+        return back()->with('success', 'Dokumen UMKM berhasil diperbarui.');
+    }
+
+    public function destroyUmkmDocument(
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        VillageUmkmDocument $document,
+        UmkmSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->deleteDocument($assignment, $umkm, $document);
+
+        return back()->with('success', 'Dokumen UMKM berhasil dihapus.');
+    }
+
+    public function takePariwisataSurvey(
+        VillageSurveyAssignment $assignment,
+        PariwisataVillage $pariwisata,
+        VillageSurveyAssignmentService $service
+    ): Response {
+        return Inertia::render('survey-assignment/take-survey-pariwisata', $service->getTakePariwisataSurveyData($assignment, $pariwisata));
+    }
+
+    public function storePariwisataSurveyDraft(
+        StorePariwisataSurveyDraftRequest $request,
+        VillageSurveyAssignment $assignment,
+        PariwisataVillage $pariwisata,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->savePariwisataSurveyDraft($assignment, $pariwisata, $request->validated(), $request->user());
+
+        return back()->with('success', 'Draft survey pariwisata berhasil disimpan.');
+    }
+
+    public function destroyPariwisataSurveyDocument(
+        VillageSurveyAssignment $assignment,
+        PariwisataVillage $pariwisata,
+        PariwisataSurveyAnswerDocument $document,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->deletePariwisataSurveyDocument($assignment, $pariwisata, $document);
+
+        return back()->with('success', 'Dokumen survey pariwisata berhasil dihapus.');
     }
 
     public function update(

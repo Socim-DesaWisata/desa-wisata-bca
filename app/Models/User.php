@@ -103,4 +103,39 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(SurveyAnswerHistory::class, 'actor_id');
     }
+
+    public function createdUmkms(): HasMany
+    {
+        return $this->hasMany(VillageUmkm::class, 'created_by');
+    }
+
+    public function collectedUmkms(): HasMany
+    {
+        return $this->hasMany(VillageUmkm::class, 'data_collector_id');
+    }
+
+    public function umkmSurveyAnswers(): HasMany
+    {
+        return $this->hasMany(UmkmSurveyAnswer::class, 'answered_by');
+    }
+
+    public function pariwisataSurveyAnswers(): HasMany
+    {
+        return $this->hasMany(PariwisataSurveyAnswer::class, 'answered_by');
+    }
+
+    public function editedPariwisataSurveyAnswers(): HasMany
+    {
+        return $this->hasMany(PariwisataSurveyAnswer::class, 'last_edited_by');
+    }
+
+    public function uploadedPariwisataSurveyAnswerDocuments(): HasMany
+    {
+        return $this->hasMany(PariwisataSurveyAnswerDocument::class, 'uploaded_by');
+    }
+
+    public function uploadedVillageUmkmDocuments(): HasMany
+    {
+        return $this->hasMany(VillageUmkmDocument::class, 'uploaded_by');
+    }
 }

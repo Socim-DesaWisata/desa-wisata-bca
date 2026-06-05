@@ -2,14 +2,22 @@
 
 namespace App\Services;
 
+use App\Models\PariwisataSurveyAnswer;
+use App\Models\PariwisataSurveyAnswerDocument;
+use App\Models\PariwisataSurveyQuestion;
+use App\Models\PariwisataSuveyOption;
+use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswer;
 use App\Models\SurveyAnswerDocument;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
 use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
+use App\Models\UmkmSurveyAnswer;
 use App\Models\User;
 use App\Models\VillageSurveyAssignment;
+use App\Models\VillageUmkm;
+use App\Models\VillageUmkmDocument;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -173,6 +181,35 @@ class VillageSurveyAssignmentService
                 ->orderByDesc('is_cover')
                 ->orderBy('sort_order')
                 ->orderBy('id'),
+            'village.umkms' => fn ($query) => $query
+                ->with([
+                    'dataCollector:id,name,email',
+                    'surveyAnswers' => fn ($query) => $query
+                        ->select([
+                            'id',
+                            'umkm_id',
+                            'umkm_assessment_question_id',
+                            'answered_by',
+                            'score',
+                            'criteria_code_snapshot',
+                            'criteria_name_snapshot',
+                            'criteria_weight_percent_snapshot',
+                            'question_text_snapshot',
+                            'question_weight_percent_snapshot',
+                            'max_score_snapshot',
+                            'normalized_score',
+                            'weighted_score',
+                            'answered_at',
+                            'last_edited_at',
+                        ])
+                        ->with(['question:id,criteria_code,criteria_name,question_number,question_text,question_weight_percent,max_score', 'answeredBy:id,name,email'])
+                        ->orderBy('criteria_code_snapshot')
+                        ->orderBy('umkm_assessment_question_id'),
+                ])
+                ->latest('updated_at'),
+            'village.pariwisataVillages' => fn ($query) => $query
+                ->with(['categories:id,pariwisata_village_id,category'])
+                ->latest('updated_at'),
             'template:id,title,description,status,published_at',
             'template.questions' => fn ($query) => $query
                 ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
@@ -277,6 +314,18 @@ class VillageSurveyAssignmentService
             ],
             'summary' => $summary,
             'aspects' => $aspects,
+            'desa_survey' => [
+                'summary' => $summary,
+                'aspects' => $aspects,
+            ],
+            'umkms' => $assignment->village?->umkms
+                ->map(fn (VillageUmkm $umkm): array => $this->formatUmkmForAssignment($umkm))
+                ->values()
+                ->all() ?? [],
+            'pariwisata' => $assignment->village?->pariwisataVillages
+                ->map(fn (PariwisataVillage $pariwisata): array => $this->formatPariwisataForAssignment($assignment, $pariwisata))
+                ->values()
+                ->all() ?? [],
             'activities' => $this->formatAssignmentActivities($assignment),
             'edit_options' => [
                 'status_options' => $this->statusOptions(),
@@ -298,6 +347,357 @@ class VillageSurveyAssignmentService
                 'reviewed_at' => $this->formatDateTimeLocal($assignment->reviewed_at),
             ],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getUmkmShowData(VillageSurveyAssignment $assignment, VillageUmkm $umkm): array
+    {
+        $assignment->loadMissing([
+            'village:id,code,name,province,city,district,subdistrict,address,status',
+        ]);
+
+        abort_unless($assignment->village_id === $umkm->village_id, 404);
+
+        $umkm->loadMissing([
+            'dataCollector:id,name,email',
+            'creator:id,name,email',
+            'documents:id,village_umkm_id,uploaded_by,document_name,file_path,mime_type,file_size,created_at,updated_at',
+            'documents.uploadedBy:id,name,email',
+            'surveyAnswers' => fn ($query) => $query
+                ->select([
+                    'id',
+                    'umkm_id',
+                    'umkm_assessment_question_id',
+                    'answered_by',
+                    'score',
+                    'criteria_code_snapshot',
+                    'criteria_name_snapshot',
+                    'criteria_weight_percent_snapshot',
+                    'question_text_snapshot',
+                    'question_weight_percent_snapshot',
+                    'max_score_snapshot',
+                    'normalized_score',
+                    'weighted_score',
+                    'answered_at',
+                    'last_edited_at',
+                ])
+                ->with(['question:id,criteria_code,criteria_name,question_number,question_text,question_weight_percent,max_score', 'answeredBy:id,name,email'])
+                ->orderBy('criteria_code_snapshot')
+                ->orderBy('umkm_assessment_question_id'),
+        ]);
+
+        $formattedUmkm = $this->formatUmkmForAssignment($umkm);
+
+        return [
+            'assignment' => [
+                ...$this->formatAssignment($assignment),
+                'village' => [
+                    'id' => $assignment->village?->id,
+                    'code' => $assignment->village?->code,
+                    'name' => $assignment->village?->name ?? '-',
+                    'status' => $assignment->village?->status,
+                    'address' => $assignment->village?->address,
+                    'location' => collect([
+                        $assignment->village?->subdistrict,
+                        $assignment->village?->district,
+                        $assignment->village?->city,
+                        $assignment->village?->province,
+                    ])->filter()->implode(', ') ?: '-',
+                ],
+            ],
+            'umkm' => $formattedUmkm,
+            'survey_summary' => $formattedUmkm['survey_summary'],
+            'survey_groups' => $formattedUmkm['survey_groups'],
+            'edit_values' => $this->formatUmkmEditValues($umkm),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getPariwisataShowData(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): array
+    {
+        $assignment->loadMissing([
+            'village:id,code,name,province,city,district,subdistrict,address,status',
+        ]);
+
+        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
+
+        $pariwisata->loadMissing(['categories:id,pariwisata_village_id,category']);
+
+        $template = SurveyTemplate::query()
+            ->select(['id', 'title', 'description', 'status', 'published_at'])
+            ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
+            ->with(['pariwisataSurveyQuestions' => fn ($query) => $query
+                ->select([
+                    'id',
+                    'survey_template_id',
+                    'category_code',
+                    'category_name',
+                    'sub_category_code',
+                    'sub_category_name',
+                    'criteria_code',
+                    'criteria_name',
+                    'indicator_code',
+                    'indicator_name',
+                    'indicator_description',
+                    'supporting_evidence',
+                    'document_required',
+                    'document_hint',
+                    'sort_order',
+                ])
+                ->where('is_active', true)
+                ->with(['options' => fn ($query) => $query
+                    ->select(['id', 'pariwisata_survey_question_id', 'score', 'level', 'label', 'description', 'sort_order'])
+                    ->orderBy('sort_order')
+                    ->orderBy('score')])
+                ->orderBy('category_code')
+                ->orderBy('criteria_code')
+                ->orderBy('sort_order')])
+            ->latest('published_at')
+            ->latest('id')
+            ->first();
+
+        $questions = $template?->pariwisataSurveyQuestions ?? collect();
+        $answersByQuestion = $pariwisata->surveyAnswers()
+            ->select([
+                'id',
+                'pariwisata_village_id',
+                'pariwisata_survey_question_id',
+                'pariwisata_suvey_option_id',
+                'score',
+                'notes',
+                'answered_by',
+                'last_edited_by',
+                'answered_at',
+                'last_edited_at',
+            ])
+            ->with([
+                'option:id,score,level,label,description',
+                'answeredBy:id,name,email',
+                'lastEditedBy:id,name,email',
+                'documents:id,pariwisata_survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,caption,created_at',
+                'documents.uploadedBy:id,name,email',
+            ])
+            ->get()
+            ->keyBy('pariwisata_survey_question_id');
+
+        return [
+            'assignment' => [
+                ...$this->formatAssignment($assignment),
+                'village' => [
+                    'id' => $assignment->village?->id,
+                    'code' => $assignment->village?->code,
+                    'name' => $assignment->village?->name ?? '-',
+                    'status' => $assignment->village?->status,
+                    'address' => $assignment->village?->address,
+                    'location' => collect([
+                        $assignment->village?->subdistrict,
+                        $assignment->village?->district,
+                        $assignment->village?->city,
+                        $assignment->village?->province,
+                    ])->filter()->implode(', ') ?: '-',
+                ],
+            ],
+            'pariwisata' => $this->formatPariwisataForAssignment($assignment, $pariwisata),
+            'survey_template' => $template ? [
+                'id' => $template->id,
+                'title' => $template->title,
+                'description' => $template->description,
+                'status' => $template->status,
+                'published_at' => $this->formatDate($template->published_at),
+                'question_count' => $questions->count(),
+            ] : null,
+            'survey_summary' => $this->buildPariwisataSurveySummary($questions, $answersByQuestion),
+            'survey_groups' => $this->formatPariwisataSurveyGroups($questions, $answersByQuestion),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getTakePariwisataSurveyData(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): array
+    {
+        $assignment->loadMissing([
+            'village:id,code,name,province,city,district,subdistrict',
+            'assignedBy:id,name,email',
+        ]);
+
+        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
+
+        $pariwisata->loadMissing(['categories:id,pariwisata_village_id,category']);
+
+        $template = $this->activePariwisataTemplate([
+            'pariwisataSurveyQuestions' => fn ($query) => $query
+                ->select([
+                    'id',
+                    'survey_template_id',
+                    'category_code',
+                    'category_name',
+                    'sub_category_code',
+                    'sub_category_name',
+                    'criteria_code',
+                    'criteria_name',
+                    'criteria_description',
+                    'indicator_code',
+                    'indicator_name',
+                    'indicator_description',
+                    'supporting_evidence',
+                    'document_required',
+                    'document_hint',
+                    'sort_order',
+                ])
+                ->where('is_active', true)
+                ->with(['options' => fn ($query) => $query
+                    ->select(['id', 'pariwisata_survey_question_id', 'score', 'level', 'label', 'description', 'sort_order'])
+                    ->orderBy('sort_order')
+                    ->orderBy('score')])
+                ->orderBy('category_code')
+                ->orderBy('sub_category_code')
+                ->orderBy('criteria_code')
+                ->orderBy('sort_order'),
+        ]);
+
+        $questions = $template?->pariwisataSurveyQuestions ?? collect();
+        $answers = $pariwisata->surveyAnswers()
+            ->select([
+                'id',
+                'pariwisata_village_id',
+                'pariwisata_survey_question_id',
+                'pariwisata_suvey_option_id',
+                'score',
+                'notes',
+                'answered_by',
+                'last_edited_by',
+                'answered_at',
+                'last_edited_at',
+            ])
+            ->with([
+                'documents:id,pariwisata_survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,caption,created_at',
+                'documents.uploadedBy:id,name,email',
+            ])
+            ->get()
+            ->keyBy('pariwisata_survey_question_id');
+
+        return [
+            'assignment' => [
+                'id' => $assignment->id,
+                'code' => 'ASG-'.str_pad((string) $assignment->id, 3, '0', STR_PAD_LEFT),
+                'status' => $assignment->status,
+                'status_label' => $this->labelFor($assignment->status, $this->statusOptions()),
+                'assigned_at' => $this->formatDate($assignment->assigned_at),
+                'started_at' => $this->formatDate($assignment->started_at),
+                'last_saved_at' => $this->formatDate($assignment->last_saved_at),
+                'village' => [
+                    'id' => $assignment->village?->id,
+                    'code' => $assignment->village?->code,
+                    'name' => $assignment->village?->name ?? '-',
+                    'location' => collect([
+                        $assignment->village?->subdistrict,
+                        $assignment->village?->district,
+                        $assignment->village?->city,
+                        $assignment->village?->province,
+                    ])->filter()->implode(', ') ?: '-',
+                ],
+                'assigned_by' => $this->formatUser($assignment->assignedBy),
+            ],
+            'pariwisata' => $this->formatPariwisataForAssignment($assignment, $pariwisata),
+            'template' => $template ? [
+                'id' => $template->id,
+                'title' => $template->title,
+                'description' => $template->description,
+                'status' => $template->status,
+                'published_at' => $this->formatDate($template->published_at),
+            ] : null,
+            'sub_categories' => $this->formatTakePariwisataSubCategories($questions, $answers),
+            'summary' => [
+                'total_sub_categories' => $questions->groupBy(fn (PariwisataSurveyQuestion $question): string => $question->sub_category_code ?: 'uncategorized')->count(),
+                'total_questions' => $questions->count(),
+                'answered_questions' => $answers->count(),
+                'total_options' => $questions->sum(fn (PariwisataSurveyQuestion $question): int => $question->options->count()),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array{answers: array<int, array<string, mixed>>}  $data
+     */
+    public function savePariwisataSurveyDraft(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata, array $data, User $user): void
+    {
+        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
+
+        DB::transaction(function () use ($assignment, $pariwisata, $data, $user): void {
+            foreach ($data['answers'] as $answerData) {
+                $option = PariwisataSuveyOption::query()
+                    ->with('question:id,category_code,category_name,sub_category_code,sub_category_name,criteria_code,criteria_name,criteria_description,indicator_code,indicator_name,indicator_description,supporting_evidence')
+                    ->findOrFail($answerData['pariwisata_suvey_option_id']);
+                $question = $option->question;
+
+                $answer = PariwisataSurveyAnswer::query()->updateOrCreate(
+                    [
+                        'pariwisata_village_id' => $pariwisata->id,
+                        'pariwisata_survey_question_id' => $answerData['question_id'],
+                    ],
+                    [
+                        'pariwisata_suvey_option_id' => $option->id,
+                        'score' => $option->score,
+                        'notes' => $answerData['notes'] ?? null,
+                        'category_code_snapshot' => $question?->category_code,
+                        'category_name_snapshot' => $question?->category_name,
+                        'sub_category_code_snapshot' => $question?->sub_category_code,
+                        'sub_category_name_snapshot' => $question?->sub_category_name,
+                        'criteria_code_snapshot' => $question?->criteria_code,
+                        'criteria_name_snapshot' => $question?->criteria_name,
+                        'criteria_description_snapshot' => $question?->criteria_description,
+                        'indicator_code_snapshot' => $question?->indicator_code,
+                        'indicator_name_snapshot' => $question?->indicator_name,
+                        'indicator_description_snapshot' => $question?->indicator_description,
+                        'supporting_evidence_snapshot' => $question?->supporting_evidence,
+                        'option_label_snapshot' => $option->label,
+                        'option_description_snapshot' => $option->description,
+                        'answered_by' => $user->id,
+                        'last_edited_by' => $user->id,
+                        'answered_at' => now(),
+                        'last_edited_at' => now(),
+                    ]
+                );
+
+                foreach (Arr::wrap($answerData['documents'] ?? []) as $document) {
+                    if (! $document instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $path = $document->storePublicly("pariwisata-survey-answers/{$pariwisata->id}/{$answer->id}", 'public');
+
+                    $answer->documents()->create([
+                        'uploaded_by' => $user->id,
+                        'file_name' => $document->getClientOriginalName(),
+                        'file_path' => $path,
+                        'mime_type' => $document->getClientMimeType(),
+                        'file_size' => $document->getSize(),
+                    ]);
+                }
+            }
+
+            $assignment->update([
+                'status' => $assignment->status === 'assigned' ? 'in_progress' : $assignment->status,
+                'started_at' => $assignment->started_at ?? now(),
+                'last_saved_at' => now(),
+            ]);
+        });
+    }
+
+    public function deletePariwisataSurveyDocument(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata, PariwisataSurveyAnswerDocument $document): void
+    {
+        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
+
+        $document->loadMissing('answer:id,pariwisata_village_id');
+        abort_unless($document->answer?->pariwisata_village_id === $pariwisata->id, 404);
+
+        Storage::disk('public')->delete($document->file_path);
+        $document->delete();
     }
 
     /**
@@ -769,6 +1169,377 @@ class VillageSurveyAssignmentService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function formatUmkmForAssignment(VillageUmkm $umkm): array
+    {
+        $answers = $umkm->surveyAnswers;
+        $documents = $umkm->relationLoaded('documents') ? $umkm->documents : collect();
+        $weightedScore = round((float) $answers->sum(fn (UmkmSurveyAnswer $answer): float => (float) $answer->weighted_score), 2);
+        $averageScore = $answers->count() > 0
+            ? round((float) $answers->avg(fn (UmkmSurveyAnswer $answer): float => (float) $answer->score), 2)
+            : 0.0;
+
+        return [
+            'id' => $umkm->id,
+            'name' => $umkm->name,
+            'business_owner_name' => $umkm->business_owner_name,
+            'village_name' => $umkm->village_name,
+            'collector_name' => $umkm->collector_name,
+            'legal_business_name' => $umkm->legal_business_name,
+            'established_year' => $umkm->established_year,
+            'company_website_url' => $umkm->company_website_url,
+            'production_address' => $umkm->production_address,
+            'product_category' => $umkm->product_category,
+            'brand_name' => $umkm->brand_name,
+            'annual_revenue' => $umkm->annual_revenue ? $this->formatCurrency((float) $umkm->annual_revenue) : '-',
+            'monthly_production_capacity' => $umkm->monthly_production_capacity,
+            'annual_production_capacity' => $umkm->annual_production_capacity,
+            'factory_location_feasibility' => $umkm->factory_location_feasibility,
+            'certifications' => $umkm->certifications,
+            'current_obstacles' => $umkm->current_obstacles,
+            'has_business_legality_and_certification' => $umkm->has_business_legality_and_certification,
+            'is_umkm_participant' => $umkm->is_umkm_participant,
+            'is_production_capacity_participant' => $umkm->is_production_capacity_participant,
+            'instagram_url' => $umkm->instagram_url,
+            'facebook_url' => $umkm->facebook_url,
+            'twitter_url' => $umkm->twitter_url,
+            'marketing_website_url' => $umkm->marketing_website_url,
+            'ecommerce_profile_url' => $umkm->ecommerce_profile_url,
+            'marketing_notes' => $umkm->marketing_notes,
+            'sustainability_notes' => $umkm->sustainability_notes,
+            'bank_name' => $umkm->bank_name,
+            'bank_account_number' => $umkm->bank_account_number,
+            'has_qris' => $this->formatBoolean($umkm->has_qris),
+            'qris_provider' => $umkm->qris_provider,
+            'has_edc' => $this->formatBoolean($umkm->has_edc),
+            'edc_provider' => $umkm->edc_provider,
+            'has_credit_card' => $this->formatBoolean($umkm->has_credit_card),
+            'banking_notes' => $umkm->banking_notes,
+            'has_exported' => $this->formatBoolean($umkm->has_exported),
+            'export_destination_countries' => $umkm->export_destination_countries,
+            'collector' => $this->formatUser($umkm->dataCollector),
+            'creator' => $this->formatUser($umkm->creator),
+            'product_photo_url' => $umkm->product_photo_path ? Storage::disk('public')->url($umkm->product_photo_path) : null,
+            'documents' => $documents
+                ->map(fn (VillageUmkmDocument $document): array => $this->formatUmkmDocument($document))
+                ->values()
+                ->all(),
+            'created_at' => $this->formatDate($umkm->created_at),
+            'updated_at' => $this->formatDate($umkm->updated_at),
+            'survey_summary' => [
+                'answered_questions' => $answers->count(),
+                'average_score' => $averageScore,
+                'weighted_score' => $weightedScore,
+                'last_answered_at' => $this->formatDate($answers->max('last_edited_at')),
+            ],
+            'survey_groups' => $answers
+                ->groupBy(fn (UmkmSurveyAnswer $answer): string => $answer->criteria_code_snapshot ?? $answer->question?->criteria_code ?? '-')
+                ->map(fn (Collection $criteriaAnswers, string $criteriaCode): array => [
+                    'criteria_code' => $criteriaCode,
+                    'criteria_name' => $criteriaAnswers->first()?->criteria_name_snapshot
+                        ?? $criteriaAnswers->first()?->question?->criteria_name
+                        ?? '-',
+                    'criteria_weight_percent' => (float) ($criteriaAnswers->first()?->criteria_weight_percent_snapshot ?? 0),
+                    'answered_questions' => $criteriaAnswers->count(),
+                    'weighted_score' => round((float) $criteriaAnswers->sum(fn (UmkmSurveyAnswer $answer): float => (float) $answer->weighted_score), 2),
+                    'answers' => $criteriaAnswers
+                        ->values()
+                        ->map(fn (UmkmSurveyAnswer $answer): array => [
+                            'id' => $answer->id,
+                            'question_id' => $answer->umkm_assessment_question_id,
+                            'question_number' => $answer->question?->question_number,
+                            'question_text' => $answer->question_text_snapshot ?? $answer->question?->question_text ?? '-',
+                            'question_weight_percent' => (float) ($answer->question_weight_percent_snapshot ?? 0),
+                            'score' => (float) $answer->score,
+                            'max_score' => (float) ($answer->max_score_snapshot ?? 100),
+                            'weighted_score' => (float) $answer->weighted_score,
+                            'answered_by' => $this->formatUser($answer->answeredBy),
+                            'answered_at' => $this->formatDate($answer->answered_at),
+                            'last_edited_at' => $this->formatDate($answer->last_edited_at),
+                        ])
+                        ->all(),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function formatUmkmEditValues(VillageUmkm $umkm): array
+    {
+        return [
+            'business_owner_name' => (string) ($umkm->business_owner_name ?? ''),
+            'name' => (string) ($umkm->name ?? ''),
+            'legal_business_name' => (string) ($umkm->legal_business_name ?? ''),
+            'established_year' => $umkm->established_year ? (string) $umkm->established_year : '',
+            'company_website_url' => (string) ($umkm->company_website_url ?? ''),
+            'production_address' => (string) ($umkm->production_address ?? ''),
+            'product_category' => (string) ($umkm->product_category ?? ''),
+            'brand_name' => (string) ($umkm->brand_name ?? ''),
+            'annual_revenue' => $umkm->annual_revenue ? (string) $umkm->annual_revenue : '',
+            'monthly_production_capacity' => (string) ($umkm->monthly_production_capacity ?? ''),
+            'current_obstacles' => (string) ($umkm->current_obstacles ?? ''),
+            'certifications' => (string) ($umkm->certifications ?? ''),
+            'has_business_legality_and_certification' => (string) ($umkm->has_business_legality_and_certification ?? ''),
+            'is_umkm_participant' => (string) ($umkm->is_umkm_participant ?? ''),
+            'is_production_capacity_participant' => (string) ($umkm->is_production_capacity_participant ?? ''),
+            'annual_production_capacity' => (string) ($umkm->annual_production_capacity ?? ''),
+            'factory_location_feasibility' => (string) ($umkm->factory_location_feasibility ?? ''),
+            'instagram_url' => (string) ($umkm->instagram_url ?? ''),
+            'facebook_url' => (string) ($umkm->facebook_url ?? ''),
+            'twitter_url' => (string) ($umkm->twitter_url ?? ''),
+            'marketing_website_url' => (string) ($umkm->marketing_website_url ?? ''),
+            'ecommerce_profile_url' => (string) ($umkm->ecommerce_profile_url ?? ''),
+            'marketing_notes' => (string) ($umkm->marketing_notes ?? ''),
+            'sustainability_notes' => (string) ($umkm->sustainability_notes ?? ''),
+            'bank_name' => (string) ($umkm->bank_name ?? ''),
+            'bank_account_number' => (string) ($umkm->bank_account_number ?? ''),
+            'has_qris' => $this->formatBooleanValue($umkm->has_qris),
+            'qris_provider' => (string) ($umkm->qris_provider ?? ''),
+            'has_edc' => $this->formatBooleanValue($umkm->has_edc),
+            'edc_provider' => (string) ($umkm->edc_provider ?? ''),
+            'has_credit_card' => $this->formatBooleanValue($umkm->has_credit_card),
+            'banking_notes' => (string) ($umkm->banking_notes ?? ''),
+            'has_exported' => $this->formatBooleanValue($umkm->has_exported),
+            'export_destination_countries' => (string) ($umkm->export_destination_countries ?? ''),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatPariwisataForAssignment(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): array
+    {
+        return [
+            'id' => $pariwisata->id,
+            'name' => $pariwisata->name,
+            'operational_days' => $pariwisata->operational_days,
+            'operational_hours' => $pariwisata->operational_hours,
+            'operational_schedule' => $pariwisata->operational_schedule,
+            'entrance_ticket_price' => $pariwisata->entrance_ticket_price ? $this->formatCurrency((float) $pariwisata->entrance_ticket_price) : '-',
+            'entrance_ticket_description' => $pariwisata->entrance_ticket_description,
+            'address' => $pariwisata->address,
+            'person_in_charge_name' => $pariwisata->person_in_charge_name,
+            'person_in_charge_phone' => $pariwisata->person_in_charge_phone,
+            'person_in_charge_address' => $pariwisata->person_in_charge_address,
+            'is_active' => (bool) $pariwisata->is_active,
+            'status_label' => $pariwisata->is_active ? 'Aktif' : 'Nonaktif',
+            'categories' => $pariwisata->categories
+                ->map(fn ($category): array => [
+                    'id' => $category->id,
+                    'value' => $category->category,
+                    'label' => $this->categoryLabel($category->category),
+                ])
+                ->values()
+                ->all(),
+            'created_at' => $this->formatDate($pariwisata->created_at),
+            'updated_at' => $this->formatDate($pariwisata->updated_at),
+            'detail_url' => route('survey-assignments.pariwisata.show', [$assignment, $pariwisata]),
+        ];
+    }
+
+    /**
+     * @param  Collection<int, PariwisataSurveyQuestion>  $questions
+     * @param  Collection<int, PariwisataSurveyAnswer>  $answersByQuestion
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatPariwisataSurveyGroups(Collection $questions, Collection $answersByQuestion): array
+    {
+        return $questions
+            ->groupBy('category_name')
+            ->map(function (Collection $categoryQuestions, string $categoryName) use ($answersByQuestion): array {
+                $questionRows = $categoryQuestions
+                    ->values()
+                    ->map(function (PariwisataSurveyQuestion $question) use ($answersByQuestion): array {
+                        $answer = $answersByQuestion->get($question->id);
+                        $maxScore = (int) $question->options->max('score');
+
+                        return [
+                            'id' => $question->id,
+                            'category_code' => $question->category_code,
+                            'category_name' => $question->category_name,
+                            'sub_category_code' => $question->sub_category_code,
+                            'sub_category_name' => $question->sub_category_name,
+                            'criteria_code' => $question->criteria_code,
+                            'criteria_name' => $question->criteria_name,
+                            'indicator_code' => $question->indicator_code,
+                            'indicator_name' => $question->indicator_name,
+                            'indicator_description' => $question->indicator_description,
+                            'supporting_evidence' => $question->supporting_evidence,
+                            'document_required' => (bool) $question->document_required,
+                            'document_hint' => $question->document_hint,
+                            'max_score' => $maxScore,
+                            'answer' => $answer ? [
+                                'id' => $answer->id,
+                                'pariwisata_suvey_option_id' => $answer->pariwisata_suvey_option_id,
+                                'score' => (int) $answer->score,
+                                'score_label' => $answer->option_label_snapshot ?? $answer->option?->label ?? '-',
+                                'option_description' => $answer->option_description_snapshot ?? $answer->option?->description,
+                                'notes' => $answer->notes,
+                                'answered_at' => $this->formatDate($answer->answered_at),
+                                'last_edited_at' => $this->formatDate($answer->last_edited_at),
+                                'answered_by' => $this->formatUser($answer->answeredBy),
+                                'last_edited_by' => $this->formatUser($answer->lastEditedBy),
+                                'documents' => $answer->documents
+                                    ->map(fn (PariwisataSurveyAnswerDocument $document): array => $this->formatPariwisataDocument($document))
+                                    ->values()
+                                    ->all(),
+                            ] : null,
+                            'options' => $question->options
+                                ->map(fn (PariwisataSuveyOption $option): array => [
+                                    'id' => $option->id,
+                                    'score' => (int) $option->score,
+                                    'level' => $option->level,
+                                    'label' => $option->label,
+                                    'description' => $option->description,
+                                    'sort_order' => $option->sort_order,
+                                ])
+                                ->values()
+                                ->all(),
+                        ];
+                    });
+
+                return [
+                    'category_name' => $categoryName,
+                    'question_count' => $questionRows->count(),
+                    'answered_count' => $questionRows->whereNotNull('answer')->count(),
+                    'documents_count' => $questionRows->sum(fn (array $question): int => count($question['answer']['documents'] ?? [])),
+                    'questions' => $questionRows->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, PariwisataSurveyQuestion>  $questions
+     * @param  Collection<int, PariwisataSurveyAnswer>  $answersByQuestion
+     * @return array<string, mixed>
+     */
+    private function buildPariwisataSurveySummary(Collection $questions, Collection $answersByQuestion): array
+    {
+        $totalScore = $answersByQuestion->sum(fn (PariwisataSurveyAnswer $answer): int => (int) $answer->score);
+        $maxScore = $questions->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
+
+        return [
+            'total_questions' => $questions->count(),
+            'answered_questions' => $answersByQuestion->count(),
+            'unanswered_questions' => max($questions->count() - $answersByQuestion->count(), 0),
+            'total_documents' => $answersByQuestion->sum(fn (PariwisataSurveyAnswer $answer): int => $answer->documents->count()),
+            'total_score' => $totalScore,
+            'max_score' => $maxScore,
+            'final_score' => $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $with
+     */
+    private function activePariwisataTemplate(array $with = []): ?SurveyTemplate
+    {
+        return SurveyTemplate::query()
+            ->select(['id', 'title', 'description', 'status', 'published_at'])
+            ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
+            ->where('status', 'published')
+            ->with($with)
+            ->latest('published_at')
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * @param  Collection<int, PariwisataSurveyQuestion>  $questions
+     * @param  Collection<int, PariwisataSurveyAnswer>  $answersByQuestion
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatTakePariwisataSubCategories(Collection $questions, Collection $answersByQuestion): array
+    {
+        return $questions
+            ->groupBy(fn (PariwisataSurveyQuestion $question): string => $question->sub_category_code ?: 'uncategorized')
+            ->map(function (Collection $subCategoryQuestions, string $subCategoryCode) use ($answersByQuestion): array {
+                $firstQuestion = $subCategoryQuestions->first();
+
+                return [
+                    'sub_category_code' => $subCategoryCode,
+                    'sub_category_name' => $firstQuestion?->sub_category_name ?? 'Tanpa Sub Kategori',
+                    'category_code' => $firstQuestion?->category_code,
+                    'category_name' => $firstQuestion?->category_name,
+                    'question_count' => $subCategoryQuestions->count(),
+                    'answered_count' => $subCategoryQuestions
+                        ->filter(fn (PariwisataSurveyQuestion $question): bool => $answersByQuestion->has($question->id))
+                        ->count(),
+                    'questions' => $subCategoryQuestions
+                        ->values()
+                        ->map(function (PariwisataSurveyQuestion $question) use ($answersByQuestion): array {
+                            $answer = $answersByQuestion->get($question->id);
+
+                            return [
+                                'id' => $question->id,
+                                'category_code' => $question->category_code,
+                                'category_name' => $question->category_name,
+                                'sub_category_code' => $question->sub_category_code,
+                                'sub_category_name' => $question->sub_category_name,
+                                'criteria_code' => $question->criteria_code,
+                                'criteria_name' => $question->criteria_name,
+                                'criteria_description' => $question->criteria_description,
+                                'indicator_code' => $question->indicator_code,
+                                'indicator_name' => $question->indicator_name,
+                                'indicator_description' => $question->indicator_description,
+                                'supporting_evidence' => $question->supporting_evidence,
+                                'document_required' => (bool) $question->document_required,
+                                'document_hint' => $question->document_hint,
+                                'sort_order' => $question->sort_order,
+                                'answer' => $answer ? [
+                                    'id' => $answer->id,
+                                    'selected_option_id' => $answer->pariwisata_suvey_option_id,
+                                    'score' => (int) $answer->score,
+                                    'notes' => $answer->notes,
+                                    'documents' => $answer->documents
+                                        ->map(fn (PariwisataSurveyAnswerDocument $document): array => $this->formatPariwisataDocument($document))
+                                        ->values()
+                                        ->all(),
+                                ] : null,
+                                'options' => $question->options
+                                    ->map(fn (PariwisataSuveyOption $option): array => [
+                                        'id' => $option->id,
+                                        'score' => (int) $option->score,
+                                        'level' => $option->level,
+                                        'label' => $option->label,
+                                        'description' => $option->description,
+                                        'sort_order' => $option->sort_order,
+                                    ])
+                                    ->values()
+                                    ->all(),
+                            ];
+                        })
+                        ->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatPariwisataDocument(PariwisataSurveyAnswerDocument $document): array
+    {
+        return [
+            'id' => $document->id,
+            'file_name' => $document->file_name,
+            'file_url' => Storage::disk('public')->url($document->file_path),
+            'mime_type' => $document->mime_type,
+            'file_size' => $document->file_size,
+            'file_size_label' => $this->formatFileSize($document->file_size),
+            'uploaded_at' => $this->formatDate($document->created_at),
+            'uploaded_by' => $this->formatUser($document->uploadedBy),
+        ];
+    }
+
+    /**
      * @return array<int, array<string, string>>
      */
     private function formatAssignmentActivities(VillageSurveyAssignment $assignment): array
@@ -826,6 +1597,25 @@ class VillageSurveyAssignmentService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatUmkmDocument(VillageUmkmDocument $document): array
+    {
+        return [
+            'id' => $document->id,
+            'document_name' => $document->document_name,
+            'file_path' => $document->file_path,
+            'file_url' => Storage::disk('public')->url($document->file_path),
+            'mime_type' => $document->mime_type,
+            'file_size' => $document->file_size,
+            'file_size_label' => $this->formatFileSize($document->file_size),
+            'uploaded_by' => $this->formatUser($document->uploadedBy),
+            'created_at' => $this->formatDate($document->created_at),
+            'updated_at' => $this->formatDate($document->updated_at),
+        ];
+    }
+
     private function mediaUrl(?string $filePath, ?string $externalUrl): ?string
     {
         if ($externalUrl) {
@@ -846,6 +1636,33 @@ class VillageSurveyAssignmentService
         }
 
         return round($bytes / (1024 * 1024), 1).' MB';
+    }
+
+    private function formatCurrency(float $value): string
+    {
+        return 'Rp '.number_format($value, 0, ',', '.');
+    }
+
+    private function formatBoolean(?bool $value): string
+    {
+        return is_null($value) ? '-' : ($value ? 'Ya' : 'Tidak');
+    }
+
+    private function formatBooleanValue(?bool $value): string
+    {
+        return is_null($value) ? '' : ($value ? '1' : '0');
+    }
+
+    private function categoryLabel(?string $value): string
+    {
+        return [
+            'wisata_alam' => 'Wisata Alam',
+            'wisata_buatan' => 'Wisata Buatan',
+            'wisata_religi' => 'Wisata Religi',
+            'wisata_budaya' => 'Wisata Budaya',
+            'wisata_kuliner' => 'Wisata Kuliner',
+            'wisata_edukasi' => 'Wisata Edukasi',
+        ][$value ?? ''] ?? Str::headline((string) $value);
     }
 
     /**
