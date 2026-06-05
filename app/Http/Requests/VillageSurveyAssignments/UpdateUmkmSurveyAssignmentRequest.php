@@ -3,9 +3,22 @@
 namespace App\Http\Requests\VillageSurveyAssignments;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUmkmSurveyAssignmentRequest extends FormRequest
 {
+    private const CATEGORY_OPTIONS = [
+        'kuliner',
+        'tekstil_dan_kerajinan',
+        'fashion_dan_aksesoris',
+        'kecantikan_dan_kesehatan',
+        'jasa',
+        'pertanian',
+        'peternakan',
+        'perikanan',
+        'produk_digital_dan_kreatif',
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -24,6 +37,8 @@ class UpdateUmkmSurveyAssignmentRequest extends FormRequest
             'company_website_url' => ['nullable', 'url', 'max:2048'],
             'production_address' => ['nullable', 'string'],
             'product_category' => ['nullable', 'string', 'max:150'],
+            'categories' => ['required', 'array', 'min:1'],
+            'categories.*' => ['required', 'string', Rule::in(self::CATEGORY_OPTIONS)],
             'brand_name' => ['nullable', 'string', 'max:150'],
             'annual_revenue' => ['nullable', 'numeric', 'min:0'],
             'monthly_production_capacity' => ['nullable', 'string', 'max:150'],

@@ -8,7 +8,6 @@ import {
     Eye,
     FileText,
     MapPin,
-    MoreVertical,
     Save,
     Trash2,
     UserRound,
@@ -745,7 +744,7 @@ function TakeSurveyPariwisataContent({
             <Head title={`Survey Pariwisata - ${pariwisata.name}`} />
 
             <div className="min-h-[100dvh] bg-[#F7F7F7] font-sans text-[#303030]">
-                <header className="bg-white">
+                <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EFEFEF] bg-white/95 shadow-[0_8px_24px_rgba(9,57,103,0.08)] backdrop-blur-md lg:left-[232px]">
                     <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4 sm:px-6">
                         <div className="flex min-w-0 items-center gap-3">
                             <Link
@@ -791,18 +790,11 @@ function TakeSurveyPariwisataContent({
                             >
                                 <Save size={22} strokeWidth={2.1} />
                             </button>
-                            <button
-                                type="button"
-                                aria-label="Menu"
-                                className="flex size-9 items-center justify-center rounded-lg transition hover:bg-[#F1F5F8] active:scale-95"
-                            >
-                                <MoreVertical size={22} strokeWidth={2.5} />
-                            </button>
                         </div>
                     </div>
                 </header>
 
-                <main className="mx-auto w-full max-w-4xl px-4 pt-4 pb-6 sm:px-6 sm:pt-6">
+                <main className="mx-auto w-full max-w-4xl px-4 pt-24 pb-6 sm:px-6 sm:pt-24">
                     <nav className="mb-4 flex items-center gap-2 text-sm font-semibold">
                         <Link
                             href={surveyAssignments.url()}

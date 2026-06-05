@@ -17,6 +17,7 @@ import {
 import type { FormEvent } from 'react';
 import type { ReactNode } from 'react';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import { surveyAssignments } from '@/routes';
 import { store as storeUmkmSurvey } from '@/routes/survey-assignments/create-umkm';
 
@@ -25,6 +26,13 @@ type Option = {
     label: string;
     description?: string;
 };
+
+const legalBusinessOptions: Option[] = [
+    { value: 'UD', label: 'UD' },
+    { value: 'CV', label: 'CV' },
+    { value: 'PT', label: 'PT' },
+    { value: 'Perorangan', label: 'Perorangan' },
+];
 
 type UmkmQuestion = {
     id: number;
@@ -69,6 +77,7 @@ type CreateUmkmProps = {
     } | null;
     criteria_groups: CriteriaGroup[];
     boolean_options: Option[];
+    category_options: Option[];
 };
 
 type AnswerForm = {
@@ -88,7 +97,7 @@ type UmkmForm = {
     established_year: string;
     company_website_url: string;
     production_address: string;
-    product_category: string;
+    categories: string[];
     brand_name: string;
     annual_revenue: string;
     monthly_production_capacity: string;
@@ -138,7 +147,7 @@ function initialForm(criteriaGroups: CriteriaGroup[]): UmkmForm {
         established_year: '',
         company_website_url: '',
         production_address: '',
-        product_category: '',
+        categories: [],
         brand_name: '',
         annual_revenue: '',
         monthly_production_capacity: '',
@@ -332,6 +341,7 @@ export default function CreateUmkmSurveyAssignment({
     template,
     criteria_groups,
     boolean_options,
+    category_options,
 }: CreateUmkmProps) {
     const { data, setData, post, processing, errors, reset } =
         useForm<UmkmForm>(initialForm(criteria_groups));
@@ -351,6 +361,15 @@ export default function CreateUmkmSurveyAssignment({
         return (
             data.answers.find((answer) => answer.question_id === questionId)
                 ?.score ?? ''
+        );
+    }
+
+    function toggleCategory(value: string) {
+        setData(
+            'categories',
+            data.categories.includes(value)
+                ? data.categories.filter((category) => category !== value)
+                : [...data.categories, value],
         );
     }
 
@@ -509,7 +528,7 @@ export default function CreateUmkmSurveyAssignment({
                                         placeholder="Contoh: Batik Sumber Rejeki"
                                         required
                                     />
-                                    <TextInput
+                                    <SelectInput
                                         label="Nama Lengkap Badan Usaha"
                                         value={data.legal_business_name}
                                         onChange={(value) =>
@@ -522,7 +541,8 @@ export default function CreateUmkmSurveyAssignment({
                                             errors,
                                             'legal_business_name',
                                         )}
-                                        placeholder="UD/CV/PT/Perorangan"
+                                        options={legalBusinessOptions}
+                                        placeholder="Pilih badan usaha"
                                     />
                                     <TextInput
                                         label="Tahun Berdiri"
@@ -552,18 +572,53 @@ export default function CreateUmkmSurveyAssignment({
                                         )}
                                         placeholder="https://contoh.com"
                                     />
-                                    <TextInput
-                                        label="Kategori Produk"
-                                        value={data.product_category}
-                                        onChange={(value) =>
-                                            setData('product_category', value)
-                                        }
-                                        error={fieldError(
-                                            errors,
-                                            'product_category',
-                                        )}
-                                        placeholder="Makanan, kriya, fashion"
-                                    />
+                                    <div className="min-w-0 lg:col-span-2">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-xs font-bold text-[#344256]">
+                                                Kategori UMKM{' '}
+                                                <span className="text-[#D81313]">
+                                                    *
+                                                </span>
+                                            </span>
+                                            <span className="text-[11px] font-semibold text-[#7C7C7C]">
+                                                Bisa pilih lebih dari satu
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 grid grid-cols-1 gap-2 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2 xl:grid-cols-3">
+                                            {category_options.map((option) => {
+                                                const checked =
+                                                    data.categories.includes(
+                                                        option.value,
+                                                    );
+
+                                                return (
+                                                    <label
+                                                        key={option.value}
+                                                        className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#303030] ring-1 ring-[#E6ECF2] transition hover:ring-[#AAD2F8]"
+                                                    >
+                                                        <Checkbox
+                                                            checked={checked}
+                                                            onCheckedChange={() =>
+                                                                toggleCategory(
+                                                                    option.value,
+                                                                )
+                                                            }
+                                                            className="border-[#AAD2F8] data-[state=checked]:border-[#0066AE] data-[state=checked]:bg-[#0066AE]"
+                                                        />
+                                                        <span className="truncate">
+                                                            {option.label}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                        <FieldError
+                                            message={fieldError(
+                                                errors,
+                                                'categories',
+                                            )}
+                                        />
+                                    </div>
                                     <TextInput
                                         label="Merk Dagang"
                                         value={data.brand_name}

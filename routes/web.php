@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PariwisataController;
 use App\Http\Controllers\SurveyQuestionController;
 use App\Http\Controllers\TourismVillageController;
+use App\Http\Controllers\UmkmController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageSurveyAssignmentController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/villages/{village}', [TourismVillageController::class, 'show'])->name('villages.show');
     Route::get('/villages/{village}/edit', [TourismVillageController::class, 'edit'])->name('villages.edit');
     Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
+    Route::get('/umkm', [UmkmController::class, 'index'])->name('umkm');
+    Route::get('/pariwisata', [PariwisataController::class, 'index'])->name('pariwisata');
     Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
     Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
     Route::get('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'createUmkm'])
@@ -48,6 +52,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.umkm.documents.update');
     Route::delete('/survey-assignments/{assignment}/umkm/{umkm}/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyUmkmDocument'])
         ->name('survey-assignments.umkm.documents.destroy');
+    Route::get('/survey-assignments/{assignment}/export', [VillageSurveyAssignmentController::class, 'export'])
+        ->name('survey-assignments.export');
     Route::get('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'show'])
         ->name('survey-assignments.show');
     Route::patch('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'update'])

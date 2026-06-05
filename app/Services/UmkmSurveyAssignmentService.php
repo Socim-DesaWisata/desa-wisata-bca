@@ -17,6 +17,18 @@ use Illuminate\Validation\ValidationException;
 
 class UmkmSurveyAssignmentService
 {
+    private const CATEGORY_OPTIONS = [
+        ['value' => 'kuliner', 'label' => 'Kuliner'],
+        ['value' => 'tekstil_dan_kerajinan', 'label' => 'Tekstil dan Kerajinan'],
+        ['value' => 'fashion_dan_aksesoris', 'label' => 'Fashion dan Aksesoris'],
+        ['value' => 'kecantikan_dan_kesehatan', 'label' => 'Kecantikan dan Kesehatan'],
+        ['value' => 'jasa', 'label' => 'Jasa'],
+        ['value' => 'pertanian', 'label' => 'Pertanian'],
+        ['value' => 'peternakan', 'label' => 'Peternakan'],
+        ['value' => 'perikanan', 'label' => 'Perikanan'],
+        ['value' => 'produk_digital_dan_kreatif', 'label' => 'Produk Digital dan Kreatif'],
+    ];
+
     /**
      * @return array<string, mixed>
      */
@@ -84,6 +96,7 @@ class UmkmSurveyAssignmentService
                 ['value' => '1', 'label' => 'Ya'],
                 ['value' => '0', 'label' => 'Tidak'],
             ],
+            'category_options' => self::CATEGORY_OPTIONS,
         ];
     }
 
@@ -121,8 +134,11 @@ class UmkmSurveyAssignmentService
                 'has_edc' => $this->nullableBoolean($data['has_edc'] ?? null),
                 'has_credit_card' => $this->nullableBoolean($data['has_credit_card'] ?? null),
                 'has_exported' => $this->nullableBoolean($data['has_exported'] ?? null),
+                'product_category' => $this->categoryLabels($data['categories'] ?? []),
                 'product_photo_path' => $this->storeProductPhoto($data['product_photo'] ?? null, $village->id),
             ]);
+
+            $this->syncCategories($umkm, $data['categories'] ?? []);
 
             $questions = $template->umkmSurveyQuestions->keyBy('id');
 
@@ -243,6 +259,7 @@ class UmkmSurveyAssignmentService
                 'has_edc' => $this->nullableBoolean($data['has_edc'] ?? null),
                 'has_credit_card' => $this->nullableBoolean($data['has_credit_card'] ?? null),
                 'has_exported' => $this->nullableBoolean($data['has_exported'] ?? null),
+                'product_category' => $this->categoryLabels($data['categories'] ?? []),
             ];
 
             $photoPath = $this->storeProductPhoto($data['product_photo'] ?? null, (int) $assignment->village_id);
@@ -252,6 +269,7 @@ class UmkmSurveyAssignmentService
             }
 
             $umkm->update($payload);
+            $this->syncCategories($umkm, $data['categories'] ?? []);
 
             return $umkm->refresh();
         });
@@ -324,7 +342,6 @@ class UmkmSurveyAssignmentService
             'established_year',
             'company_website_url',
             'production_address',
-            'product_category',
             'brand_name',
             'annual_revenue',
             'monthly_production_capacity',
@@ -358,6 +375,40 @@ class UmkmSurveyAssignmentService
         }
 
         return $file->storePublicly("umkms/{$villageId}/products", 'public');
+    }
+
+    /**
+     * @param  array<int, string>  $categories
+     */
+    private function syncCategories(VillageUmkm $umkm, array $categories): void
+    {
+        $uniqueCategories = collect($categories)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $umkm->categories()->delete();
+
+        $uniqueCategories->each(fn (string $category): mixed => $umkm->categories()->create([
+            'category' => $category,
+        ]));
+    }
+
+    /**
+     * @param  array<int, string>  $categories
+     */
+    private function categoryLabels(array $categories): ?string
+    {
+        $labels = collect($categories)
+            ->map(function (string $category): ?string {
+                $option = collect(self::CATEGORY_OPTIONS)->firstWhere('value', $category);
+
+                return $option['label'] ?? null;
+            })
+            ->filter()
+            ->values();
+
+        return $labels->isEmpty() ? null : $labels->implode(', ');
     }
 
     /**

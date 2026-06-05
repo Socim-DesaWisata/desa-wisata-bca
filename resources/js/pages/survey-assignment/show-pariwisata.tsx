@@ -255,7 +255,7 @@ function QuestionRow({
 
             <div className="min-w-0">
                 <p className="text-[11px] font-bold text-[#7C7C7C]">
-                    {question.indicator_code} · {question.criteria_code ?? '-'}
+                    {question.indicator_code}
                 </p>
                 <p className="mt-1 text-sm leading-5 font-semibold text-[#303030]">
                     {question.indicator_name}

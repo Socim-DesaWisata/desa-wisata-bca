@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\VillageSurveyAssignmentExport;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
@@ -26,6 +27,7 @@ use App\Services\VillageSurveyAssignmentService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class VillageSurveyAssignmentController extends Controller
 {
@@ -84,6 +86,15 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show', $service->getShowData($assignment));
+    }
+
+    public function export(
+        VillageSurveyAssignment $assignment,
+        VillageSurveyAssignmentExport $export
+    ): BinaryFileResponse {
+        $file = $export->export($assignment);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
 
     public function showPariwisata(

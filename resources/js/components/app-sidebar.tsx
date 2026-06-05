@@ -6,12 +6,12 @@ import {
     FileSearch,
     FolderOpen,
     LayoutDashboard,
-    MapPinned,
     BarChart3,
     Settings,
     UserCog,
     Users,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import {
     DropdownMenu,
@@ -24,7 +24,9 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import {
     dashboard,
     questions,
+    pariwisata,
     surveyAssignments,
+    umkm,
     users as usersRoute,
     villages,
 } from '@/routes';
@@ -34,6 +36,7 @@ import type { NavItem } from '@/types';
 type SidebarNavItem = NavItem & {
     badge?: string;
     warning?: boolean;
+    children?: Array<Pick<NavItem, 'title' | 'href'>>;
 };
 
 type SidebarNavGroup = {
@@ -55,7 +58,16 @@ const navGroups: SidebarNavGroup[] = [
     {
         label: 'Program',
         items: [
-            { title: 'Desa Wisata', href: villages(), icon: MapPinned },
+            {
+                title: 'Laporan',
+                href: '#',
+                icon: BarChart3,
+                children: [
+                    { title: 'Kemenpar', href: villages() },
+                    { title: 'UMKM', href: umkm() },
+                    { title: 'ISTC', href: pariwisata() },
+                ],
+            },
             {
                 title: 'Template Survey',
                 href: questions(),
@@ -84,7 +96,6 @@ const navGroups: SidebarNavGroup[] = [
                 badge: '3',
                 warning: true,
             },
-            { title: 'Laporan', href: '#', icon: BarChart3 },
             { title: 'User Management', href: usersRoute(), icon: Users },
             { title: 'Pengaturan', href: '#', icon: Settings },
         ],
@@ -108,6 +119,7 @@ export function AdminSidebarContent({
 }) {
     const { auth } = usePage().props;
     const { isCurrentOrParentUrl, isCurrentUrl } = useCurrentUrl();
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
     return (
         <div className="relative flex h-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(47,166,252,0.45),transparent_34%),linear-gradient(180deg,#0066AE_0%,#00508F_42%,#093967_100%)] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
@@ -138,18 +150,33 @@ export function AdminSidebarContent({
                         <div className="space-y-1">
                             {group.items.map((item) => {
                                 const Icon = item.icon;
-                                const isPlaceholder = item.href === '#';
+                                const hasChildren = Boolean(
+                                    item.children?.length,
+                                );
+                                const isPlaceholder =
+                                    item.href === '#' && !hasChildren;
                                 const href =
                                     !isPlaceholder &&
+                                    !hasChildren &&
                                     typeof item.href !== 'string'
                                         ? item.href
                                         : null;
-                                const isActive =
-                                    href && href.url === questions().url
-                                        ? isCurrentOrParentUrl(href)
-                                        : href
-                                          ? isCurrentUrl(href)
-                                          : false;
+                                const childHrefs = item.children?.filter(
+                                    (child) => typeof child.href !== 'string',
+                                );
+                                const hasActiveChild = Boolean(
+                                    childHrefs?.some((child) =>
+                                        isCurrentUrl(child.href),
+                                    ),
+                                );
+                                const isOpen = Boolean(openMenus[item.title]);
+                                const isActive = hasActiveChild
+                                    ? true
+                                    : href && href.url === questions().url
+                                      ? isCurrentOrParentUrl(href)
+                                      : href
+                                        ? isCurrentUrl(href)
+                                        : false;
 
                                 const content = (
                                     <>
@@ -180,17 +207,71 @@ export function AdminSidebarContent({
                                                 {item.badge}
                                             </span>
                                         )}
+                                        {hasChildren && (
+                                            <ChevronDown
+                                                className={[
+                                                    'relative size-4 shrink-0 text-white/70 transition-transform duration-150',
+                                                    isOpen ? 'rotate-180' : '',
+                                                ].join(' ')}
+                                                strokeWidth={1.8}
+                                            />
+                                        )}
                                     </>
                                 );
 
                                 const className = [
                                     'group relative flex h-[42px] items-center gap-2.5 rounded-xl px-3 text-[13.5px] leading-5 transition-all duration-150',
-                                    isActive
+                                    isActive || isOpen
                                         ? 'bg-gradient-to-r from-white/22 to-white/12 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_rgba(3,17,32,0.16)]'
                                         : isPlaceholder
                                           ? 'cursor-default font-medium text-white/42'
                                           : 'font-medium text-white/72 hover:translate-x-0.5 hover:bg-white/10 hover:text-white',
                                 ].join(' ');
+
+                                if (hasChildren) {
+                                    return (
+                                        <div key={item.title}>
+                                            <button
+                                                type="button"
+                                                className={className}
+                                                aria-expanded={isOpen}
+                                                onClick={() =>
+                                                    setOpenMenus((current) => ({
+                                                        ...current,
+                                                        [item.title]:
+                                                            !current[
+                                                                item.title
+                                                            ],
+                                                    }))
+                                                }
+                                            >
+                                                {content}
+                                            </button>
+                                            {isOpen && (
+                                                <div className="mt-1 ml-5 space-y-1 border-l border-white/14 pl-3">
+                                                    {item.children?.map(
+                                                        (child) => (
+                                                            <Link
+                                                                key={
+                                                                    child.title
+                                                                }
+                                                                href={
+                                                                    child.href
+                                                                }
+                                                                onClick={
+                                                                    onNavigate
+                                                                }
+                                                                className="flex h-9 items-center rounded-lg px-3 text-[13px] font-medium text-white/68 transition hover:bg-white/10 hover:text-white"
+                                                            >
+                                                                {child.title}
+                                                            </Link>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }
 
                                 return isPlaceholder ? (
                                     <div
@@ -263,9 +344,6 @@ export function AdminSidebarContent({
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
-                <div className="mt-2 px-2 text-[10px] leading-4 text-white/40">
-                    v1.0.0
-                </div>
             </div>
         </div>
     );

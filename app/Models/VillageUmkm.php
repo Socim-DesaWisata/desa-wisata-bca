@@ -62,4 +62,9 @@ class VillageUmkm extends Model
     {
         return $this->hasMany(VillageUmkmDocument::class, 'village_umkm_id');
     }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(VillageUmkmCategory::class, 'village_umkm_id');
+    }
 }

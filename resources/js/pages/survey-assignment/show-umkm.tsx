@@ -25,6 +25,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ReactNode } from 'react';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -108,6 +109,8 @@ type UmkmData = {
     company_website_url: string | null;
     production_address: string | null;
     product_category: string | null;
+    categories: CategoryOption[];
+    category_labels: string | null;
     brand_name: string | null;
     annual_revenue: string;
     monthly_production_capacity: string | null;
@@ -167,6 +170,7 @@ type UmkmEditValues = {
     company_website_url: string;
     production_address: string;
     product_category: string;
+    categories: string[];
     brand_name: string;
     annual_revenue: string;
     monthly_production_capacity: string;
@@ -218,9 +222,33 @@ type Option = {
     label: string;
 };
 
+type CategoryOption = Option;
+
 const booleanOptions: Option[] = [
     { value: '1', label: 'Ya' },
     { value: '0', label: 'Tidak' },
+];
+
+const legalBusinessOptions: Option[] = [
+    { value: 'UD', label: 'UD' },
+    { value: 'CV', label: 'CV' },
+    { value: 'PT', label: 'PT' },
+    { value: 'Perorangan', label: 'Perorangan' },
+];
+
+const umkmCategoryOptions: CategoryOption[] = [
+    { value: 'kuliner', label: 'Kuliner' },
+    { value: 'tekstil_dan_kerajinan', label: 'Tekstil dan Kerajinan' },
+    { value: 'fashion_dan_aksesoris', label: 'Fashion dan Aksesoris' },
+    { value: 'kecantikan_dan_kesehatan', label: 'Kecantikan dan Kesehatan' },
+    { value: 'jasa', label: 'Jasa' },
+    { value: 'pertanian', label: 'Pertanian' },
+    { value: 'peternakan', label: 'Peternakan' },
+    { value: 'perikanan', label: 'Perikanan' },
+    {
+        value: 'produk_digital_dan_kreatif',
+        label: 'Produk Digital dan Kreatif',
+    },
 ];
 
 function initialEditForm(values: UmkmEditValues): UmkmEditForm {
@@ -774,6 +802,15 @@ function UmkmEditSidebar({
 }) {
     const { data, setData, processing, errors } = form;
 
+    function toggleCategory(value: string) {
+        setData(
+            'categories',
+            data.categories.includes(value)
+                ? data.categories.filter((category) => category !== value)
+                : [...data.categories, value],
+        );
+    }
+
     return (
         <>
             <div
@@ -880,8 +917,8 @@ function UmkmEditSidebar({
                                     placeholder="Nama usaha"
                                     required
                                 />
-                                <TextInput
-                                    label="Badan Usaha"
+                                <SelectInput
+                                    label="Nama Lengkap Badan Usaha"
                                     value={data.legal_business_name}
                                     onChange={(value) =>
                                         setData('legal_business_name', value)
@@ -890,7 +927,7 @@ function UmkmEditSidebar({
                                         errors,
                                         'legal_business_name',
                                     )}
-                                    placeholder="UD/CV/PT/Perorangan"
+                                    options={legalBusinessOptions}
                                 />
                                 <TextInput
                                     label="Tahun Berdiri"
@@ -905,18 +942,53 @@ function UmkmEditSidebar({
                                     placeholder="2020"
                                     type="number"
                                 />
-                                <TextInput
-                                    label="Kategori Produk"
-                                    value={data.product_category}
-                                    onChange={(value) =>
-                                        setData('product_category', value)
-                                    }
-                                    error={fieldError(
-                                        errors,
-                                        'product_category',
-                                    )}
-                                    placeholder="Makanan, kriya, fashion"
-                                />
+                                <div className="min-w-0 lg:col-span-2">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-xs font-bold text-[#344256]">
+                                            Kategori UMKM{' '}
+                                            <span className="text-[#D81313]">
+                                                *
+                                            </span>
+                                        </span>
+                                        <span className="text-[11px] font-semibold text-[#7C7C7C]">
+                                            Bisa pilih lebih dari satu
+                                        </span>
+                                    </div>
+                                    <div className="mt-2 grid grid-cols-1 gap-2 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2">
+                                        {umkmCategoryOptions.map((option) => {
+                                            const checked =
+                                                data.categories.includes(
+                                                    option.value,
+                                                );
+
+                                            return (
+                                                <label
+                                                    key={option.value}
+                                                    className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#303030] ring-1 ring-[#E6ECF2] transition hover:ring-[#AAD2F8]"
+                                                >
+                                                    <Checkbox
+                                                        checked={checked}
+                                                        onCheckedChange={() =>
+                                                            toggleCategory(
+                                                                option.value,
+                                                            )
+                                                        }
+                                                        className="border-[#AAD2F8] data-[state=checked]:border-[#0066AE] data-[state=checked]:bg-[#0066AE]"
+                                                    />
+                                                    <span className="truncate">
+                                                        {option.label}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <FieldError
+                                        message={fieldError(
+                                            errors,
+                                            'categories',
+                                        )}
+                                    />
+                                </div>
                                 <TextInput
                                     label="Merk Dagang"
                                     value={data.brand_name}
@@ -1557,9 +1629,29 @@ export default function ShowUmkm({
                                             {umkm.name}
                                         </h2>
                                         <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
-                                            {umkm.business_owner_name ?? '-'} ·{' '}
-                                            {umkm.product_category ?? '-'}
+                                            {umkm.business_owner_name ?? '-'}
                                         </p>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {umkm.categories.length > 0 ? (
+                                                umkm.categories.map(
+                                                    (category) => (
+                                                        <span
+                                                            key={
+                                                                category.value
+                                                            }
+                                                            className="inline-flex rounded-full bg-[#EAF3FF] px-2.5 py-1 text-[11px] font-bold text-[#0066AE]"
+                                                        >
+                                                            {category.label}
+                                                        </span>
+                                                    ),
+                                                )
+                                            ) : (
+                                                <span className="inline-flex rounded-full bg-[#F1F5F8] px-2.5 py-1 text-[11px] font-bold text-[#7C7C7C]">
+                                                    {umkm.product_category ??
+                                                        '-'}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <span className="inline-flex rounded-full bg-[#EAF8F0] px-3 py-1.5 text-xs font-bold text-[#00893D]">
                                         Master UMKM

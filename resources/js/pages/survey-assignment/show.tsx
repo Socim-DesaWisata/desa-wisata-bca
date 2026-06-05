@@ -45,6 +45,7 @@ import { dashboard, surveyAssignments } from '@/routes';
 import {
     createPariwisata,
     createUmkm,
+    exportMethod as exportSurveyAssignment,
     takeSurvey,
     update as updateSurveyAssignment,
 } from '@/routes/survey-assignments';
@@ -281,6 +282,16 @@ type PariwisataData = {
     is_active: boolean;
     status_label: string;
     categories: Array<{ id: number; value: string; label: string }>;
+    survey_summary: {
+        total_questions: number;
+        answered_questions: number;
+        unanswered_questions: number;
+        total_documents: number;
+        total_score: number;
+        max_score: number;
+        final_score: number;
+        last_answered_at: string;
+    };
     created_at: string;
     updated_at: string;
     detail_url: string;
@@ -728,10 +739,6 @@ function UmkmTab({
     umkms: UmkmData[];
     assignmentId: number;
 }) {
-    const totalAnswers = umkms.reduce(
-        (total, umkm) => total + umkm.survey_summary.answered_questions,
-        0,
-    );
     const averageScore = umkms.length
         ? Math.round(
               (umkms.reduce(
@@ -742,6 +749,13 @@ function UmkmTab({
                   10,
           ) / 10
         : 0;
+    const rankedUmkms = [...umkms].sort(
+        (first, second) =>
+            second.survey_summary.weighted_score -
+            first.survey_summary.weighted_score,
+    );
+    const highestUmkm = rankedUmkms[0] ?? null;
+    const lowestUmkm = rankedUmkms[rankedUmkms.length - 1] ?? null;
 
     return (
         <div className="space-y-4">
@@ -777,15 +791,15 @@ function UmkmTab({
                     icon={<Star size={22} />}
                 />
                 <MetricCard
-                    label="Jawaban Survey"
-                    value={String(totalAnswers)}
-                    helper="Total jawaban"
+                    label="UMKM Skor Tertinggi"
+                    value={highestUmkm ? String(highestUmkm.survey_summary.weighted_score) : '-'}
+                    helper={highestUmkm?.name ?? 'Belum ada data'}
                     icon={<ClipboardCheck size={22} />}
                 />
                 <MetricCard
-                    label="Status Data"
-                    value={umkms.length ? 'Tersedia' : 'Kosong'}
-                    helper="UMKM assignment"
+                    label="UMKM Skor Terendah"
+                    value={lowestUmkm ? String(lowestUmkm.survey_summary.weighted_score) : '-'}
+                    helper={lowestUmkm?.name ?? 'Belum ada data'}
                     icon={<CheckCircle2 size={22} />}
                     tone={umkms.length ? 'green' : 'orange'}
                 />
@@ -889,7 +903,7 @@ function UmkmCard({
                         className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
                     >
                         <Eye size={14} />
-                        Lihat Detail UMKM
+                        Lihat Survey UMKM
                     </Link>
                 </div>
             </div>
@@ -904,33 +918,82 @@ function PariwisataTab({
     pariwisata: PariwisataData[];
     assignmentId: number;
 }) {
+    const activeCount = pariwisata.filter((item) => item.is_active).length;
+    const totalAnswered = pariwisata.reduce(
+        (total, item) => total + item.survey_summary.answered_questions,
+        0,
+    );
+    const totalQuestions = pariwisata.reduce(
+        (total, item) => total + item.survey_summary.total_questions,
+        0,
+    );
+    const averageScore = pariwisata.length
+        ? Math.round(
+              (pariwisata.reduce(
+                  (total, item) => total + item.survey_summary.final_score,
+                  0,
+              ) /
+                  pariwisata.length) *
+                  10,
+          ) / 10
+        : 0;
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3 rounded-xl border border-[#D7E8F8] bg-[#F8FBFE] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-base font-bold text-[#303030]">
-                        Data Master Pariwisata
+                        Data Master ISTC
                     </h2>
                     <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
-                        Tab ini hanya menampilkan master pariwisata. Survey
-                        dibuka dari halaman detail pariwisata.
+                        Tab ini menampilkan master ISTC, ringkasan score, dan
+                        akses pengisian survey.
                     </p>
                 </div>
                 <Link href={createPariwisata.url(assignmentId)}>
                     <Button variant="primary">
                         <MapPin size={16} />
-                        Tambah Pariwisata
+                        Tambah ISTC
                     </Button>
                 </Link>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard
+                    label="Total ISTC"
+                    value={String(pariwisata.length)}
+                    helper="Master pariwisata"
+                    icon={<Folder size={22} />}
+                />
+                <MetricCard
+                    label="Aktif"
+                    value={String(activeCount)}
+                    helper="Data aktif"
+                    icon={<CheckCircle2 size={22} />}
+                    tone="green"
+                />
+                <MetricCard
+                    label="Rata-rata Skor"
+                    value={String(averageScore)}
+                    helper="Final score"
+                    icon={<Star size={22} />}
+                />
+                <MetricCard
+                    label="Jawaban Survey"
+                    value={`${totalAnswered}/${totalQuestions}`}
+                    helper="Terisi"
+                    icon={<ClipboardCheck size={22} />}
+                    tone={totalAnswered > 0 ? 'green' : 'orange'}
+                />
+            </div>
+
             {pariwisata.length === 0 ? (
                 <EmptyState
-                    title="Belum ada data pariwisata"
-                    description="Tambahkan master pariwisata untuk desa pada assignment ini."
+                    title="Belum ada data ISTC"
+                    description="Tambahkan master ISTC untuk desa pada assignment ini."
                 />
             ) : (
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {pariwisata.map((item) => (
                         <PariwisataCard
                             key={item.id}
@@ -952,13 +1015,14 @@ function PariwisataCard({
     assignmentId: number;
 }) {
     return (
-        <Card className="p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
+        <Card className="overflow-hidden p-4 transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(9,57,103,0.10)]">
+            <div className="flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
                         <span
                             className={classNames(
-                                'rounded-full px-3 py-1 text-xs font-bold',
+                                    'rounded-full px-2.5 py-1 text-[11px] font-bold',
                                 item.is_active
                                     ? 'bg-[#EAF8F0] text-[#00893D]'
                                     : 'bg-[#F1F5F8] text-[#7C7C7C]',
@@ -966,30 +1030,67 @@ function PariwisataCard({
                         >
                             {item.status_label}
                         </span>
-                        {item.categories.map((category) => (
+                            {item.categories.slice(0, 2).map((category) => (
                             <span
                                 key={category.id}
-                                className="rounded-full bg-[#EAF3FF] px-3 py-1 text-xs font-bold text-[#0066AE]"
+                                    className="rounded-full bg-[#EAF3FF] px-2.5 py-1 text-[11px] font-bold text-[#0066AE]"
                             >
                                 {category.label}
                             </span>
                         ))}
+                            {item.categories.length > 2 && (
+                                <span className="rounded-full bg-[#F1F5F8] px-2.5 py-1 text-[11px] font-bold text-[#7C7C7C]">
+                                    +{item.categories.length - 2}
+                                </span>
+                            )}
                     </div>
-                    <h3 className="mt-3 text-lg font-bold text-[#303030]">
+                        <h3 className="mt-3 line-clamp-1 text-base font-bold text-[#303030]">
                         {item.name}
                     </h3>
-                    <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 font-semibold text-[#7C7C7C]">
                         {item.address ?? '-'}
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                    <div className="shrink-0 rounded-2xl bg-[#F8FBFE] px-4 py-3 text-right ring-1 ring-[#E4EAF0]">
+                        <p className="text-[10px] font-black tracking-[0.06em] text-[#7C7C7C] uppercase">
+                            Skor
+                        </p>
+                        <p className="mt-1 text-2xl leading-6 font-bold text-[#093967]">
+                            {item.survey_summary.final_score}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid gap-2 text-xs sm:grid-cols-3">
+                    <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
+                        <p className="font-semibold text-[#7C7C7C]">Jawaban</p>
+                        <p className="mt-0.5 truncate font-bold text-[#303030]">
+                            {item.survey_summary.answered_questions}/
+                            {item.survey_summary.total_questions} jawaban
+                        </p>
+                    </div>
+                    <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
+                        <p className="font-semibold text-[#7C7C7C]">PIC</p>
+                        <p className="mt-0.5 truncate font-bold text-[#303030]">
+                            {item.person_in_charge_name ?? '-'}
+                        </p>
+                    </div>
+                    <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
+                        <p className="font-semibold text-[#7C7C7C]">Tiket</p>
+                        <p className="mt-0.5 truncate font-bold text-[#303030]">
+                            {item.entrance_ticket_price}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
                     <Link
                         href={takePariwisataSurvey.url({
                             assignment: assignmentId,
                             pariwisata: item.id,
                         })}
                     >
-                        <Button variant="primary">
+                        <Button variant="primary" className="w-full">
                             <ClipboardList size={16} />
                             Isi Survey
                         </Button>
@@ -1000,29 +1101,12 @@ function PariwisataCard({
                             pariwisata: item.id,
                         })}
                     >
-                        <Button>
+                        <Button className="w-full">
                             <Eye size={16} />
                             Lihat Detail
                         </Button>
                     </Link>
                 </div>
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <DetailPair
-                    label="Hari Operasional"
-                    value={item.operational_days}
-                />
-                <DetailPair label="Jam" value={item.operational_hours} />
-                <DetailPair
-                    label="Harga Tiket"
-                    value={item.entrance_ticket_price}
-                />
-                <DetailPair label="PIC" value={item.person_in_charge_name} />
-                <DetailPair
-                    label="Telepon PIC"
-                    value={item.person_in_charge_phone}
-                />
-                <DetailPair label="Update" value={item.updated_at} />
             </div>
         </Card>
     );
@@ -1337,6 +1421,12 @@ export default function SurveyAssignmentShow({
                                     Edit Assignment
                                 </Button>
                             </button>
+                            <a href={exportSurveyAssignment.url(assignment.id)}>
+                                <Button>
+                                    <Download size={16} />
+                                    Export Excel
+                                </Button>
+                            </a>
                             <Link href={takeSurvey.url(assignment.id)}>
                                 <Button variant="primary">
                                     <ClipboardList size={16} />
@@ -1350,7 +1440,7 @@ export default function SurveyAssignmentShow({
                         <div className="flex min-w-max gap-2">
                             <TabButton
                                 active={activeTab === 'desa'}
-                                label="Desa"
+                                label="Kemenpar"
                                 count={summary.total_questions}
                                 icon={<MapPin size={16} />}
                                 onClick={() => setActiveTab('desa')}
@@ -1364,7 +1454,7 @@ export default function SurveyAssignmentShow({
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
-                                label="Pariwisata"
+                                label="ISTC"
                                 count={pariwisata.length}
                                 icon={<Flag size={16} />}
                                 onClick={() => setActiveTab('pariwisata')}

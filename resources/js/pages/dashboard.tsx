@@ -13,6 +13,8 @@ import {
     MoreVertical,
     Plus,
     Search,
+    Store,
+    Ticket,
     TrendingUp,
     UserRound,
 } from 'lucide-react';
@@ -43,19 +45,8 @@ type Kpi = {
     value: string;
     desc: string;
     trend: string;
-    icon: 'map' | 'clipboard' | 'search' | 'trending';
+    icon: 'map' | 'clipboard' | 'search' | 'trending' | 'store' | 'ticket';
     tone: 'success' | 'warning';
-};
-
-type StatusBar = {
-    label: string;
-    value: number;
-    color: string;
-};
-
-type ScoreTrend = {
-    label: string;
-    value: number;
 };
 
 type RecentAssignment = {
@@ -76,6 +67,12 @@ type Priority = {
     tone: 'blue' | 'warning' | 'danger';
 };
 
+type TopUmkmCategory = {
+    category: string;
+    label: string;
+    total: number;
+};
+
 type Activity = {
     title: string;
     time: string;
@@ -83,10 +80,23 @@ type Activity = {
     tone: 'success' | 'blue' | 'warning';
 };
 
+type TopSurveyRow = {
+    id: number;
+    name: string;
+    meta: string;
+    score: number;
+    progress: number | null;
+    answers: string;
+    status: string;
+    url: string | null;
+};
+
 type DashboardProps = {
     kpis: Kpi[];
-    status_bars: StatusBar[];
-    score_trend: ScoreTrend[];
+    top_village_surveys: TopSurveyRow[];
+    top_umkm_surveys: TopSurveyRow[];
+    top_pariwisata_surveys: TopSurveyRow[];
+    top_umkm_categories: TopUmkmCategory[];
     recent_assignments: RecentAssignment[];
     priorities: Priority[];
     activities: Activity[];
@@ -97,12 +107,8 @@ const kpiIcons = {
     clipboard: ClipboardCheck,
     search: FileSearch,
     trending: TrendingUp,
-};
-
-const priorityIcons = {
-    clipboard: ClipboardCheck,
-    file: FileText,
-    calendar: CalendarDays,
+    store: Store,
+    ticket: Ticket,
 };
 
 const activityIcons = {
@@ -170,37 +176,114 @@ function Panel({
     );
 }
 
+function TopSurveyTable({
+    title,
+    description,
+    rows,
+}: {
+    title: string;
+    description: string;
+    rows: TopSurveyRow[];
+}) {
+    return (
+        <Panel className="p-3.5 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-base leading-6 font-bold text-[#303030]">
+                        {title}
+                    </h2>
+                    <p className="text-xs leading-5 text-[#7C7C7C]">
+                        {description}
+                    </p>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-[#EFEFEF]">
+                <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+                    <thead className="bg-[#F1F5F8] text-xs text-[#303030]">
+                        <tr>
+                            {[
+                                'Nama Survey',
+                                'Info',
+                                'Jawaban',
+                                'Skor',
+                                'Status',
+                                'Aksi',
+                            ].map((head) => (
+                                    <th
+                                        key={head}
+                                        className="h-10 px-4 font-bold whitespace-nowrap"
+                                    >
+                                        {head}
+                                    </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EFEFEF] bg-white">
+                        {rows.map((row) => (
+                            <tr key={row.id} className="h-12 hover:bg-[#F7F7F7]">
+                                <td className="px-4 font-semibold whitespace-nowrap text-[#303030]">
+                                    {row.name}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-[#303030]">
+                                    {row.meta}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-[#303030]">
+                                    {row.answers}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-[#303030]">
+                                    <span className="inline-flex h-6 min-w-16 items-center justify-center rounded-full bg-[#EAF3FF] px-3 text-xs font-bold text-[#0066AE]">
+                                        {row.score}
+                                    </span>
+                                </td>
+                                <td className="px-4">
+                                    <span className="inline-flex h-6 min-w-24 items-center justify-center rounded-full bg-[#F1F5F8] px-3 text-xs font-bold text-[#0066AE]">
+                                        {row.status}
+                                    </span>
+                                </td>
+                                <td className="px-4 text-center">
+                                    {row.url ? (
+                                        <Link
+                                            href={row.url}
+                                            className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-[#F1F5F8]"
+                                            aria-label={`Detail ${row.name}`}
+                                        >
+                                            <MoreVertical className="size-4 text-[#7C7C7C]" />
+                                        </Link>
+                                    ) : (
+                                        <span className="text-xs font-semibold text-[#B0B0B0]">
+                                            -
+                                        </span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                        {rows.length === 0 && (
+                            <tr>
+                                <td
+                                    colSpan={6}
+                                    className="px-4 py-8 text-center text-sm font-semibold text-[#7C7C7C]"
+                                >
+                                    Belum ada data.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </Panel>
+    );
+}
+
 export default function Dashboard({
     kpis,
-    status_bars,
-    score_trend,
+    top_village_surveys,
+    top_umkm_surveys,
+    top_pariwisata_surveys,
+    top_umkm_categories,
     recent_assignments,
-    priorities,
     activities,
 }: DashboardProps) {
-    const maxStatusValue = Math.max(...status_bars.map((bar) => bar.value), 1);
-    const trendPoints = score_trend.map((point, index) => {
-        const x =
-            score_trend.length > 1
-                ? 58 + index * (410 / (score_trend.length - 1))
-                : 58;
-        const y = 184 - (Number(point.value) / 100) * 150;
-
-        return {
-            ...point,
-            x,
-            y,
-        };
-    });
-    const trendPath = trendPoints
-        .map(
-            (point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`,
-        )
-        .join(' ');
-    const trendAreaPath = trendPoints.length
-        ? `${trendPath} L${trendPoints[trendPoints.length - 1].x} 184 L${trendPoints[0].x} 184 Z`
-        : '';
-
     return (
         <>
             <Head title="Dashboard Admin" />
@@ -291,145 +374,22 @@ export default function Dashboard({
 
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
                         <main className="min-w-0 space-y-4 xl:col-span-8 2xl:col-span-9">
-                            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                                <Panel className="p-3.5 sm:p-4">
-                                    <div className="mb-4">
-                                        <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                            Progress Survey Desa
-                                        </h2>
-                                        <p className="text-xs leading-5 text-[#7C7C7C]">
-                                            Distribusi status assignment aktif.
-                                        </p>
-                                    </div>
-
-                                    <div className="relative h-[220px] pl-8 md:h-[240px] xl:h-[260px]">
-                                        {[80, 60, 40, 20, 0].map((line) => (
-                                            <div
-                                                key={line}
-                                                className="absolute right-0 left-8 border-t border-dashed border-[#EFEFEF]"
-                                                style={{
-                                                    top: `${((80 - line) / 80) * 170}px`,
-                                                }}
-                                            >
-                                                <span className="absolute -top-2.5 -left-8 text-[11px] leading-none text-[#7C7C7C]">
-                                                    {line}
-                                                </span>
-                                            </div>
-                                        ))}
-                                        <div className="absolute right-0 bottom-7 left-10 flex h-[170px] items-end justify-between gap-1.5 sm:gap-2">
-                                            {status_bars.map((bar) => (
-                                                <div
-                                                    key={bar.label}
-                                                    className="flex min-w-0 flex-1 flex-col items-center"
-                                                >
-                                                    <span className="mb-1 text-xs font-bold text-[#303030]">
-                                                        {bar.value}
-                                                    </span>
-                                                    <span
-                                                        className="w-full max-w-10 rounded-t-md"
-                                                        style={{
-                                                            height: `${Math.max((bar.value / maxStatusValue) * 170, bar.value > 0 ? 14 : 4)}px`,
-                                                            backgroundColor:
-                                                                bar.color,
-                                                        }}
-                                                    />
-                                                    <span className="mt-2 max-w-[64px] text-center text-[11px] leading-4 text-[#7C7C7C]">
-                                                        {bar.label}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </Panel>
-
-                                <Panel className="p-3.5 sm:p-4">
-                                    <div className="mb-4">
-                                        <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                            Tren Skor Assessment
-                                        </h2>
-                                        <p className="text-xs leading-5 text-[#7C7C7C]">
-                                            Rata-rata skor assessment per bulan.
-                                        </p>
-                                    </div>
-
-                                    <div className="h-[220px] overflow-hidden md:h-[240px] xl:h-[260px]">
-                                        <svg
-                                            viewBox="0 0 520 210"
-                                            className="h-full w-full"
-                                        >
-                                            {[100, 90, 80, 70, 60].map(
-                                                (line, index) => (
-                                                    <g key={line}>
-                                                        <line
-                                                            x1="38"
-                                                            x2="510"
-                                                            y1={index * 36 + 14}
-                                                            y2={index * 36 + 14}
-                                                            stroke="#EFEFEF"
-                                                            strokeDasharray="4 4"
-                                                        />
-                                                        <text
-                                                            x="2"
-                                                            y={index * 36 + 18}
-                                                            fontSize="11"
-                                                            fill="#7C7C7C"
-                                                        >
-                                                            {line}
-                                                        </text>
-                                                    </g>
-                                                ),
-                                            )}
-                                            {trendPath && (
-                                                <>
-                                                    <path
-                                                        d={trendPath}
-                                                        fill="none"
-                                                        stroke="#0066AE"
-                                                        strokeWidth="3"
-                                                        strokeLinecap="round"
-                                                    />
-                                                    <path
-                                                        d={trendAreaPath}
-                                                        fill="#2FA6FC"
-                                                        opacity="0.10"
-                                                    />
-                                                </>
-                                            )}
-                                            {trendPoints.map((point) => (
-                                                <g key={point.label}>
-                                                    <circle
-                                                        cx={point.x}
-                                                        cy={point.y}
-                                                        r="4.5"
-                                                        fill="#0066AE"
-                                                    />
-                                                    <text
-                                                        x={point.x - 12}
-                                                        y={point.y - 12}
-                                                        fontSize="11"
-                                                        fontWeight="700"
-                                                        fill="#303030"
-                                                    >
-                                                        {Number(
-                                                            point.value,
-                                                        ).toFixed(1)}
-                                                    </text>
-                                                </g>
-                                            ))}
-                                            {trendPoints.map((point) => (
-                                                <text
-                                                    key={point.label}
-                                                    x={point.x - 4}
-                                                    y="205"
-                                                    fontSize="11"
-                                                    fill="#7C7C7C"
-                                                >
-                                                    {point.label}
-                                                </text>
-                                            ))}
-                                        </svg>
-                                    </div>
-                                </Panel>
+                            <div className="space-y-4">
+                                <TopSurveyTable
+                                    title="Top 3 Survey Desa"
+                                    description="Skor tertinggi survey Kemenpar."
+                                    rows={top_village_surveys}
+                                />
+                                <TopSurveyTable
+                                    title="Top 3 Survey UMKM"
+                                    description="Skor tertinggi assessment UMKM."
+                                    rows={top_umkm_surveys}
+                                />
+                                <TopSurveyTable
+                                    title="Top 3 Survey Pariwisata"
+                                    description="Skor tertinggi survey ISTC."
+                                    rows={top_pariwisata_surveys}
+                                />
                             </div>
 
                             <Panel className="p-3.5 sm:p-4">
@@ -609,45 +569,56 @@ export default function Dashboard({
 
                         <aside className="space-y-4 xl:col-span-4 2xl:col-span-3">
                             <Panel className="p-3.5 sm:p-4">
-                                <h2 className="mb-3 text-base leading-6 font-bold text-[#303030]">
-                                    Prioritas Review
-                                </h2>
-                                <div className="divide-y divide-[#EFEFEF]">
-                                    {priorities.map((item) => {
-                                        const Icon = priorityIcons[item.icon];
-                                        const color = toneColors[item.tone];
-                                        return (
-                                            <button
-                                                key={item.text}
-                                                className="flex w-full items-center gap-3 py-3 text-left"
-                                            >
-                                                <span
-                                                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F8]"
-                                                    style={{
-                                                        color,
-                                                    }}
-                                                >
-                                                    <Icon
-                                                        className="size-5"
-                                                        strokeWidth={2}
-                                                    />
-                                                </span>
-                                                <span
-                                                    className="text-xl leading-none font-bold"
-                                                    style={{
-                                                        color,
-                                                    }}
-                                                >
-                                                    {item.value}
-                                                </span>
-                                                <span className="min-w-0 flex-1 text-xs leading-5 font-semibold text-[#303030]">
-                                                    {item.text}
-                                                </span>
-                                                <ChevronRight className="size-4 shrink-0 text-[#7C7C7C]" />
-                                            </button>
-                                        );
-                                    })}
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                    <div>
+                                        <h2 className="text-base leading-6 font-bold text-[#303030]">
+                                            Top Kategori UMKM
+                                        </h2>
+                                        <p className="text-xs leading-5 text-[#7C7C7C]">
+                                            4 kategori terbanyak terdata
+                                        </p>
+                                    </div>
+                                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                                        <Store className="size-4" />
+                                    </span>
                                 </div>
+                                {top_umkm_categories.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {top_umkm_categories.map((item) => (
+                                            <div
+                                                key={item.category}
+                                                className="min-w-0 rounded-xl border border-[#EFEFEF] bg-[#F8FBFE] p-3"
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <span className="min-w-0 text-xs leading-5 font-bold text-[#303030]">
+                                                        {item.label}
+                                                    </span>
+                                                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-[#0066AE] ring-1 ring-[#AAD2F8]/50">
+                                                        #{
+                                                            top_umkm_categories.findIndex(
+                                                                (category) =>
+                                                                    category.category ===
+                                                                    item.category,
+                                                            ) + 1
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <div className="mt-3 flex items-end gap-1">
+                                                    <span className="text-2xl leading-none font-bold text-[#0066AE]">
+                                                        {item.total}
+                                                    </span>
+                                                    <span className="text-xs font-semibold text-[#7C7C7C]">
+                                                        UMKM
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl border border-dashed border-[#DCE3EA] bg-[#F8FBFE] px-3 py-6 text-center text-sm font-semibold text-[#7C7C7C]">
+                                        Belum ada kategori UMKM.
+                                    </div>
+                                )}
                             </Panel>
 
                             <Panel className="p-3.5 sm:p-4">
