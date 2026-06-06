@@ -3,11 +3,8 @@ import {
     ChevronDown,
     ClipboardCheck,
     ClipboardList,
-    FileSearch,
-    FolderOpen,
     LayoutDashboard,
     BarChart3,
-    Settings,
     UserCog,
     Users,
 } from 'lucide-react';
@@ -78,26 +75,12 @@ const navGroups: SidebarNavGroup[] = [
                 href: surveyAssignments(),
                 icon: ClipboardCheck,
             },
-            {
-                title: 'Review Survey',
-                href: '#',
-                icon: FileSearch,
-                badge: '18',
-            },
         ],
     },
     {
         label: 'Management',
         items: [
-            {
-                title: 'Dokumen',
-                href: '#',
-                icon: FolderOpen,
-                badge: '3',
-                warning: true,
-            },
             { title: 'User Management', href: usersRoute(), icon: Users },
-            { title: 'Pengaturan', href: '#', icon: Settings },
         ],
     },
     {

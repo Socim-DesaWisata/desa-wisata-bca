@@ -2,16 +2,11 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import {
     BriefcaseBusiness,
-    CheckCircle2,
-    Download,
-    Eye,
     Info,
     KeyRound,
     MoreHorizontal,
-    Pencil,
     Plus,
     Search,
-    Send,
     Shield,
     Trash2,
     UserRound,
@@ -289,7 +284,7 @@ export default function UsersIndex({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-3 sm:flex-row">
                             <button
                                 type="button"
                                 onClick={() => setCreateOpen(true)}
@@ -297,13 +292,6 @@ export default function UsersIndex({
                             >
                                 <Plus className="size-4" />
                                 Tambah User
-                            </button>
-                            <button
-                                type="button"
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                            >
-                                <Download className="size-4" />
-                                Export Data
                             </button>
                         </div>
                     </header>
@@ -530,14 +518,6 @@ export default function UsersIndex({
                                                                 align="end"
                                                                 className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                             >
-                                                                <DropdownMenuItem className="gap-2 text-xs">
-                                                                    <Eye className="size-4 text-[#303030]" />
-                                                                    Lihat Detail
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem className="gap-2 text-xs">
-                                                                    <Pencil className="size-4 text-[#303030]" />
-                                                                    Edit User
-                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
                                                                         openResetModal(
@@ -551,18 +531,8 @@ export default function UsersIndex({
                                                                     Password
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem className="gap-2 text-xs">
-                                                                    <Send className="size-4 text-[#303030]" />
-                                                                    Kirim Ulang
-                                                                    Undangan
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem className="gap-2 text-xs">
                                                                     <UserRound className="size-4 text-[#303030]" />
                                                                     Nonaktifkan
-                                                                    User
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem className="gap-2 text-xs">
-                                                                    <CheckCircle2 className="size-4 text-[#303030]" />
-                                                                    Arsipkan
                                                                     User
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />

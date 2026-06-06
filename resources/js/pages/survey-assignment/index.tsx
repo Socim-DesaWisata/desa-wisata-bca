@@ -7,9 +7,7 @@ import {
     Eye,
     FileSearch,
     MoreHorizontal,
-    Pencil,
     Plus,
-    RefreshCcw,
     Search,
     Trash2,
 } from 'lucide-react';
@@ -348,7 +346,7 @@ export default function SurveyAssignmentIndex({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-3 sm:flex-row">
                             <button
                                 type="button"
                                 onClick={openCreateModal}
@@ -356,9 +354,6 @@ export default function SurveyAssignmentIndex({
                             >
                                 <Plus className="size-4" />
                                 Tambah Assignment
-                            </button>
-                            <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]">
-                                Export Data
                             </button>
                         </div>
                     </header>
@@ -593,14 +588,6 @@ export default function SurveyAssignmentIndex({
                                                         >
                                                             <ClipboardList className="size-4 text-[#303030]" />
                                                             Take Survey
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="gap-2 text-xs">
-                                                            <Pencil className="size-4 text-[#303030]" />
-                                                            Edit Assignment
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="gap-2 text-xs">
-                                                            <RefreshCcw className="size-4 text-[#303030]" />
-                                                            Reset Status
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
