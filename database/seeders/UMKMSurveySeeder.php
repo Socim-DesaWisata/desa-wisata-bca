@@ -25,6 +25,7 @@ class UMKMSurveySeeder extends Seeder
 
             $template = SurveyTemplate::withTrashed()->firstOrNew([
                 'title' => 'Assessment Pelaku UMKM',
+                'type' => 'umkm'
             ]);
             $shouldRestore = $template->exists && $template->trashed();
 

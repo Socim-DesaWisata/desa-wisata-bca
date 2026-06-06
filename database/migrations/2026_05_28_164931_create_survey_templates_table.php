@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('survey_templates', function (Blueprint $table) {
             $table->id();
             $table->string('title', 150);
+            $table->enum('type', ['village', 'umkm', 'pariwisata'])->nullable();
             $table->text('description')->nullable();
             $table->string('status')->default('draft');
             $table->foreignId('created_by')->constrained('users');

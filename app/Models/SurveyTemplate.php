@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['title', 'description', 'status', 'created_by', 'published_at'])]
+#[Fillable(['title', 'description', 'type', 'status', 'created_by', 'published_at'])]
 class SurveyTemplate extends Model
 {
     use HasFactory, SoftDeletes;

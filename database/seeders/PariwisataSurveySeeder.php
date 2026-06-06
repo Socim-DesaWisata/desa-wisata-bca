@@ -29,6 +29,7 @@ class PariwisataSurveySeeder extends Seeder
 
             $template = SurveyTemplate::withTrashed()->firstOrNew([
                 'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+                'type' => 'pariwisata'
             ]);
             $shouldRestore = $template->exists && $template->trashed();
 

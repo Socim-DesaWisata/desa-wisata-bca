@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowDownToLine,
     ArrowUpRight,
@@ -93,14 +93,15 @@ type TopSurveyRow = {
 };
 
 type DashboardProps = {
-    kpis: Kpi[];
-    top_village_surveys: TopSurveyRow[];
-    top_umkm_surveys: TopSurveyRow[];
-    top_pariwisata_surveys: TopSurveyRow[];
-    top_umkm_categories: TopUmkmCategory[];
-    recent_assignments: RecentAssignment[];
-    priorities: Priority[];
-    activities: Activity[];
+    dashboard_mode?: 'admin' | 'enumerator';
+    kpis?: Kpi[];
+    top_village_surveys?: TopSurveyRow[];
+    top_umkm_surveys?: TopSurveyRow[];
+    top_pariwisata_surveys?: TopSurveyRow[];
+    top_umkm_categories?: TopUmkmCategory[];
+    recent_assignments?: RecentAssignment[];
+    priorities?: Priority[];
+    activities?: Activity[];
 };
 
 const kpiIcons = {
@@ -277,14 +278,83 @@ function TopSurveyTable({
 }
 
 export default function Dashboard({
-    kpis,
-    top_village_surveys,
-    top_umkm_surveys,
-    top_pariwisata_surveys,
-    top_umkm_categories,
-    recent_assignments,
-    activities,
+    dashboard_mode = 'admin',
+    kpis = [],
+    top_village_surveys = [],
+    top_umkm_surveys = [],
+    top_pariwisata_surveys = [],
+    top_umkm_categories = [],
+    recent_assignments = [],
+    activities = [],
 }: DashboardProps) {
+    const { auth } = usePage().props;
+
+    if (dashboard_mode === 'enumerator') {
+        return (
+            <>
+                <Head title="Dashboard Enumerator" />
+                <div className="min-w-0 bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
+                    <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
+                        <header className="rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_14px_rgba(3,17,32,0.06)] sm:p-6">
+                            <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#7C7C7C]">
+                                <span>Dashboard</span>
+                                <ChevronRight
+                                    className="size-3.5"
+                                    strokeWidth={2}
+                                />
+                                <span>Enumerator</span>
+                            </div>
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-[#0066AE]">
+                                        Selamat datang,
+                                    </p>
+                                    <h1 className="mt-1 text-[24px] leading-8 font-bold tracking-[-0.01em] text-[#303030] sm:text-[30px] sm:leading-9">
+                                        {auth.user.name}
+                                    </h1>
+                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7C7C7C]">
+                                        Anda masuk sebagai enumerator. Gunakan
+                                        menu Survey Assignment untuk melihat dan
+                                        mengisi data assessment yang ditugaskan.
+                                    </p>
+                                </div>
+                                <Link
+                                    href={surveyAssignments.url()}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-semibold text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] sm:w-auto"
+                                >
+                                    <ClipboardCheck
+                                        className="size-4"
+                                        strokeWidth={2}
+                                    />
+                                    Lihat Assignment
+                                </Link>
+                            </div>
+                        </header>
+
+                        <Panel className="p-5 sm:p-6">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE]">
+                                    <Info className="size-5" strokeWidth={2} />
+                                </span>
+                                <div>
+                                    <h2 className="text-base leading-6 font-bold text-[#303030]">
+                                        Akses Enumerator
+                                    </h2>
+                                    <p className="mt-1 text-sm leading-6 text-[#7C7C7C]">
+                                        Menu dashboard admin, template survey,
+                                        dan manajemen user dibatasi untuk admin.
+                                        Jika membutuhkan akses tambahan,
+                                        hubungi admin platform.
+                                    </p>
+                                </div>
+                            </div>
+                        </Panel>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title="Dashboard Admin" />

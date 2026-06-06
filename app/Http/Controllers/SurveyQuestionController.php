@@ -15,9 +15,17 @@ use Inertia\Response;
 
 class SurveyQuestionController extends Controller
 {
-    public function __invoke(IndexSurveyQuestionRequest $request, SurveyQuestionService $service): Response
+    public function __invoke(SurveyQuestionService $service): Response
     {
-        return Inertia::render('questions/index', $service->getIndexData($request->validated()));
+        return Inertia::render('questions/templates', $service->getTemplateIndexData());
+    }
+
+    public function show(
+        IndexSurveyQuestionRequest $request,
+        SurveyTemplate $template,
+        SurveyQuestionService $service
+    ): Response {
+        return Inertia::render('questions/index', $service->getIndexData($template, $request->validated()));
     }
 
     public function updateTemplate(

@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Activity,
     CheckCircle2,
@@ -193,6 +193,8 @@ export default function SurveyAssignmentIndex({
     village_options,
     per_page_options,
 }: SurveyAssignmentIndexProps) {
+    const { auth } = usePage().props;
+    const isEnumerator = auth.user?.role === 'enumerator';
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isAccessOpen, setIsAccessOpen] = useState(false);
     const [selectedAssignment, setSelectedAssignment] =
@@ -346,16 +348,18 @@ export default function SurveyAssignmentIndex({
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                            <button
-                                type="button"
-                                onClick={openCreateModal}
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
-                            >
-                                <Plus className="size-4" />
-                                Tambah Assignment
-                            </button>
-                        </div>
+                        {!isEnumerator && (
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <button
+                                    type="button"
+                                    onClick={openCreateModal}
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Assignment
+                                </button>
+                            </div>
+                        )}
                     </header>
 
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -405,7 +409,11 @@ export default function SurveyAssignmentIndex({
                                         }))
                                     }
                                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#7C7C7C]"
-                                    placeholder="Cari ID assignment, desa, kode desa, atau template..."
+                                    placeholder={
+                                        isEnumerator
+                                            ? 'Cari desa, kode desa, atau template...'
+                                            : 'Cari ID assignment, desa, kode desa, atau template...'
+                                    }
                                 />
                             </label>
 
@@ -513,14 +521,14 @@ export default function SurveyAssignmentIndex({
                                             className="hover:bg-[#FAFCFF]"
                                         >
                                             <td className="px-3 py-3 font-bold text-[#0066AE]">
-                                                {assignment.code ?? `#${assignment.id}`}
+                                                {isEnumerator
+                                                    ? `#${assignment.id}`
+                                                    : (assignment.code ??
+                                                      `#${assignment.id}`)}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#303030]">
                                                     {assignment.village_name}
-                                                </span>
-                                                <span className="block text-[12px] leading-4 text-[#093967]">
-                                                    {assignment.village_code}
                                                 </span>
                                                 <span className="block text-[12px] leading-4 text-[#7C7C7C]">
                                                     {
@@ -589,11 +597,16 @@ export default function SurveyAssignmentIndex({
                                                             <ClipboardList className="size-4 text-[#303030]" />
                                                             Take Survey
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
-                                                            <Trash2 className="size-4 text-[#D81313]" />
-                                                            Hapus Assignment
-                                                        </DropdownMenuItem>
+                                                        {!isEnumerator && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
+                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                    Hapus
+                                                                    Assignment
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </td>
@@ -615,14 +628,16 @@ export default function SurveyAssignmentIndex({
                                     Assignment survey desa yang dibuat akan
                                     muncul di halaman ini.
                                 </p>
-                                <button
-                                    type="button"
-                                    onClick={openCreateModal}
-                                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
-                                >
-                                    <Plus className="size-4" />
-                                    Tambah Assignment
-                                </button>
+                                {!isEnumerator && (
+                                    <button
+                                        type="button"
+                                        onClick={openCreateModal}
+                                        className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Assignment
+                                    </button>
+                                )}
                             </div>
                         )}
 

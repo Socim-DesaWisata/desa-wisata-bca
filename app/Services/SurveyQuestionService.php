@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\PariwisataSurveyQuestion;
+use App\Models\PariwisataSuveyOption;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
 use App\Models\SurveyTemplate;
+use App\Models\UmkmSurveyQuestion;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -12,20 +15,43 @@ use Illuminate\Support\Facades\DB;
 class SurveyQuestionService
 {
     /**
-     * @param  array{template_id?: int|null, search?: string|null, aspect?: string|null, per_page?: int|null}  $filters
      * @return array<string, mixed>
      */
-    public function getIndexData(array $filters): array
+    public function getTemplateIndexData(): array
     {
-        $template = $this->resolveTemplate($filters['template_id'] ?? null);
+        $templates = SurveyTemplate::query()
+            ->with(['creator:id,name'])
+            ->withCount(['assignments'])
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (SurveyTemplate $template): array => $this->formatTemplate($template))
+            ->values()
+            ->all();
 
         return [
-            'template' => $template ? $this->formatTemplate($template) : null,
-            'templates' => $this->templates(),
+            'templates' => $templates,
+            'summary' => [
+                'total_templates' => count($templates),
+                'published_templates' => collect($templates)->where('status', 'published')->count(),
+                'draft_templates' => collect($templates)->where('status', 'draft')->count(),
+                'total_questions' => collect($templates)->sum('questions_count'),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array{search?: string|null, aspect?: string|null, per_page?: int|null}  $filters
+     * @return array<string, mixed>
+     */
+    public function getIndexData(SurveyTemplate $template, array $filters): array
+    {
+        $template->loadMissing('creator:id,name')->loadCount(['assignments']);
+
+        return [
+            'template' => $this->formatTemplate($template),
             'aspects' => $this->aspects($template),
             'questions' => $this->questions($template, $filters),
             'filters' => [
-                'template_id' => $template?->id,
                 'search' => $filters['search'] ?? '',
                 'aspect' => $filters['aspect'] ?? '',
                 'per_page' => $filters['per_page'] ?? 10,
@@ -93,40 +119,6 @@ class SurveyQuestionService
         });
     }
 
-    private function resolveTemplate(?int $templateId): ?SurveyTemplate
-    {
-        $query = SurveyTemplate::query()
-            ->with(['creator:id,name'])
-            ->withCount(['questions', 'assignments']);
-
-        if ($templateId) {
-            return $query->find($templateId);
-        }
-
-        return $query
-            ->whereHas('questions')
-            ->latest('published_at')
-            ->latest('id')
-            ->first();
-    }
-
-    /**
-     * @return array<int, array{id: int, title: string}>
-     */
-    private function templates(): array
-    {
-        return SurveyTemplate::query()
-            ->whereHas('questions')
-            ->orderBy('title')
-            ->get(['id', 'title'])
-            ->map(fn (SurveyTemplate $template): array => [
-                'id' => $template->id,
-                'title' => $template->title,
-            ])
-            ->values()
-            ->all();
-    }
-
     /**
      * @return array<int, string>
      */
@@ -136,25 +128,60 @@ class SurveyQuestionService
             return [];
         }
 
-        return SurveyQuestion::query()
-            ->whereBelongsTo($template, 'template')
-            ->distinct()
-            ->orderBy('aspect')
-            ->pluck('aspect')
-            ->all();
+        return match ($this->templateType($template)) {
+            'umkm' => UmkmSurveyQuestion::query()
+                ->whereBelongsTo($template, 'template')
+                ->whereNotNull('criteria_name')
+                ->distinct()
+                ->orderBy('criteria_name')
+                ->pluck('criteria_name')
+                ->filter()
+                ->values()
+                ->all(),
+            'pariwisata' => PariwisataSurveyQuestion::query()
+                ->whereBelongsTo($template, 'template')
+                ->get(['category_name', 'sub_category_name', 'criteria_name'])
+                ->map(fn (PariwisataSurveyQuestion $question): ?string => $this->pariwisataAspect($question))
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values()
+                ->all(),
+            default => SurveyQuestion::query()
+                ->whereBelongsTo($template, 'template')
+                ->whereNotNull('aspect')
+                ->distinct()
+                ->orderBy('aspect')
+                ->pluck('aspect')
+                ->filter()
+                ->values()
+                ->all(),
+        };
     }
 
     /**
      * @param  array{search?: string|null, aspect?: string|null, per_page?: int|null}  $filters
      */
-    private function questions(?SurveyTemplate $template, array $filters): LengthAwarePaginator
+    private function questions(SurveyTemplate $template, array $filters): LengthAwarePaginator
     {
         $perPage = min(max((int) ($filters['per_page'] ?? 10), 5), 50);
 
+        return match ($this->templateType($template)) {
+            'umkm' => $this->umkmQuestions($template, $filters, $perPage),
+            'pariwisata' => $this->pariwisataQuestions($template, $filters, $perPage),
+            default => $this->villageQuestions($template, $filters, $perPage),
+        };
+    }
+
+    /**
+     * @param  array{search?: string|null, aspect?: string|null, per_page?: int|null}  $filters
+     */
+    private function villageQuestions(SurveyTemplate $template, array $filters, int $perPage): LengthAwarePaginator
+    {
         return SurveyQuestion::query()
             ->with(['options' => fn ($query) => $query->orderBy('sort_order')])
             ->withCount('options')
-            ->when($template, fn (Builder $query) => $query->whereBelongsTo($template, 'template'))
+            ->whereBelongsTo($template, 'template')
             ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query
@@ -177,16 +204,140 @@ class SurveyQuestionService
                 'document_hint' => $question->document_hint,
                 'aspect' => $question->aspect,
                 'type' => 'Skor 1-4',
+                'raw_type' => 'village',
                 'required' => true,
                 'options' => $question->options
                     ->map(fn (SurveyQuestionOption $option): array => [
                         'id' => $option->id,
                         'score' => (int) $option->score,
                         'label' => $option->label,
+                        'description' => null,
                     ])
                     ->values()
                     ->all(),
                 'options_count' => $question->options_count,
+                'description' => null,
+                'supporting_evidence' => null,
+                'weight_label' => null,
+                'max_score_label' => '4',
+                'updated_at' => $question->updated_at?->diffForHumans(),
+                'updated_date' => $question->updated_at?->format('d/m/Y'),
+            ]);
+    }
+
+    /**
+     * @param  array{search?: string|null, aspect?: string|null, per_page?: int|null}  $filters
+     */
+    private function umkmQuestions(SurveyTemplate $template, array $filters, int $perPage): LengthAwarePaginator
+    {
+        return UmkmSurveyQuestion::query()
+            ->whereBelongsTo($template, 'template')
+            ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query
+                        ->where('criteria_code', 'like', "%{$search}%")
+                        ->orWhere('criteria_name', 'like', "%{$search}%")
+                        ->orWhere('question_text', 'like', "%{$search}%")
+                        ->orWhere('help_text', 'like', "%{$search}%");
+                });
+            })
+            ->when($filters['aspect'] ?? null, fn (Builder $query, string $aspect) => $query->where('criteria_name', $aspect))
+            ->orderBy('sort_order')
+            ->orderBy('criteria_code')
+            ->orderBy('question_number')
+            ->orderBy('id')
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (UmkmSurveyQuestion $question): array => [
+                'id' => $question->id,
+                'no' => $question->question_number ?: $question->sort_order,
+                'code' => trim(implode('.', array_filter([$question->criteria_code, $question->question_number]))),
+                'question_text' => $question->question_text,
+                'document_hint' => $question->help_text,
+                'aspect' => $question->criteria_name ?? '-',
+                'type' => 'Skor 0-100',
+                'raw_type' => 'umkm',
+                'required' => true,
+                'options' => [],
+                'options_count' => 0,
+                'description' => $this->percentLabel($question->criteria_weight_percent, 'bobot kriteria'),
+                'supporting_evidence' => null,
+                'weight_label' => $this->percentLabel($question->question_weight_percent),
+                'max_score_label' => $this->numberLabel($question->max_score),
+                'updated_at' => $question->updated_at?->diffForHumans(),
+                'updated_date' => $question->updated_at?->format('d/m/Y'),
+            ]);
+    }
+
+    /**
+     * @param  array{search?: string|null, aspect?: string|null, per_page?: int|null}  $filters
+     */
+    private function pariwisataQuestions(SurveyTemplate $template, array $filters, int $perPage): LengthAwarePaginator
+    {
+        return PariwisataSurveyQuestion::query()
+            ->with(['options' => fn ($query) => $query->orderBy('sort_order')])
+            ->whereBelongsTo($template, 'template')
+            ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query
+                        ->where('category_code', 'like', "%{$search}%")
+                        ->orWhere('category_name', 'like', "%{$search}%")
+                        ->orWhere('sub_category_code', 'like', "%{$search}%")
+                        ->orWhere('sub_category_name', 'like', "%{$search}%")
+                        ->orWhere('criteria_code', 'like', "%{$search}%")
+                        ->orWhere('criteria_name', 'like', "%{$search}%")
+                        ->orWhere('indicator_code', 'like', "%{$search}%")
+                        ->orWhere('indicator_name', 'like', "%{$search}%")
+                        ->orWhere('indicator_description', 'like', "%{$search}%")
+                        ->orWhere('supporting_evidence', 'like', "%{$search}%")
+                        ->orWhere('document_hint', 'like', "%{$search}%")
+                        ->orWhereHas('options', function (Builder $query) use ($search): void {
+                            $query
+                                ->where('label', 'like', "%{$search}%")
+                                ->orWhere('description', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($filters['aspect'] ?? null, function (Builder $query, string $aspect): void {
+                $query->where(function (Builder $query) use ($aspect): void {
+                    $query
+                        ->where('category_name', $aspect)
+                        ->orWhere('sub_category_name', $aspect)
+                        ->orWhere('criteria_name', $aspect);
+                });
+            })
+            ->orderBy('sort_order')
+            ->orderBy('category_code')
+            ->orderBy('sub_category_code')
+            ->orderBy('criteria_code')
+            ->orderBy('indicator_code')
+            ->orderBy('id')
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (PariwisataSurveyQuestion $question): array => [
+                'id' => $question->id,
+                'no' => $question->sort_order,
+                'code' => $question->indicator_code,
+                'question_text' => $question->indicator_name,
+                'document_hint' => $question->document_hint ?: $question->supporting_evidence,
+                'aspect' => $this->pariwisataAspect($question) ?? '-',
+                'type' => $question->input_type ?? 'Pilihan skor',
+                'raw_type' => 'pariwisata',
+                'required' => (bool) $question->document_required,
+                'options' => $question->options
+                    ->map(fn (PariwisataSuveyOption $option): array => [
+                        'id' => $option->id,
+                        'score' => (int) $option->score,
+                        'label' => $option->label,
+                        'description' => $option->description,
+                    ])
+                    ->values()
+                    ->all(),
+                'options_count' => $question->options->count(),
+                'description' => $question->indicator_description,
+                'supporting_evidence' => $question->supporting_evidence,
+                'weight_label' => null,
+                'max_score_label' => $question->options->max('score') ? (string) $question->options->max('score') : null,
                 'updated_at' => $question->updated_at?->diffForHumans(),
                 'updated_date' => $question->updated_at?->format('d/m/Y'),
             ]);
@@ -197,23 +348,72 @@ class SurveyQuestionService
      */
     private function formatTemplate(SurveyTemplate $template): array
     {
-        $aspectCount = SurveyQuestion::query()
-            ->whereBelongsTo($template, 'template')
-            ->distinct()
-            ->count('aspect');
+        $type = $this->templateType($template);
 
         return [
             'id' => $template->id,
             'title' => $template->title,
             'description' => $template->description,
+            'type' => $type,
+            'type_label' => $this->typeLabel($type),
             'status' => $template->status,
             'created_by' => $template->creator?->name ?? '-',
             'published_at' => $template->published_at?->format('d M Y'),
             'updated_at' => $template->updated_at?->diffForHumans(),
-            'questions_count' => $template->questions_count,
-            'aspects_count' => $aspectCount,
+            'questions_count' => $this->questionCount($template, $type),
+            'aspects_count' => count($this->aspects($template)),
             'assignments_count' => $template->assignments_count,
         ];
+    }
+
+    private function templateType(SurveyTemplate $template): string
+    {
+        return in_array($template->type, ['village', 'umkm', 'pariwisata'], true)
+            ? $template->type
+            : 'village';
+    }
+
+    private function typeLabel(string $type): string
+    {
+        return match ($type) {
+            'umkm' => 'UMKM',
+            'pariwisata' => 'Pariwisata',
+            default => 'Desa',
+        };
+    }
+
+    private function questionCount(SurveyTemplate $template, string $type): int
+    {
+        return match ($type) {
+            'umkm' => UmkmSurveyQuestion::query()->whereBelongsTo($template, 'template')->count(),
+            'pariwisata' => PariwisataSurveyQuestion::query()->whereBelongsTo($template, 'template')->count(),
+            default => SurveyQuestion::query()->whereBelongsTo($template, 'template')->count(),
+        };
+    }
+
+    private function pariwisataAspect(PariwisataSurveyQuestion $question): ?string
+    {
+        return $question->category_name ?: $question->sub_category_name ?: $question->criteria_name;
+    }
+
+    private function percentLabel(mixed $value, ?string $suffix = null): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $label = rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',').'%';
+
+        return $suffix ? "{$label} {$suffix}" : $label;
+    }
+
+    private function numberLabel(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',');
     }
 
     private function nextSortOrder(int $templateId): int

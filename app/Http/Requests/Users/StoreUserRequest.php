@@ -24,7 +24,7 @@ class StoreUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:30'],
             'role' => ['required', 'string', Rule::in(['admin', 'enumerator'])],
             'status' => ['required', 'string', Rule::in(['active', 'inactive', 'pending'])],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed','min:8'],
         ];
     }
 }

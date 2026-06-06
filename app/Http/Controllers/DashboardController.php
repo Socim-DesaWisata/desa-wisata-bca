@@ -10,6 +10,15 @@ class DashboardController extends Controller
 {
     public function __invoke(DashboardService $service): Response
     {
-        return Inertia::render('dashboard', $service->getData());
+        if (auth()->user()?->role === 'enumerator') {
+            return Inertia::render('dashboard', [
+                'dashboard_mode' => 'enumerator',
+            ]);
+        }
+
+        return Inertia::render('dashboard', [
+            'dashboard_mode' => 'admin',
+            ...$service->getData(),
+        ]);
     }
 }

@@ -34,6 +34,7 @@ type SidebarNavItem = NavItem & {
     badge?: string;
     warning?: boolean;
     children?: Array<Pick<NavItem, 'title' | 'href'>>;
+    roles?: Array<'admin' | 'enumerator'>;
 };
 
 type SidebarNavGroup = {
@@ -59,6 +60,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Laporan',
                 href: '#',
                 icon: BarChart3,
+                roles: ['admin'],
                 children: [
                     { title: 'Kemenpar', href: villages() },
                     { title: 'UMKM', href: umkm() },
@@ -69,6 +71,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Template Survey',
                 href: questions(),
                 icon: ClipboardList,
+                roles: ['admin'],
             },
             {
                 title: 'Survey Assignment',
@@ -80,7 +83,12 @@ const navGroups: SidebarNavGroup[] = [
     {
         label: 'Management',
         items: [
-            { title: 'User Management', href: usersRoute(), icon: Users },
+            {
+                title: 'User Management',
+                href: usersRoute(),
+                icon: Users,
+                roles: ['admin'],
+            },
         ],
     },
     {
@@ -103,6 +111,15 @@ export function AdminSidebarContent({
     const { auth } = usePage().props;
     const { isCurrentOrParentUrl, isCurrentUrl } = useCurrentUrl();
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+    const userRole = auth.user?.role === 'admin' ? 'admin' : 'enumerator';
+    const visibleNavGroups = navGroups
+        .map((group) => ({
+            ...group,
+            items: group.items.filter(
+                (item) => !item.roles || item.roles.includes(userRole),
+            ),
+        }))
+        .filter((group) => group.items.length > 0);
 
     return (
         <div className="relative flex h-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(47,166,252,0.45),transparent_34%),linear-gradient(180deg,#0066AE_0%,#00508F_42%,#093967_100%)] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
@@ -122,7 +139,7 @@ export function AdminSidebarContent({
             </div>
 
             <nav className="relative flex-1 [scrollbar-width:none] overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden">
-                {navGroups.map((group, groupIndex) => (
+                {visibleNavGroups.map((group, groupIndex) => (
                     <div
                         key={group.label}
                         className={groupIndex === 0 ? 'mt-1' : 'mt-4'}

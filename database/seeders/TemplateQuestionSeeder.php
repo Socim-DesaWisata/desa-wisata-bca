@@ -23,6 +23,7 @@ class TemplateQuestionSeeder extends Seeder
 
             $template = SurveyTemplate::withTrashed()->firstOrNew([
                 'title' => 'Instrumen Klasifikasi Desa/Kampung Wisata',
+                'type' => 'village',
             ]);
             $shouldRestore = $template->exists && $template->trashed();
 

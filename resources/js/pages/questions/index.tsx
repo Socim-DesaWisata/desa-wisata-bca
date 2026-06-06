@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import {
     ClipboardList,
@@ -27,11 +27,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SurveyQuestionController from '@/actions/App/Http/Controllers/SurveyQuestionController';
 import { dashboard, questions as questionsRoute } from '@/routes';
+import { show as showQuestionTemplate } from '@/routes/questions';
 
 type TemplateSummary = {
     id: number;
     title: string;
     description: string | null;
+    type: 'village' | 'umkm' | 'pariwisata';
+    type_label: string;
     status: string;
     created_by: string;
     published_at: string | null;
@@ -49,9 +52,14 @@ type Question = {
     document_hint: string | null;
     aspect: string;
     type: string;
+    raw_type: 'village' | 'umkm' | 'pariwisata';
     required: boolean;
     options: QuestionOption[];
     options_count: number;
+    description: string | null;
+    supporting_evidence: string | null;
+    weight_label: string | null;
+    max_score_label: string | null;
     updated_at: string | null;
     updated_date: string | null;
 };
@@ -60,6 +68,7 @@ type QuestionOption = {
     id: number;
     score: number;
     label: string;
+    description: string | null;
 };
 
 type PaginationLink = {
@@ -79,14 +88,13 @@ type PaginatedQuestions = {
 };
 
 type QuestionFilters = {
-    template_id: number | null;
     search: string;
     aspect: string;
     per_page: number;
 };
 
 type QuestionsIndexProps = {
-    template: TemplateSummary | null;
+    template: TemplateSummary;
     aspects: string[];
     questions: PaginatedQuestions;
     filters: QuestionFilters;
@@ -156,6 +164,14 @@ function StatusBadge({
     );
 }
 
+function TypeBadge({ label }: { label: string }) {
+    return (
+        <span className="inline-flex h-6 items-center rounded-md bg-[#EAF3FF] px-2 text-[11px] font-bold text-[#0066AE]">
+            {label}
+        </span>
+    );
+}
+
 export default function QuestionsIndex({
     template,
     aspects,
@@ -163,7 +179,6 @@ export default function QuestionsIndex({
     filters,
 }: QuestionsIndexProps) {
     const [filterForm, setFilterForm] = useState({
-        template_id: filters.template_id?.toString() ?? '',
         search: filters.search ?? '',
         aspect: filters.aspect ?? '',
         per_page: filters.per_page?.toString() ?? '10',
@@ -175,13 +190,13 @@ export default function QuestionsIndex({
     );
 
     const templateForm = useForm<TemplateForm>({
-        title: template?.title ?? '',
-        description: template?.description ?? '',
-        status: template?.status ?? 'draft',
+        title: template.title,
+        description: template.description ?? '',
+        status: template.status,
     });
 
     const questionForm = useForm<QuestionForm>({
-        survey_template_id: template?.id.toString() ?? '',
+        survey_template_id: template.id.toString(),
         aspect: filters.aspect || aspects[0] || '',
         code: '',
         question_text: '',
@@ -190,23 +205,30 @@ export default function QuestionsIndex({
         options: ['', '', '', ''],
     });
 
+    const isVillageTemplate = template.type === 'village';
+    const aspectLabel =
+        template.type === 'umkm'
+            ? 'Kriteria'
+            : template.type === 'pariwisata'
+              ? 'Kategori'
+              : 'Aspek';
+
     const templateStats = [
-        { label: 'Pertanyaan', value: String(template?.questions_count ?? 0) },
-        { label: 'Aspek', value: String(template?.aspects_count ?? 0) },
+        { label: 'Pertanyaan', value: String(template.questions_count) },
+        { label: aspectLabel, value: String(template.aspects_count) },
         {
             label: 'Assignment',
-            value: String(template?.assignments_count ?? 0),
+            value: String(template.assignments_count),
         },
-        { label: 'Update', value: template?.updated_at ?? '-' },
+        { label: 'Update', value: template.updated_at ?? '-' },
     ];
 
     function applyFilters(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         router.get(
-            questionsRoute.url(),
+            showQuestionTemplate.url(template.id),
             {
-                template_id: filterForm.template_id || undefined,
                 search: filterForm.search || undefined,
                 aspect: filterForm.aspect || undefined,
                 per_page: filterForm.per_page || undefined,
@@ -221,16 +243,14 @@ export default function QuestionsIndex({
 
     function resetFilters() {
         setFilterForm({
-            template_id: filters.template_id?.toString() ?? '',
             search: '',
             aspect: '',
             per_page: filters.per_page?.toString() ?? '10',
         });
 
         router.get(
-            questionsRoute.url(),
+            showQuestionTemplate.url(template.id),
             {
-                template_id: filters.template_id || undefined,
                 per_page: filters.per_page || undefined,
             },
             {
@@ -253,10 +273,6 @@ export default function QuestionsIndex({
     }
 
     function openTemplateModal() {
-        if (!template) {
-            return;
-        }
-
         templateForm.setData({
             title: template.title,
             description: template.description ?? '',
@@ -268,7 +284,7 @@ export default function QuestionsIndex({
 
     function openCreateQuestionModal() {
         questionForm.setData({
-            survey_template_id: template?.id.toString() ?? '',
+            survey_template_id: template.id.toString(),
             aspect: filters.aspect || aspects[0] || '',
             code: '',
             question_text: '',
@@ -283,7 +299,7 @@ export default function QuestionsIndex({
 
     function openEditQuestionModal(question: Question) {
         questionForm.setData({
-            survey_template_id: template?.id.toString() ?? '',
+            survey_template_id: template.id.toString(),
             aspect: question.aspect,
             code: question.code ?? '',
             question_text: question.question_text,
@@ -311,10 +327,6 @@ export default function QuestionsIndex({
 
     function submitTemplate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
-        if (!template) {
-            return;
-        }
 
         templateForm.patch(
             SurveyQuestionController.updateTemplate.url(template.id),
@@ -375,21 +387,27 @@ export default function QuestionsIndex({
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:flex">
-                            <button
-                                type="button"
-                                onClick={openCreateQuestionModal}
-                                disabled={!template}
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] disabled:cursor-not-allowed disabled:opacity-50"
+                            <Link
+                                href={questionsRoute.url()}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#AAD2F8] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
                             >
-                                <Plus className="size-4" />
-                                Tambah Pertanyaan
-                            </button>
+                                Kembali
+                            </Link>
+                            {isVillageTemplate && (
+                                <button
+                                    type="button"
+                                    onClick={openCreateQuestionModal}
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Pertanyaan
+                                </button>
+                            )}
                         </div>
                     </header>
 
                     <section className="rounded-xl border border-[#EFEFEF] bg-white px-4 py-3 shadow-[0_4px_14px_rgba(3,17,32,0.05)]">
-                        {template ? (
-                            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                                 <div className="flex min-w-0 items-center gap-3">
                                     <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE]">
                                         <ClipboardList
@@ -410,6 +428,9 @@ export default function QuestionsIndex({
                                             >
                                                 {template.status}
                                             </StatusBadge>
+                                            <TypeBadge
+                                                label={template.type_label}
+                                            />
                                         </div>
                                         <p className="mt-1 line-clamp-1 text-xs leading-5 text-[#7C7C7C]">
                                             {template.description ??
@@ -443,18 +464,7 @@ export default function QuestionsIndex({
                                         Edit
                                     </button>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="rounded-lg bg-[#F1F5F8] px-4 py-8 text-center">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    Belum ada template survey berisi pertanyaan.
-                                </p>
-                                <p className="mt-1 text-xs text-[#7C7C7C]">
-                                    Jalankan seeder template question atau buat
-                                    template baru terlebih dahulu.
-                                </p>
-                            </div>
-                        )}
+                        </div>
                     </section>
 
                     <form
@@ -484,7 +494,7 @@ export default function QuestionsIndex({
 
                             <label className="space-y-1">
                                 <span className="block text-[11px] font-semibold text-[#7C7C7C]">
-                                    Aspek
+                                    {aspectLabel}
                                 </span>
                                 <select
                                     className="h-10 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
@@ -496,7 +506,7 @@ export default function QuestionsIndex({
                                         }))
                                     }
                                 >
-                                    <option value="">Semua Aspek</option>
+                                    <option value="">Semua {aspectLabel}</option>
                                     {aspects.map((aspect) => (
                                         <option key={aspect} value={aspect}>
                                             {aspect}
@@ -542,7 +552,7 @@ export default function QuestionsIndex({
                                             'No',
                                             'Kode',
                                             'Pertanyaan',
-                                            'Aspek',
+                                            aspectLabel,
                                             'Terakhir Diperbarui',
                                             'Aksi',
                                         ].map((head) => (
@@ -578,6 +588,42 @@ export default function QuestionsIndex({
                                                         {question.document_hint}
                                                     </p>
                                                 )}
+                                                {question.description && (
+                                                    <p className="mt-1 text-xs leading-5 text-[#64748B]">
+                                                        {question.description}
+                                                    </p>
+                                                )}
+                                                {question.supporting_evidence &&
+                                                    question.supporting_evidence !==
+                                                        question.document_hint && (
+                                                        <p className="mt-1 text-xs leading-5 text-[#7C7C7C]">
+                                                            Bukti pendukung:{' '}
+                                                            {
+                                                                question.supporting_evidence
+                                                            }
+                                                        </p>
+                                                    )}
+                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                    <span className="rounded-md bg-[#F1F5F8] px-2 py-1 text-[11px] font-bold text-[#0066AE]">
+                                                        {question.type}
+                                                    </span>
+                                                    {question.weight_label && (
+                                                        <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-[11px] font-bold text-[#00893D]">
+                                                            Bobot:{' '}
+                                                            {
+                                                                question.weight_label
+                                                            }
+                                                        </span>
+                                                    )}
+                                                    {question.max_score_label && (
+                                                        <span className="rounded-md bg-[#FFF4EA] px-2 py-1 text-[11px] font-bold text-[#C9681E]">
+                                                            Maks:{' '}
+                                                            {
+                                                                question.max_score_label
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-3 py-3 align-top">
                                                 <span
@@ -595,40 +641,46 @@ export default function QuestionsIndex({
                                                 {question.updated_date ?? '-'}
                                             </td>
                                             <td className="px-3 py-3 align-top">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <button className="flex size-8 items-center justify-center rounded-md border border-[#AAD2F8] bg-[#F1F5F8] text-[#0066AE]">
-                                                            <MoreVertical className="size-4" />
-                                                        </button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                                                    >
-                                                        <DropdownMenuItem className="gap-2 text-xs font-semibold">
-                                                            <Eye className="size-4 text-[#303030]" />
-                                                            Lihat Detail
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="gap-2 text-xs"
-                                                            onSelect={() =>
-                                                                openEditQuestionModal(
-                                                                    question,
-                                                                )
-                                                            }
+                                                {isVillageTemplate ? (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
                                                         >
-                                                            <Edit3 className="size-4 text-[#0066AE]" />
-                                                            Edit Pertanyaan
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
-                                                            <Trash2 className="size-4 text-[#D81313]" />
-                                                            Hapus Pertanyaan
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                            <button className="flex size-8 items-center justify-center rounded-md border border-[#AAD2F8] bg-[#F1F5F8] text-[#0066AE]">
+                                                                <MoreVertical className="size-4" />
+                                                            </button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
+                                                        >
+                                                            <DropdownMenuItem className="gap-2 text-xs font-semibold">
+                                                                <Eye className="size-4 text-[#303030]" />
+                                                                Lihat Detail
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                className="gap-2 text-xs"
+                                                                onSelect={() =>
+                                                                    openEditQuestionModal(
+                                                                        question,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Edit3 className="size-4 text-[#0066AE]" />
+                                                                Edit Pertanyaan
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
+                                                                <Trash2 className="size-4 text-[#D81313]" />
+                                                                Hapus Pertanyaan
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                ) : (
+                                                    <span className="inline-flex h-8 items-center rounded-md bg-[#F1F5F8] px-2.5 text-[11px] font-bold text-[#7C7C7C]">
+                                                        Read-only
+                                                    </span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -666,6 +718,26 @@ export default function QuestionsIndex({
                                             Dokumen: {question.document_hint}
                                         </p>
                                     )}
+                                    {question.description && (
+                                        <p className="mt-2 text-xs leading-5 text-[#64748B]">
+                                            {question.description}
+                                        </p>
+                                    )}
+                                    <div className="mt-3 flex flex-wrap gap-1.5">
+                                        <span className="rounded-md bg-[#F1F5F8] px-2 py-1 text-[11px] font-bold text-[#0066AE]">
+                                            {question.type}
+                                        </span>
+                                        {question.weight_label && (
+                                            <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-[11px] font-bold text-[#00893D]">
+                                                Bobot: {question.weight_label}
+                                            </span>
+                                        )}
+                                        {question.max_score_label && (
+                                            <span className="rounded-md bg-[#FFF4EA] px-2 py-1 text-[11px] font-bold text-[#C9681E]">
+                                                Maks: {question.max_score_label}
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="mt-3 grid grid-cols-1 gap-2 text-xs">
                                         <div>
                                             <span className="font-bold text-[#303030]">
@@ -677,18 +749,22 @@ export default function QuestionsIndex({
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                openEditQuestionModal(question)
-                                            }
-                                            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-3 text-xs font-bold text-[#0066AE]"
-                                        >
-                                            <Edit3 className="size-3.5" />
-                                            Edit
-                                        </button>
-                                    </div>
+                                    {isVillageTemplate && (
+                                        <div className="mt-4 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    openEditQuestionModal(
+                                                        question,
+                                                    )
+                                                }
+                                                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-3 text-xs font-bold text-[#0066AE]"
+                                            >
+                                                <Edit3 className="size-3.5" />
+                                                Edit
+                                            </button>
+                                        </div>
+                                    )}
                                 </article>
                             ))}
                         </div>
@@ -723,11 +799,10 @@ export default function QuestionsIndex({
                                                 per_page: perPage,
                                             }));
                                             router.get(
-                                                questionsRoute.url(),
+                                                showQuestionTemplate.url(
+                                                    template.id,
+                                                ),
                                                 {
-                                                    template_id:
-                                                        filterForm.template_id ||
-                                                        undefined,
                                                     search:
                                                         filterForm.search ||
                                                         undefined,
@@ -1071,6 +1146,6 @@ QuestionsIndex.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: dashboard() },
         { title: 'Template Survey', href: questionsRoute() },
-        { title: 'Detail Template', href: questionsRoute() },
+        { title: 'Detail Template', href: '#' },
     ],
 };
