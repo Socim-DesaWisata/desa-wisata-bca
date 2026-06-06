@@ -18,7 +18,7 @@ import type { FormEvent } from 'react';
 import type { ReactNode } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { surveyAssignments } from '@/routes';
+import { show as showAssignment } from '@/routes/survey-assignments';
 import { store as storeUmkmSurvey } from '@/routes/survey-assignments/create-umkm';
 
 type Option = {
@@ -137,6 +137,16 @@ function fieldError(
     name: string,
 ) {
     return (errors as ErrorBag)[name];
+}
+
+function digitsOnly(value: string) {
+    return value.replace(/\D/g, '');
+}
+
+function formatThousands(value: string) {
+    const digits = digitsOnly(value);
+
+    return digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
 }
 
 function initialForm(criteriaGroups: CriteriaGroup[]): UmkmForm {
@@ -401,7 +411,7 @@ export default function CreateUmkmSurveyAssignment({
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        post(storeUmkmSurvey.url(assignment.id), {
+        post(storeUmkmSurvey.url(assignment.code), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => reset(),
@@ -423,7 +433,7 @@ export default function CreateUmkmSurveyAssignment({
                         <div className="min-w-0">
                             <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#64748B]">
                                 <Link
-                                    href={surveyAssignments.url()}
+                                    href={showAssignment.url(assignment.code)}
                                     className="inline-flex items-center gap-1 text-[#0066AE]"
                                 >
                                     <ArrowLeft className="size-3.5" />{' '}
@@ -630,16 +640,20 @@ export default function CreateUmkmSurveyAssignment({
                                     />
                                     <TextInput
                                         label="Omset per Tahun"
-                                        value={data.annual_revenue}
+                                        value={formatThousands(
+                                            data.annual_revenue,
+                                        )}
                                         onChange={(value) =>
-                                            setData('annual_revenue', value)
+                                            setData(
+                                                'annual_revenue',
+                                                digitsOnly(value),
+                                            )
                                         }
                                         error={fieldError(
                                             errors,
                                             'annual_revenue',
                                         )}
                                         placeholder="Nominal rupiah"
-                                        type="number"
                                     />
                                 </div>
                                 <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -1304,7 +1318,7 @@ export default function CreateUmkmSurveyAssignment({
                                             : 'Simpan UMKM'}
                                     </button>
                                     <Link
-                                        href={surveyAssignments.url()}
+                                        href={showAssignment.url(assignment.code)}
                                         className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#093967] transition hover:bg-[#F1F5F8]"
                                     >
                                         <ArrowLeft className="size-4" />

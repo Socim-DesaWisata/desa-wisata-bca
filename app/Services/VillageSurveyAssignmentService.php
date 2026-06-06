@@ -45,6 +45,7 @@ class VillageSurveyAssignmentService
         $paginator = VillageSurveyAssignment::query()
             ->select([
                 'id',
+                'code',
                 'village_id',
                 'survey_template_id',
                 'status',
@@ -73,6 +74,7 @@ class VillageSurveyAssignmentService
                 $query->where(function ($query) use ($search): void {
                     $query
                         ->where('id', $search)
+                        ->orWhere('code', 'like', "%{$search}%")
                         ->orWhereHas('village', function ($query) use ($search): void {
                             $query
                                 ->where('name', 'like', "%{$search}%")
@@ -121,14 +123,19 @@ class VillageSurveyAssignmentService
             ]);
         }
 
-        return VillageSurveyAssignment::query()->create([
-            'village_id' => $data['village_id'],
-            'survey_template_id' => $template->id,
-            'status' => 'assigned',
-            'assigned_by' => $user->id,
-            'assigned_at' => now(),
-            'started_at' => $data['started_at'] ?? null,
-        ]);
+        return DB::transaction(function () use ($data, $template, $user): VillageSurveyAssignment {
+            $assignment = VillageSurveyAssignment::query()->create([
+                'village_id' => $data['village_id'],
+                'survey_template_id' => 1,
+                'code' => $data['code'],
+                'status' => 'assigned',
+                'assigned_by' => $user->id,
+                'assigned_at' => now(),
+                'started_at' => $data['started_at'] ?? null,
+            ]);
+
+            return $assignment->refresh();
+        });
     }
 
     /**
@@ -589,7 +596,7 @@ class VillageSurveyAssignmentService
         return [
             'assignment' => [
                 'id' => $assignment->id,
-                'code' => 'ASG-'.str_pad((string) $assignment->id, 3, '0', STR_PAD_LEFT),
+                'code' => $assignment->code,
                 'status' => $assignment->status,
                 'status_label' => $this->labelFor($assignment->status, $this->statusOptions()),
                 'assigned_at' => $this->formatDate($assignment->assigned_at),
@@ -743,7 +750,7 @@ class VillageSurveyAssignmentService
         return [
             'assignment' => [
                 'id' => $assignment->id,
-                'code' => 'ASG-'.str_pad((string) $assignment->id, 3, '0', STR_PAD_LEFT),
+                'code' => $assignment->code,
                 'status' => $assignment->status,
                 'status_label' => $this->labelFor($assignment->status, $this->statusOptions()),
                 'assigned_at' => $this->formatDate($assignment->assigned_at),
@@ -974,6 +981,7 @@ class VillageSurveyAssignmentService
     {
         return [
             'id' => $assignment->id,
+            'code' => $assignment->code,
             'village_id' => $assignment->village_id,
             'village_name' => $assignment->village?->name ?? '-',
             'village_code' => $assignment->village?->code ?? '-',

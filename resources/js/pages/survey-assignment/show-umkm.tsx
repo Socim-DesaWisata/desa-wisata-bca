@@ -64,6 +64,7 @@ type UmkmDocument = {
 
 type Assignment = {
     id: number;
+    code: string;
     status_label: string;
     village: {
         id: number | null;
@@ -228,6 +229,16 @@ const booleanOptions: Option[] = [
     { value: '1', label: 'Ya' },
     { value: '0', label: 'Tidak' },
 ];
+
+function digitsOnly(value: string) {
+    return value.replace(/\D/g, '');
+}
+
+function formatThousands(value: string) {
+    const digits = digitsOnly(value);
+
+    return digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
+}
 
 const legalBusinessOptions: Option[] = [
     { value: 'UD', label: 'UD' },
@@ -1000,13 +1011,12 @@ function UmkmEditSidebar({
                                 />
                                 <TextInput
                                     label="Omset per Tahun"
-                                    value={data.annual_revenue}
+                                    value={formatThousands(data.annual_revenue)}
                                     onChange={(value) =>
-                                        setData('annual_revenue', value)
+                                        setData('annual_revenue', digitsOnly(value))
                                     }
                                     error={fieldError(errors, 'annual_revenue')}
                                     placeholder="Nominal rupiah"
-                                    type="number"
                                 />
                                 <TextInput
                                     label="Website Perusahaan"
@@ -1390,7 +1400,7 @@ export default function ShowUmkm({
         event.preventDefault();
 
         editForm.post(
-            updateUmkm.url({ assignment: assignment.id, umkm: umkm.id }),
+            updateUmkm.url({ assignment: assignment.code, umkm: umkm.id }),
             {
                 forceFormData: true,
                 preserveScroll: true,
@@ -1419,7 +1429,7 @@ export default function ShowUmkm({
 
         answerEditForm.patch(
             updateUmkmAnswer.url({
-                assignment: assignment.id,
+                assignment: assignment.code,
                 umkm: umkm.id,
                 answer: editAnswer.id,
             }),
@@ -1461,7 +1471,7 @@ export default function ShowUmkm({
         if (editDocument) {
             documentForm.post(
                 updateUmkmDocument.url({
-                    assignment: assignment.id,
+                    assignment: assignment.code,
                     umkm: umkm.id,
                     document: editDocument.id,
                 }),
@@ -1476,7 +1486,7 @@ export default function ShowUmkm({
         }
 
         documentForm.post(
-            storeUmkmDocument.url({ assignment: assignment.id, umkm: umkm.id }),
+            storeUmkmDocument.url({ assignment: assignment.code, umkm: umkm.id }),
             {
                 forceFormData: true,
                 preserveScroll: true,
@@ -1492,7 +1502,7 @@ export default function ShowUmkm({
 
         documentDeleteForm.delete(
             destroyUmkmDocument.url({
-                assignment: assignment.id,
+                assignment: assignment.code,
                 umkm: umkm.id,
                 document: document.id,
             }),
@@ -1571,7 +1581,7 @@ export default function ShowUmkm({
                                 </Link>
                                 <span className="text-[#B0B0B0]">/</span>
                                 <Link
-                                    href={showAssignment.url(assignment.id)}
+                                    href={showAssignment.url(assignment.code)}
                                     className="text-[#0066AE]"
                                 >
                                     Detail Assignment
@@ -1596,7 +1606,7 @@ export default function ShowUmkm({
                                 <Pencil size={16} />
                                 Edit Data UMKM
                             </button>
-                            <Link href={showAssignment.url(assignment.id)}>
+                            <Link href={showAssignment.url(assignment.code)}>
                                 <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
                                     <ArrowLeft size={16} />
                                     Kembali

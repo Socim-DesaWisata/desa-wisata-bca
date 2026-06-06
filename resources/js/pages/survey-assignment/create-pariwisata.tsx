@@ -192,7 +192,7 @@ export default function CreatePariwisata({
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        post(storePariwisata.url(assignment.id), {
+        post(storePariwisata.url(assignment.code), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
@@ -232,7 +232,7 @@ export default function CreatePariwisata({
                         </div>
 
                         <Link
-                            href={showSurveyAssignment.url(assignment.id)}
+                            href={showSurveyAssignment.url(assignment.code)}
                             className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-5 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
                         >
                             <ArrowLeft className="size-4" />

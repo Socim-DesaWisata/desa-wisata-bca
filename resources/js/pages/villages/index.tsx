@@ -10,7 +10,6 @@ import {
     useMapEvents,
 } from 'react-leaflet';
 import {
-    Archive,
     Building2,
     CheckCircle2,
     ChevronDown,
@@ -890,14 +889,6 @@ export default function VillagesIndex({
                                                                     <Pencil className="size-4 text-[#303030]" />
                                                                     Edit Desa
                                                                 </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <ClipboardCheck className="size-4 text-[#303030]" />
-                                                                Buat Assignment
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Archive className="size-4 text-[#303030]" />
-                                                                Arsipkan Desa
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">

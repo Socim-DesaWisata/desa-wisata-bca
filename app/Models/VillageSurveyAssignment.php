@@ -11,12 +11,17 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'village_id', 'survey_template_id', 'status', 'assigned_by', 'submitted_by',
+    'village_id', 'survey_template_id', 'code', 'status', 'assigned_by', 'submitted_by',
     'reviewed_by', 'assigned_at', 'started_at', 'last_saved_at', 'submitted_at', 'reviewed_at',
 ])]
 class VillageSurveyAssignment extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public function getRouteKeyName(): string
+    {
+        return 'code';
+    }
 
     protected function casts(): array
     {

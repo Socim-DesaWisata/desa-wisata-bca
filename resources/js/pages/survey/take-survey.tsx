@@ -22,7 +22,7 @@ import {
     useState,
 } from 'react';
 
-import { surveyAssignments } from '@/routes';
+import { show as showAssignment } from '@/routes/survey-assignments';
 import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
 import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
 
@@ -671,7 +671,7 @@ function TakeSurveyContent({
     function deleteStoredDocument(document: SurveyDocument) {
         router.delete(
             destroySurveyDocument.url({
-                assignment: assignment.id,
+                assignment: assignment.code,
                 document: document.id,
             }),
             {
@@ -709,7 +709,7 @@ function TakeSurveyContent({
         setProcessing(true);
         isSubmittingRef.current = true;
 
-        router.post(storeSurveyDraft.url(assignment.id), formData, {
+        router.post(storeSurveyDraft.url(assignment.code), formData, {
             forceFormData: true,
             preserveScroll: true,
             onFinish: () => {
@@ -732,7 +732,7 @@ function TakeSurveyContent({
                     <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4 sm:px-6">
                         <div className="flex min-w-0 items-center gap-3">
                             <Link
-                                href={surveyAssignments.url()}
+                                href={showAssignment.url(assignment.code)}
                                 aria-label="Kembali"
                                 className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-95"
                             >

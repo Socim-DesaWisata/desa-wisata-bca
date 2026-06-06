@@ -22,7 +22,7 @@ import {
     useState,
 } from 'react';
 
-import { surveyAssignments } from '@/routes';
+import { show as showAssignment } from '@/routes/survey-assignments';
 import { show as showPariwisata } from '@/routes/survey-assignments/pariwisata';
 import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
 import { destroy as destroyPariwisataSurveyDocument } from '@/routes/survey-assignments/pariwisata/take-survey/documents';
@@ -680,7 +680,7 @@ function TakeSurveyPariwisataContent({
     function deleteStoredDocument(document: SurveyDocument) {
         router.delete(
             destroyPariwisataSurveyDocument.url({
-                assignment: assignment.id,
+                assignment: assignment.code,
                 pariwisata: pariwisata.id,
                 document: document.id,
             }),
@@ -723,7 +723,7 @@ function TakeSurveyPariwisataContent({
 
         router.post(
             storePariwisataSurveyDraft.url({
-                assignment: assignment.id,
+            assignment: assignment.code,
                 pariwisata: pariwisata.id,
             }),
             formData,
@@ -749,7 +749,7 @@ function TakeSurveyPariwisataContent({
                         <div className="flex min-w-0 items-center gap-3">
                             <Link
                                 href={showPariwisata.url({
-                                    assignment: assignment.id,
+                    assignment: assignment.code,
                                     pariwisata: pariwisata.id,
                                 })}
                                 aria-label="Kembali"
@@ -797,7 +797,7 @@ function TakeSurveyPariwisataContent({
                 <main className="mx-auto w-full max-w-4xl px-4 pt-24 pb-6 sm:px-6 sm:pt-24">
                     <nav className="mb-4 flex items-center gap-2 text-sm font-semibold">
                         <Link
-                            href={surveyAssignments.url()}
+                            href={showAssignment.url(assignment.code)}
                             className="text-[#0066AE]"
                         >
                             Assignment

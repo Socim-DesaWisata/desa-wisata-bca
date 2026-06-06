@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     CheckCircle2,
     ClipboardCheck,
@@ -6,10 +6,8 @@ import {
     Eye,
     MapPinned,
     MoreHorizontal,
-    Pencil,
     Search,
     Tag,
-    Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -20,7 +18,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -60,6 +57,7 @@ type PariwisataRow = {
     village_location: string;
     survey_answers_count: number;
     updated_at: string;
+    detail_url: string | null;
 };
 
 type Option = {
@@ -467,19 +465,25 @@ export default function PariwisataIndex({
                                                             align="end"
                                                             className="w-44 rounded-lg"
                                                         >
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Eye className="size-4" />
-                                                                Lihat Detail
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Pencil className="size-4" />
-                                                                Edit Wisata
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
-                                                                <Trash2 className="size-4" />
-                                                                Hapus Wisata
-                                                            </DropdownMenuItem>
+                                                            {item.detail_url ? (
+                                                                <DropdownMenuItem
+                                                                    asChild
+                                                                    className="gap-2 text-xs"
+                                                                >
+                                                                    <Link href={item.detail_url}>
+                                                                        <Eye className="size-4" />
+                                                                        Lihat Detail
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem
+                                                                    disabled
+                                                                    className="gap-2 text-xs"
+                                                                >
+                                                                    <Eye className="size-4" />
+                                                                    Lihat Detail
+                                                                </DropdownMenuItem>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>

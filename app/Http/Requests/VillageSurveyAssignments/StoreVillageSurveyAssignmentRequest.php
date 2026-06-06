@@ -7,6 +7,15 @@ use Illuminate\Validation\Rule;
 
 class StoreVillageSurveyAssignmentRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('code')) {
+            $this->merge([
+                'code' => strtoupper(trim((string) $this->input('code'))),
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -18,6 +27,13 @@ class StoreVillageSurveyAssignmentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Z0-9-]+$/',
+                Rule::unique('village_survey_assignments', 'code'),
+            ],
             'village_id' => [
                 'required',
                 'integer',

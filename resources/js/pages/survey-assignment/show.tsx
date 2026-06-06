@@ -127,6 +127,7 @@ type SurveyAspect = {
 type SurveyAssignmentShowProps = {
     assignment: {
         id: number;
+        code: string;
         status: string;
         status_label: string;
         assigned_at: string;
@@ -532,10 +533,7 @@ function QuestionRow({
             </div>
 
             <div className="min-w-0">
-                <p className="text-[11px] font-bold text-[#7C7C7C]">
-                    {question.code}
-                </p>
-                <p className="mt-1 text-sm leading-5 font-semibold text-[#303030]">
+                <p className="text-sm leading-5 font-semibold text-[#303030]">
                     {question.question_text}
                 </p>
                 {question.document_hint && (
@@ -734,10 +732,10 @@ function DetailPair({
 
 function UmkmTab({
     umkms,
-    assignmentId,
+    assignmentCode,
 }: {
     umkms: UmkmData[];
-    assignmentId: number;
+    assignmentCode: string;
 }) {
     const averageScore = umkms.length
         ? Math.round(
@@ -769,7 +767,7 @@ function UmkmTab({
                         assessment 0-100.
                     </p>
                 </div>
-                <Link href={createUmkm.url(assignmentId)}>
+                <Link href={createUmkm.url(assignmentCode)}>
                     <Button variant="primary">
                         <ClipboardCheck size={16} />
                         Tambah UMKM
@@ -816,7 +814,7 @@ function UmkmTab({
                         <UmkmCard
                             key={umkm.id}
                             umkm={umkm}
-                            assignmentId={assignmentId}
+                            assignmentCode={assignmentCode}
                         />
                     ))}
                 </div>
@@ -827,10 +825,10 @@ function UmkmTab({
 
 function UmkmCard({
     umkm,
-    assignmentId,
+    assignmentCode,
 }: {
     umkm: UmkmData;
-    assignmentId: number;
+    assignmentCode: string;
 }) {
     return (
         <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(9,57,103,0.10)]">
@@ -897,7 +895,7 @@ function UmkmCard({
 
                     <Link
                         href={showUmkm.url({
-                            assignment: assignmentId,
+                            assignment: assignmentCode,
                             umkm: umkm.id,
                         })}
                         className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
@@ -913,10 +911,10 @@ function UmkmCard({
 
 function PariwisataTab({
     pariwisata,
-    assignmentId,
+    assignmentCode,
 }: {
     pariwisata: PariwisataData[];
-    assignmentId: number;
+    assignmentCode: string;
 }) {
     const activeCount = pariwisata.filter((item) => item.is_active).length;
     const totalAnswered = pariwisata.reduce(
@@ -950,7 +948,7 @@ function PariwisataTab({
                         akses pengisian survey.
                     </p>
                 </div>
-                <Link href={createPariwisata.url(assignmentId)}>
+                <Link href={createPariwisata.url(assignmentCode)}>
                     <Button variant="primary">
                         <MapPin size={16} />
                         Tambah ISTC
@@ -998,7 +996,7 @@ function PariwisataTab({
                         <PariwisataCard
                             key={item.id}
                             item={item}
-                            assignmentId={assignmentId}
+                            assignmentCode={assignmentCode}
                         />
                     ))}
                 </div>
@@ -1009,10 +1007,10 @@ function PariwisataTab({
 
 function PariwisataCard({
     item,
-    assignmentId,
+    assignmentCode,
 }: {
     item: PariwisataData;
-    assignmentId: number;
+    assignmentCode: string;
 }) {
     return (
         <Card className="overflow-hidden p-4 transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(9,57,103,0.10)]">
@@ -1086,7 +1084,7 @@ function PariwisataCard({
                 <div className="grid gap-2 sm:grid-cols-2">
                     <Link
                         href={takePariwisataSurvey.url({
-                            assignment: assignmentId,
+                            assignment: assignmentCode,
                             pariwisata: item.id,
                         })}
                     >
@@ -1097,7 +1095,7 @@ function PariwisataCard({
                     </Link>
                     <Link
                         href={showPariwisata.url({
-                            assignment: assignmentId,
+                            assignment: assignmentCode,
                             pariwisata: item.id,
                         })}
                     >
@@ -1140,10 +1138,7 @@ function AnswerDetailModal({
 
                 <div className="space-y-5">
                     <section className="rounded-xl bg-[#F8FBFF] p-4">
-                        <p className="text-xs font-bold text-[#0066AE]">
-                            {question.code}
-                        </p>
-                        <h3 className="mt-2 text-base leading-6 font-bold text-[#303030]">
+                        <h3 className="text-base leading-6 font-bold text-[#303030]">
                             {question.question_text}
                         </h3>
                         {question.document_hint && (
@@ -1328,7 +1323,6 @@ export default function SurveyAssignmentShow({
                             return (
                                 value === '' ||
                                 aspect.name.toLowerCase().includes(value) ||
-                                question.code.toLowerCase().includes(value) ||
                                 question.question_text
                                     .toLowerCase()
                                     .includes(value)
@@ -1368,7 +1362,7 @@ export default function SurveyAssignmentShow({
     function submitAssignment(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        patch(updateSurveyAssignment.url(assignment.id), {
+        patch(updateSurveyAssignment.url(assignment.code), {
             preserveScroll: true,
             onSuccess: () => setIsEditOpen(false),
         });
@@ -1421,13 +1415,13 @@ export default function SurveyAssignmentShow({
                                     Edit Assignment
                                 </Button>
                             </button>
-                            <a href={exportSurveyAssignment.url(assignment.id)}>
+                            <a href={exportSurveyAssignment.url(assignment.code)}>
                                 <Button>
                                     <Download size={16} />
                                     Export Excel
                                 </Button>
                             </a>
-                            <Link href={takeSurvey.url(assignment.id)}>
+                            <Link href={takeSurvey.url(assignment.code)}>
                                 <Button variant="primary">
                                     <ClipboardList size={16} />
                                     Take Survey
@@ -1513,7 +1507,7 @@ export default function SurveyAssignmentShow({
                                                         />
                                                     }
                                                     label="Kode Assignment"
-                                                    value={`ASG-${String(assignment.id).padStart(3, '0')}`}
+                                                    value={assignment.code}
                                                 />
                                                 <InfoItem
                                                     icon={<Flag size={18} />}
@@ -1974,7 +1968,7 @@ export default function SurveyAssignmentShow({
                         <div className="mt-5">
                             <UmkmTab
                                 umkms={umkms}
-                                assignmentId={assignment.id}
+                                assignmentCode={assignment.code}
                             />
                         </div>
                     )}
@@ -1983,7 +1977,7 @@ export default function SurveyAssignmentShow({
                         <div className="mt-5">
                             <PariwisataTab
                                 pariwisata={pariwisata}
-                                assignmentId={assignment.id}
+                                assignmentCode={assignment.code}
                             />
                         </div>
                     )}
@@ -2009,7 +2003,7 @@ export default function SurveyAssignmentShow({
                 <div className="flex items-start justify-between gap-4 border-b border-[#EFEFEF] px-5 py-4">
                     <div>
                         <p className="text-xs font-bold text-[#0066AE]">
-                            ASG-{String(assignment.id).padStart(3, '0')}
+                            {assignment.code}
                         </p>
                         <h2 className="mt-1 text-lg font-bold text-[#303030]">
                             Edit Survey Assignment

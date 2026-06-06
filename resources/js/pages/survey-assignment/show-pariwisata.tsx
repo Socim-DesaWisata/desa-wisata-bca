@@ -28,6 +28,7 @@ import { takeSurvey as takePariwisataSurvey } from '@/routes/survey-assignments/
 
 type Assignment = {
     id: number;
+    code: string;
     status_label: string;
     village: {
         id: number | null;
@@ -581,7 +582,7 @@ export default function ShowPariwisata({
                                 </Link>
                                 <span className="text-[#B0B0B0]">/</span>
                                 <Link
-                                    href={showAssignment.url(assignment.id)}
+                                    href={showAssignment.url(assignment.code)}
                                     className="text-[#0066AE]"
                                 >
                                     Detail Assignment
@@ -600,7 +601,7 @@ export default function ShowPariwisata({
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <Link href={showAssignment.url(assignment.id)}>
+                            <Link href={showAssignment.url(assignment.code)}>
                                 <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
                                     <ArrowLeft size={16} />
                                     Kembali
@@ -608,7 +609,7 @@ export default function ShowPariwisata({
                             </Link>
                             <Link
                                 href={takePariwisataSurvey.url({
-                                    assignment: assignment.id,
+                                    assignment: assignment.code,
                                     pariwisata: pariwisata.id,
                                 })}
                             >

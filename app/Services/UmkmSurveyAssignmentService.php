@@ -45,7 +45,7 @@ class UmkmSurveyAssignmentService
         return [
             'assignment' => [
                 'id' => $assignment->id,
-                'code' => 'ASG-'.str_pad((string) $assignment->id, 3, '0', STR_PAD_LEFT),
+                'code' => $assignment->code,
                 'status' => $assignment->status,
                 'village' => [
                     'id' => $assignment->village?->id,

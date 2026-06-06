@@ -1,15 +1,13 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     CreditCard,
     Download,
     Eye,
     MoreHorizontal,
-    Pencil,
     Search,
     Send,
     Store,
     Tag,
-    Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -20,7 +18,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -60,6 +57,7 @@ type UmkmRow = {
     documents_count: number;
     survey_answers_count: number;
     updated_at: string;
+    detail_url: string | null;
 };
 
 type Option = {
@@ -474,19 +472,25 @@ export default function UmkmIndex({
                                                             align="end"
                                                             className="w-44 rounded-lg"
                                                         >
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Eye className="size-4" />
-                                                                Lihat Detail
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="gap-2 text-xs">
-                                                                <Pencil className="size-4" />
-                                                                Edit UMKM
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
-                                                                <Trash2 className="size-4" />
-                                                                Hapus UMKM
-                                                            </DropdownMenuItem>
+                                                            {umkm.detail_url ? (
+                                                                <DropdownMenuItem
+                                                                    asChild
+                                                                    className="gap-2 text-xs"
+                                                                >
+                                                                    <Link href={umkm.detail_url}>
+                                                                        <Eye className="size-4" />
+                                                                        Lihat Detail
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem
+                                                                    disabled
+                                                                    className="gap-2 text-xs"
+                                                                >
+                                                                    <Eye className="size-4" />
+                                                                    Lihat Detail
+                                                                </DropdownMenuItem>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>

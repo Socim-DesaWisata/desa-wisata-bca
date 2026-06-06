@@ -45,6 +45,7 @@ class PariwisataService
             ])
             ->with([
                 'village:id,code,name,city,province',
+                'village.surveyAssignment:id,code,village_id',
                 'categories:id,pariwisata_village_id,category',
             ])
             ->withCount('surveyAnswers')
@@ -168,6 +169,9 @@ class PariwisataService
             'village_location' => collect([$pariwisata->village?->city, $pariwisata->village?->province])->filter()->implode(', ') ?: '-',
             'survey_answers_count' => $pariwisata->survey_answers_count,
             'updated_at' => $this->formatDate($pariwisata->updated_at),
+            'detail_url' => $pariwisata->village?->surveyAssignment
+                ? route('survey-assignments.pariwisata.show', [$pariwisata->village->surveyAssignment, $pariwisata])
+                : null,
         ];
     }
 

@@ -86,7 +86,7 @@ class VillageSurveyAssignmentExport
 
         $rows = [
             ['Survey Assignment', ''],
-            ['Kode Assignment', 'ASG-'.str_pad((string) $assignment->id, 3, '0', STR_PAD_LEFT)],
+            ['Kode Assignment', $assignment->code],
             ['Status', Str::headline($assignment->status)],
             ['Template', $assignment->template?->title ?? '-'],
             ['Assigned By', $assignment->assignedBy?->name ?? '-'],

@@ -47,6 +47,7 @@ type StatCard = {
 
 type AssignmentRow = {
     id: number;
+    code: string | null;
     village_id: number;
     village_name: string;
     village_code: string;
@@ -112,9 +113,12 @@ type SurveyAssignmentIndexProps = {
 };
 
 type AssignmentForm = {
+    code: string;
     village_id: string;
     started_at: string;
 };
+
+type AccessAction = 'detail' | 'take-survey';
 
 const statIcons = {
     clipboard: ClipboardCheck,
@@ -124,9 +128,14 @@ const statIcons = {
 };
 
 const defaultForm: AssignmentForm = {
+    code: '',
     village_id: '',
     started_at: '',
 };
+
+function normalizeAssignmentCode(value: string) {
+    return value.trim().toUpperCase();
+}
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
@@ -187,6 +196,13 @@ export default function SurveyAssignmentIndex({
     per_page_options,
 }: SurveyAssignmentIndexProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isAccessOpen, setIsAccessOpen] = useState(false);
+    const [selectedAssignment, setSelectedAssignment] =
+        useState<AssignmentRow | null>(null);
+    const [selectedAction, setSelectedAction] =
+        useState<AccessAction>('detail');
+    const [accessCode, setAccessCode] = useState('');
+    const [accessError, setAccessError] = useState('');
     const [filterForm, setFilterForm] = useState({
         search: filters.search ?? '',
         status: filters.status ?? '',
@@ -262,6 +278,47 @@ export default function SurveyAssignmentIndex({
                 preserveState: true,
                 preserveScroll: true,
             },
+        );
+    }
+
+    function openAccessModal(assignment: AssignmentRow, action: AccessAction) {
+        setSelectedAssignment(assignment);
+        setSelectedAction(action);
+        setAccessCode('');
+        setAccessError('');
+        setIsAccessOpen(true);
+    }
+
+    function closeAccessModal(open: boolean) {
+        setIsAccessOpen(open);
+
+        if (!open) {
+            setSelectedAssignment(null);
+            setAccessCode('');
+            setAccessError('');
+        }
+    }
+
+    function submitAccess(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        if (!selectedAssignment?.code) {
+            setAccessError('Kode assignment belum tersedia. Hubungi admin.');
+            return;
+        }
+
+        if (
+            normalizeAssignmentCode(accessCode) !==
+            normalizeAssignmentCode(selectedAssignment.code)
+        ) {
+            setAccessError('Kode assignment tidak sesuai.');
+            return;
+        }
+
+        router.visit(
+            selectedAction === 'detail'
+                ? showSurveyAssignment.url(selectedAssignment.code)
+                : takeSurvey.url(selectedAssignment.code),
         );
     }
 
@@ -461,7 +518,7 @@ export default function SurveyAssignmentIndex({
                                             className="hover:bg-[#FAFCFF]"
                                         >
                                             <td className="px-3 py-3 font-bold text-[#0066AE]">
-                                                #{assignment.id}
+                                                {assignment.code ?? `#${assignment.id}`}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#303030]">
@@ -512,30 +569,30 @@ export default function SurveyAssignmentIndex({
                                                         className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                     >
                                                         <DropdownMenuItem
-                                                            asChild
                                                             className="gap-2 text-xs"
+                                                            onSelect={(event) => {
+                                                                event.preventDefault();
+                                                                openAccessModal(
+                                                                    assignment,
+                                                                    'detail',
+                                                                );
+                                                            }}
                                                         >
-                                                            <Link
-                                                                href={showSurveyAssignment.url(
-                                                                    assignment.id,
-                                                                )}
-                                                            >
-                                                                <Eye className="size-4 text-[#303030]" />
-                                                                Lihat Detail
-                                                            </Link>
+                                                            <Eye className="size-4 text-[#303030]" />
+                                                            Lihat Detail
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
-                                                            asChild
                                                             className="gap-2 text-xs"
+                                                            onSelect={(event) => {
+                                                                event.preventDefault();
+                                                                openAccessModal(
+                                                                    assignment,
+                                                                    'take-survey',
+                                                                );
+                                                            }}
                                                         >
-                                                            <Link
-                                                                href={takeSurvey.url(
-                                                                    assignment.id,
-                                                                )}
-                                                            >
-                                                                <ClipboardList className="size-4 text-[#303030]" />
-                                                                Take Survey
-                                                            </Link>
+                                                            <ClipboardList className="size-4 text-[#303030]" />
+                                                            Take Survey
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem className="gap-2 text-xs">
                                                             <Pencil className="size-4 text-[#303030]" />
@@ -640,14 +697,36 @@ export default function SurveyAssignmentIndex({
                     <DialogHeader>
                         <DialogTitle>Tambah Survey Assignment</DialogTitle>
                         <DialogDescription>
-                            Pilih desa dan jadwal mulai. Template aktif terbaru,
-                            status, assigned by, dan assigned at diisi otomatis
-                            oleh sistem.
+                            Isi kode assignment, pilih desa, dan jadwal mulai.
+                            Template aktif terbaru, status, assigned by, dan
+                            assigned at diisi otomatis oleh sistem.
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={submitAssignment} className="space-y-5">
                         <div className="grid gap-4 md:grid-cols-2">
+                            <label className="space-y-1.5">
+                                <span className="text-sm font-bold text-[#303030]">
+                                    Kode Assignment
+                                </span>
+                                <input
+                                    value={data.code}
+                                    onChange={(event) =>
+                                        setData(
+                                            'code',
+                                            event.target.value.toUpperCase(),
+                                        )
+                                    }
+                                    placeholder="Contoh: ASG-001"
+                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
+                                />
+                                <p className="text-[11px] font-semibold text-[#7C7C7C]">
+                                    Gunakan huruf kapital, angka, dan tanda
+                                    hubung.
+                                </p>
+                                <FieldError message={errors.code} />
+                            </label>
+
                             <label className="space-y-1.5">
                                 <span className="text-sm font-bold text-[#303030]">
                                     Desa
@@ -711,6 +790,71 @@ export default function SurveyAssignmentIndex({
                                 {processing
                                     ? 'Menyimpan...'
                                     : 'Simpan Assignment'}
+                            </button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isAccessOpen} onOpenChange={closeAccessModal}>
+                <DialogContent className="rounded-2xl sm:max-w-[460px]">
+                    <DialogHeader>
+                        <DialogTitle>Verifikasi Kode Assignment</DialogTitle>
+                        <DialogDescription>
+                            Masukkan kode survey assignment untuk mengakses{' '}
+                            {selectedAction === 'detail'
+                                ? 'detail assignment'
+                                : 'halaman take survey'}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={submitAccess} className="space-y-4">
+                        <div className="rounded-xl border border-[#EFEFEF] bg-[#F8FBFF] p-4">
+                            <p className="text-sm font-bold text-[#303030]">
+                                {selectedAssignment?.village_name ?? '-'}
+                            </p>
+                            <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                {selectedAssignment?.village_code ?? '-'} ·{' '}
+                                {selectedAssignment?.village_location ?? '-'}
+                            </p>
+                        </div>
+
+                        <label className="space-y-1.5">
+                            <span className="text-sm font-bold text-[#303030]">
+                                Kode Assignment
+                            </span>
+                            <input
+                                autoFocus
+                                value={accessCode}
+                                onChange={(event) => {
+                                    setAccessCode(
+                                        event.target.value.toUpperCase(),
+                                    );
+                                    setAccessError('');
+                                }}
+                                placeholder="Contoh: ASG-001"
+                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
+                            />
+                            {accessError && (
+                                <p className="text-xs font-semibold text-[#D81313]">
+                                    {accessError}
+                                </p>
+                            )}
+                        </label>
+
+                        <DialogFooter>
+                            <button
+                                type="button"
+                                onClick={() => closeAccessModal(false)}
+                                className="h-11 rounded-lg border border-[#DDE4EC] bg-white px-5 text-sm font-bold text-[#303030]"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                disabled={accessCode.trim() === ''}
+                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Masuk
                             </button>
                         </DialogFooter>
                     </form>

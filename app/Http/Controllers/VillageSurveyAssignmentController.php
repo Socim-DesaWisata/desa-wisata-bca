@@ -61,7 +61,9 @@ class VillageSurveyAssignmentController extends Controller
     ): RedirectResponse {
         $service->createWithSurvey($request->validated(), $request->user(), $assignment);
 
-        return back()->with('success', 'Data UMKM dan assessment berhasil disimpan.');
+        return redirect()
+            ->route('survey-assignments.show', $assignment)
+            ->with('success', 'Data UMKM dan assessment berhasil disimpan.');
     }
 
     public function createPariwisata(
@@ -78,7 +80,9 @@ class VillageSurveyAssignmentController extends Controller
     ): RedirectResponse {
         $service->create($request->validated(), $assignment);
 
-        return back()->with('success', 'Data pariwisata berhasil disimpan.');
+        return redirect()
+            ->route('survey-assignments.show', $assignment)
+            ->with('success', 'Data pariwisata berhasil disimpan.');
     }
 
     public function show(

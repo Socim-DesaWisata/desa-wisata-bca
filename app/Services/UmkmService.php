@@ -49,6 +49,7 @@ class UmkmService
             ])
             ->with([
                 'village:id,code,name,city,province',
+                'village.surveyAssignment:id,code,village_id',
                 'dataCollector:id,name,email',
             ])
             ->withCount(['documents', 'surveyAnswers'])
@@ -178,6 +179,9 @@ class UmkmService
             'documents_count' => $umkm->documents_count,
             'survey_answers_count' => $umkm->survey_answers_count,
             'updated_at' => $this->formatDate($umkm->updated_at),
+            'detail_url' => $umkm->village?->surveyAssignment
+                ? route('survey-assignments.umkm.show', [$umkm->village->surveyAssignment, $umkm])
+                : null,
         ];
     }
 

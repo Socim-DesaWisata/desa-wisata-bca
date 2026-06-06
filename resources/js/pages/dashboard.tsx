@@ -51,6 +51,7 @@ type Kpi = {
 
 type RecentAssignment = {
     id: number;
+    code: string;
     village: string;
     location: string;
     progress: number;
@@ -468,7 +469,7 @@ export default function Dashboard({
                                             <div className="mt-4 flex gap-2">
                                                 <Link
                                                     href={showSurveyAssignment.url(
-                                                        row.id,
+                                                        row.code,
                                                     )}
                                                     className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-[#0066AE] px-3 text-xs font-semibold text-white"
                                                 >
@@ -551,7 +552,7 @@ export default function Dashboard({
                                                     <td className="px-4 text-center">
                                                         <Link
                                                             href={showSurveyAssignment.url(
-                                                                row.id,
+                                                                row.code,
                                                             )}
                                                             className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-[#F1F5F8]"
                                                             aria-label={`Detail ${row.village}`}

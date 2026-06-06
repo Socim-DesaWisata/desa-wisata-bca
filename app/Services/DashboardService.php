@@ -4,13 +4,11 @@ namespace App\Services;
 
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataVillage;
-use App\Models\SurveyAnswer;
 use App\Models\TourismVillage;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageSurveyAssignmentLog;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
-use Carbon\CarbonInterface;
 use Illuminate\Support\Str;
 
 class DashboardService
@@ -49,8 +47,6 @@ class DashboardService
         $currentMonthPariwisata = PariwisataVillage::query()
             ->where('created_at', '>=', now()->startOfMonth())
             ->count();
-        $averageScore = $this->averageScore();
-
         return [
             [
                 'title' => 'Total Desa Wisata',
@@ -76,14 +72,6 @@ class DashboardService
                 'icon' => 'ticket',
                 'tone' => 'warning',
             ],
-            [
-                'title' => 'Rata-rata Skor',
-                'value' => number_format($averageScore, 1),
-                'desc' => 'Skor jawaban terkumpul',
-                'trend' => $this->scoreTrendText(),
-                'icon' => 'trending',
-                'tone' => $averageScore >= 75 ? 'success' : 'warning',
-            ],
         ];
     }
 
@@ -93,7 +81,7 @@ class DashboardService
     private function topVillageSurveys(): array
     {
         return VillageSurveyAssignment::query()
-            ->select(['id', 'village_id', 'survey_template_id', 'status', 'updated_at'])
+            ->select(['id', 'code', 'village_id', 'survey_template_id', 'status', 'updated_at'])
             ->whereHas('answers')
             ->with(['village:id,name,city,province', 'template:id,title'])
             ->withCount('answers')
@@ -214,6 +202,7 @@ class DashboardService
         return VillageSurveyAssignment::query()
             ->select([
                 'id',
+                'code',
                 'village_id',
                 'survey_template_id',
                 'status',
@@ -240,6 +229,7 @@ class DashboardService
 
                 return [
                     'id' => $assignment->id,
+                    'code' => $assignment->code,
                     'village' => $assignment->village?->name ?? '-',
                     'location' => collect([
                         $assignment->village?->city,
@@ -260,7 +250,7 @@ class DashboardService
     private function latestAssignmentForVillage(int $villageId): ?VillageSurveyAssignment
     {
         return VillageSurveyAssignment::query()
-            ->select(['id', 'village_id'])
+            ->select(['id', 'code', 'village_id'])
             ->where('village_id', $villageId)
             ->latest('updated_at')
             ->first();
@@ -352,34 +342,6 @@ class DashboardService
                 'tone' => 'blue',
             ])
             ->all();
-    }
-
-    private function averageScore(): float
-    {
-        return round(((float) SurveyAnswer::query()->avg('score')) * 20, 1);
-    }
-
-    private function averageScoreForMonth(CarbonInterface $month): float
-    {
-        return round(((float) SurveyAnswer::query()
-            ->whereBetween('created_at', [
-                $month->copy()->startOfMonth(),
-                $month->copy()->endOfMonth(),
-            ])
-            ->avg('score')) * 20, 1);
-    }
-
-    private function scoreTrendText(): string
-    {
-        $thisMonth = $this->averageScoreForMonth(now());
-        $lastMonth = $this->averageScoreForMonth(now()->subMonth());
-        $delta = round($thisMonth - $lastMonth, 1);
-
-        if ($delta === 0.0) {
-            return 'stabil bulan ini';
-        }
-
-        return ($delta > 0 ? '+' : '').number_format($delta, 1).' poin';
     }
 
     private function statusLabel(string $status): string
