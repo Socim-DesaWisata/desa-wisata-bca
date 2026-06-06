@@ -62,13 +62,58 @@ type Question = {
     max_score_label: string | null;
     updated_at: string | null;
     updated_date: string | null;
+    editable: VillageQuestionEditable | UmkmQuestionEditable | PariwisataQuestionEditable;
 };
 
 type QuestionOption = {
     id: number;
     score: number;
+    level?: string | null;
     label: string;
     description: string | null;
+    sort_order?: number | null;
+};
+
+type VillageQuestionEditable = {
+    aspect: string;
+    code: string | null;
+    question_text: string;
+    document_hint: string | null;
+    sort_order: number | null;
+    options: Array<{ id: number; score: number; label: string }>;
+};
+
+type UmkmQuestionEditable = {
+    criteria_code: string;
+    criteria_name: string;
+    criteria_weight_percent: string | number;
+    question_number: number;
+    question_text: string;
+    question_weight_percent: string | number;
+    max_score: string | number;
+    help_text: string | null;
+    sort_order: number | null;
+    is_active: boolean;
+};
+
+type PariwisataQuestionEditable = {
+    category_code: string;
+    category_name: string;
+    sub_category_code: string;
+    sub_category_name: string;
+    criteria_code: string;
+    criteria_name: string;
+    criteria_description: string | null;
+    indicator_code: string;
+    indicator_name: string;
+    indicator_description: string | null;
+    supporting_evidence: string | null;
+    input_type: string;
+    document_required: boolean;
+    document_hint: string | null;
+    sort_order: number | null;
+    is_active: boolean;
+    options: QuestionOption[];
 };
 
 type PaginationLink = {
@@ -114,6 +159,48 @@ type QuestionForm = {
     document_hint: string;
     sort_order: string;
     options: string[];
+};
+
+type UmkmQuestionForm = {
+    criteria_code: string;
+    criteria_name: string;
+    criteria_weight_percent: string;
+    question_number: string;
+    question_text: string;
+    question_weight_percent: string;
+    max_score: string;
+    help_text: string;
+    sort_order: string;
+    is_active: boolean;
+};
+
+type PariwisataOptionForm = {
+    id: string;
+    score: string;
+    level: string;
+    label: string;
+    description: string;
+    sort_order: string;
+};
+
+type PariwisataQuestionForm = {
+    category_code: string;
+    category_name: string;
+    sub_category_code: string;
+    sub_category_name: string;
+    criteria_code: string;
+    criteria_name: string;
+    criteria_description: string;
+    indicator_code: string;
+    indicator_name: string;
+    indicator_description: string;
+    supporting_evidence: string;
+    input_type: string;
+    document_required: boolean;
+    document_hint: string;
+    sort_order: string;
+    is_active: boolean;
+    options: PariwisataOptionForm[];
 };
 
 const aspectClasses = [
@@ -203,6 +290,39 @@ export default function QuestionsIndex({
         document_hint: '',
         sort_order: '',
         options: ['', '', '', ''],
+    });
+
+    const umkmQuestionForm = useForm<UmkmQuestionForm>({
+        criteria_code: '',
+        criteria_name: '',
+        criteria_weight_percent: '',
+        question_number: '',
+        question_text: '',
+        question_weight_percent: '',
+        max_score: '',
+        help_text: '',
+        sort_order: '',
+        is_active: true,
+    });
+
+    const pariwisataQuestionForm = useForm<PariwisataQuestionForm>({
+        category_code: '',
+        category_name: '',
+        sub_category_code: '',
+        sub_category_name: '',
+        criteria_code: '',
+        criteria_name: '',
+        criteria_description: '',
+        indicator_code: '',
+        indicator_name: '',
+        indicator_description: '',
+        supporting_evidence: '',
+        input_type: 'radio',
+        document_required: false,
+        document_hint: '',
+        sort_order: '',
+        is_active: true,
+        options: [],
     });
 
     const isVillageTemplate = template.type === 'village';
@@ -298,6 +418,66 @@ export default function QuestionsIndex({
     }
 
     function openEditQuestionModal(question: Question) {
+        if (question.raw_type === 'umkm') {
+            const editable = question.editable as UmkmQuestionEditable;
+
+            umkmQuestionForm.setData({
+                criteria_code: editable.criteria_code ?? '',
+                criteria_name: editable.criteria_name ?? '',
+                criteria_weight_percent:
+                    editable.criteria_weight_percent?.toString() ?? '',
+                question_number: editable.question_number?.toString() ?? '',
+                question_text: editable.question_text ?? '',
+                question_weight_percent:
+                    editable.question_weight_percent?.toString() ?? '',
+                max_score: editable.max_score?.toString() ?? '',
+                help_text: editable.help_text ?? '',
+                sort_order: editable.sort_order?.toString() ?? '',
+                is_active: editable.is_active,
+            });
+            umkmQuestionForm.clearErrors();
+            setEditingQuestion(question);
+            setIsQuestionModalOpen(true);
+
+            return;
+        }
+
+        if (question.raw_type === 'pariwisata') {
+            const editable = question.editable as PariwisataQuestionEditable;
+
+            pariwisataQuestionForm.setData({
+                category_code: editable.category_code ?? '',
+                category_name: editable.category_name ?? '',
+                sub_category_code: editable.sub_category_code ?? '',
+                sub_category_name: editable.sub_category_name ?? '',
+                criteria_code: editable.criteria_code ?? '',
+                criteria_name: editable.criteria_name ?? '',
+                criteria_description: editable.criteria_description ?? '',
+                indicator_code: editable.indicator_code ?? '',
+                indicator_name: editable.indicator_name ?? '',
+                indicator_description: editable.indicator_description ?? '',
+                supporting_evidence: editable.supporting_evidence ?? '',
+                input_type: editable.input_type ?? 'radio',
+                document_required: editable.document_required,
+                document_hint: editable.document_hint ?? '',
+                sort_order: editable.sort_order?.toString() ?? '',
+                is_active: editable.is_active,
+                options: editable.options.map((option) => ({
+                    id: option.id.toString(),
+                    score: option.score.toString(),
+                    level: option.level ?? '',
+                    label: option.label,
+                    description: option.description ?? '',
+                    sort_order: option.sort_order?.toString() ?? '',
+                })),
+            });
+            pariwisataQuestionForm.clearErrors();
+            setEditingQuestion(question);
+            setIsQuestionModalOpen(true);
+
+            return;
+        }
+
         questionForm.setData({
             survey_template_id: template.id.toString(),
             aspect: question.aspect,
@@ -325,6 +505,44 @@ export default function QuestionsIndex({
         );
     }
 
+    function updatePariwisataOption(
+        index: number,
+        key: keyof PariwisataOptionForm,
+        value: string,
+    ) {
+        pariwisataQuestionForm.setData(
+            'options',
+            pariwisataQuestionForm.data.options.map((option, optionIndex) =>
+                optionIndex === index ? { ...option, [key]: value } : option,
+            ),
+        );
+    }
+
+    function addPariwisataOption() {
+        pariwisataQuestionForm.setData('options', [
+            ...pariwisataQuestionForm.data.options,
+            {
+                id: '',
+                score: '',
+                level: '',
+                label: '',
+                description: '',
+                sort_order: (
+                    pariwisataQuestionForm.data.options.length + 1
+                ).toString(),
+            },
+        ]);
+    }
+
+    function removePariwisataOption(index: number) {
+        pariwisataQuestionForm.setData(
+            'options',
+            pariwisataQuestionForm.data.options.filter(
+                (_option, optionIndex) => optionIndex !== index,
+            ),
+        );
+    }
+
     function submitTemplate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -346,6 +564,26 @@ export default function QuestionsIndex({
         };
 
         if (editingQuestion) {
+            if (editingQuestion.raw_type === 'umkm') {
+                umkmQuestionForm.patch(
+                    SurveyQuestionController.updateUmkm.url(editingQuestion.id),
+                    options,
+                );
+
+                return;
+            }
+
+            if (editingQuestion.raw_type === 'pariwisata') {
+                pariwisataQuestionForm.patch(
+                    SurveyQuestionController.updatePariwisata.url(
+                        editingQuestion.id,
+                    ),
+                    options,
+                );
+
+                return;
+            }
+
             questionForm.patch(
                 SurveyQuestionController.update.url(editingQuestion.id),
                 options,
@@ -360,6 +598,24 @@ export default function QuestionsIndex({
     const questionErrors = questionForm.errors as Partial<
         Record<keyof QuestionForm | `options.${number}`, string>
     >;
+    const umkmQuestionErrors = umkmQuestionForm.errors as Partial<
+        Record<keyof UmkmQuestionForm, string>
+    >;
+    const pariwisataQuestionErrors = pariwisataQuestionForm.errors as Partial<
+        Record<
+            | keyof PariwisataQuestionForm
+            | `options.${number}.score`
+            | `options.${number}.level`
+            | `options.${number}.label`
+            | `options.${number}.description`
+            | `options.${number}.sort_order`,
+            string
+        >
+    >;
+    const isQuestionProcessing =
+        questionForm.processing ||
+        umkmQuestionForm.processing ||
+        pariwisataQuestionForm.processing;
 
     return (
         <>
@@ -641,46 +897,42 @@ export default function QuestionsIndex({
                                                 {question.updated_date ?? '-'}
                                             </td>
                                             <td className="px-3 py-3 align-top">
-                                                {isVillageTemplate ? (
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="flex size-8 items-center justify-center rounded-md border border-[#AAD2F8] bg-[#F1F5F8] text-[#0066AE]">
+                                                            <MoreVertical className="size-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
+                                                    >
+                                                        <DropdownMenuItem className="gap-2 text-xs font-semibold">
+                                                            <Eye className="size-4 text-[#303030]" />
+                                                            Lihat Detail
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="gap-2 text-xs"
+                                                            onSelect={() =>
+                                                                openEditQuestionModal(
+                                                                    question,
+                                                                )
+                                                            }
                                                         >
-                                                            <button className="flex size-8 items-center justify-center rounded-md border border-[#AAD2F8] bg-[#F1F5F8] text-[#0066AE]">
-                                                                <MoreVertical className="size-4" />
-                                                            </button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                                                        >
-                                                            <DropdownMenuItem className="gap-2 text-xs font-semibold">
-                                                                <Eye className="size-4 text-[#303030]" />
-                                                                Lihat Detail
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="gap-2 text-xs"
-                                                                onSelect={() =>
-                                                                    openEditQuestionModal(
-                                                                        question,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Edit3 className="size-4 text-[#0066AE]" />
-                                                                Edit Pertanyaan
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
-                                                                <Trash2 className="size-4 text-[#D81313]" />
-                                                                Hapus Pertanyaan
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                ) : (
-                                                    <span className="inline-flex h-8 items-center rounded-md bg-[#F1F5F8] px-2.5 text-[11px] font-bold text-[#7C7C7C]">
-                                                        Read-only
-                                                    </span>
-                                                )}
+                                                            <Edit3 className="size-4 text-[#0066AE]" />
+                                                            Edit Pertanyaan
+                                                        </DropdownMenuItem>
+                                                        {isVillageTemplate && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
+                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                    Hapus Pertanyaan
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </td>
                                         </tr>
                                     ))}
@@ -749,22 +1001,18 @@ export default function QuestionsIndex({
                                             </span>
                                         </div>
                                     </div>
-                                    {isVillageTemplate && (
-                                        <div className="mt-4 flex justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    openEditQuestionModal(
-                                                        question,
-                                                    )
-                                                }
-                                                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-3 text-xs font-bold text-[#0066AE]"
-                                            >
-                                                <Edit3 className="size-3.5" />
-                                                Edit
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="mt-4 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                openEditQuestionModal(question)
+                                            }
+                                            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-3 text-xs font-bold text-[#0066AE]"
+                                        >
+                                            <Edit3 className="size-3.5" />
+                                            Edit
+                                        </button>
+                                    </div>
                                 </article>
                             ))}
                         </div>
@@ -962,6 +1210,9 @@ export default function QuestionsIndex({
                     </DialogHeader>
 
                     <form onSubmit={submitQuestion} className="space-y-4">
+                        {(!editingQuestion ||
+                            editingQuestion.raw_type === 'village') && (
+                            <>
                         <div className="grid gap-3 sm:grid-cols-3">
                             <label className="space-y-1.5 sm:col-span-2">
                                 <span className="text-xs font-bold text-[#303030]">
@@ -1106,6 +1357,193 @@ export default function QuestionsIndex({
                                 </label>
                             ))}
                         </div>
+                            </>
+                        )}
+
+                        {editingQuestion?.raw_type === 'umkm' && (
+                            <>
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <TextField
+                                        label="Kode Kriteria"
+                                        value={umkmQuestionForm.data.criteria_code}
+                                        onChange={(value) =>
+                                            umkmQuestionForm.setData(
+                                                'criteria_code',
+                                                value,
+                                            )
+                                        }
+                                        error={umkmQuestionErrors.criteria_code}
+                                    />
+                                    <TextField
+                                        label="Nomor Pertanyaan"
+                                        type="number"
+                                        value={umkmQuestionForm.data.question_number}
+                                        onChange={(value) =>
+                                            umkmQuestionForm.setData(
+                                                'question_number',
+                                                value,
+                                            )
+                                        }
+                                        error={umkmQuestionErrors.question_number}
+                                    />
+                                    <TextField
+                                        label="Urutan"
+                                        type="number"
+                                        value={umkmQuestionForm.data.sort_order}
+                                        onChange={(value) =>
+                                            umkmQuestionForm.setData(
+                                                'sort_order',
+                                                value,
+                                            )
+                                        }
+                                        error={umkmQuestionErrors.sort_order}
+                                    />
+                                </div>
+                                <TextField
+                                    label="Nama Kriteria"
+                                    value={umkmQuestionForm.data.criteria_name}
+                                    onChange={(value) =>
+                                        umkmQuestionForm.setData(
+                                            'criteria_name',
+                                            value,
+                                        )
+                                    }
+                                    error={umkmQuestionErrors.criteria_name}
+                                />
+                                <TextAreaField
+                                    label="Pertanyaan"
+                                    value={umkmQuestionForm.data.question_text}
+                                    onChange={(value) =>
+                                        umkmQuestionForm.setData(
+                                            'question_text',
+                                            value,
+                                        )
+                                    }
+                                    error={umkmQuestionErrors.question_text}
+                                />
+                                <TextAreaField
+                                    label="Bantuan / Dokumen Pendukung"
+                                    value={umkmQuestionForm.data.help_text}
+                                    onChange={(value) =>
+                                        umkmQuestionForm.setData(
+                                            'help_text',
+                                            value,
+                                        )
+                                    }
+                                    error={umkmQuestionErrors.help_text}
+                                    rows={3}
+                                />
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <TextField
+                                        label="Bobot Kriteria (%)"
+                                        type="number"
+                                        value={
+                                            umkmQuestionForm.data
+                                                .criteria_weight_percent
+                                        }
+                                        onChange={(value) =>
+                                            umkmQuestionForm.setData(
+                                                'criteria_weight_percent',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            umkmQuestionErrors.criteria_weight_percent
+                                        }
+                                    />
+                                    <TextField
+                                        label="Bobot Pertanyaan (%)"
+                                        type="number"
+                                        value={
+                                            umkmQuestionForm.data
+                                                .question_weight_percent
+                                        }
+                                        onChange={(value) =>
+                                            umkmQuestionForm.setData(
+                                                'question_weight_percent',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            umkmQuestionErrors.question_weight_percent
+                                        }
+                                    />
+                                    <TextField
+                                        label="Skor Maksimal"
+                                        type="number"
+                                        value={umkmQuestionForm.data.max_score}
+                                        onChange={(value) =>
+                                            umkmQuestionForm.setData(
+                                                'max_score',
+                                                value,
+                                            )
+                                        }
+                                        error={umkmQuestionErrors.max_score}
+                                    />
+                                </div>
+                                <CheckField
+                                    label="Pertanyaan aktif"
+                                    checked={umkmQuestionForm.data.is_active}
+                                    onChange={(checked) =>
+                                        umkmQuestionForm.setData(
+                                            'is_active',
+                                            checked,
+                                        )
+                                    }
+                                />
+                            </>
+                        )}
+
+                        {editingQuestion?.raw_type === 'pariwisata' && (
+                            <>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <TextField label="Kode Kategori" value={pariwisataQuestionForm.data.category_code} onChange={(value) => pariwisataQuestionForm.setData('category_code', value)} error={pariwisataQuestionErrors.category_code} />
+                                    <TextField label="Nama Kategori" value={pariwisataQuestionForm.data.category_name} onChange={(value) => pariwisataQuestionForm.setData('category_name', value)} error={pariwisataQuestionErrors.category_name} />
+                                    <TextField label="Kode Sub Kategori" value={pariwisataQuestionForm.data.sub_category_code} onChange={(value) => pariwisataQuestionForm.setData('sub_category_code', value)} error={pariwisataQuestionErrors.sub_category_code} />
+                                    <TextField label="Nama Sub Kategori" value={pariwisataQuestionForm.data.sub_category_name} onChange={(value) => pariwisataQuestionForm.setData('sub_category_name', value)} error={pariwisataQuestionErrors.sub_category_name} />
+                                    <TextField label="Kode Kriteria" value={pariwisataQuestionForm.data.criteria_code} onChange={(value) => pariwisataQuestionForm.setData('criteria_code', value)} error={pariwisataQuestionErrors.criteria_code} />
+                                    <TextField label="Nama Kriteria" value={pariwisataQuestionForm.data.criteria_name} onChange={(value) => pariwisataQuestionForm.setData('criteria_name', value)} error={pariwisataQuestionErrors.criteria_name} />
+                                </div>
+                                <TextAreaField label="Deskripsi Kriteria" value={pariwisataQuestionForm.data.criteria_description} onChange={(value) => pariwisataQuestionForm.setData('criteria_description', value)} error={pariwisataQuestionErrors.criteria_description} rows={3} />
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <TextField label="Kode Indikator" value={pariwisataQuestionForm.data.indicator_code} onChange={(value) => pariwisataQuestionForm.setData('indicator_code', value)} error={pariwisataQuestionErrors.indicator_code} />
+                                    <TextField label="Tipe Input" value={pariwisataQuestionForm.data.input_type} onChange={(value) => pariwisataQuestionForm.setData('input_type', value)} error={pariwisataQuestionErrors.input_type} />
+                                    <TextField label="Urutan" type="number" value={pariwisataQuestionForm.data.sort_order} onChange={(value) => pariwisataQuestionForm.setData('sort_order', value)} error={pariwisataQuestionErrors.sort_order} />
+                                </div>
+                                <TextAreaField label="Pertanyaan Utama / Indikator" value={pariwisataQuestionForm.data.indicator_name} onChange={(value) => pariwisataQuestionForm.setData('indicator_name', value)} error={pariwisataQuestionErrors.indicator_name} />
+                                <TextAreaField label="Deskripsi Indikator" value={pariwisataQuestionForm.data.indicator_description} onChange={(value) => pariwisataQuestionForm.setData('indicator_description', value)} error={pariwisataQuestionErrors.indicator_description} rows={3} />
+                                <TextAreaField label="Bukti Pendukung" value={pariwisataQuestionForm.data.supporting_evidence} onChange={(value) => pariwisataQuestionForm.setData('supporting_evidence', value)} error={pariwisataQuestionErrors.supporting_evidence} rows={3} />
+                                <TextAreaField label="Dokumen Pendukung" value={pariwisataQuestionForm.data.document_hint} onChange={(value) => pariwisataQuestionForm.setData('document_hint', value)} error={pariwisataQuestionErrors.document_hint} rows={3} />
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <CheckField label="Dokumen wajib" checked={pariwisataQuestionForm.data.document_required} onChange={(checked) => pariwisataQuestionForm.setData('document_required', checked)} />
+                                    <CheckField label="Pertanyaan aktif" checked={pariwisataQuestionForm.data.is_active} onChange={(checked) => pariwisataQuestionForm.setData('is_active', checked)} />
+                                </div>
+                                <div className="space-y-3 rounded-xl border border-[#EFEFEF] bg-[#F8FAFC] p-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-xs font-bold text-[#303030]">Opsi Skor ISTC</p>
+                                            <p className="text-[11px] text-[#7C7C7C]">Score, level, label, dan deskripsi opsi.</p>
+                                        </div>
+                                        <button type="button" onClick={addPariwisataOption} className="h-8 rounded-lg border border-[#0066AE] px-3 text-xs font-bold text-[#0066AE]">Tambah Opsi</button>
+                                    </div>
+                                    {pariwisataQuestionForm.data.options.map((option, index) => (
+                                        <div key={`${option.id}-${index}`} className="space-y-2 rounded-lg border border-[#DDE4EC] bg-white p-3">
+                                            <div className="grid gap-2 sm:grid-cols-4">
+                                                <TextField label="Skor" type="number" value={option.score} onChange={(value) => updatePariwisataOption(index, 'score', value)} error={pariwisataQuestionErrors[`options.${index}.score`]} />
+                                                <TextField label="Level" value={option.level} onChange={(value) => updatePariwisataOption(index, 'level', value)} error={pariwisataQuestionErrors[`options.${index}.level`]} />
+                                                <TextField label="Label" value={option.label} onChange={(value) => updatePariwisataOption(index, 'label', value)} error={pariwisataQuestionErrors[`options.${index}.label`]} />
+                                                <TextField label="Urutan" type="number" value={option.sort_order} onChange={(value) => updatePariwisataOption(index, 'sort_order', value)} error={pariwisataQuestionErrors[`options.${index}.sort_order`]} />
+                                            </div>
+                                            <TextAreaField label="Deskripsi Opsi" value={option.description} onChange={(value) => updatePariwisataOption(index, 'description', value)} error={pariwisataQuestionErrors[`options.${index}.description`]} rows={2} />
+                                            {pariwisataQuestionForm.data.options.length > 1 && (
+                                                <button type="button" onClick={() => removePariwisataOption(index)} className="text-xs font-bold text-[#D81313]">Hapus opsi</button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <FieldError message={pariwisataQuestionErrors.options} />
+                                </div>
+                            </>
+                        )}
 
                         <DialogFooter>
                             <button
@@ -1117,7 +1555,7 @@ export default function QuestionsIndex({
                             </button>
                             <button
                                 type="submit"
-                                disabled={questionForm.processing}
+                                disabled={isQuestionProcessing}
                                 className="h-10 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white disabled:opacity-60"
                             >
                                 {editingQuestion
@@ -1139,6 +1577,82 @@ function FieldError({ message }: { message?: string }) {
 
     return (
         <p className="mt-1 text-xs font-semibold text-[#D81313]">{message}</p>
+    );
+}
+
+function TextField({
+    label,
+    value,
+    onChange,
+    error,
+    type = 'text',
+}: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    type?: 'text' | 'number';
+}) {
+    return (
+        <label className="space-y-1.5">
+            <span className="text-xs font-bold text-[#303030]">{label}</span>
+            <input
+                type={type}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
+            />
+            <FieldError message={error} />
+        </label>
+    );
+}
+
+function TextAreaField({
+    label,
+    value,
+    onChange,
+    error,
+    rows = 4,
+}: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    rows?: number;
+}) {
+    return (
+        <label className="space-y-1.5">
+            <span className="text-xs font-bold text-[#303030]">{label}</span>
+            <textarea
+                value={value}
+                rows={rows}
+                onChange={(event) => onChange(event.target.value)}
+                className="w-full resize-none rounded-lg border border-[#DDE4EC] px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
+            />
+            <FieldError message={error} />
+        </label>
+    );
+}
+
+function CheckField({
+    label,
+    checked,
+    onChange,
+}: {
+    label: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+}) {
+    return (
+        <label className="flex h-10 items-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#303030]">
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={(event) => onChange(event.target.checked)}
+                className="size-4 accent-[#0066AE]"
+            />
+            {label}
+        </label>
     );
 }
 

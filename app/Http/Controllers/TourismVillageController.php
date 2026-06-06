@@ -42,8 +42,6 @@ class TourismVillageController extends Controller
     ): RedirectResponse {
         $service->update($village, $request->validated(), $request->user());
 
-        return redirect()
-            ->route('villages.show', $village)
-            ->with('success', 'Desa wisata berhasil diperbarui.');
+        return back()->with('success', 'Desa wisata berhasil diperbarui.');
     }
 }

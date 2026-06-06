@@ -26,6 +26,9 @@ import { show as showAssignment } from '@/routes/survey-assignments';
 import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
 import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
 
+const MAX_UPLOAD_FILE_SIZE_MB = 5;
+const MAX_UPLOAD_FILE_SIZE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024;
+
 type SurveyOption = {
     id: number;
     score: number;
@@ -123,6 +126,10 @@ const SurveyDraftContext = createContext<SurveyDraftContextValue | null>(null);
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
+}
+
+function fileSizeLabel(bytes: number) {
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function getInitialSelectedOptions(aspects: SurveyAspect[]) {
@@ -354,6 +361,7 @@ function QuestionCard({
     onRemoveFile: (file: File) => void;
     onDeleteDocument: (document: SurveyDocument) => void;
 }) {
+    const [fileError, setFileError] = useState('');
     const hasDocuments =
         (question.answer?.documents.length ?? 0) > 0 || files.length > 0;
     const draftStatus = getQuestionDraftStatus(
@@ -361,6 +369,35 @@ function QuestionCard({
         selectedOptionId,
         files.length,
     );
+
+    function handleFilesChange(fileList: FileList | null) {
+        const selectedFiles = Array.from(fileList ?? []);
+
+        if (selectedFiles.length === 0) {
+            return;
+        }
+
+        const oversizedFiles = selectedFiles.filter(
+            (file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES,
+        );
+        const acceptedFiles = selectedFiles.filter(
+            (file) => file.size <= MAX_UPLOAD_FILE_SIZE_BYTES,
+        );
+
+        if (oversizedFiles.length > 0) {
+            setFileError(
+                `File ${oversizedFiles
+                    .map((file) => `${file.name} (${fileSizeLabel(file.size)})`)
+                    .join(', ')} melebihi batas ${MAX_UPLOAD_FILE_SIZE_MB} MB per file.`,
+            );
+        } else {
+            setFileError('');
+        }
+
+        if (acceptedFiles.length > 0) {
+            onFilesChange(acceptedFiles);
+        }
+    }
 
     return (
         <article className="rounded-2xl border border-[#EFEFEF] bg-white px-4 py-5 sm:px-6">
@@ -500,12 +537,18 @@ function QuestionCard({
                         type="file"
                         multiple
                         accept="image/jpeg,image/png,image/webp,application/pdf"
-                        onChange={(event) =>
-                            onFilesChange(Array.from(event.target.files ?? []))
-                        }
+                        onChange={(event) => {
+                            handleFilesChange(event.target.files);
+                            event.target.value = '';
+                        }}
                         className="sr-only"
                     />
                 </label>
+                {fileError && (
+                    <p className="mt-2 rounded-lg bg-[#FDECEC] px-3 py-2 text-xs font-semibold text-[#D81313]">
+                        {fileError}
+                    </p>
+                )}
 
                 {hasDocuments && (
                     <div className="mt-3 space-y-2">

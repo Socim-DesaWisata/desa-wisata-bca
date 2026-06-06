@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SurveyQuestions\IndexSurveyQuestionRequest;
+use App\Http\Requests\SurveyQuestions\UpdatePariwisataSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\StoreSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\UpdateSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\UpdateSurveyTemplateRequest;
+use App\Http\Requests\SurveyQuestions\UpdateUmkmSurveyQuestionRequest;
+use App\Models\PariwisataSurveyQuestion;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyTemplate;
+use App\Models\UmkmSurveyQuestion;
 use App\Services\SurveyQuestionService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -57,6 +61,30 @@ class SurveyQuestionController extends Controller
         $service->updateQuestion($question, $request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pertanyaan berhasil diperbarui.']);
+
+        return back();
+    }
+
+    public function updateUmkm(
+        UpdateUmkmSurveyQuestionRequest $request,
+        UmkmSurveyQuestion $question,
+        SurveyQuestionService $service
+    ): RedirectResponse {
+        $service->updateUmkmQuestion($question, $request->validated());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pertanyaan UMKM berhasil diperbarui.']);
+
+        return back();
+    }
+
+    public function updatePariwisata(
+        UpdatePariwisataSurveyQuestionRequest $request,
+        PariwisataSurveyQuestion $question,
+        SurveyQuestionService $service
+    ): RedirectResponse {
+        $service->updatePariwisataQuestion($question, $request->validated());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pertanyaan ISTC berhasil diperbarui.']);
 
         return back();
     }

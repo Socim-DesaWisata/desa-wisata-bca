@@ -23,6 +23,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('questions.templates.update');
         Route::post('/questions', [SurveyQuestionController::class, 'store'])->name('questions.store');
         Route::get('/questions/{template}', [SurveyQuestionController::class, 'show'])->name('questions.show');
+        Route::patch('/questions/umkm/{question}', [SurveyQuestionController::class, 'updateUmkm'])
+            ->name('questions.umkm.update');
+        Route::patch('/questions/pariwisata/{question}', [SurveyQuestionController::class, 'updatePariwisata'])
+            ->name('questions.pariwisata.update');
         Route::patch('/questions/{question}', [SurveyQuestionController::class, 'update'])->name('questions.update');
     });
 

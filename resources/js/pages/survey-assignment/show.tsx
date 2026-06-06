@@ -1520,7 +1520,7 @@ export default function SurveyAssignmentShow({
                                                     icon={
                                                         <UserRound size={18} />
                                                     }
-                                                    label="Enumerator"
+                                                    label="Assigned By"
                                                     value={
                                                         assignment
                                                             .assigned_by_user

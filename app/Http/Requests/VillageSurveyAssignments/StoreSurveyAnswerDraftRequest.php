@@ -29,6 +29,19 @@ class StoreSurveyAnswerDraftRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'answers.*.documents.max' => 'Maksimal 10 dokumen pendukung per jawaban.',
+            'answers.*.documents.*.file' => 'Dokumen pendukung harus berupa file yang valid.',
+            'answers.*.documents.*.mimes' => 'Format dokumen pendukung harus JPG, JPEG, PNG, WEBP, atau PDF.',
+            'answers.*.documents.*.max' => 'Ukuran dokumen pendukung maksimal 5 MB per file.',
+        ];
+    }
+
     public function after(): array
     {
         return [

@@ -120,6 +120,58 @@ class SurveyQuestionService
     }
 
     /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateUmkmQuestion(UmkmSurveyQuestion $question, array $data): UmkmSurveyQuestion
+    {
+        $question->update([
+            'criteria_code' => $data['criteria_code'],
+            'criteria_name' => $data['criteria_name'],
+            'criteria_weight_percent' => $data['criteria_weight_percent'],
+            'question_number' => $data['question_number'],
+            'question_text' => $data['question_text'],
+            'question_weight_percent' => $data['question_weight_percent'],
+            'max_score' => $data['max_score'],
+            'help_text' => $data['help_text'] ?? null,
+            'sort_order' => $data['sort_order'] ?? $question->sort_order,
+            'is_active' => (bool) ($data['is_active'] ?? false),
+        ]);
+
+        return $question;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updatePariwisataQuestion(PariwisataSurveyQuestion $question, array $data): PariwisataSurveyQuestion
+    {
+        return DB::transaction(function () use ($question, $data): PariwisataSurveyQuestion {
+            $question->update([
+                'category_code' => $data['category_code'],
+                'category_name' => $data['category_name'],
+                'sub_category_code' => $data['sub_category_code'],
+                'sub_category_name' => $data['sub_category_name'],
+                'criteria_code' => $data['criteria_code'],
+                'criteria_name' => $data['criteria_name'],
+                'criteria_description' => $data['criteria_description'] ?? null,
+                'indicator_code' => $data['indicator_code'],
+                'indicator_name' => $data['indicator_name'],
+                'indicator_description' => $data['indicator_description'] ?? null,
+                'supporting_evidence' => $data['supporting_evidence'] ?? null,
+                'input_type' => $data['input_type'],
+                'document_required' => (bool) ($data['document_required'] ?? false),
+                'document_hint' => $data['document_hint'] ?? null,
+                'sort_order' => $data['sort_order'] ?? $question->sort_order,
+                'is_active' => (bool) ($data['is_active'] ?? false),
+            ]);
+
+            $this->syncPariwisataOptions($question, $data['options']);
+
+            return $question;
+        });
+    }
+
+    /**
      * @return array<int, string>
      */
     private function aspects(?SurveyTemplate $template): array
@@ -222,6 +274,21 @@ class SurveyQuestionService
                 'max_score_label' => '4',
                 'updated_at' => $question->updated_at?->diffForHumans(),
                 'updated_date' => $question->updated_at?->format('d/m/Y'),
+                'editable' => [
+                    'aspect' => $question->aspect,
+                    'code' => $question->code,
+                    'question_text' => $question->question_text,
+                    'document_hint' => $question->document_hint,
+                    'sort_order' => $question->sort_order,
+                    'options' => $question->options
+                        ->map(fn (SurveyQuestionOption $option): array => [
+                            'id' => $option->id,
+                            'score' => (int) $option->score,
+                            'label' => $option->label,
+                        ])
+                        ->values()
+                        ->all(),
+                ],
             ]);
     }
 
@@ -266,6 +333,18 @@ class SurveyQuestionService
                 'max_score_label' => $this->numberLabel($question->max_score),
                 'updated_at' => $question->updated_at?->diffForHumans(),
                 'updated_date' => $question->updated_at?->format('d/m/Y'),
+                'editable' => [
+                    'criteria_code' => $question->criteria_code,
+                    'criteria_name' => $question->criteria_name,
+                    'criteria_weight_percent' => $question->criteria_weight_percent,
+                    'question_number' => $question->question_number,
+                    'question_text' => $question->question_text,
+                    'question_weight_percent' => $question->question_weight_percent,
+                    'max_score' => $question->max_score,
+                    'help_text' => $question->help_text,
+                    'sort_order' => $question->sort_order,
+                    'is_active' => (bool) $question->is_active,
+                ],
             ]);
     }
 
@@ -328,8 +407,10 @@ class SurveyQuestionService
                     ->map(fn (PariwisataSuveyOption $option): array => [
                         'id' => $option->id,
                         'score' => (int) $option->score,
+                        'level' => $option->level,
                         'label' => $option->label,
                         'description' => $option->description,
+                        'sort_order' => $option->sort_order,
                     ])
                     ->values()
                     ->all(),
@@ -340,6 +421,35 @@ class SurveyQuestionService
                 'max_score_label' => $question->options->max('score') ? (string) $question->options->max('score') : null,
                 'updated_at' => $question->updated_at?->diffForHumans(),
                 'updated_date' => $question->updated_at?->format('d/m/Y'),
+                'editable' => [
+                    'category_code' => $question->category_code,
+                    'category_name' => $question->category_name,
+                    'sub_category_code' => $question->sub_category_code,
+                    'sub_category_name' => $question->sub_category_name,
+                    'criteria_code' => $question->criteria_code,
+                    'criteria_name' => $question->criteria_name,
+                    'criteria_description' => $question->criteria_description,
+                    'indicator_code' => $question->indicator_code,
+                    'indicator_name' => $question->indicator_name,
+                    'indicator_description' => $question->indicator_description,
+                    'supporting_evidence' => $question->supporting_evidence,
+                    'input_type' => $question->input_type,
+                    'document_required' => (bool) $question->document_required,
+                    'document_hint' => $question->document_hint,
+                    'sort_order' => $question->sort_order,
+                    'is_active' => (bool) $question->is_active,
+                    'options' => $question->options
+                        ->map(fn (PariwisataSuveyOption $option): array => [
+                            'id' => $option->id,
+                            'score' => (int) $option->score,
+                            'level' => $option->level,
+                            'label' => $option->label,
+                            'description' => $option->description,
+                            'sort_order' => $option->sort_order,
+                        ])
+                        ->values()
+                        ->all(),
+                ],
             ]);
     }
 
@@ -437,5 +547,51 @@ class SurveyQuestionService
                 'sort_order' => $index + 1,
             ]);
         }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $options
+     */
+    private function syncPariwisataOptions(PariwisataSurveyQuestion $question, array $options): void
+    {
+        $keptIds = [];
+
+        foreach (array_values($options) as $index => $optionData) {
+            $score = (int) $optionData['score'];
+            $option = PariwisataSuveyOption::withTrashed()
+                ->where('pariwisata_survey_question_id', $question->id)
+                ->when(
+                    $optionData['id'] ?? null,
+                    fn (Builder $query, mixed $id) => $query->where('id', $id),
+                    fn (Builder $query) => $query->where('score', $score),
+                )
+                ->first();
+
+            if (! $option) {
+                $option = new PariwisataSuveyOption([
+                    'pariwisata_survey_question_id' => $question->id,
+                ]);
+            }
+
+            if ($option->trashed()) {
+                $option->restore();
+            }
+
+            $option->fill([
+                'pariwisata_survey_question_id' => $question->id,
+                'score' => $score,
+                'level' => $optionData['level'],
+                'label' => $optionData['label'],
+                'description' => $optionData['description'],
+                'sort_order' => $optionData['sort_order'] ?? ($index + 1),
+            ])->save();
+
+            $keptIds[] = $option->id;
+        }
+
+        PariwisataSuveyOption::query()
+            ->where('pariwisata_survey_question_id', $question->id)
+            ->whereNotIn('id', $keptIds)
+            ->delete();
     }
 }

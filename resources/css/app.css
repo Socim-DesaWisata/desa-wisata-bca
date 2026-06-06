@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap');
+
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -10,8 +12,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: 'BCA Sans', 'Open Sans', Arial, sans-serif;
-    --font-bca: 'BCA Sans', 'Open Sans', Arial, sans-serif;
+    --font-sans: 'Inter', Arial, sans-serif;
+    --font-tight: 'Inter Tight', 'Inter', Arial, sans-serif;
+    --font-bca: 'Inter', Arial, sans-serif;
 
     --text-hero: 56px;
     --text-hero--line-height: 64px;
@@ -94,7 +97,7 @@
 }
 
 :root {
-    --font-bca: 'BCA Sans', 'Open Sans', Arial, sans-serif;
+    --font-bca: 'Inter', Arial, sans-serif;
 
     --text-hero-size: 56px;
     --text-hero-line-height: 64px;
@@ -194,7 +197,7 @@
     }
 
     body {
-        @apply bg-background font-bca text-foreground;
+        @apply bg-background font-sans text-foreground;
         color: #303030;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
