@@ -25,6 +25,16 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
+        User::query()->firstOrCreate(
+            ['email' => 'enum@gmail.com'],
+            [
+                'name' => 'Enum SOCIM',
+                'password' => 'enum12345',
+                'role' => 'enumerator',
+                'status' => 'active',
+            ],
+        );
+
         $this->call([
             TemplateQuestionSeeder::class,
             UMKMSurveySeeder::class,
