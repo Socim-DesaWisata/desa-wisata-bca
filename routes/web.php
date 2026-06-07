@@ -71,6 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.umkm.documents.destroy');
     Route::get('/survey-assignments/{assignment}/export', [VillageSurveyAssignmentController::class, 'export'])
         ->name('survey-assignments.export');
+    Route::patch('/survey-assignments/{assignment}/village-annual-data', [VillageSurveyAssignmentController::class, 'updateVillageAnnualData'])
+        ->name('survey-assignments.village-annual-data.update');
     Route::get('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'show'])
         ->name('survey-assignments.show');
     Route::patch('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'update'])

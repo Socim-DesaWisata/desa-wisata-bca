@@ -96,13 +96,13 @@ class PariwisataSurveyAssignmentService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function update(array $data, VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): PariwisataVillage
+    public function update(array $data, User $user, VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): PariwisataVillage
     {
         if ($assignment->village_id !== $pariwisata->village_id) {
             abort(404);
         }
 
-        return DB::transaction(function () use ($data, $pariwisata): PariwisataVillage {
+        return DB::transaction(function () use ($data, $user, $pariwisata): PariwisataVillage {
             $pariwisata->update([
                 ...$this->normalizePariwisataData($data),
                 'operational_schedule' => filled($data['operational_schedule_notes'] ?? null)
@@ -118,6 +118,20 @@ class PariwisataSurveyAssignmentService
                     'category' => $category,
                 ]);
             }
+
+            AnnualTurnover::query()->where('pariwisata_id', $pariwisata->id)->delete();
+            PariwisataAnnualVisitor::query()->where('pariwisata_id', $pariwisata->id)->delete();
+            PariwisataVisitorTypeAnnual::query()->where('pariwisata_id', $pariwisata->id)->delete();
+            PariwisataPackage::query()->where('pariwisata_id', $pariwisata->id)->delete();
+            AnnualWorkerStat::query()->where('pariwisata_id', $pariwisata->id)->delete();
+            AnnualWorkerTrainingStat::query()->where('pariwisata_id', $pariwisata->id)->delete();
+
+            $this->createAnnualTurnovers($pariwisata, $data['annual_turnovers'] ?? [], $user);
+            $this->createAnnualVisitors($pariwisata, $data['annual_visitors'] ?? [], $user);
+            $this->createVisitorTypeAnnuals($pariwisata, $data['visitor_type_annuals'] ?? [], $user);
+            $this->createPackages($pariwisata, $data['packages'] ?? [], $user);
+            $this->createAnnualWorkerStats($pariwisata, $data['annual_worker_stats'] ?? [], $user);
+            $this->createAnnualWorkerTrainingStats($pariwisata, $data['annual_worker_training_stats'] ?? [], $user);
 
             return $pariwisata->refresh();
         });

@@ -62,7 +62,10 @@ type Question = {
     max_score_label: string | null;
     updated_at: string | null;
     updated_date: string | null;
-    editable: VillageQuestionEditable | UmkmQuestionEditable | PariwisataQuestionEditable;
+    editable:
+        | VillageQuestionEditable
+        | UmkmQuestionEditable
+        | PariwisataQuestionEditable;
 };
 
 type QuestionOption = {
@@ -674,62 +677,61 @@ export default function QuestionsIndex({
 
                     <section className="rounded-xl border border-[#EFEFEF] bg-white px-4 py-3 shadow-[0_4px_14px_rgba(3,17,32,0.05)]">
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE]">
-                                        <ClipboardList
-                                            className="size-5"
-                                            strokeWidth={1.8}
+                            <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE]">
+                                    <ClipboardList
+                                        className="size-5"
+                                        strokeWidth={1.8}
+                                    />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h2 className="truncate text-[15px] leading-5 font-bold text-[#303030]">
+                                            {template.title}
+                                        </h2>
+                                        <StatusBadge
+                                            muted={
+                                                template.status !== 'published'
+                                            }
+                                        >
+                                            {template.status}
+                                        </StatusBadge>
+                                        <TypeBadge
+                                            label={template.type_label}
                                         />
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <h2 className="truncate text-[15px] leading-5 font-bold text-[#303030]">
-                                                {template.title}
-                                            </h2>
-                                            <StatusBadge
-                                                muted={
-                                                    template.status !==
-                                                    'published'
-                                                }
-                                            >
-                                                {template.status}
-                                            </StatusBadge>
-                                            <TypeBadge
-                                                label={template.type_label}
-                                            />
-                                        </div>
-                                        <p className="mt-1 line-clamp-1 text-xs leading-5 text-[#7C7C7C]">
-                                            {template.description ??
-                                                'Template survey untuk assessment Desa/Kampung Wisata.'}
-                                        </p>
-                                    </div>
+                                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-[#7C7C7C]">
+                                        {template.description ??
+                                            'Template survey untuk assessment Desa/Kampung Wisata.'}
+                                    </p>
                                 </div>
+                            </div>
 
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
-                                    <div className="grid grid-cols-2 gap-2 sm:flex">
-                                        {templateStats.map((stat) => (
-                                            <div
-                                                key={stat.label}
-                                                className="rounded-lg bg-[#F7F7F7] px-3 py-2"
-                                            >
-                                                <p className="text-[10px] font-semibold text-[#7C7C7C]">
-                                                    {stat.label}
-                                                </p>
-                                                <p className="text-xs font-bold text-[#303030]">
-                                                    {stat.value}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={openTemplateModal}
-                                        className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                                    >
-                                        <Edit3 className="size-3.5" />
-                                        Edit
-                                    </button>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
+                                <div className="grid grid-cols-2 gap-2 sm:flex">
+                                    {templateStats.map((stat) => (
+                                        <div
+                                            key={stat.label}
+                                            className="rounded-lg bg-[#F7F7F7] px-3 py-2"
+                                        >
+                                            <p className="text-[10px] font-semibold text-[#7C7C7C]">
+                                                {stat.label}
+                                            </p>
+                                            <p className="text-xs font-bold text-[#303030]">
+                                                {stat.value}
+                                            </p>
+                                        </div>
+                                    ))}
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={openTemplateModal}
+                                    className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                                >
+                                    <Edit3 className="size-3.5" />
+                                    Edit
+                                </button>
+                            </div>
                         </div>
                     </section>
 
@@ -772,7 +774,9 @@ export default function QuestionsIndex({
                                         }))
                                     }
                                 >
-                                    <option value="">Semua {aspectLabel}</option>
+                                    <option value="">
+                                        Semua {aspectLabel}
+                                    </option>
                                     {aspects.map((aspect) => (
                                         <option key={aspect} value={aspect}>
                                             {aspect}
@@ -908,7 +912,9 @@ export default function QuestionsIndex({
                                             </td>
                                             <td className="px-3 py-3 align-top">
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
                                                         <button className="flex size-8 items-center justify-center rounded-md border border-[#AAD2F8] bg-[#F1F5F8] text-[#0066AE]">
                                                             <MoreVertical className="size-4" />
                                                         </button>
@@ -937,7 +943,8 @@ export default function QuestionsIndex({
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
                                                                     <Trash2 className="size-4 text-[#D81313]" />
-                                                                    Hapus Pertanyaan
+                                                                    Hapus
+                                                                    Pertanyaan
                                                                 </DropdownMenuItem>
                                                             </>
                                                         )}
@@ -1223,150 +1230,162 @@ export default function QuestionsIndex({
                         {(!editingQuestion ||
                             editingQuestion.raw_type === 'village') && (
                             <>
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <label className="space-y-1.5 sm:col-span-2">
-                                <span className="text-xs font-bold text-[#303030]">
-                                    Aspek
-                                </span>
-                                <input
-                                    list="question-aspects"
-                                    value={questionForm.data.aspect}
-                                    onChange={(event) =>
-                                        questionForm.setData(
-                                            'aspect',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
-                                />
-                                <datalist id="question-aspects">
-                                    {aspects.map((aspect) => (
-                                        <option key={aspect} value={aspect} />
-                                    ))}
-                                </datalist>
-                                <FieldError message={questionErrors.aspect} />
-                            </label>
-
-                            <label className="space-y-1.5">
-                                <span className="text-xs font-bold text-[#303030]">
-                                    Kode
-                                </span>
-                                <input
-                                    value={questionForm.data.code}
-                                    onChange={(event) =>
-                                        questionForm.setData(
-                                            'code',
-                                            event.target.value,
-                                        )
-                                    }
-                                    placeholder="Q062"
-                                    className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
-                                />
-                                <FieldError message={questionErrors.code} />
-                            </label>
-                        </div>
-
-                        <label className="space-y-1.5">
-                            <span className="text-xs font-bold text-[#303030]">
-                                Pertanyaan
-                            </span>
-                            <textarea
-                                value={questionForm.data.question_text}
-                                onChange={(event) =>
-                                    questionForm.setData(
-                                        'question_text',
-                                        event.target.value,
-                                    )
-                                }
-                                rows={4}
-                                className="w-full resize-none rounded-lg border border-[#DDE4EC] px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
-                            />
-                            <FieldError
-                                message={questionErrors.question_text}
-                            />
-                        </label>
-
-                        <label className="space-y-1.5">
-                            <span className="text-xs font-bold text-[#303030]">
-                                Dokumen yang Disiapkan
-                            </span>
-                            <textarea
-                                value={questionForm.data.document_hint}
-                                onChange={(event) =>
-                                    questionForm.setData(
-                                        'document_hint',
-                                        event.target.value,
-                                    )
-                                }
-                                rows={3}
-                                className="w-full resize-none rounded-lg border border-[#DDE4EC] px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
-                            />
-                            <FieldError
-                                message={questionErrors.document_hint}
-                            />
-                        </label>
-
-                        <label className="space-y-1.5">
-                            <span className="text-xs font-bold text-[#303030]">
-                                Urutan
-                            </span>
-                            <input
-                                type="number"
-                                min={1}
-                                value={questionForm.data.sort_order}
-                                onChange={(event) =>
-                                    questionForm.setData(
-                                        'sort_order',
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder="Otomatis jika kosong"
-                                className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
-                            />
-                            <FieldError message={questionErrors.sort_order} />
-                        </label>
-
-                        <div className="space-y-3 rounded-xl border border-[#EFEFEF] bg-[#F8FAFC] p-3">
-                            <div>
-                                <p className="text-xs font-bold text-[#303030]">
-                                    Kriteria Skor
-                                </p>
-                                <p className="text-[11px] text-[#7C7C7C]">
-                                    Score otomatis 1 sampai 4 berdasarkan
-                                    urutan.
-                                </p>
-                            </div>
-                            {questionForm.data.options.map((option, index) => (
-                                <label
-                                    key={index}
-                                    className="grid gap-2 sm:grid-cols-[72px_minmax(0,1fr)]"
-                                >
-                                    <span className="flex h-10 items-center text-xs font-bold text-[#0066AE]">
-                                        Skor {index + 1}
-                                    </span>
-                                    <div>
-                                        <textarea
-                                            value={option}
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <label className="space-y-1.5 sm:col-span-2">
+                                        <span className="text-xs font-bold text-[#303030]">
+                                            Aspek
+                                        </span>
+                                        <input
+                                            list="question-aspects"
+                                            value={questionForm.data.aspect}
                                             onChange={(event) =>
-                                                updateOption(
-                                                    index,
+                                                questionForm.setData(
+                                                    'aspect',
                                                     event.target.value,
                                                 )
                                             }
-                                            rows={2}
-                                            className="w-full resize-none rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
+                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
+                                        />
+                                        <datalist id="question-aspects">
+                                            {aspects.map((aspect) => (
+                                                <option
+                                                    key={aspect}
+                                                    value={aspect}
+                                                />
+                                            ))}
+                                        </datalist>
+                                        <FieldError
+                                            message={questionErrors.aspect}
+                                        />
+                                    </label>
+
+                                    <label className="space-y-1.5">
+                                        <span className="text-xs font-bold text-[#303030]">
+                                            Kode
+                                        </span>
+                                        <input
+                                            value={questionForm.data.code}
+                                            onChange={(event) =>
+                                                questionForm.setData(
+                                                    'code',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Q062"
+                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
                                         />
                                         <FieldError
-                                            message={
-                                                questionErrors[
-                                                    `options.${index}`
-                                                ]
-                                            }
+                                            message={questionErrors.code}
                                         />
-                                    </div>
+                                    </label>
+                                </div>
+
+                                <label className="space-y-1.5">
+                                    <span className="text-xs font-bold text-[#303030]">
+                                        Pertanyaan
+                                    </span>
+                                    <textarea
+                                        value={questionForm.data.question_text}
+                                        onChange={(event) =>
+                                            questionForm.setData(
+                                                'question_text',
+                                                event.target.value,
+                                            )
+                                        }
+                                        rows={4}
+                                        className="w-full resize-none rounded-lg border border-[#DDE4EC] px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
+                                    />
+                                    <FieldError
+                                        message={questionErrors.question_text}
+                                    />
                                 </label>
-                            ))}
-                        </div>
+
+                                <label className="space-y-1.5">
+                                    <span className="text-xs font-bold text-[#303030]">
+                                        Dokumen yang Disiapkan
+                                    </span>
+                                    <textarea
+                                        value={questionForm.data.document_hint}
+                                        onChange={(event) =>
+                                            questionForm.setData(
+                                                'document_hint',
+                                                event.target.value,
+                                            )
+                                        }
+                                        rows={3}
+                                        className="w-full resize-none rounded-lg border border-[#DDE4EC] px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
+                                    />
+                                    <FieldError
+                                        message={questionErrors.document_hint}
+                                    />
+                                </label>
+
+                                <label className="space-y-1.5">
+                                    <span className="text-xs font-bold text-[#303030]">
+                                        Urutan
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={questionForm.data.sort_order}
+                                        onChange={(event) =>
+                                            questionForm.setData(
+                                                'sort_order',
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="Otomatis jika kosong"
+                                        className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm outline-none focus:border-[#0066AE]"
+                                    />
+                                    <FieldError
+                                        message={questionErrors.sort_order}
+                                    />
+                                </label>
+
+                                <div className="space-y-3 rounded-xl border border-[#EFEFEF] bg-[#F8FAFC] p-3">
+                                    <div>
+                                        <p className="text-xs font-bold text-[#303030]">
+                                            Kriteria Skor
+                                        </p>
+                                        <p className="text-[11px] text-[#7C7C7C]">
+                                            Score otomatis 1 sampai 4
+                                            berdasarkan urutan.
+                                        </p>
+                                    </div>
+                                    {questionForm.data.options.map(
+                                        (option, index) => (
+                                            <label
+                                                key={index}
+                                                className="grid gap-2 sm:grid-cols-[72px_minmax(0,1fr)]"
+                                            >
+                                                <span className="flex h-10 items-center text-xs font-bold text-[#0066AE]">
+                                                    Skor {index + 1}
+                                                </span>
+                                                <div>
+                                                    <textarea
+                                                        value={option}
+                                                        onChange={(event) =>
+                                                            updateOption(
+                                                                index,
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        rows={2}
+                                                        className="w-full resize-none rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-sm outline-none focus:border-[#0066AE]"
+                                                    />
+                                                    <FieldError
+                                                        message={
+                                                            questionErrors[
+                                                                `options.${index}`
+                                                            ]
+                                                        }
+                                                    />
+                                                </div>
+                                            </label>
+                                        ),
+                                    )}
+                                </div>
                             </>
                         )}
 
@@ -1375,7 +1394,9 @@ export default function QuestionsIndex({
                                 <div className="grid gap-3 sm:grid-cols-3">
                                     <TextField
                                         label="Kode Kriteria"
-                                        value={umkmQuestionForm.data.criteria_code}
+                                        value={
+                                            umkmQuestionForm.data.criteria_code
+                                        }
                                         onChange={(value) =>
                                             umkmQuestionForm.setData(
                                                 'criteria_code',
@@ -1387,14 +1408,19 @@ export default function QuestionsIndex({
                                     <TextField
                                         label="Nomor Pertanyaan"
                                         type="number"
-                                        value={umkmQuestionForm.data.question_number}
+                                        value={
+                                            umkmQuestionForm.data
+                                                .question_number
+                                        }
                                         onChange={(value) =>
                                             umkmQuestionForm.setData(
                                                 'question_number',
                                                 value,
                                             )
                                         }
-                                        error={umkmQuestionErrors.question_number}
+                                        error={
+                                            umkmQuestionErrors.question_number
+                                        }
                                     />
                                     <TextField
                                         label="Urutan"
@@ -1507,50 +1533,400 @@ export default function QuestionsIndex({
                         {editingQuestion?.raw_type === 'pariwisata' && (
                             <>
                                 <div className="grid gap-3 sm:grid-cols-2">
-                                    <TextField label="Kode Kategori" value={pariwisataQuestionForm.data.category_code} onChange={(value) => pariwisataQuestionForm.setData('category_code', value)} error={pariwisataQuestionErrors.category_code} />
-                                    <TextField label="Nama Kategori" value={pariwisataQuestionForm.data.category_name} onChange={(value) => pariwisataQuestionForm.setData('category_name', value)} error={pariwisataQuestionErrors.category_name} />
-                                    <TextField label="Kode Sub Kategori" value={pariwisataQuestionForm.data.sub_category_code} onChange={(value) => pariwisataQuestionForm.setData('sub_category_code', value)} error={pariwisataQuestionErrors.sub_category_code} />
-                                    <TextField label="Nama Sub Kategori" value={pariwisataQuestionForm.data.sub_category_name} onChange={(value) => pariwisataQuestionForm.setData('sub_category_name', value)} error={pariwisataQuestionErrors.sub_category_name} />
-                                    <TextField label="Kode Kriteria" value={pariwisataQuestionForm.data.criteria_code} onChange={(value) => pariwisataQuestionForm.setData('criteria_code', value)} error={pariwisataQuestionErrors.criteria_code} />
-                                    <TextField label="Nama Kriteria" value={pariwisataQuestionForm.data.criteria_name} onChange={(value) => pariwisataQuestionForm.setData('criteria_name', value)} error={pariwisataQuestionErrors.criteria_name} />
+                                    <TextField
+                                        label="Kode Kategori"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .category_code
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'category_code',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.category_code
+                                        }
+                                    />
+                                    <TextField
+                                        label="Nama Kategori"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .category_name
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'category_name',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.category_name
+                                        }
+                                    />
+                                    <TextField
+                                        label="Kode Sub Kategori"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .sub_category_code
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'sub_category_code',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.sub_category_code
+                                        }
+                                    />
+                                    <TextField
+                                        label="Nama Sub Kategori"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .sub_category_name
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'sub_category_name',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.sub_category_name
+                                        }
+                                    />
+                                    <TextField
+                                        label="Kode Kriteria"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .criteria_code
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'criteria_code',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.criteria_code
+                                        }
+                                    />
+                                    <TextField
+                                        label="Nama Kriteria"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .criteria_name
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'criteria_name',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.criteria_name
+                                        }
+                                    />
                                 </div>
-                                <TextAreaField label="Deskripsi Kriteria" value={pariwisataQuestionForm.data.criteria_description} onChange={(value) => pariwisataQuestionForm.setData('criteria_description', value)} error={pariwisataQuestionErrors.criteria_description} rows={3} />
+                                <TextAreaField
+                                    label="Deskripsi Kriteria"
+                                    value={
+                                        pariwisataQuestionForm.data
+                                            .criteria_description
+                                    }
+                                    onChange={(value) =>
+                                        pariwisataQuestionForm.setData(
+                                            'criteria_description',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        pariwisataQuestionErrors.criteria_description
+                                    }
+                                    rows={3}
+                                />
                                 <div className="grid gap-3 sm:grid-cols-3">
-                                    <TextField label="Kode Indikator" value={pariwisataQuestionForm.data.indicator_code} onChange={(value) => pariwisataQuestionForm.setData('indicator_code', value)} error={pariwisataQuestionErrors.indicator_code} />
-                                    <TextField label="Tipe Input" value={pariwisataQuestionForm.data.input_type} onChange={(value) => pariwisataQuestionForm.setData('input_type', value)} error={pariwisataQuestionErrors.input_type} />
-                                    <TextField label="Urutan" type="number" value={pariwisataQuestionForm.data.sort_order} onChange={(value) => pariwisataQuestionForm.setData('sort_order', value)} error={pariwisataQuestionErrors.sort_order} />
+                                    <TextField
+                                        label="Kode Indikator"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .indicator_code
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'indicator_code',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.indicator_code
+                                        }
+                                    />
+                                    <TextField
+                                        label="Tipe Input"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .input_type
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'input_type',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.input_type
+                                        }
+                                    />
+                                    <TextField
+                                        label="Urutan"
+                                        type="number"
+                                        value={
+                                            pariwisataQuestionForm.data
+                                                .sort_order
+                                        }
+                                        onChange={(value) =>
+                                            pariwisataQuestionForm.setData(
+                                                'sort_order',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            pariwisataQuestionErrors.sort_order
+                                        }
+                                    />
                                 </div>
-                                <TextAreaField label="Pertanyaan Utama / Indikator" value={pariwisataQuestionForm.data.indicator_name} onChange={(value) => pariwisataQuestionForm.setData('indicator_name', value)} error={pariwisataQuestionErrors.indicator_name} />
-                                <TextAreaField label="Deskripsi Indikator" value={pariwisataQuestionForm.data.indicator_description} onChange={(value) => pariwisataQuestionForm.setData('indicator_description', value)} error={pariwisataQuestionErrors.indicator_description} rows={3} />
-                                <TextAreaField label="Bukti Pendukung" value={pariwisataQuestionForm.data.supporting_evidence} onChange={(value) => pariwisataQuestionForm.setData('supporting_evidence', value)} error={pariwisataQuestionErrors.supporting_evidence} rows={3} />
-                                <TextAreaField label="Dokumen Pendukung" value={pariwisataQuestionForm.data.document_hint} onChange={(value) => pariwisataQuestionForm.setData('document_hint', value)} error={pariwisataQuestionErrors.document_hint} rows={3} />
+                                <TextAreaField
+                                    label="Pertanyaan Utama / Indikator"
+                                    value={
+                                        pariwisataQuestionForm.data
+                                            .indicator_name
+                                    }
+                                    onChange={(value) =>
+                                        pariwisataQuestionForm.setData(
+                                            'indicator_name',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        pariwisataQuestionErrors.indicator_name
+                                    }
+                                />
+                                <TextAreaField
+                                    label="Deskripsi Indikator"
+                                    value={
+                                        pariwisataQuestionForm.data
+                                            .indicator_description
+                                    }
+                                    onChange={(value) =>
+                                        pariwisataQuestionForm.setData(
+                                            'indicator_description',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        pariwisataQuestionErrors.indicator_description
+                                    }
+                                    rows={3}
+                                />
+                                <TextAreaField
+                                    label="Bukti Pendukung"
+                                    value={
+                                        pariwisataQuestionForm.data
+                                            .supporting_evidence
+                                    }
+                                    onChange={(value) =>
+                                        pariwisataQuestionForm.setData(
+                                            'supporting_evidence',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        pariwisataQuestionErrors.supporting_evidence
+                                    }
+                                    rows={3}
+                                />
+                                <TextAreaField
+                                    label="Dokumen Pendukung"
+                                    value={
+                                        pariwisataQuestionForm.data
+                                            .document_hint
+                                    }
+                                    onChange={(value) =>
+                                        pariwisataQuestionForm.setData(
+                                            'document_hint',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        pariwisataQuestionErrors.document_hint
+                                    }
+                                    rows={3}
+                                />
                                 <div className="grid gap-3 sm:grid-cols-2">
-                                    <CheckField label="Dokumen wajib" checked={pariwisataQuestionForm.data.document_required} onChange={(checked) => pariwisataQuestionForm.setData('document_required', checked)} />
-                                    <CheckField label="Pertanyaan aktif" checked={pariwisataQuestionForm.data.is_active} onChange={(checked) => pariwisataQuestionForm.setData('is_active', checked)} />
+                                    <CheckField
+                                        label="Dokumen wajib"
+                                        checked={
+                                            pariwisataQuestionForm.data
+                                                .document_required
+                                        }
+                                        onChange={(checked) =>
+                                            pariwisataQuestionForm.setData(
+                                                'document_required',
+                                                checked,
+                                            )
+                                        }
+                                    />
+                                    <CheckField
+                                        label="Pertanyaan aktif"
+                                        checked={
+                                            pariwisataQuestionForm.data
+                                                .is_active
+                                        }
+                                        onChange={(checked) =>
+                                            pariwisataQuestionForm.setData(
+                                                'is_active',
+                                                checked,
+                                            )
+                                        }
+                                    />
                                 </div>
                                 <div className="space-y-3 rounded-xl border border-[#EFEFEF] bg-[#F8FAFC] p-3">
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-bold text-[#303030]">Opsi Skor ISTC</p>
-                                            <p className="text-[11px] text-[#7C7C7C]">Score, level, label, dan deskripsi opsi.</p>
+                                            <p className="text-xs font-bold text-[#303030]">
+                                                Opsi Skor ISTC
+                                            </p>
+                                            <p className="text-[11px] text-[#7C7C7C]">
+                                                Score, level, label, dan
+                                                deskripsi opsi.
+                                            </p>
                                         </div>
-                                        <button type="button" onClick={addPariwisataOption} className="h-8 rounded-lg border border-[#0066AE] px-3 text-xs font-bold text-[#0066AE]">Tambah Opsi</button>
+                                        <button
+                                            type="button"
+                                            onClick={addPariwisataOption}
+                                            className="h-8 rounded-lg border border-[#0066AE] px-3 text-xs font-bold text-[#0066AE]"
+                                        >
+                                            Tambah Opsi
+                                        </button>
                                     </div>
-                                    {pariwisataQuestionForm.data.options.map((option, index) => (
-                                        <div key={`${option.id}-${index}`} className="space-y-2 rounded-lg border border-[#DDE4EC] bg-white p-3">
-                                            <div className="grid gap-2 sm:grid-cols-4">
-                                                <TextField label="Skor" type="number" value={option.score} onChange={(value) => updatePariwisataOption(index, 'score', value)} error={pariwisataQuestionErrors[`options.${index}.score`]} />
-                                                <TextField label="Level" value={option.level} onChange={(value) => updatePariwisataOption(index, 'level', value)} error={pariwisataQuestionErrors[`options.${index}.level`]} />
-                                                <TextField label="Label" value={option.label} onChange={(value) => updatePariwisataOption(index, 'label', value)} error={pariwisataQuestionErrors[`options.${index}.label`]} />
-                                                <TextField label="Urutan" type="number" value={option.sort_order} onChange={(value) => updatePariwisataOption(index, 'sort_order', value)} error={pariwisataQuestionErrors[`options.${index}.sort_order`]} />
+                                    {pariwisataQuestionForm.data.options.map(
+                                        (option, index) => (
+                                            <div
+                                                key={`${option.id}-${index}`}
+                                                className="space-y-2 rounded-lg border border-[#DDE4EC] bg-white p-3"
+                                            >
+                                                <div className="grid gap-2 sm:grid-cols-4">
+                                                    <TextField
+                                                        label="Skor"
+                                                        type="number"
+                                                        value={option.score}
+                                                        onChange={(value) =>
+                                                            updatePariwisataOption(
+                                                                index,
+                                                                'score',
+                                                                value,
+                                                            )
+                                                        }
+                                                        error={
+                                                            pariwisataQuestionErrors[
+                                                                `options.${index}.score`
+                                                            ]
+                                                        }
+                                                    />
+                                                    <TextField
+                                                        label="Level"
+                                                        value={option.level}
+                                                        onChange={(value) =>
+                                                            updatePariwisataOption(
+                                                                index,
+                                                                'level',
+                                                                value,
+                                                            )
+                                                        }
+                                                        error={
+                                                            pariwisataQuestionErrors[
+                                                                `options.${index}.level`
+                                                            ]
+                                                        }
+                                                    />
+                                                    <TextField
+                                                        label="Label"
+                                                        value={option.label}
+                                                        onChange={(value) =>
+                                                            updatePariwisataOption(
+                                                                index,
+                                                                'label',
+                                                                value,
+                                                            )
+                                                        }
+                                                        error={
+                                                            pariwisataQuestionErrors[
+                                                                `options.${index}.label`
+                                                            ]
+                                                        }
+                                                    />
+                                                    <TextField
+                                                        label="Urutan"
+                                                        type="number"
+                                                        value={
+                                                            option.sort_order
+                                                        }
+                                                        onChange={(value) =>
+                                                            updatePariwisataOption(
+                                                                index,
+                                                                'sort_order',
+                                                                value,
+                                                            )
+                                                        }
+                                                        error={
+                                                            pariwisataQuestionErrors[
+                                                                `options.${index}.sort_order`
+                                                            ]
+                                                        }
+                                                    />
+                                                </div>
+                                                <TextAreaField
+                                                    label="Deskripsi Opsi"
+                                                    value={option.description}
+                                                    onChange={(value) =>
+                                                        updatePariwisataOption(
+                                                            index,
+                                                            'description',
+                                                            value,
+                                                        )
+                                                    }
+                                                    error={
+                                                        pariwisataQuestionErrors[
+                                                            `options.${index}.description`
+                                                        ]
+                                                    }
+                                                    rows={2}
+                                                />
+                                                {pariwisataQuestionForm.data
+                                                    .options.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removePariwisataOption(
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="text-xs font-bold text-[#D81313]"
+                                                    >
+                                                        Hapus opsi
+                                                    </button>
+                                                )}
                                             </div>
-                                            <TextAreaField label="Deskripsi Opsi" value={option.description} onChange={(value) => updatePariwisataOption(index, 'description', value)} error={pariwisataQuestionErrors[`options.${index}.description`]} rows={2} />
-                                            {pariwisataQuestionForm.data.options.length > 1 && (
-                                                <button type="button" onClick={() => removePariwisataOption(index)} className="text-xs font-bold text-[#D81313]">Hapus opsi</button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <FieldError message={pariwisataQuestionErrors.options} />
+                                        ),
+                                    )}
+                                    <FieldError
+                                        message={
+                                            pariwisataQuestionErrors.options
+                                        }
+                                    />
                                 </div>
                             </>
                         )}

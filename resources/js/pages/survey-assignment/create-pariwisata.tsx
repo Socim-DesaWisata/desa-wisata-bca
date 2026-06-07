@@ -298,8 +298,12 @@ function SectionCard({
                     <Icon className="size-5" />
                 </div>
                 <div className="min-w-0">
-                    <h2 className="text-[15px] font-bold text-[#172033]">{title}</h2>
-                    <p className="mt-0.5 text-sm leading-5 text-[#64748B]">{description}</p>
+                    <h2 className="text-[15px] font-bold text-[#172033]">
+                        {title}
+                    </h2>
+                    <p className="mt-0.5 text-sm leading-5 text-[#64748B]">
+                        {description}
+                    </p>
                 </div>
             </div>
             <div className="p-4 sm:p-5">{children}</div>
@@ -469,7 +473,9 @@ export default function CreatePariwisata({
     function removeVisitorTypeAnnual(index: number) {
         setData(
             'visitor_type_annuals',
-            data.visitor_type_annuals.filter((_, rowIndex) => rowIndex !== index),
+            data.visitor_type_annuals.filter(
+                (_, rowIndex) => rowIndex !== index,
+            ),
         );
     }
 
@@ -532,7 +538,9 @@ export default function CreatePariwisata({
     function removeAnnualWorkerStat(index: number) {
         setData(
             'annual_worker_stats',
-            data.annual_worker_stats.filter((_, rowIndex) => rowIndex !== index),
+            data.annual_worker_stats.filter(
+                (_, rowIndex) => rowIndex !== index,
+            ),
         );
     }
 
@@ -904,27 +912,56 @@ export default function CreatePariwisata({
                                         <div className="space-y-2 text-sm">
                                             <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                                                 <span>Omset Tahunan</span>
-                                                <span className="font-bold">{data.annual_turnovers.length}</span>
+                                                <span className="font-bold">
+                                                    {
+                                                        data.annual_turnovers
+                                                            .length
+                                                    }
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                                                 <span>Pengunjung Tahunan</span>
-                                                <span className="font-bold">{data.annual_visitors.length}</span>
+                                                <span className="font-bold">
+                                                    {
+                                                        data.annual_visitors
+                                                            .length
+                                                    }
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                                                 <span>Jenis Pengunjung</span>
-                                                <span className="font-bold">{data.visitor_type_annuals.length}</span>
+                                                <span className="font-bold">
+                                                    {
+                                                        data
+                                                            .visitor_type_annuals
+                                                            .length
+                                                    }
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                                                 <span>Paket Wisata</span>
-                                                <span className="font-bold">{data.packages.length}</span>
+                                                <span className="font-bold">
+                                                    {data.packages.length}
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                                                 <span>Data Pekerja</span>
-                                                <span className="font-bold">{data.annual_worker_stats.length}</span>
+                                                <span className="font-bold">
+                                                    {
+                                                        data.annual_worker_stats
+                                                            .length
+                                                    }
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                                                 <span>Pelatihan Pekerja</span>
-                                                <span className="font-bold">{data.annual_worker_training_stats.length}</span>
+                                                <span className="font-bold">
+                                                    {
+                                                        data
+                                                            .annual_worker_training_stats
+                                                            .length
+                                                    }
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -974,7 +1011,10 @@ export default function CreatePariwisata({
                                                     year: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_turnovers.${index}.year`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_turnovers.${index}.year`,
+                                            )}
                                             placeholder="2024"
                                         />
                                         <TextInput
@@ -985,7 +1025,10 @@ export default function CreatePariwisata({
                                                     value: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_turnovers.${index}.value`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_turnovers.${index}.value`,
+                                            )}
                                             placeholder="Nominal rupiah"
                                         />
                                         <TextInput
@@ -996,12 +1039,17 @@ export default function CreatePariwisata({
                                                     notes: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_turnovers.${index}.notes`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_turnovers.${index}.notes`,
+                                            )}
                                             placeholder="Opsional"
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => removeAnnualTurnover(index)}
+                                            onClick={() =>
+                                                removeAnnualTurnover(index)
+                                            }
                                             className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
                                         >
                                             <Trash2 className="size-4" />
@@ -1017,7 +1065,12 @@ export default function CreatePariwisata({
                                     <Plus className="size-4" />
                                     Tambah Omset Tahunan
                                 </button>
-                                <FieldError message={fieldError(errors, 'annual_turnovers')} />
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'annual_turnovers',
+                                    )}
+                                />
                             </div>
                         </SectionCard>
 
@@ -1048,7 +1101,10 @@ export default function CreatePariwisata({
                                                     year: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_visitors.${index}.year`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_visitors.${index}.year`,
+                                            )}
                                             placeholder="2024"
                                         />
                                         <TextInput
@@ -1059,7 +1115,10 @@ export default function CreatePariwisata({
                                                     value: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_visitors.${index}.value`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_visitors.${index}.value`,
+                                            )}
                                             placeholder="1250"
                                         />
                                         <TextInput
@@ -1070,12 +1129,17 @@ export default function CreatePariwisata({
                                                     notes: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_visitors.${index}.notes`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_visitors.${index}.notes`,
+                                            )}
                                             placeholder="Opsional"
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => removeAnnualVisitor(index)}
+                                            onClick={() =>
+                                                removeAnnualVisitor(index)
+                                            }
                                             className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
                                         >
                                             <Trash2 className="size-4" />
@@ -1091,7 +1155,12 @@ export default function CreatePariwisata({
                                     <Plus className="size-4" />
                                     Tambah Pengunjung Tahunan
                                 </button>
-                                <FieldError message={fieldError(errors, 'annual_visitors')} />
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'annual_visitors',
+                                    )}
+                                />
                             </div>
                         </SectionCard>
 
@@ -1122,7 +1191,10 @@ export default function CreatePariwisata({
                                                     year: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `visitor_type_annuals.${index}.year`)}
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.year`,
+                                            )}
                                             placeholder="2024"
                                         />
                                         <SelectInput
@@ -1133,7 +1205,10 @@ export default function CreatePariwisata({
                                                     visitor_type: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `visitor_type_annuals.${index}.visitor_type`)}
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.visitor_type`,
+                                            )}
                                             options={visitorTypeOptions}
                                         />
                                         <TextInput
@@ -1144,7 +1219,10 @@ export default function CreatePariwisata({
                                                     value: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `visitor_type_annuals.${index}.value`)}
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.value`,
+                                            )}
                                             placeholder="500"
                                         />
                                         <TextInput
@@ -1155,12 +1233,17 @@ export default function CreatePariwisata({
                                                     notes: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `visitor_type_annuals.${index}.notes`)}
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.notes`,
+                                            )}
                                             placeholder="Opsional"
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => removeVisitorTypeAnnual(index)}
+                                            onClick={() =>
+                                                removeVisitorTypeAnnual(index)
+                                            }
                                             className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] xl:mt-6"
                                         >
                                             <Trash2 className="size-4" />
@@ -1176,7 +1259,12 @@ export default function CreatePariwisata({
                                     <Plus className="size-4" />
                                     Tambah Jenis Pengunjung
                                 </button>
-                                <FieldError message={fieldError(errors, 'visitor_type_annuals')} />
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'visitor_type_annuals',
+                                    )}
+                                />
                             </div>
                         </SectionCard>
 
@@ -1208,7 +1296,10 @@ export default function CreatePariwisata({
                                                         name: value,
                                                     })
                                                 }
-                                                error={fieldError(errors, `packages.${index}.name`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.name`,
+                                                )}
                                                 placeholder="Contoh: Paket Jelajah Desa"
                                             />
                                             <TextInput
@@ -1219,7 +1310,10 @@ export default function CreatePariwisata({
                                                         package_type: value,
                                                     })
                                                 }
-                                                error={fieldError(errors, `packages.${index}.package_type`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.package_type`,
+                                                )}
                                                 placeholder="Family / Adventure"
                                             />
                                             <TextInput
@@ -1230,18 +1324,28 @@ export default function CreatePariwisata({
                                                         duration: value,
                                                     })
                                                 }
-                                                error={fieldError(errors, `packages.${index}.duration`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.duration`,
+                                                )}
                                                 placeholder="2 Hari 1 Malam"
                                             />
                                             <TextInput
                                                 label="Harga"
-                                                value={formatThousands(row.price)}
+                                                value={formatThousands(
+                                                    row.price,
+                                                )}
                                                 onChange={(value) =>
                                                     updatePackage(index, {
-                                                        price: digitsOnly(value),
+                                                        price: digitsOnly(
+                                                            value,
+                                                        ),
                                                     })
                                                 }
-                                                error={fieldError(errors, `packages.${index}.price`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.price`,
+                                                )}
                                                 placeholder="250.000"
                                             />
                                         </div>
@@ -1254,7 +1358,10 @@ export default function CreatePariwisata({
                                                         facilities: value,
                                                     })
                                                 }
-                                                error={fieldError(errors, `packages.${index}.facilities`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.facilities`,
+                                                )}
                                                 rows={3}
                                                 placeholder="Daftar fasilitas paket"
                                             />
@@ -1266,7 +1373,10 @@ export default function CreatePariwisata({
                                                         description: value,
                                                     })
                                                 }
-                                                error={fieldError(errors, `packages.${index}.description`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.description`,
+                                                )}
                                                 rows={3}
                                                 placeholder="Deskripsi singkat paket wisata"
                                             />
@@ -1278,7 +1388,9 @@ export default function CreatePariwisata({
                                                     checked={row.is_active}
                                                     onChange={(event) =>
                                                         updatePackage(index, {
-                                                            is_active: event.target.checked,
+                                                            is_active:
+                                                                event.target
+                                                                    .checked,
                                                         })
                                                     }
                                                     className="size-4 accent-[#0066AE]"
@@ -1287,7 +1399,9 @@ export default function CreatePariwisata({
                                             </label>
                                             <button
                                                 type="button"
-                                                onClick={() => removePackage(index)}
+                                                onClick={() =>
+                                                    removePackage(index)
+                                                }
                                                 className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#F2C7C7] bg-white px-4 text-sm font-bold text-[#D81313] transition hover:bg-[#FFF6F6]"
                                             >
                                                 <Trash2 className="size-4" />
@@ -1335,7 +1449,10 @@ export default function CreatePariwisata({
                                                     year: digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_worker_stats.${index}.year`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.year`,
+                                            )}
                                             placeholder="2024"
                                         />
                                         <SelectInput
@@ -1346,7 +1463,10 @@ export default function CreatePariwisata({
                                                     dimension: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_worker_stats.${index}.dimension`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.dimension`,
+                                            )}
                                             options={workerDimensionOptions}
                                         />
                                         <TextInput
@@ -1357,7 +1477,10 @@ export default function CreatePariwisata({
                                                     category_value: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_worker_stats.${index}.category_value`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.category_value`,
+                                            )}
                                             placeholder="Contoh: 18-25 tahun"
                                         />
                                         <TextInput
@@ -1365,10 +1488,14 @@ export default function CreatePariwisata({
                                             value={row.total_people}
                                             onChange={(value) =>
                                                 updateAnnualWorkerStat(index, {
-                                                    total_people: digitsOnly(value),
+                                                    total_people:
+                                                        digitsOnly(value),
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_worker_stats.${index}.total_people`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.total_people`,
+                                            )}
                                             placeholder="10"
                                         />
                                         <TextInput
@@ -1379,12 +1506,17 @@ export default function CreatePariwisata({
                                                     notes: value,
                                                 })
                                             }
-                                            error={fieldError(errors, `annual_worker_stats.${index}.notes`)}
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.notes`,
+                                            )}
                                             placeholder="Opsional"
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => removeAnnualWorkerStat(index)}
+                                            onClick={() =>
+                                                removeAnnualWorkerStat(index)
+                                            }
                                             className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] xl:mt-6"
                                         >
                                             <Trash2 className="size-4" />
@@ -1400,7 +1532,12 @@ export default function CreatePariwisata({
                                     <Plus className="size-4" />
                                     Tambah Data Pekerja
                                 </button>
-                                <FieldError message={fieldError(errors, 'annual_worker_stats')} />
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'annual_worker_stats',
+                                    )}
+                                />
                             </div>
                         </SectionCard>
 
@@ -1410,7 +1547,8 @@ export default function CreatePariwisata({
                             description="Catat program pelatihan pekerja beserta jumlah pesertanya per tahun."
                         >
                             <div className="space-y-3">
-                                {data.annual_worker_training_stats.length === 0 && (
+                                {data.annual_worker_training_stats.length ===
+                                    0 && (
                                     <EmptyState
                                         icon={GraduationCap}
                                         title="Belum ada data pelatihan"
@@ -1418,64 +1556,100 @@ export default function CreatePariwisata({
                                     />
                                 )}
 
-                                {data.annual_worker_training_stats.map((row, index) => (
-                                    <div
-                                        key={index}
-                                        className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 xl:grid-cols-[140px_minmax(0,1fr)_180px_minmax(0,1fr)_44px] xl:items-start"
-                                    >
-                                        <TextInput
-                                            label="Tahun"
-                                            value={row.year}
-                                            onChange={(value) =>
-                                                updateAnnualWorkerTrainingStat(index, {
-                                                    year: digitsOnly(value),
-                                                })
-                                            }
-                                            error={fieldError(errors, `annual_worker_training_stats.${index}.year`)}
-                                            placeholder="2024"
-                                        />
-                                        <TextInput
-                                            label="Nama Pelatihan"
-                                            value={row.training_name}
-                                            onChange={(value) =>
-                                                updateAnnualWorkerTrainingStat(index, {
-                                                    training_name: value,
-                                                })
-                                            }
-                                            error={fieldError(errors, `annual_worker_training_stats.${index}.training_name`)}
-                                            placeholder="Pelatihan hospitality"
-                                        />
-                                        <TextInput
-                                            label="Total Peserta"
-                                            value={row.total_people}
-                                            onChange={(value) =>
-                                                updateAnnualWorkerTrainingStat(index, {
-                                                    total_people: digitsOnly(value),
-                                                })
-                                            }
-                                            error={fieldError(errors, `annual_worker_training_stats.${index}.total_people`)}
-                                            placeholder="15"
-                                        />
-                                        <TextInput
-                                            label="Catatan"
-                                            value={row.notes}
-                                            onChange={(value) =>
-                                                updateAnnualWorkerTrainingStat(index, {
-                                                    notes: value,
-                                                })
-                                            }
-                                            error={fieldError(errors, `annual_worker_training_stats.${index}.notes`)}
-                                            placeholder="Opsional"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAnnualWorkerTrainingStat(index)}
-                                            className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] xl:mt-6"
+                                {data.annual_worker_training_stats.map(
+                                    (row, index) => (
+                                        <div
+                                            key={index}
+                                            className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 xl:grid-cols-[140px_minmax(0,1fr)_180px_minmax(0,1fr)_44px] xl:items-start"
                                         >
-                                            <Trash2 className="size-4" />
-                                        </button>
-                                    </div>
-                                ))}
+                                            <TextInput
+                                                label="Tahun"
+                                                value={row.year}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            year: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.year`,
+                                                )}
+                                                placeholder="2024"
+                                            />
+                                            <TextInput
+                                                label="Nama Pelatihan"
+                                                value={row.training_name}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            training_name:
+                                                                value,
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.training_name`,
+                                                )}
+                                                placeholder="Pelatihan hospitality"
+                                            />
+                                            <TextInput
+                                                label="Total Peserta"
+                                                value={row.total_people}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            total_people:
+                                                                digitsOnly(
+                                                                    value,
+                                                                ),
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.total_people`,
+                                                )}
+                                                placeholder="15"
+                                            />
+                                            <TextInput
+                                                label="Catatan"
+                                                value={row.notes}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            notes: value,
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.notes`,
+                                                )}
+                                                placeholder="Opsional"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeAnnualWorkerTrainingStat(
+                                                        index,
+                                                    )
+                                                }
+                                                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] xl:mt-6"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    ),
+                                )}
 
                                 <button
                                     type="button"

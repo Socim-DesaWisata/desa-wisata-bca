@@ -723,7 +723,7 @@ function TakeSurveyPariwisataContent({
 
         router.post(
             storePariwisataSurveyDraft.url({
-            assignment: assignment.code,
+                assignment: assignment.code,
                 pariwisata: pariwisata.id,
             }),
             formData,
@@ -749,7 +749,7 @@ function TakeSurveyPariwisataContent({
                         <div className="flex min-w-0 items-center gap-3">
                             <Link
                                 href={showPariwisata.url({
-                    assignment: assignment.code,
+                                    assignment: assignment.code,
                                     pariwisata: pariwisata.id,
                                 })}
                                 aria-label="Kembali"

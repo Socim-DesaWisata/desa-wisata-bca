@@ -44,7 +44,6 @@ export default function Login({ status, canResetPassword }: Props) {
                 style={{ backgroundImage: `url(${loginBg})` }}
             >
                 <section className="relative z-10 flex min-h-svh items-center justify-end px-4 py-5 sm:px-6 lg:px-14 xl:px-20">
-
                     <div className="w-full max-w-[520px] rounded-3xl border border-white/70 bg-white/96 px-6 py-7 shadow-[0_22px_70px_rgba(17,55,99,0.18)] backdrop-blur-sm sm:px-8 lg:px-10 lg:py-9">
                         <div className="mx-auto flex max-w-[420px] flex-col items-center">
                             <img
@@ -196,15 +195,13 @@ export default function Login({ status, canResetPassword }: Props) {
                                             Masuk ke Dashboard
                                             <ArrowRight className="size-5" />
                                         </button>
-
                                     </div>
                                 )}
                             </Form>
 
                             <div className="mt-6 h-px w-full bg-[#c7d0df]" />
                             <p className="mt-4 text-center text-xs font-medium text-[#7d8aa0] sm:text-sm">
-                                © 2026 All rights
-                                reserved.
+                                © 2026 All rights reserved.
                             </p>
                         </div>
                     </div>

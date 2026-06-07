@@ -16,11 +16,13 @@ import {
     Folder,
     MapPin,
     PanelRightOpen,
+    Plus,
     RefreshCcw,
     Save,
     Search,
     ShieldCheck,
     Star,
+    Trash2,
     Trophy,
     UserRound,
     X,
@@ -49,6 +51,7 @@ import {
     takeSurvey,
     update as updateSurveyAssignment,
 } from '@/routes/survey-assignments';
+import { update as updateVillageAnnualData } from '@/routes/survey-assignments/village-annual-data';
 import {
     show as showPariwisata,
     takeSurvey as takePariwisataSurvey,
@@ -192,6 +195,7 @@ type SurveyAssignmentShowProps = {
         user_options: Option[];
     };
     edit_values: AssignmentEditForm;
+    village_annual_edit_values: VillageAnnualEditForm;
 };
 
 type Option = {
@@ -212,6 +216,33 @@ type AssignmentEditForm = {
     last_saved_at: string;
     submitted_at: string;
     reviewed_at: string;
+};
+
+type VillageAnnualPopulationStatForm = {
+    year: string;
+    category_value: string;
+    total_people: string;
+    notes: string;
+};
+
+type VillageVulnerableGroupAnnualForm = {
+    vulnerable_category: string;
+    year: string;
+    total_people: string;
+    notes: string;
+};
+
+type VillageActiveGroupAnnualForm = {
+    active_category: string;
+    year: string;
+    value: string;
+    notes: string;
+};
+
+type VillageAnnualEditForm = {
+    annual_population_stats: VillageAnnualPopulationStatForm[];
+    vulnerable_group_annuals: VillageVulnerableGroupAnnualForm[];
+    active_group_annuals: VillageActiveGroupAnnualForm[];
 };
 
 type UmkmSurveyAnswer = {
@@ -300,6 +331,53 @@ type PariwisataData = {
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
+}
+
+function currentYearString() {
+    return String(new Date().getFullYear());
+}
+
+function cloneVillageAnnualForm(
+    values: VillageAnnualEditForm,
+): VillageAnnualEditForm {
+    return {
+        annual_population_stats: values.annual_population_stats.map((row) => ({
+            ...row,
+        })),
+        vulnerable_group_annuals: values.vulnerable_group_annuals.map(
+            (row) => ({ ...row }),
+        ),
+        active_group_annuals: values.active_group_annuals.map((row) => ({
+            ...row,
+        })),
+    };
+}
+
+function emptyPopulationStat(): VillageAnnualPopulationStatForm {
+    return {
+        year: currentYearString(),
+        category_value: '',
+        total_people: '',
+        notes: '',
+    };
+}
+
+function emptyVulnerableGroupAnnual(): VillageVulnerableGroupAnnualForm {
+    return {
+        vulnerable_category: '',
+        year: currentYearString(),
+        total_people: '',
+        notes: '',
+    };
+}
+
+function emptyActiveGroupAnnual(): VillageActiveGroupAnnualForm {
+    return {
+        active_category: '',
+        year: currentYearString(),
+        value: '',
+        notes: '',
+    };
 }
 
 function statusClass(status: string) {
@@ -790,13 +868,21 @@ function UmkmTab({
                 />
                 <MetricCard
                     label="UMKM Skor Tertinggi"
-                    value={highestUmkm ? String(highestUmkm.survey_summary.weighted_score) : '-'}
+                    value={
+                        highestUmkm
+                            ? String(highestUmkm.survey_summary.weighted_score)
+                            : '-'
+                    }
                     helper={highestUmkm?.name ?? 'Belum ada data'}
                     icon={<ClipboardCheck size={22} />}
                 />
                 <MetricCard
                     label="UMKM Skor Terendah"
-                    value={lowestUmkm ? String(lowestUmkm.survey_summary.weighted_score) : '-'}
+                    value={
+                        lowestUmkm
+                            ? String(lowestUmkm.survey_summary.weighted_score)
+                            : '-'
+                    }
                     helper={lowestUmkm?.name ?? 'Belum ada data'}
                     icon={<CheckCircle2 size={22} />}
                     tone={umkms.length ? 'green' : 'orange'}
@@ -1018,37 +1104,37 @@ function PariwisataCard({
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                        <span
-                            className={classNames(
-                                    'rounded-full px-2.5 py-1 text-[11px] font-bold',
-                                item.is_active
-                                    ? 'bg-[#EAF8F0] text-[#00893D]'
-                                    : 'bg-[#F1F5F8] text-[#7C7C7C]',
-                            )}
-                        >
-                            {item.status_label}
-                        </span>
-                            {item.categories.slice(0, 2).map((category) => (
                             <span
-                                key={category.id}
-                                    className="rounded-full bg-[#EAF3FF] px-2.5 py-1 text-[11px] font-bold text-[#0066AE]"
+                                className={classNames(
+                                    'rounded-full px-2.5 py-1 text-[11px] font-bold',
+                                    item.is_active
+                                        ? 'bg-[#EAF8F0] text-[#00893D]'
+                                        : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                                )}
                             >
-                                {category.label}
+                                {item.status_label}
                             </span>
-                        ))}
+                            {item.categories.slice(0, 2).map((category) => (
+                                <span
+                                    key={category.id}
+                                    className="rounded-full bg-[#EAF3FF] px-2.5 py-1 text-[11px] font-bold text-[#0066AE]"
+                                >
+                                    {category.label}
+                                </span>
+                            ))}
                             {item.categories.length > 2 && (
                                 <span className="rounded-full bg-[#F1F5F8] px-2.5 py-1 text-[11px] font-bold text-[#7C7C7C]">
                                     +{item.categories.length - 2}
                                 </span>
                             )}
-                    </div>
+                        </div>
                         <h3 className="mt-3 line-clamp-1 text-base font-bold text-[#303030]">
-                        {item.name}
-                    </h3>
+                            {item.name}
+                        </h3>
                         <p className="mt-1 line-clamp-2 text-sm leading-5 font-semibold text-[#7C7C7C]">
-                        {item.address ?? '-'}
-                    </p>
-                </div>
+                            {item.address ?? '-'}
+                        </p>
+                    </div>
                     <div className="shrink-0 rounded-2xl bg-[#F8FBFE] px-4 py-3 text-right ring-1 ring-[#E4EAF0]">
                         <p className="text-[10px] font-black tracking-[0.06em] text-[#7C7C7C] uppercase">
                             Skor
@@ -1295,6 +1381,7 @@ export default function SurveyAssignmentShow({
     activities,
     edit_options,
     edit_values,
+    village_annual_edit_values,
 }: SurveyAssignmentShowProps) {
     const [activeTab, setActiveTab] = useState<'desa' | 'umkm' | 'pariwisata'>(
         'desa',
@@ -1310,8 +1397,12 @@ export default function SurveyAssignmentShow({
         {},
     );
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isVillageAnnualOpen, setIsVillageAnnualOpen] = useState(false);
     const { data, setData, patch, processing, errors, clearErrors, reset } =
         useForm<AssignmentEditForm>(edit_values);
+    const villageAnnualForm = useForm<VillageAnnualEditForm>(
+        cloneVillageAnnualForm(village_annual_edit_values),
+    );
 
     const filteredAspects = useMemo(
         () =>
@@ -1363,6 +1454,69 @@ export default function SurveyAssignmentShow({
         setIsEditOpen(false);
         reset();
         clearErrors();
+    }
+
+    function openVillageAnnualSidebar() {
+        villageAnnualForm.setData(
+            cloneVillageAnnualForm(village_annual_edit_values),
+        );
+        villageAnnualForm.clearErrors();
+        setIsVillageAnnualOpen(true);
+    }
+
+    function closeVillageAnnualSidebar() {
+        setIsVillageAnnualOpen(false);
+        villageAnnualForm.reset();
+        villageAnnualForm.clearErrors();
+    }
+
+    function updatePopulationStat(
+        index: number,
+        key: keyof VillageAnnualPopulationStatForm,
+        value: string,
+    ) {
+        villageAnnualForm.setData(
+            'annual_population_stats',
+            villageAnnualForm.data.annual_population_stats.map((row, rowIndex) =>
+                rowIndex === index ? { ...row, [key]: value } : row,
+            ),
+        );
+    }
+
+    function updateVulnerableGroupAnnual(
+        index: number,
+        key: keyof VillageVulnerableGroupAnnualForm,
+        value: string,
+    ) {
+        villageAnnualForm.setData(
+            'vulnerable_group_annuals',
+            villageAnnualForm.data.vulnerable_group_annuals.map(
+                (row, rowIndex) =>
+                    rowIndex === index ? { ...row, [key]: value } : row,
+            ),
+        );
+    }
+
+    function updateActiveGroupAnnual(
+        index: number,
+        key: keyof VillageActiveGroupAnnualForm,
+        value: string,
+    ) {
+        villageAnnualForm.setData(
+            'active_group_annuals',
+            villageAnnualForm.data.active_group_annuals.map((row, rowIndex) =>
+                rowIndex === index ? { ...row, [key]: value } : row,
+            ),
+        );
+    }
+
+    function submitVillageAnnualData(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        villageAnnualForm.patch(updateVillageAnnualData.url(assignment.code), {
+            preserveScroll: true,
+            onSuccess: () => setIsVillageAnnualOpen(false),
+        });
     }
 
     function submitAssignment(event: FormEvent<HTMLFormElement>) {
@@ -1421,7 +1575,20 @@ export default function SurveyAssignmentShow({
                                     Edit Assignment
                                 </Button>
                             </button>
-                            <a href={exportSurveyAssignment.url(assignment.code)}>
+                            <button
+                                type="button"
+                                onClick={openVillageAnnualSidebar}
+                            >
+                                <Button>
+                                    <PanelRightOpen size={16} />
+                                    Edit Data Desa
+                                </Button>
+                            </button>
+                            <a
+                                href={exportSurveyAssignment.url(
+                                    assignment.code,
+                                )}
+                            >
                                 <Button>
                                     <Download size={16} />
                                     Export Excel
@@ -2216,6 +2383,605 @@ export default function SurveyAssignmentShow({
                         >
                             <Save size={16} />
                             {processing ? 'Menyimpan...' : 'Simpan'}
+                        </button>
+                    </div>
+                </form>
+            </aside>
+
+            <div
+                className={classNames(
+                    'fixed inset-0 z-40 bg-[#031120]/35 transition-opacity',
+                    isVillageAnnualOpen
+                        ? 'pointer-events-auto opacity-100'
+                        : 'pointer-events-none opacity-0',
+                )}
+                onClick={closeVillageAnnualSidebar}
+            />
+            <aside
+                className={classNames(
+                    'fixed top-0 right-0 z-50 flex h-dvh w-full max-w-[560px] flex-col border-l border-[#DDE4EC] bg-white shadow-[-18px_0_40px_rgba(3,17,32,0.18)] transition-transform duration-300',
+                    isVillageAnnualOpen ? 'translate-x-0' : 'translate-x-full',
+                )}
+                aria-hidden={!isVillageAnnualOpen}
+            >
+                <div className="flex items-start justify-between gap-4 border-b border-[#EFEFEF] px-5 py-4">
+                    <div>
+                        <p className="text-xs font-bold text-[#0066AE]">
+                            {assignment.village.name}
+                        </p>
+                        <h2 className="mt-1 text-lg font-bold text-[#303030]">
+                            Edit Data Tahunan Desa
+                        </h2>
+                        <p className="mt-1 text-xs leading-5 font-semibold text-[#7C7C7C]">
+                            Kelola statistik penduduk, kelompok rentan, dan
+                            kelompok aktif sesuai data desa.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={closeVillageAnnualSidebar}
+                        className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#DDE4EC] text-[#303030] transition hover:bg-[#F1F5F8]"
+                        aria-label="Tutup edit data tahunan desa"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <form
+                    onSubmit={submitVillageAnnualData}
+                    className="flex min-h-0 flex-1 flex-col"
+                >
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+                        <section className="rounded-xl border border-[#EFEFEF] bg-[#F8FBFE] p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 className="text-sm font-bold text-[#303030]">
+                                        Statistik Penduduk Tahunan
+                                    </h3>
+                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                        Tabel village_annual_population_stats.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        villageAnnualForm.setData(
+                                            'annual_population_stats',
+                                            [
+                                                ...villageAnnualForm.data
+                                                    .annual_population_stats,
+                                                emptyPopulationStat(),
+                                            ],
+                                        )
+                                    }
+                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
+                            </div>
+                            <FieldError
+                                message={
+                                    (
+                                        villageAnnualForm.errors as Record<
+                                            string,
+                                            string | undefined
+                                        >
+                                    ).annual_population_stats
+                                }
+                            />
+                            <div className="mt-4 space-y-3">
+                                {villageAnnualForm.data.annual_population_stats
+                                    .length === 0 && (
+                                    <p className="rounded-lg bg-white px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                                        Belum ada data penduduk tahunan.
+                                    </p>
+                                )}
+                                {villageAnnualForm.data.annual_population_stats.map(
+                                    (row, index) => {
+                                        const formErrors =
+                                            villageAnnualForm.errors as Record<
+                                                string,
+                                                string | undefined
+                                            >;
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="rounded-xl border border-[#EFEFEF] bg-white p-3"
+                                            >
+                                                <div className="grid gap-3 sm:grid-cols-3">
+                                                    <label className="block space-y-1.5">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Tahun
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            value={row.year}
+                                                            onChange={(event) =>
+                                                                updatePopulationStat(
+                                                                    index,
+                                                                    'year',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `annual_population_stats.${index}.year`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5 sm:col-span-2">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Kategori
+                                                        </span>
+                                                        <input
+                                                            value={
+                                                                row.category_value
+                                                            }
+                                                            onChange={(event) =>
+                                                                updatePopulationStat(
+                                                                    index,
+                                                                    'category_value',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                            placeholder="Contoh: Laki-laki, Perempuan, Total"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `annual_population_stats.${index}.category_value`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Jumlah Orang
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={
+                                                                row.total_people
+                                                            }
+                                                            onChange={(event) =>
+                                                                updatePopulationStat(
+                                                                    index,
+                                                                    'total_people',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `annual_population_stats.${index}.total_people`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5 sm:col-span-2">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Catatan
+                                                        </span>
+                                                        <input
+                                                            value={row.notes}
+                                                            onChange={(event) =>
+                                                                updatePopulationStat(
+                                                                    index,
+                                                                    'notes',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                            placeholder="Catatan opsional"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div className="mt-3 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            villageAnnualForm.setData(
+                                                                'annual_population_stats',
+                                                                villageAnnualForm.data.annual_population_stats.filter(
+                                                                    (_, rowIndex) =>
+                                                                        rowIndex !==
+                                                                        index,
+                                                                ),
+                                                            )
+                                                        }
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#F3C8C8] px-3 text-xs font-bold text-[#D81313] hover:bg-[#FDECEC]"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    },
+                                )}
+                            </div>
+                        </section>
+
+                        <section className="rounded-xl border border-[#EFEFEF] bg-[#F8FBFE] p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 className="text-sm font-bold text-[#303030]">
+                                        Kelompok Rentan Tahunan
+                                    </h3>
+                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                        Tabel village_vulnerable_group_annuals.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        villageAnnualForm.setData(
+                                            'vulnerable_group_annuals',
+                                            [
+                                                ...villageAnnualForm.data
+                                                    .vulnerable_group_annuals,
+                                                emptyVulnerableGroupAnnual(),
+                                            ],
+                                        )
+                                    }
+                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
+                            </div>
+                            <FieldError
+                                message={
+                                    (
+                                        villageAnnualForm.errors as Record<
+                                            string,
+                                            string | undefined
+                                        >
+                                    ).vulnerable_group_annuals
+                                }
+                            />
+                            <div className="mt-4 space-y-3">
+                                {villageAnnualForm.data.vulnerable_group_annuals
+                                    .length === 0 && (
+                                    <p className="rounded-lg bg-white px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                                        Belum ada data kelompok rentan.
+                                    </p>
+                                )}
+                                {villageAnnualForm.data.vulnerable_group_annuals.map(
+                                    (row, index) => {
+                                        const formErrors =
+                                            villageAnnualForm.errors as Record<
+                                                string,
+                                                string | undefined
+                                            >;
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="rounded-xl border border-[#EFEFEF] bg-white p-3"
+                                            >
+                                                <div className="grid gap-3 sm:grid-cols-3">
+                                                    <label className="block space-y-1.5">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Tahun
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            value={row.year}
+                                                            onChange={(event) =>
+                                                                updateVulnerableGroupAnnual(
+                                                                    index,
+                                                                    'year',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `vulnerable_group_annuals.${index}.year`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5 sm:col-span-2">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Kategori Rentan
+                                                        </span>
+                                                        <input
+                                                            value={
+                                                                row.vulnerable_category
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateVulnerableGroupAnnual(
+                                                                    index,
+                                                                    'vulnerable_category',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                            placeholder="Contoh: Lansia, Disabilitas, Anak"
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Jumlah Orang
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={
+                                                                row.total_people
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateVulnerableGroupAnnual(
+                                                                    index,
+                                                                    'total_people',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `vulnerable_group_annuals.${index}.total_people`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5 sm:col-span-2">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Catatan
+                                                        </span>
+                                                        <input
+                                                            value={row.notes}
+                                                            onChange={(event) =>
+                                                                updateVulnerableGroupAnnual(
+                                                                    index,
+                                                                    'notes',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                            placeholder="Catatan opsional"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div className="mt-3 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            villageAnnualForm.setData(
+                                                                'vulnerable_group_annuals',
+                                                                villageAnnualForm.data.vulnerable_group_annuals.filter(
+                                                                    (_, rowIndex) =>
+                                                                        rowIndex !==
+                                                                        index,
+                                                                ),
+                                                            )
+                                                        }
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#F3C8C8] px-3 text-xs font-bold text-[#D81313] hover:bg-[#FDECEC]"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    },
+                                )}
+                            </div>
+                        </section>
+
+                        <section className="rounded-xl border border-[#EFEFEF] bg-[#F8FBFE] p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 className="text-sm font-bold text-[#303030]">
+                                        Kelompok Aktif Tahunan
+                                    </h3>
+                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                        Tabel village_active_group_annuals.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        villageAnnualForm.setData(
+                                            'active_group_annuals',
+                                            [
+                                                ...villageAnnualForm.data
+                                                    .active_group_annuals,
+                                                emptyActiveGroupAnnual(),
+                                            ],
+                                        )
+                                    }
+                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
+                            </div>
+                            <FieldError
+                                message={
+                                    (
+                                        villageAnnualForm.errors as Record<
+                                            string,
+                                            string | undefined
+                                        >
+                                    ).active_group_annuals
+                                }
+                            />
+                            <div className="mt-4 space-y-3">
+                                {villageAnnualForm.data.active_group_annuals
+                                    .length === 0 && (
+                                    <p className="rounded-lg bg-white px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                                        Belum ada data kelompok aktif.
+                                    </p>
+                                )}
+                                {villageAnnualForm.data.active_group_annuals.map(
+                                    (row, index) => {
+                                        const formErrors =
+                                            villageAnnualForm.errors as Record<
+                                                string,
+                                                string | undefined
+                                            >;
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="rounded-xl border border-[#EFEFEF] bg-white p-3"
+                                            >
+                                                <div className="grid gap-3 sm:grid-cols-3">
+                                                    <label className="block space-y-1.5">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Tahun
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            value={row.year}
+                                                            onChange={(event) =>
+                                                                updateActiveGroupAnnual(
+                                                                    index,
+                                                                    'year',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `active_group_annuals.${index}.year`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5 sm:col-span-2">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Kategori Aktif
+                                                        </span>
+                                                        <input
+                                                            value={
+                                                                row.active_category
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateActiveGroupAnnual(
+                                                                    index,
+                                                                    'active_category',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                            placeholder="Contoh: Pokdarwis, Karang Taruna"
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Nilai
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={row.value}
+                                                            onChange={(event) =>
+                                                                updateActiveGroupAnnual(
+                                                                    index,
+                                                                    'value',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                        />
+                                                        <FieldError
+                                                            message={
+                                                                formErrors[
+                                                                    `active_group_annuals.${index}.value`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="block space-y-1.5 sm:col-span-2">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            Catatan
+                                                        </span>
+                                                        <input
+                                                            value={row.notes}
+                                                            onChange={(event) =>
+                                                                updateActiveGroupAnnual(
+                                                                    index,
+                                                                    'notes',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] px-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                                                            placeholder="Catatan opsional"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div className="mt-3 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            villageAnnualForm.setData(
+                                                                'active_group_annuals',
+                                                                villageAnnualForm.data.active_group_annuals.filter(
+                                                                    (_, rowIndex) =>
+                                                                        rowIndex !==
+                                                                        index,
+                                                                ),
+                                                            )
+                                                        }
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#F3C8C8] px-3 text-xs font-bold text-[#D81313] hover:bg-[#FDECEC]"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    },
+                                )}
+                            </div>
+                        </section>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 border-t border-[#EFEFEF] px-5 py-4">
+                        <button type="button" onClick={closeVillageAnnualSidebar}>
+                            <Button>Batal</Button>
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={villageAnnualForm.processing}
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] disabled:opacity-60"
+                        >
+                            <Save size={16} />
+                            {villageAnnualForm.processing
+                                ? 'Menyimpan...'
+                                : 'Simpan Data Desa'}
                         </button>
                     </div>
                 </form>

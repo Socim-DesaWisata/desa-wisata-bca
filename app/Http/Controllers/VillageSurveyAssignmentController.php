@@ -13,6 +13,7 @@ use App\Http\Requests\VillageSurveyAssignments\StoreVillageUmkmDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdatePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAnswerRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateVillageAnnualDataRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageUmkmDocumentRequest;
 use App\Models\PariwisataSurveyAnswerDocument;
@@ -116,7 +117,7 @@ class VillageSurveyAssignmentController extends Controller
         PariwisataVillage $pariwisata,
         PariwisataSurveyAssignmentService $service
     ): RedirectResponse {
-        $service->update($request->validated(), $assignment, $pariwisata);
+        $service->update($request->validated(), $request->user(), $assignment, $pariwisata);
 
         return back()->with('success', 'Data pariwisata berhasil diperbarui.');
     }
@@ -224,6 +225,16 @@ class VillageSurveyAssignmentController extends Controller
         $service->update($assignment, $request->validated(), $request->user());
 
         return back()->with('success', 'Survey assignment berhasil diperbarui.');
+    }
+
+    public function updateVillageAnnualData(
+        UpdateVillageAnnualDataRequest $request,
+        VillageSurveyAssignment $assignment,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->updateVillageAnnualData($assignment, $request->validated(), $request->user());
+
+        return back()->with('success', 'Data tahunan desa berhasil diperbarui.');
     }
 
     public function takeSurvey(

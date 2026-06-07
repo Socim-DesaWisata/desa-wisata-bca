@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('village_id')->constrained('tourism_villages')->cascadeOnDelete();
             $table->integer('year');
-            // $table->string('dimension', 50);
             $table->string('category_value', 150);
             $table->integer('total_people');
             $table->text('notes')->nullable();
@@ -22,9 +21,8 @@ return new class extends Migration
 
             $table->index('village_id');
             $table->index('year');
-            $table->index('dimension');
             $table->index('category_value');
-            $table->unique(['village_id', 'year', 'dimension', 'category_value'], 'village_population_unique');
+            $table->unique(['village_id', 'year', 'category_value'], 'village_population_unique');
         });
     }
 

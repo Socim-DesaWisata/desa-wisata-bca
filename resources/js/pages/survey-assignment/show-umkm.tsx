@@ -742,7 +742,10 @@ function DocumentModal({
                     />
                     <label className="block min-w-0">
                         <span className="text-xs font-bold text-[#344256]">
-                            File Dokumen {!isEdit && <span className="text-[#D81313]">*</span>}
+                            File Dokumen{' '}
+                            {!isEdit && (
+                                <span className="text-[#D81313]">*</span>
+                            )}
                         </span>
                         <input
                             type="file"
@@ -1013,7 +1016,10 @@ function UmkmEditSidebar({
                                     label="Omset per Tahun"
                                     value={formatThousands(data.annual_revenue)}
                                     onChange={(value) =>
-                                        setData('annual_revenue', digitsOnly(value))
+                                        setData(
+                                            'annual_revenue',
+                                            digitsOnly(value),
+                                        )
                                     }
                                     error={fieldError(errors, 'annual_revenue')}
                                     placeholder="Nominal rupiah"
@@ -1486,7 +1492,10 @@ export default function ShowUmkm({
         }
 
         documentForm.post(
-            storeUmkmDocument.url({ assignment: assignment.code, umkm: umkm.id }),
+            storeUmkmDocument.url({
+                assignment: assignment.code,
+                umkm: umkm.id,
+            }),
             {
                 forceFormData: true,
                 preserveScroll: true,
@@ -1646,9 +1655,7 @@ export default function ShowUmkm({
                                                 umkm.categories.map(
                                                     (category) => (
                                                         <span
-                                                            key={
-                                                                category.value
-                                                            }
+                                                            key={category.value}
                                                             className="inline-flex rounded-full bg-[#EAF3FF] px-2.5 py-1 text-[11px] font-bold text-[#0066AE]"
                                                         >
                                                             {category.label}
@@ -1889,7 +1896,8 @@ export default function ShowUmkm({
                                                 Belum ada dokumen
                                             </p>
                                             <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                                Tambahkan dokumen pendukung UMKM.
+                                                Tambahkan dokumen pendukung
+                                                UMKM.
                                             </p>
                                         </div>
                                     )}
@@ -1908,8 +1916,14 @@ export default function ShowUmkm({
                                                         {document.document_name}
                                                     </p>
                                                     <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                                        {document.file_size_label} ·{' '}
-                                                        {document.uploaded_by.name}
+                                                        {
+                                                            document.file_size_label
+                                                        }{' '}
+                                                        ·{' '}
+                                                        {
+                                                            document.uploaded_by
+                                                                .name
+                                                        }
                                                     </p>
                                                     <p className="mt-1 text-[11px] font-semibold text-[#9AA7B5]">
                                                         {document.created_at}
@@ -1929,7 +1943,9 @@ export default function ShowUmkm({
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        openEditDocument(document)
+                                                        openEditDocument(
+                                                            document,
+                                                        )
                                                     }
                                                     className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
                                                 >

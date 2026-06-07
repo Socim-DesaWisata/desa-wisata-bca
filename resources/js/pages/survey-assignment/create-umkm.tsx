@@ -426,7 +426,9 @@ export default function CreateUmkmSurveyAssignment({
     function removeDocument(index: number) {
         setData(
             'documents',
-            data.documents.filter((_, documentIndex) => documentIndex !== index),
+            data.documents.filter(
+                (_, documentIndex) => documentIndex !== index,
+            ),
         );
     }
 
@@ -434,9 +436,7 @@ export default function CreateUmkmSurveyAssignment({
         setData(
             'documents',
             data.documents.map((document, documentIndex) =>
-                documentIndex === index
-                    ? { ...document, ...values }
-                    : document,
+                documentIndex === index ? { ...document, ...values } : document,
             ),
         );
     }
@@ -495,7 +495,9 @@ export default function CreateUmkmSurveyAssignment({
     function removeAnnualWorkerStat(index: number) {
         setData(
             'annual_worker_stats',
-            data.annual_worker_stats.filter((_, rowIndex) => rowIndex !== index),
+            data.annual_worker_stats.filter(
+                (_, rowIndex) => rowIndex !== index,
+            ),
         );
     }
 
@@ -1289,7 +1291,8 @@ export default function CreateUmkmSurveyAssignment({
                                                 Belum ada omset tahunan
                                             </p>
                                             <p className="mt-1 text-xs text-[#64748B]">
-                                                Tambahkan data tahun dan nominal omset jika tersedia.
+                                                Tambahkan data tahun dan nominal
+                                                omset jika tersedia.
                                             </p>
                                         </div>
                                     )}
@@ -1303,39 +1306,65 @@ export default function CreateUmkmSurveyAssignment({
                                                 label="Tahun"
                                                 value={row.year}
                                                 onChange={(value) =>
-                                                    updateAnnualTurnover(index, {
-                                                        year: digitsOnly(value),
-                                                    })
+                                                    updateAnnualTurnover(
+                                                        index,
+                                                        {
+                                                            year: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
-                                                error={fieldError(errors, `annual_turnovers.${index}.year`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_turnovers.${index}.year`,
+                                                )}
                                                 placeholder="2024"
                                                 type="number"
                                             />
                                             <TextInput
                                                 label="Nilai Omset"
-                                                value={formatThousands(row.value)}
+                                                value={formatThousands(
+                                                    row.value,
+                                                )}
                                                 onChange={(value) =>
-                                                    updateAnnualTurnover(index, {
-                                                        value: digitsOnly(value),
-                                                    })
+                                                    updateAnnualTurnover(
+                                                        index,
+                                                        {
+                                                            value: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
-                                                error={fieldError(errors, `annual_turnovers.${index}.value`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_turnovers.${index}.value`,
+                                                )}
                                                 placeholder="Nominal rupiah"
                                             />
                                             <TextInput
                                                 label="Catatan"
                                                 value={row.notes}
                                                 onChange={(value) =>
-                                                    updateAnnualTurnover(index, {
-                                                        notes: value,
-                                                    })
+                                                    updateAnnualTurnover(
+                                                        index,
+                                                        {
+                                                            notes: value,
+                                                        },
+                                                    )
                                                 }
-                                                error={fieldError(errors, `annual_turnovers.${index}.notes`)}
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_turnovers.${index}.notes`,
+                                                )}
                                                 placeholder="Opsional"
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => removeAnnualTurnover(index)}
+                                                onClick={() =>
+                                                    removeAnnualTurnover(index)
+                                                }
                                                 className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
                                                 aria-label="Hapus omset tahunan"
                                             >
@@ -1368,84 +1397,130 @@ export default function CreateUmkmSurveyAssignment({
                                                 Belum ada data pekerja tahunan
                                             </p>
                                             <p className="mt-1 text-xs text-[#64748B]">
-                                                Tambahkan data jika ingin mencatat profil pekerja UMKM.
+                                                Tambahkan data jika ingin
+                                                mencatat profil pekerja UMKM.
                                             </p>
                                         </div>
                                     )}
 
-                                    {data.annual_worker_stats.map((row, index) => (
-                                        <div
-                                            key={index}
-                                            className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[120px_170px_minmax(0,1fr)_150px_minmax(0,1fr)_44px] lg:items-start"
-                                        >
-                                            <TextInput
-                                                label="Tahun"
-                                                value={row.year}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        year: digitsOnly(value),
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_stats.${index}.year`)}
-                                                placeholder="2024"
-                                                type="number"
-                                            />
-                                            <SelectInput
-                                                label="Dimensi"
-                                                value={row.dimension}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        dimension: value,
-                                                    })
-                                                }
-                                                options={workerDimensionOptions}
-                                                error={fieldError(errors, `annual_worker_stats.${index}.dimension`)}
-                                                placeholder="Pilih dimensi"
-                                            />
-                                            <TextInput
-                                                label="Kategori"
-                                                value={row.category_value}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        category_value: value,
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_stats.${index}.category_value`)}
-                                                placeholder="Contoh: perempuan, S1, 22 tahun"
-                                            />
-                                            <TextInput
-                                                label="Jumlah Orang"
-                                                value={row.total_people}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        total_people: digitsOnly(value),
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_stats.${index}.total_people`)}
-                                                placeholder="0"
-                                                type="number"
-                                            />
-                                            <TextInput
-                                                label="Catatan"
-                                                value={row.notes}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        notes: value,
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_stats.${index}.notes`)}
-                                                placeholder="Opsional"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeAnnualWorkerStat(index)}
-                                                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
-                                                aria-label="Hapus data pekerja"
+                                    {data.annual_worker_stats.map(
+                                        (row, index) => (
+                                            <div
+                                                key={index}
+                                                className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[120px_170px_minmax(0,1fr)_150px_minmax(0,1fr)_44px] lg:items-start"
                                             >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                                <TextInput
+                                                    label="Tahun"
+                                                    value={row.year}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerStat(
+                                                            index,
+                                                            {
+                                                                year: digitsOnly(
+                                                                    value,
+                                                                ),
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_stats.${index}.year`,
+                                                    )}
+                                                    placeholder="2024"
+                                                    type="number"
+                                                />
+                                                <SelectInput
+                                                    label="Dimensi"
+                                                    value={row.dimension}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerStat(
+                                                            index,
+                                                            {
+                                                                dimension:
+                                                                    value,
+                                                            },
+                                                        )
+                                                    }
+                                                    options={
+                                                        workerDimensionOptions
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_stats.${index}.dimension`,
+                                                    )}
+                                                    placeholder="Pilih dimensi"
+                                                />
+                                                <TextInput
+                                                    label="Kategori"
+                                                    value={row.category_value}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerStat(
+                                                            index,
+                                                            {
+                                                                category_value:
+                                                                    value,
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_stats.${index}.category_value`,
+                                                    )}
+                                                    placeholder="Contoh: perempuan, S1, 22 tahun"
+                                                />
+                                                <TextInput
+                                                    label="Jumlah Orang"
+                                                    value={row.total_people}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerStat(
+                                                            index,
+                                                            {
+                                                                total_people:
+                                                                    digitsOnly(
+                                                                        value,
+                                                                    ),
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_stats.${index}.total_people`,
+                                                    )}
+                                                    placeholder="0"
+                                                    type="number"
+                                                />
+                                                <TextInput
+                                                    label="Catatan"
+                                                    value={row.notes}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerStat(
+                                                            index,
+                                                            {
+                                                                notes: value,
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_stats.${index}.notes`,
+                                                    )}
+                                                    placeholder="Opsional"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        removeAnnualWorkerStat(
+                                                            index,
+                                                        )
+                                                    }
+                                                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
+                                                    aria-label="Hapus data pekerja"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+                                        ),
+                                    )}
 
                                     <button
                                         type="button"
@@ -1464,79 +1539,117 @@ export default function CreateUmkmSurveyAssignment({
                                 description="Catat jumlah pekerja yang mengikuti pelatihan per tahun."
                             >
                                 <div className="space-y-3">
-                                    {data.annual_worker_training_stats.length === 0 && (
+                                    {data.annual_worker_training_stats
+                                        .length === 0 && (
                                         <div className="rounded-2xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-4 py-6 text-center">
                                             <ClipboardCheck className="mx-auto size-8 text-[#0066AE]" />
                                             <p className="mt-2 text-sm font-bold text-[#172033]">
                                                 Belum ada data pelatihan
                                             </p>
                                             <p className="mt-1 text-xs text-[#64748B]">
-                                                Tambahkan data pelatihan pekerja jika tersedia.
+                                                Tambahkan data pelatihan pekerja
+                                                jika tersedia.
                                             </p>
                                         </div>
                                     )}
 
-                                    {data.annual_worker_training_stats.map((row, index) => (
-                                        <div
-                                            key={index}
-                                            className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[120px_minmax(0,1fr)_150px_minmax(0,1fr)_44px] lg:items-start"
-                                        >
-                                            <TextInput
-                                                label="Tahun"
-                                                value={row.year}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerTrainingStat(index, {
-                                                        year: digitsOnly(value),
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_training_stats.${index}.year`)}
-                                                placeholder="2024"
-                                                type="number"
-                                            />
-                                            <TextInput
-                                                label="Nama Pelatihan"
-                                                value={row.training_name}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerTrainingStat(index, {
-                                                        training_name: value,
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_training_stats.${index}.training_name`)}
-                                                placeholder="Contoh: Digital Marketing"
-                                            />
-                                            <TextInput
-                                                label="Jumlah Orang"
-                                                value={row.total_people}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerTrainingStat(index, {
-                                                        total_people: digitsOnly(value),
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_training_stats.${index}.total_people`)}
-                                                placeholder="0"
-                                                type="number"
-                                            />
-                                            <TextInput
-                                                label="Catatan"
-                                                value={row.notes}
-                                                onChange={(value) =>
-                                                    updateAnnualWorkerTrainingStat(index, {
-                                                        notes: value,
-                                                    })
-                                                }
-                                                error={fieldError(errors, `annual_worker_training_stats.${index}.notes`)}
-                                                placeholder="Opsional"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeAnnualWorkerTrainingStat(index)}
-                                                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
-                                                aria-label="Hapus data pelatihan"
+                                    {data.annual_worker_training_stats.map(
+                                        (row, index) => (
+                                            <div
+                                                key={index}
+                                                className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[120px_minmax(0,1fr)_150px_minmax(0,1fr)_44px] lg:items-start"
                                             >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                                <TextInput
+                                                    label="Tahun"
+                                                    value={row.year}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerTrainingStat(
+                                                            index,
+                                                            {
+                                                                year: digitsOnly(
+                                                                    value,
+                                                                ),
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_training_stats.${index}.year`,
+                                                    )}
+                                                    placeholder="2024"
+                                                    type="number"
+                                                />
+                                                <TextInput
+                                                    label="Nama Pelatihan"
+                                                    value={row.training_name}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerTrainingStat(
+                                                            index,
+                                                            {
+                                                                training_name:
+                                                                    value,
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_training_stats.${index}.training_name`,
+                                                    )}
+                                                    placeholder="Contoh: Digital Marketing"
+                                                />
+                                                <TextInput
+                                                    label="Jumlah Orang"
+                                                    value={row.total_people}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerTrainingStat(
+                                                            index,
+                                                            {
+                                                                total_people:
+                                                                    digitsOnly(
+                                                                        value,
+                                                                    ),
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_training_stats.${index}.total_people`,
+                                                    )}
+                                                    placeholder="0"
+                                                    type="number"
+                                                />
+                                                <TextInput
+                                                    label="Catatan"
+                                                    value={row.notes}
+                                                    onChange={(value) =>
+                                                        updateAnnualWorkerTrainingStat(
+                                                            index,
+                                                            {
+                                                                notes: value,
+                                                            },
+                                                        )
+                                                    }
+                                                    error={fieldError(
+                                                        errors,
+                                                        `annual_worker_training_stats.${index}.notes`,
+                                                    )}
+                                                    placeholder="Opsional"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        removeAnnualWorkerTrainingStat(
+                                                            index,
+                                                        )
+                                                    }
+                                                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
+                                                    aria-label="Hapus data pelatihan"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+                                        ),
+                                    )}
 
                                     <button
                                         type="button"
@@ -1710,7 +1823,11 @@ export default function CreateUmkmSurveyAssignment({
                                             Data Pelatihan
                                         </span>
                                         <span className="font-bold text-[#172033]">
-                                            {data.annual_worker_training_stats.length}
+                                            {
+                                                data
+                                                    .annual_worker_training_stats
+                                                    .length
+                                            }
                                         </span>
                                     </div>
                                 </div>
@@ -1734,7 +1851,9 @@ export default function CreateUmkmSurveyAssignment({
                                             : 'Simpan UMKM'}
                                     </button>
                                     <Link
-                                        href={showAssignment.url(assignment.code)}
+                                        href={showAssignment.url(
+                                            assignment.code,
+                                        )}
                                         className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#093967] transition hover:bg-[#F1F5F8]"
                                     >
                                         <ArrowLeft className="size-4" />

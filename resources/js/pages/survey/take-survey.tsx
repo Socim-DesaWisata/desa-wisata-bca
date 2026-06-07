@@ -388,7 +388,9 @@ function QuestionCard({
             setFileError(
                 `File ${oversizedFiles
                     .map((file) => `${file.name} (${fileSizeLabel(file.size)})`)
-                    .join(', ')} melebihi batas ${MAX_UPLOAD_FILE_SIZE_MB} MB per file.`,
+                    .join(
+                        ', ',
+                    )} melebihi batas ${MAX_UPLOAD_FILE_SIZE_MB} MB per file.`,
             );
         } else {
             setFileError('');

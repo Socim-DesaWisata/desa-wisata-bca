@@ -15,6 +15,9 @@ use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
 use App\Models\UmkmSurveyAnswer;
 use App\Models\User;
+use App\Models\VillageActiveGroupAnnual;
+use App\Models\VillageAnnualPopulationStat;
+use App\Models\VillageVulnerableGroupAnnual;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmDocument;
@@ -177,6 +180,63 @@ class VillageSurveyAssignmentService
     }
 
     /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateVillageAnnualData(VillageSurveyAssignment $assignment, array $data, User $user): void
+    {
+        $assignment->loadMissing('village:id');
+
+        abort_unless($assignment->village, 404);
+
+        DB::transaction(function () use ($assignment, $data, $user): void {
+            $villageId = $assignment->village_id;
+
+            VillageAnnualPopulationStat::withTrashed()
+                ->where('village_id', $villageId)
+                ->forceDelete();
+            VillageVulnerableGroupAnnual::withTrashed()
+                ->where('village_id', $villageId)
+                ->forceDelete();
+            VillageActiveGroupAnnual::withTrashed()
+                ->where('village_id', $villageId)
+                ->forceDelete();
+
+            foreach ($data['annual_population_stats'] ?? [] as $row) {
+                VillageAnnualPopulationStat::query()->create([
+                    'village_id' => $villageId,
+                    'year' => $row['year'],
+                    'category_value' => $row['category_value'],
+                    'total_people' => $row['total_people'],
+                    'notes' => $row['notes'] ?? null,
+                    'created_by' => $user->id,
+                ]);
+            }
+
+            foreach ($data['vulnerable_group_annuals'] ?? [] as $row) {
+                VillageVulnerableGroupAnnual::query()->create([
+                    'village_id' => $villageId,
+                    'vulnerable_category' => $row['vulnerable_category'] ?? null,
+                    'year' => $row['year'],
+                    'total_people' => $row['total_people'],
+                    'notes' => $row['notes'] ?? null,
+                    'created_by' => $user->id,
+                ]);
+            }
+
+            foreach ($data['active_group_annuals'] ?? [] as $row) {
+                VillageActiveGroupAnnual::query()->create([
+                    'village_id' => $villageId,
+                    'active_category' => $row['active_category'] ?? null,
+                    'year' => $row['year'],
+                    'value' => $row['value'],
+                    'notes' => $row['notes'] ?? null,
+                    'created_by' => $user->id,
+                ]);
+            }
+        });
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function getShowData(VillageSurveyAssignment $assignment): array
@@ -188,6 +248,16 @@ class VillageSurveyAssignmentService
                 ->orderByDesc('is_cover')
                 ->orderBy('sort_order')
                 ->orderBy('id'),
+            'village.annualPopulationStats' => fn ($query) => $query
+                ->select(['id', 'village_id', 'year', 'category_value', 'total_people', 'notes'])
+                ->orderByDesc('year')
+                ->orderBy('category_value'),
+            'village.vulnerableGroupAnnuals' => fn ($query) => $query
+                ->select(['id', 'village_id', 'vulnerable_category', 'year', 'total_people', 'notes'])
+                ->orderByDesc('year'),
+            'village.activeGroupAnnuals' => fn ($query) => $query
+                ->select(['id', 'village_id', 'active_category', 'year', 'value', 'notes'])
+                ->orderByDesc('year'),
             'village.umkms' => fn ($query) => $query
                 ->with([
                     'categories:id,village_umkm_id,category',
@@ -357,6 +427,43 @@ class VillageSurveyAssignmentService
                 'submitted_at' => $this->formatDateTimeLocal($assignment->submitted_at),
                 'reviewed_at' => $this->formatDateTimeLocal($assignment->reviewed_at),
             ],
+            'village_annual_edit_values' => $this->formatVillageAnnualEditValues($assignment->village),
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, array<string, string>>>
+     */
+    private function formatVillageAnnualEditValues(?TourismVillage $village): array
+    {
+        return [
+            'annual_population_stats' => $village?->annualPopulationStats
+                ->map(fn (VillageAnnualPopulationStat $row): array => [
+                    'year' => (string) $row->year,
+                    'category_value' => $row->category_value,
+                    'total_people' => (string) $row->total_people,
+                    'notes' => $row->notes ?? '',
+                ])
+                ->values()
+                ->all() ?? [],
+            'vulnerable_group_annuals' => $village?->vulnerableGroupAnnuals
+                ->map(fn (VillageVulnerableGroupAnnual $row): array => [
+                    'vulnerable_category' => $row->vulnerable_category ?? '',
+                    'year' => (string) $row->year,
+                    'total_people' => (string) $row->total_people,
+                    'notes' => $row->notes ?? '',
+                ])
+                ->values()
+                ->all() ?? [],
+            'active_group_annuals' => $village?->activeGroupAnnuals
+                ->map(fn (VillageActiveGroupAnnual $row): array => [
+                    'active_category' => $row->active_category ?? '',
+                    'year' => (string) $row->year,
+                    'value' => (string) $row->value,
+                    'notes' => $row->notes ?? '',
+                ])
+                ->values()
+                ->all() ?? [],
         ];
     }
 
@@ -437,7 +544,15 @@ class VillageSurveyAssignmentService
 
         abort_unless($assignment->village_id === $pariwisata->village_id, 404);
 
-        $pariwisata->loadMissing(['categories:id,pariwisata_village_id,category']);
+        $pariwisata->loadMissing([
+            'categories:id,pariwisata_village_id,category',
+            'annualTurnovers:id,pariwisata_id,year,value,notes',
+            'annualVisitors:id,pariwisata_id,year,value,notes',
+            'visitorTypeAnnuals:id,pariwisata_id,year,visitor_type,value,notes',
+            'packages:id,pariwisata_id,name,package_type,duration,facilities,description,price,is_active',
+            'annualWorkerStats:id,pariwisata_id,year,dimension,category_value,total_people,notes',
+            'annualWorkerTrainingStats:id,pariwisata_id,year,training_name,total_people,notes',
+        ]);
 
         $template = SurveyTemplate::query()
             ->select(['id', 'title', 'description', 'status', 'published_at'])
@@ -1765,6 +1880,44 @@ class VillageSurveyAssignmentService
             'person_in_charge_phone' => (string) ($pariwisata->person_in_charge_phone ?? ''),
             'person_in_charge_address' => (string) ($pariwisata->person_in_charge_address ?? ''),
             'is_active' => (bool) $pariwisata->is_active,
+            'annual_turnovers' => $pariwisata->annualTurnovers->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'value' => (string) round($item->value),
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
+            'annual_visitors' => $pariwisata->annualVisitors->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'value' => (string) $item->value,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
+            'visitor_type_annuals' => $pariwisata->visitorTypeAnnuals->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'visitor_type' => $item->visitor_type,
+                'value' => (string) $item->value,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
+            'packages' => $pariwisata->packages->map(fn ($item) => [
+                'name' => $item->name,
+                'package_type' => $item->package_type ?? '',
+                'duration' => $item->duration ?? '',
+                'facilities' => $item->facilities ?? '',
+                'description' => $item->description ?? '',
+                'price' => $item->price ? (string) round($item->price) : '',
+                'is_active' => $item->is_active,
+            ])->values()->all(),
+            'annual_worker_stats' => $pariwisata->annualWorkerStats->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'dimension' => $item->dimension,
+                'category_value' => $item->category_value,
+                'total_people' => (string) $item->total_people,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
+            'annual_worker_training_stats' => $pariwisata->annualWorkerTrainingStats->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'training_name' => $item->training_name ?? '',
+                'total_people' => (string) $item->total_people,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
         ];
     }
 

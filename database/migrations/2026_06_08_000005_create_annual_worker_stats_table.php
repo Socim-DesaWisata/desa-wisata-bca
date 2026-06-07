@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('pariwisata_id')->nullable()->constrained('pariwisata_village_table')->nullOnDelete();
             $table->string('entity_key', 100);
             $table->integer('year');
-            // $table->string('dimension', 50);
+            $table->string('dimension', 50);
             $table->string('category_value', 150);
             $table->integer('total_people');
             $table->text('notes')->nullable();

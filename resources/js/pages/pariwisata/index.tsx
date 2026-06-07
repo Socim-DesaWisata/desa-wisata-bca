@@ -470,9 +470,14 @@ export default function PariwisataIndex({
                                                                     asChild
                                                                     className="gap-2 text-xs"
                                                                 >
-                                                                    <Link href={item.detail_url}>
+                                                                    <Link
+                                                                        href={
+                                                                            item.detail_url
+                                                                        }
+                                                                    >
                                                                         <Eye className="size-4" />
-                                                                        Lihat Detail
+                                                                        Lihat
+                                                                        Detail
                                                                     </Link>
                                                                 </DropdownMenuItem>
                                                             ) : (

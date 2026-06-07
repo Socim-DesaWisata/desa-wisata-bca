@@ -287,7 +287,9 @@ export default function SurveyAssignmentIndex({
                 setSelectedAssignment(assignment);
                 setSelectedAction(action);
                 setAccessCode('');
-                setAccessError('Kode assignment belum tersedia. Hubungi admin.');
+                setAccessError(
+                    'Kode assignment belum tersedia. Hubungi admin.',
+                );
                 setIsAccessOpen(true);
                 return;
             }
@@ -592,7 +594,9 @@ export default function SurveyAssignmentIndex({
                                                     >
                                                         <DropdownMenuItem
                                                             className="gap-2 text-xs"
-                                                            onSelect={(event) => {
+                                                            onSelect={(
+                                                                event,
+                                                            ) => {
                                                                 event.preventDefault();
                                                                 openAccessModal(
                                                                     assignment,
@@ -605,7 +609,9 @@ export default function SurveyAssignmentIndex({
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             className="gap-2 text-xs"
-                                                            onSelect={(event) => {
+                                                            onSelect={(
+                                                                event,
+                                                            ) => {
                                                                 event.preventDefault();
                                                                 openAccessModal(
                                                                     assignment,
@@ -825,7 +831,8 @@ export default function SurveyAssignmentIndex({
                             Masukkan kode survey assignment untuk mengakses{' '}
                             {selectedAction === 'detail'
                                 ? 'detail assignment'
-                                : 'halaman take survey'}.
+                                : 'halaman take survey'}
+                            .
                         </DialogDescription>
                     </DialogHeader>
 

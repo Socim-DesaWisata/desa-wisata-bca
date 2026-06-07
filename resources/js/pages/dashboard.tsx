@@ -258,18 +258,21 @@ function TopSurveyTable({
                                 'Status',
                                 'Aksi',
                             ].map((head) => (
-                                    <th
-                                        key={head}
-                                        className="h-10 px-4 font-bold whitespace-nowrap"
-                                    >
-                                        {head}
-                                    </th>
+                                <th
+                                    key={head}
+                                    className="h-10 px-4 font-bold whitespace-nowrap"
+                                >
+                                    {head}
+                                </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EFEFEF] bg-white">
                         {rows.map((row) => (
-                            <tr key={row.id} className="h-12 hover:bg-[#F7F7F7]">
+                            <tr
+                                key={row.id}
+                                className="h-12 hover:bg-[#F7F7F7]"
+                            >
                                 <td className="px-4 font-semibold whitespace-nowrap text-[#303030]">
                                     {row.name}
                                 </td>
@@ -389,8 +392,8 @@ export default function Dashboard({
                                     <p className="mt-1 text-sm leading-6 text-[#7C7C7C]">
                                         Menu dashboard admin, template survey,
                                         dan manajemen user dibatasi untuk admin.
-                                        Jika membutuhkan akses tambahan,
-                                        hubungi admin platform.
+                                        Jika membutuhkan akses tambahan, hubungi
+                                        admin platform.
                                     </p>
                                 </div>
                             </div>
@@ -714,13 +717,12 @@ export default function Dashboard({
                                                         {item.label}
                                                     </span>
                                                     <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-[#0066AE] ring-1 ring-[#AAD2F8]/50">
-                                                        #{
-                                                            top_umkm_categories.findIndex(
-                                                                (category) =>
-                                                                    category.category ===
-                                                                    item.category,
-                                                            ) + 1
-                                                        }
+                                                        #
+                                                        {top_umkm_categories.findIndex(
+                                                            (category) =>
+                                                                category.category ===
+                                                                item.category,
+                                                        ) + 1}
                                                     </span>
                                                 </div>
                                                 <div className="mt-3 flex items-end gap-1">

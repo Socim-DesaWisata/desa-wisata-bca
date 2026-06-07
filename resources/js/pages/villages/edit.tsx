@@ -142,11 +142,15 @@ function hasZeroCoordinates(latitude: string, longitude: string) {
 }
 
 function normalizeLatitude(latitude: string, longitude: string) {
-    return !latitude || hasZeroCoordinates(latitude, longitude) ? defaultLatitude : latitude;
+    return !latitude || hasZeroCoordinates(latitude, longitude)
+        ? defaultLatitude
+        : latitude;
 }
 
 function normalizeLongitude(latitude: string, longitude: string) {
-    return !longitude || hasZeroCoordinates(latitude, longitude) ? defaultLongitude : longitude;
+    return !longitude || hasZeroCoordinates(latitude, longitude)
+        ? defaultLongitude
+        : longitude;
 }
 
 function googleMapsUrl(latitude: string, longitude: string) {
@@ -244,32 +248,35 @@ function MiniMap({
     fallbackLongitude: string;
     onPick: (latitude: string, longitude: string) => void;
 }) {
-    const position = useMemo<LatLngExpression>(
-        () => {
-            const normalizedFallbackLatitude = normalizeLatitude(
-                fallbackLatitude,
-                fallbackLongitude,
-            );
-            const normalizedFallbackLongitude = normalizeLongitude(
-                fallbackLatitude,
-                fallbackLongitude,
-            );
-            const normalizedLatitude = normalizeLatitude(latitude, longitude);
-            const normalizedLongitude = normalizeLongitude(latitude, longitude);
+    const position = useMemo<LatLngExpression>(() => {
+        const normalizedFallbackLatitude = normalizeLatitude(
+            fallbackLatitude,
+            fallbackLongitude,
+        );
+        const normalizedFallbackLongitude = normalizeLongitude(
+            fallbackLatitude,
+            fallbackLongitude,
+        );
+        const normalizedLatitude = normalizeLatitude(latitude, longitude);
+        const normalizedLongitude = normalizeLongitude(latitude, longitude);
 
-            return [
+        return [
+            parseCoordinate(
+                normalizedLatitude,
                 parseCoordinate(
-                    normalizedLatitude,
-                    parseCoordinate(normalizedFallbackLatitude, Number(defaultLatitude)),
+                    normalizedFallbackLatitude,
+                    Number(defaultLatitude),
                 ),
+            ),
+            parseCoordinate(
+                normalizedLongitude,
                 parseCoordinate(
-                    normalizedLongitude,
-                    parseCoordinate(normalizedFallbackLongitude, Number(defaultLongitude)),
+                    normalizedFallbackLongitude,
+                    Number(defaultLongitude),
                 ),
-            ];
-        },
-        [fallbackLatitude, fallbackLongitude, latitude, longitude],
-    );
+            ),
+        ];
+    }, [fallbackLatitude, fallbackLongitude, latitude, longitude]);
     const markerIcon = useMemo(
         () =>
             L.divIcon({
@@ -609,7 +616,12 @@ export default function VillageEdit({
 
         setData('profile_items', [
             ...data.profile_items,
-            blankProfileItem(category, data.profile_items.length, latitude, longitude),
+            blankProfileItem(
+                category,
+                data.profile_items.length,
+                latitude,
+                longitude,
+            ),
         ]);
     }
 
@@ -1689,14 +1701,18 @@ function ProfileItemEditor({
                 <Field
                     label="Harga Minimum"
                     value={item.price_min}
-                    onChange={(value) => onChange({ ...item, price_min: value })}
+                    onChange={(value) =>
+                        onChange({ ...item, price_min: value })
+                    }
                     placeholder="25000"
                     error={errors[`${prefix}.price_min`]}
                 />
                 <Field
                     label="Harga Maksimum"
                     value={item.price_max}
-                    onChange={(value) => onChange({ ...item, price_max: value })}
+                    onChange={(value) =>
+                        onChange({ ...item, price_max: value })
+                    }
                     placeholder="150000"
                     error={errors[`${prefix}.price_max`]}
                 />

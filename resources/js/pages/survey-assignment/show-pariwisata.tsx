@@ -14,6 +14,8 @@ import {
     Ticket,
     UserRound,
     X,
+    Plus,
+    Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
@@ -64,6 +66,11 @@ type Pariwisata = {
     categories: Array<{ id: number; value: string; label: string }>;
     created_at: string;
     updated_at: string;
+};
+
+type SelectOption = {
+    value: string;
+    label: string;
 };
 
 type SurveyTemplate = {
@@ -176,6 +183,36 @@ type PariwisataEditValues = {
     person_in_charge_phone: string;
     person_in_charge_address: string;
     is_active: boolean;
+    annual_turnovers: { year: string; value: string; notes: string }[];
+    annual_visitors: { year: string; value: string; notes: string }[];
+    visitor_type_annuals: {
+        year: string;
+        visitor_type: string;
+        value: string;
+        notes: string;
+    }[];
+    packages: {
+        name: string;
+        package_type: string;
+        duration: string;
+        facilities: string;
+        description: string;
+        price: string;
+        is_active: boolean;
+    }[];
+    annual_worker_stats: {
+        year: string;
+        dimension: string;
+        category_value: string;
+        total_people: string;
+        notes: string;
+    }[];
+    annual_worker_training_stats: {
+        year: string;
+        training_name: string;
+        total_people: string;
+        notes: string;
+    }[];
 };
 
 type PariwisataEditForm = PariwisataEditValues & {
@@ -194,6 +231,19 @@ const operationalDayOptions = [
     'Minggu',
 ];
 
+const visitorTypeOptions: SelectOption[] = [
+    { value: 'domestik', label: 'Domestik' },
+    { value: 'mancanegara', label: 'Mancanegara' },
+    { value: 'pelajar', label: 'Pelajar' },
+    { value: 'rombongan', label: 'Rombongan' },
+];
+
+const workerDimensionOptions: SelectOption[] = [
+    { value: 'age', label: 'Usia' },
+    { value: 'gender', label: 'Gender' },
+    { value: 'education', label: 'Pendidikan' },
+];
+
 function initialEditForm(values: PariwisataEditValues): PariwisataEditForm {
     return {
         _method: 'patch',
@@ -203,6 +253,16 @@ function initialEditForm(values: PariwisataEditValues): PariwisataEditForm {
 
 function fieldError(errors: Partial<ErrorBag>, name: string) {
     return errors[name];
+}
+
+function digitsOnly(value: string) {
+    return value.replace(/\D/g, '');
+}
+
+function formatThousands(value: string) {
+    const digits = digitsOnly(value);
+
+    return digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
 }
 
 function classNames(...classes: Array<string | false | null | undefined>) {
@@ -302,12 +362,14 @@ function TextArea({
     onChange,
     error,
     placeholder,
+    rows = 3,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
     error?: string;
     placeholder?: string;
+    rows?: number;
 }) {
     return (
         <label className="block min-w-0">
@@ -316,7 +378,7 @@ function TextArea({
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={placeholder}
-                rows={3}
+                rows={rows}
                 className="mt-2 w-full resize-y rounded-xl border border-[#DCE3EA] bg-white px-3 py-2 text-sm font-semibold text-[#172033] transition outline-none focus:border-[#0066AE] focus:ring-2 focus:ring-[#AAD2F8]/35"
             />
             <FieldError message={error} />
@@ -631,6 +693,41 @@ function AnswerDetailModal({
     );
 }
 
+function SelectInput({
+    label,
+    value,
+    onChange,
+    error,
+    options,
+    placeholder = 'Pilih opsi',
+}: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    options: SelectOption[];
+    placeholder?: string;
+}) {
+    return (
+        <label className="space-y-1.5">
+            <span className="text-xs font-bold text-[#303030]">{label}</span>
+            <select
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm text-[#303030] transition outline-none focus:border-[#0066AE]"
+            >
+                <option value="">{placeholder}</option>
+                {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+            <FieldError message={error} />
+        </label>
+    );
+}
+
 function PariwisataEditSidebar({
     open,
     onClose,
@@ -673,6 +770,195 @@ function PariwisataEditSidebar({
               );
 
         setData('operational_days', nextDays.join(', '));
+    }
+
+    function updateArrayField<K extends keyof PariwisataEditForm>(
+        field: K,
+        updater: (rows: any) => any,
+    ) {
+        setData(field, updater(data[field]) as any);
+    }
+
+    function addAnnualTurnover() {
+        updateArrayField('annual_turnovers', (rows) => [
+            ...rows,
+            { year: '', value: '', notes: '' },
+        ]);
+    }
+
+    function updateAnnualTurnover(
+        index: number,
+        values: Partial<{ year: string; value: string; notes: string }>,
+    ) {
+        updateArrayField('annual_turnovers', (rows) =>
+            rows.map((row: any, rowIndex: number) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualTurnover(index: number) {
+        updateArrayField('annual_turnovers', (rows) =>
+            rows.filter((_: any, rowIndex: number) => rowIndex !== index),
+        );
+    }
+
+    function addAnnualVisitor() {
+        updateArrayField('annual_visitors', (rows) => [
+            ...rows,
+            { year: '', value: '', notes: '' },
+        ]);
+    }
+
+    function updateAnnualVisitor(
+        index: number,
+        values: Partial<{ year: string; value: string; notes: string }>,
+    ) {
+        updateArrayField('annual_visitors', (rows) =>
+            rows.map((row: any, rowIndex: number) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualVisitor(index: number) {
+        updateArrayField('annual_visitors', (rows) =>
+            rows.filter((_: any, rowIndex: number) => rowIndex !== index),
+        );
+    }
+
+    function addVisitorTypeAnnual() {
+        updateArrayField('visitor_type_annuals', (rows) => [
+            ...rows,
+            { year: '', visitor_type: '', value: '', notes: '' },
+        ]);
+    }
+
+    function updateVisitorTypeAnnual(
+        index: number,
+        values: Partial<{
+            year: string;
+            visitor_type: string;
+            value: string;
+            notes: string;
+        }>,
+    ) {
+        updateArrayField('visitor_type_annuals', (rows) =>
+            rows.map((row: any, rowIndex: number) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeVisitorTypeAnnual(index: number) {
+        updateArrayField('visitor_type_annuals', (rows) =>
+            rows.filter((_: any, rowIndex: number) => rowIndex !== index),
+        );
+    }
+
+    function addPackage() {
+        updateArrayField('packages', (rows) => [
+            ...rows,
+            {
+                name: '',
+                package_type: '',
+                duration: '',
+                facilities: '',
+                description: '',
+                price: '',
+                is_active: true,
+            },
+        ]);
+    }
+
+    function updatePackage(
+        index: number,
+        values: Partial<{
+            name: string;
+            package_type: string;
+            duration: string;
+            facilities: string;
+            description: string;
+            price: string;
+            is_active: boolean;
+        }>,
+    ) {
+        updateArrayField('packages', (rows) =>
+            rows.map((row: any, rowIndex: number) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removePackage(index: number) {
+        updateArrayField('packages', (rows) =>
+            rows.filter((_: any, rowIndex: number) => rowIndex !== index),
+        );
+    }
+
+    function addAnnualWorkerStat() {
+        updateArrayField('annual_worker_stats', (rows) => [
+            ...rows,
+            {
+                year: '',
+                dimension: '',
+                category_value: '',
+                total_people: '',
+                notes: '',
+            },
+        ]);
+    }
+
+    function updateAnnualWorkerStat(
+        index: number,
+        values: Partial<{
+            year: string;
+            dimension: string;
+            category_value: string;
+            total_people: string;
+            notes: string;
+        }>,
+    ) {
+        updateArrayField('annual_worker_stats', (rows) =>
+            rows.map((row: any, rowIndex: number) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualWorkerStat(index: number) {
+        updateArrayField('annual_worker_stats', (rows) =>
+            rows.filter((_: any, rowIndex: number) => rowIndex !== index),
+        );
+    }
+
+    function addAnnualWorkerTrainingStat() {
+        updateArrayField('annual_worker_training_stats', (rows) => [
+            ...rows,
+            { year: '', training_name: '', total_people: '', notes: '' },
+        ]);
+    }
+
+    function updateAnnualWorkerTrainingStat(
+        index: number,
+        values: Partial<{
+            year: string;
+            training_name: string;
+            total_people: string;
+            notes: string;
+        }>,
+    ) {
+        updateArrayField('annual_worker_training_stats', (rows) =>
+            rows.map((row: any, rowIndex: number) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualWorkerTrainingStat(index: number) {
+        updateArrayField('annual_worker_training_stats', (rows) =>
+            rows.filter((_: any, rowIndex: number) => rowIndex !== index),
+        );
     }
 
     return (
@@ -932,6 +1218,646 @@ function PariwisataEditSidebar({
                             <FieldError
                                 message={fieldError(errors, 'is_active')}
                             />
+                        </EditSection>
+
+                        <EditSection title="Omset Tahunan">
+                            <div className="space-y-3">
+                                {data.annual_turnovers.length === 0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-4 text-center">
+                                        <p className="text-xs font-semibold text-[#64748B]">
+                                            Belum ada omset tahunan
+                                        </p>
+                                    </div>
+                                )}
+                                {data.annual_turnovers.map((row, index) => (
+                                    <div
+                                        key={index}
+                                        className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)_40px] sm:items-start"
+                                    >
+                                        <TextInput
+                                            label="Tahun"
+                                            value={row.year}
+                                            onChange={(value) =>
+                                                updateAnnualTurnover(index, {
+                                                    year: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_turnovers.${index}.year`,
+                                            )}
+                                            placeholder="2024"
+                                        />
+                                        <TextInput
+                                            label="Nilai Omset"
+                                            value={formatThousands(row.value)}
+                                            onChange={(value) =>
+                                                updateAnnualTurnover(index, {
+                                                    value: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_turnovers.${index}.value`,
+                                            )}
+                                            placeholder="Nominal rupiah"
+                                        />
+                                        <TextInput
+                                            label="Catatan"
+                                            value={row.notes}
+                                            onChange={(value) =>
+                                                updateAnnualTurnover(index, {
+                                                    notes: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_turnovers.${index}.notes`,
+                                            )}
+                                            placeholder="Opsional"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeAnnualTurnover(index)
+                                            }
+                                            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] sm:mt-[22px] sm:w-10"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addAnnualTurnover}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#BFD6EA] bg-white px-4 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Omset Tahunan
+                                </button>
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'annual_turnovers',
+                                    )}
+                                />
+                            </div>
+                        </EditSection>
+
+                        <EditSection title="Pengunjung Tahunan">
+                            <div className="space-y-3">
+                                {data.annual_visitors.length === 0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-4 text-center">
+                                        <p className="text-xs font-semibold text-[#64748B]">
+                                            Belum ada pengunjung tahunan
+                                        </p>
+                                    </div>
+                                )}
+                                {data.annual_visitors.map((row, index) => (
+                                    <div
+                                        key={index}
+                                        className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)_40px] sm:items-start"
+                                    >
+                                        <TextInput
+                                            label="Tahun"
+                                            value={row.year}
+                                            onChange={(value) =>
+                                                updateAnnualVisitor(index, {
+                                                    year: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_visitors.${index}.year`,
+                                            )}
+                                            placeholder="2024"
+                                        />
+                                        <TextInput
+                                            label="Total Pengunjung"
+                                            value={row.value}
+                                            onChange={(value) =>
+                                                updateAnnualVisitor(index, {
+                                                    value: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_visitors.${index}.value`,
+                                            )}
+                                            placeholder="1250"
+                                        />
+                                        <TextInput
+                                            label="Catatan"
+                                            value={row.notes}
+                                            onChange={(value) =>
+                                                updateAnnualVisitor(index, {
+                                                    notes: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_visitors.${index}.notes`,
+                                            )}
+                                            placeholder="Opsional"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeAnnualVisitor(index)
+                                            }
+                                            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] sm:mt-[22px] sm:w-10"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addAnnualVisitor}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#BFD6EA] bg-white px-4 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Pengunjung Tahunan
+                                </button>
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'annual_visitors',
+                                    )}
+                                />
+                            </div>
+                        </EditSection>
+
+                        <EditSection title="Jenis Pengunjung Tahunan">
+                            <div className="space-y-3">
+                                {data.visitor_type_annuals.length === 0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-4 text-center">
+                                        <p className="text-xs font-semibold text-[#64748B]">
+                                            Belum ada jenis pengunjung
+                                        </p>
+                                    </div>
+                                )}
+                                {data.visitor_type_annuals.map((row, index) => (
+                                    <div
+                                        key={index}
+                                        className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)_40px] sm:items-start"
+                                    >
+                                        <TextInput
+                                            label="Tahun"
+                                            value={row.year}
+                                            onChange={(value) =>
+                                                updateVisitorTypeAnnual(index, {
+                                                    year: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.year`,
+                                            )}
+                                            placeholder="2024"
+                                        />
+                                        <SelectInput
+                                            label="Jenis Pengunjung"
+                                            value={row.visitor_type}
+                                            onChange={(value) =>
+                                                updateVisitorTypeAnnual(index, {
+                                                    visitor_type: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.visitor_type`,
+                                            )}
+                                            options={visitorTypeOptions}
+                                        />
+                                        <TextInput
+                                            label="Jumlah"
+                                            value={row.value}
+                                            onChange={(value) =>
+                                                updateVisitorTypeAnnual(index, {
+                                                    value: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.value`,
+                                            )}
+                                            placeholder="500"
+                                        />
+                                        <TextInput
+                                            label="Catatan"
+                                            value={row.notes}
+                                            onChange={(value) =>
+                                                updateVisitorTypeAnnual(index, {
+                                                    notes: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `visitor_type_annuals.${index}.notes`,
+                                            )}
+                                            placeholder="Opsional"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeVisitorTypeAnnual(index)
+                                            }
+                                            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] sm:mt-[22px] sm:w-10"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addVisitorTypeAnnual}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#BFD6EA] bg-white px-4 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Jenis Pengunjung
+                                </button>
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'visitor_type_annuals',
+                                    )}
+                                />
+                            </div>
+                        </EditSection>
+
+                        <EditSection title="Paket Wisata">
+                            <div className="space-y-3">
+                                {data.packages.length === 0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-4 text-center">
+                                        <p className="text-xs font-semibold text-[#64748B]">
+                                            Belum ada paket wisata
+                                        </p>
+                                    </div>
+                                )}
+                                {data.packages.map((row, index) => (
+                                    <div
+                                        key={index}
+                                        className="space-y-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3"
+                                    >
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <TextInput
+                                                label="Nama Paket"
+                                                value={row.name}
+                                                onChange={(value) =>
+                                                    updatePackage(index, {
+                                                        name: value,
+                                                    })
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.name`,
+                                                )}
+                                                placeholder="Contoh: Paket Jelajah Desa"
+                                            />
+                                            <TextInput
+                                                label="Tipe Paket"
+                                                value={row.package_type}
+                                                onChange={(value) =>
+                                                    updatePackage(index, {
+                                                        package_type: value,
+                                                    })
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.package_type`,
+                                                )}
+                                                placeholder="Family / Adventure"
+                                            />
+                                            <TextInput
+                                                label="Durasi"
+                                                value={row.duration}
+                                                onChange={(value) =>
+                                                    updatePackage(index, {
+                                                        duration: value,
+                                                    })
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.duration`,
+                                                )}
+                                                placeholder="2 Hari 1 Malam"
+                                            />
+                                            <TextInput
+                                                label="Harga"
+                                                value={formatThousands(
+                                                    row.price,
+                                                )}
+                                                onChange={(value) =>
+                                                    updatePackage(index, {
+                                                        price: digitsOnly(
+                                                            value,
+                                                        ),
+                                                    })
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.price`,
+                                                )}
+                                                placeholder="250.000"
+                                            />
+                                        </div>
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <TextArea
+                                                label="Fasilitas"
+                                                value={row.facilities}
+                                                onChange={(value) =>
+                                                    updatePackage(index, {
+                                                        facilities: value,
+                                                    })
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.facilities`,
+                                                )}
+                                                rows={2}
+                                                placeholder="Daftar fasilitas paket"
+                                            />
+                                            <TextArea
+                                                label="Deskripsi"
+                                                value={row.description}
+                                                onChange={(value) =>
+                                                    updatePackage(index, {
+                                                        description: value,
+                                                    })
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `packages.${index}.description`,
+                                                )}
+                                                rows={2}
+                                                placeholder="Deskripsi singkat paket wisata"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <label className="flex items-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-xs font-semibold text-[#303030]">
+                                                <Checkbox
+                                                    checked={row.is_active}
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        updatePackage(index, {
+                                                            is_active:
+                                                                !!checked,
+                                                        })
+                                                    }
+                                                    className="border-[#AAD2F8] data-[state=checked]:border-[#0066AE] data-[state=checked]:bg-[#0066AE]"
+                                                />
+                                                Paket aktif
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removePackage(index)
+                                                }
+                                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#F2C7C7] bg-white px-4 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6]"
+                                            >
+                                                <Trash2 className="size-4" />
+                                                Hapus Paket
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addPackage}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#BFD6EA] bg-white px-4 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Paket Wisata
+                                </button>
+                            </div>
+                        </EditSection>
+
+                        <EditSection title="Data Pekerja Tahunan">
+                            <div className="space-y-3">
+                                {data.annual_worker_stats.length === 0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-4 text-center">
+                                        <p className="text-xs font-semibold text-[#64748B]">
+                                            Belum ada data pekerja
+                                        </p>
+                                    </div>
+                                )}
+                                {data.annual_worker_stats.map((row, index) => (
+                                    <div
+                                        key={index}
+                                        className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-[140px_160px_minmax(0,1fr)_40px] sm:items-start"
+                                    >
+                                        <TextInput
+                                            label="Tahun"
+                                            value={row.year}
+                                            onChange={(value) =>
+                                                updateAnnualWorkerStat(index, {
+                                                    year: digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.year`,
+                                            )}
+                                            placeholder="2024"
+                                        />
+                                        <SelectInput
+                                            label="Dimensi"
+                                            value={row.dimension}
+                                            onChange={(value) =>
+                                                updateAnnualWorkerStat(index, {
+                                                    dimension: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.dimension`,
+                                            )}
+                                            options={workerDimensionOptions}
+                                        />
+                                        <TextInput
+                                            label="Kategori"
+                                            value={row.category_value}
+                                            onChange={(value) =>
+                                                updateAnnualWorkerStat(index, {
+                                                    category_value: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.category_value`,
+                                            )}
+                                            placeholder="Contoh: 18-25 tahun"
+                                        />
+                                        <TextInput
+                                            label="Total Orang"
+                                            value={row.total_people}
+                                            onChange={(value) =>
+                                                updateAnnualWorkerStat(index, {
+                                                    total_people:
+                                                        digitsOnly(value),
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.total_people`,
+                                            )}
+                                            placeholder="10"
+                                        />
+                                        <TextInput
+                                            label="Catatan"
+                                            value={row.notes}
+                                            onChange={(value) =>
+                                                updateAnnualWorkerStat(index, {
+                                                    notes: value,
+                                                })
+                                            }
+                                            error={fieldError(
+                                                errors,
+                                                `annual_worker_stats.${index}.notes`,
+                                            )}
+                                            placeholder="Opsional"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeAnnualWorkerStat(index)
+                                            }
+                                            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] sm:mt-[22px] sm:w-10"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addAnnualWorkerStat}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#BFD6EA] bg-white px-4 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Data Pekerja
+                                </button>
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'annual_worker_stats',
+                                    )}
+                                />
+                            </div>
+                        </EditSection>
+
+                        <EditSection title="Pelatihan Pekerja Tahunan">
+                            <div className="space-y-3">
+                                {data.annual_worker_training_stats.length ===
+                                    0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-4 text-center">
+                                        <p className="text-xs font-semibold text-[#64748B]">
+                                            Belum ada data pelatihan
+                                        </p>
+                                    </div>
+                                )}
+                                {data.annual_worker_training_stats.map(
+                                    (row, index) => (
+                                        <div
+                                            key={index}
+                                            className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-[140px_minmax(0,1fr)_160px_40px] sm:items-start"
+                                        >
+                                            <TextInput
+                                                label="Tahun"
+                                                value={row.year}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            year: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.year`,
+                                                )}
+                                                placeholder="2024"
+                                            />
+                                            <TextInput
+                                                label="Nama Pelatihan"
+                                                value={row.training_name}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            training_name:
+                                                                value,
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.training_name`,
+                                                )}
+                                                placeholder="Pelatihan hospitality"
+                                            />
+                                            <TextInput
+                                                label="Total Peserta"
+                                                value={row.total_people}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        {
+                                                            total_people:
+                                                                digitsOnly(
+                                                                    value,
+                                                                ),
+                                                        },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.total_people`,
+                                                )}
+                                                placeholder="15"
+                                            />
+                                            <TextInput
+                                                label="Catatan"
+                                                value={row.notes}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(
+                                                        index,
+                                                        { notes: value },
+                                                    )
+                                                }
+                                                error={fieldError(
+                                                    errors,
+                                                    `annual_worker_training_stats.${index}.notes`,
+                                                )}
+                                                placeholder="Opsional"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeAnnualWorkerTrainingStat(
+                                                        index,
+                                                    )
+                                                }
+                                                className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] sm:mt-[22px] sm:w-10"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    ),
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={addAnnualWorkerTrainingStat}
+                                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#BFD6EA] bg-white px-4 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Pelatihan Pekerja
+                                </button>
+                            </div>
                         </EditSection>
                     </div>
 

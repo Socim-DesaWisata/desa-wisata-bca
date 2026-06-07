@@ -477,9 +477,14 @@ export default function UmkmIndex({
                                                                     asChild
                                                                     className="gap-2 text-xs"
                                                                 >
-                                                                    <Link href={umkm.detail_url}>
+                                                                    <Link
+                                                                        href={
+                                                                            umkm.detail_url
+                                                                        }
+                                                                    >
                                                                         <Eye className="size-4" />
-                                                                        Lihat Detail
+                                                                        Lihat
+                                                                        Detail
                                                                     </Link>
                                                                 </DropdownMenuItem>
                                                             ) : (
