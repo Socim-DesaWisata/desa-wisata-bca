@@ -34,6 +34,7 @@ import { show as showAssignment } from '@/routes/survey-assignments';
 import {
     takeSurvey as takePariwisataSurvey,
     update as updatePariwisata,
+    exportMethod as exportPariwisataSurvey,
 } from '@/routes/survey-assignments/pariwisata';
 
 type Assignment = {
@@ -2022,20 +2023,31 @@ export default function ShowPariwisata({
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsEditOpen(true)}
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]"
-                            >
-                                <Pencil size={16} />
-                                Edit Data Pariwisata
-                            </button>
                             <Link href={showAssignment.url(assignment.code)}>
                                 <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
                                     <ArrowLeft size={16} />
                                     Kembali
                                 </span>
                             </Link>
+                            <button
+                                type="button"
+                                onClick={() => setIsEditOpen(true)}
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]"
+                            >
+                                    <Pencil size={16} />
+                                    Edit Data
+                            </button>
+                            <a
+                                href={exportPariwisataSurvey.url({
+                                    assignment: assignment.code,
+                                    pariwisata: pariwisata.id,
+                                })}
+                            >
+                                <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
+                                    <Download size={16} />
+                                    Export Excel
+                                </span>
+                            </a>
                             <Link
                                 href={takePariwisataSurvey.url({
                                     assignment: assignment.code,

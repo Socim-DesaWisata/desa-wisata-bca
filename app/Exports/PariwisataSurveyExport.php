@@ -2,9 +2,10 @@
 
 namespace App\Exports;
 
-use App\Models\SurveyAnswer;
-use App\Models\SurveyAnswerDocument;
-use App\Models\SurveyQuestion;
+use App\Models\PariwisataSurveyAnswer;
+use App\Models\PariwisataSurveyAnswerDocument;
+use App\Models\PariwisataSurveyQuestion;
+use App\Models\PariwisataVillage;
 use App\Models\VillageSurveyAssignment;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -16,31 +17,23 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class VillageSurveyAssignmentExport
+class PariwisataSurveyExport
 {
     /**
      * @return array{path: string, filename: string}
      */
-    public function export(VillageSurveyAssignment $assignment): array
+    public function export(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): array
     {
-        $assignment->load([
-            'village:id,code,name,province,city,district,subdistrict,address,postal_code,manager_name,manager_phone,manager_email',
-            'template:id,title,description,status,published_at',
-            'template.questions' => fn ($query) => $query
-                ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
-                ->orderBy('aspect')
-                ->orderBy('sort_order')
-                ->orderBy('id'),
-            'template.questions.options' => fn ($query) => $query
-                ->select(['id', 'survey_question_id', 'score', 'label', 'sort_order'])
-                ->orderBy('sort_order')
-                ->orderBy('score')
-                ->orderBy('id'),
-            'answers' => fn ($query) => $query->select([
+        $assignment->loadMissing([
+            'village:id,code,name,province,city,district,subdistrict,address,postal_code',
+        ]);
+
+        $pariwisata->load([
+            'surveyAnswers' => fn ($query) => $query->select([
                 'id',
-                'village_survey_assignment_id',
-                'survey_question_id',
-                'survey_question_option_id',
+                'pariwisata_village_id',
+                'pariwisata_survey_question_id',
+                'pariwisata_suvey_option_id',
                 'score',
                 'option_label_snapshot',
                 'answered_by',
@@ -48,24 +41,21 @@ class VillageSurveyAssignmentExport
                 'answered_at',
                 'last_edited_at',
             ]),
-            'answers.answeredBy:id,name,email',
-            'answers.lastEditedBy:id,name,email',
-            'answers.option:id,score,label',
-            'answers.documents:id,survey_answer_id,file_name,file_path,mime_type,file_size,created_at',
-            'assignedBy:id,name,email',
-            'submittedBy:id,name,email',
-            'reviewedBy:id,name,email',
+            'surveyAnswers.answeredBy:id,name,email',
+            'surveyAnswers.lastEditedBy:id,name,email',
+            'surveyAnswers.option:id,score,label',
+            'surveyAnswers.documents:id,pariwisata_survey_answer_id,file_name,file_path,mime_type,file_size,created_at',
         ]);
 
         $spreadsheet = new Spreadsheet;
-        $this->buildSummarySheet($spreadsheet, $assignment);
-        $this->buildQuestionSheet($spreadsheet, $assignment);
+        $this->buildSummarySheet($spreadsheet, $assignment, $pariwisata);
+        $this->buildQuestionSheet($spreadsheet, $pariwisata);
         $spreadsheet->setActiveSheetIndex(0);
 
         $directory = storage_path('app/exports');
         File::ensureDirectoryExists($directory);
 
-        $filename = $this->filename($assignment);
+        $filename = $this->filename($assignment, $pariwisata);
         $path = $directory.DIRECTORY_SEPARATOR.$filename;
 
         (new Xlsx($spreadsheet))->save($path);
@@ -74,40 +64,30 @@ class VillageSurveyAssignmentExport
         return compact('path', 'filename');
     }
 
-    private function buildSummarySheet(Spreadsheet $spreadsheet, VillageSurveyAssignment $assignment): void
+    private function buildSummarySheet(Spreadsheet $spreadsheet, VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): void
     {
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Ringkasan');
 
-        $questions = $assignment->template?->questions ?? collect();
-        $answers = $assignment->answers->keyBy('survey_question_id');
-        $maxScore = $questions->sum(fn (SurveyQuestion $question): int => (int) $question->options->max('score'));
-        $totalScore = $answers->sum(fn (SurveyAnswer $answer): int => (int) $answer->score);
+        $questions = PariwisataSurveyQuestion::query()->with('options:id,pariwisata_survey_question_id,score')->get();
+        $answers = $pariwisata->surveyAnswers->keyBy('pariwisata_survey_question_id');
+        $maxScore = $questions->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
+        $totalScore = $answers->sum(fn (PariwisataSurveyAnswer $answer): int => (int) $answer->score);
         $finalScore = $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0;
 
         $rows = [
-            ['Survey Assignment', ''],
-            ['Kode Assignment', $assignment->code],
-            ['Status', Str::headline($assignment->status)],
-            ['Template', $assignment->template?->title ?? '-'],
-            ['Assigned By', $assignment->assignedBy?->name ?? '-'],
-            ['Submitted By', $assignment->submittedBy?->name ?? '-'],
-            ['Reviewed By', $assignment->reviewedBy?->name ?? '-'],
-            ['Assigned At', $this->formatDate($assignment->assigned_at)],
-            ['Started At', $this->formatDate($assignment->started_at)],
-            ['Last Saved At', $this->formatDate($assignment->last_saved_at)],
-            ['Submitted At', $this->formatDate($assignment->submitted_at)],
-            ['Reviewed At', $this->formatDate($assignment->reviewed_at)],
-            ['', ''],
-            ['Informasi Desa', ''],
-            ['Nama Desa', $assignment->village?->name ?? '-'],
-            ['Kode Desa', $assignment->village?->code ?? '-'],
-            ['Alamat', $assignment->village?->address ?? '-'],
+            ['Informasi Pariwisata', ''],
+            ['Nama Pariwisata', $pariwisata->name],
+            ['Desa', $assignment->village?->name ?? '-'],
             ['Lokasi', $this->villageLocation($assignment)],
-            ['Kode Pos', $assignment->village?->postal_code ?? '-'],
-            ['Pengelola', $assignment->village?->manager_name ?? '-'],
-            ['Telepon Pengelola', $assignment->village?->manager_phone ?? '-'],
-            ['Email Pengelola', $assignment->village?->manager_email ?? '-'],
+            ['Hari Operasional', $pariwisata->operational_days ?? '-'],
+            ['Jam Operasional', $pariwisata->operational_hours ?? '-'],
+            ['Harga Tiket Masuk', $pariwisata->entrance_ticket_price ? 'Rp ' . number_format((float) $pariwisata->entrance_ticket_price, 0, ',', '.') : '-'],
+            ['Deskripsi Tiket', $pariwisata->entrance_ticket_description ?? '-'],
+            ['Alamat', $pariwisata->address ?? '-'],
+            ['Nama PIC', $pariwisata->person_in_charge_name ?? '-'],
+            ['Telepon PIC', $pariwisata->person_in_charge_phone ?? '-'],
+            ['Status Aktif', $pariwisata->is_active ? 'Aktif' : 'Nonaktif'],
             ['', ''],
             ['Ringkasan Jawaban', ''],
             ['Total Pertanyaan', $questions->count()],
@@ -123,23 +103,23 @@ class VillageSurveyAssignmentExport
         $sheet->getColumnDimension('B')->setWidth(70);
         $sheet->getStyle('A:B')->getAlignment()->setVertical(Alignment::VERTICAL_TOP)->setWrapText(true);
 
-        foreach ([1, 14, 24] as $row) {
+        foreach ([1, 14] as $row) {
             $sheet->mergeCells("A{$row}:B{$row}");
             $sheet->getStyle("A{$row}:B{$row}")->applyFromArray($this->sectionStyle());
         }
     }
 
-    private function buildQuestionSheet(Spreadsheet $spreadsheet, VillageSurveyAssignment $assignment): void
+    private function buildQuestionSheet(Spreadsheet $spreadsheet, PariwisataVillage $pariwisata): void
     {
         $sheet = $spreadsheet->createSheet();
         $sheet->setTitle('Pertanyaan Jawaban');
 
         $headings = [
             'No',
-            'Aspek',
-            'Kode Pertanyaan',
-            'Pertanyaan',
-            'Dokumen Hint',
+            'Kategori',
+            'Sub Kategori',
+            'Kriteria',
+            'Indikator',
             'Status Jawaban',
             'Skor',
             'Jawaban/Opsi Dipilih',
@@ -150,22 +130,22 @@ class VillageSurveyAssignmentExport
             'Jumlah Dokumen',
         ];
 
-        $answers = $assignment->answers->keyBy('survey_question_id');
-
+        $questions = PariwisataSurveyQuestion::query()->orderBy('category_code')->orderBy('id')->get();
+        $answers = $pariwisata->surveyAnswers->keyBy('pariwisata_survey_question_id');
+        
         $maxDocuments = 0;
-        $rows = ($assignment->template?->questions ?? collect())
-            ->values()
-            ->map(function (SurveyQuestion $question, int $index) use ($answers): array {
-                /** @var SurveyAnswer|null $answer */
+        $rows = $questions
+            ->map(function (PariwisataSurveyQuestion $question, int $index) use ($answers): array {
+                /** @var PariwisataSurveyAnswer|null $answer */
                 $answer = $answers->get($question->id);
                 $documents = $answer?->documents ?? collect();
 
                 $baseRow = [
                     $index + 1,
-                    $question->aspect,
-                    $question->code ?? 'Q-'.$question->id,
-                    $question->question_text,
-                    $question->document_hint,
+                    $question->category_name,
+                    $question->sub_category_name,
+                    $question->criteria_name,
+                    $question->indicator_name,
                     $answer ? 'Terjawab' : 'Belum dijawab',
                     $answer?->score,
                     $answer?->option_label_snapshot ?? $answer?->option?->label,
@@ -177,7 +157,7 @@ class VillageSurveyAssignmentExport
                 ];
 
                 $documentLinks = $documents
-                    ->map(fn (SurveyAnswerDocument $document): string => $this->documentUrl($document))
+                    ->map(fn (PariwisataSurveyAnswerDocument $document): string => $this->documentUrl($document))
                     ->toArray();
 
                 return array_merge($baseRow, $documentLinks);
@@ -205,11 +185,11 @@ class VillageSurveyAssignmentExport
         $sheet->getStyle("A1:{$lastColumn}1")->applyFromArray($this->headerStyle());
         $sheet->getStyle("A:{$lastColumn}")->getAlignment()->setVertical(Alignment::VERTICAL_TOP)->setWrapText(true);
 
-        foreach ([8, 12, 14, 18, 22, 36, 22, 18, 22, 22, 20, 20, 14, 30] as $index => $width) {
+        foreach ([8, 22, 22, 26, 36, 18, 14, 30, 22, 22, 20, 20, 14] as $index => $width) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($index + 1))->setWidth($width);
         }
         
-        for ($i = 14; $i < $lastColumnIndex; $i++) {
+        for ($i = 13; $i < $lastColumnIndex; $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i + 1))->setWidth(40);
         }
 
@@ -217,11 +197,12 @@ class VillageSurveyAssignmentExport
         $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
     }
 
-    private function filename(VillageSurveyAssignment $assignment): string
+    private function filename(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): string
     {
         $villageCode = Str::slug($assignment->village?->code ?: 'desa');
+        $pariwisataName = Str::slug($pariwisata->name);
 
-        return "survey-assignment-{$assignment->id}-{$villageCode}.xlsx";
+        return "survey-pariwisata-{$assignment->id}-{$villageCode}-{$pariwisataName}.xlsx";
     }
 
     private function villageLocation(VillageSurveyAssignment $assignment): string
@@ -239,7 +220,7 @@ class VillageSurveyAssignmentExport
         return $date ? $date->timezone(config('app.timezone'))->format('d M Y H:i') : '';
     }
 
-    private function documentUrl(SurveyAnswerDocument $document): string
+    private function documentUrl(PariwisataSurveyAnswerDocument $document): string
     {
         return Storage::disk('public')->url($document->file_path);
     }

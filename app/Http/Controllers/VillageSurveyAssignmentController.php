@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\VillageSurveyAssignmentExport;
+use App\Exports\PariwisataSurveyExport;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
@@ -109,6 +110,16 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show-pariwisata', $service->getPariwisataShowData($assignment, $pariwisata));
+    }
+
+    public function exportPariwisata(
+        VillageSurveyAssignment $assignment,
+        PariwisataVillage $pariwisata,
+        PariwisataSurveyExport $export
+    ): BinaryFileResponse {
+        $file = $export->export($assignment, $pariwisata);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
 
     public function updatePariwisata(
