@@ -43,4 +43,34 @@ class PariwisataVillage extends Model
     {
         return $this->hasMany(PariwisataSurveyAnswer::class, 'pariwisata_village_id');
     }
+
+    public function annualTurnovers(): HasMany
+    {
+        return $this->hasMany(AnnualTurnover::class, 'pariwisata_id');
+    }
+
+    public function annualVisitors(): HasMany
+    {
+        return $this->hasMany(PariwisataAnnualVisitor::class, 'pariwisata_id');
+    }
+
+    public function visitorTypeAnnuals(): HasMany
+    {
+        return $this->hasMany(PariwisataVisitorTypeAnnual::class, 'pariwisata_id');
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(PariwisataPackage::class, 'pariwisata_id');
+    }
+
+    public function annualWorkerStats(): HasMany
+    {
+        return $this->hasMany(AnnualWorkerStat::class, 'pariwisata_id');
+    }
+
+    public function annualWorkerTrainingStats(): HasMany
+    {
+        return $this->hasMany(AnnualWorkerTrainingStat::class, 'pariwisata_id');
+    }
 }

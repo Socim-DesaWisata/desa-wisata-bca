@@ -386,7 +386,17 @@ export default function QuestionsIndex({
             return;
         }
 
-        router.visit(url, {
+        const normalizedUrl = (() => {
+            try {
+                const parsed = new URL(url, window.location.origin);
+
+                return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+            } catch {
+                return url;
+            }
+        })();
+
+        router.visit(normalizedUrl, {
             preserveScroll: true,
             preserveState: true,
         });

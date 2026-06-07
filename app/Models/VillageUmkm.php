@@ -67,4 +67,19 @@ class VillageUmkm extends Model
     {
         return $this->hasMany(VillageUmkmCategory::class, 'village_umkm_id');
     }
+
+    public function annualTurnovers(): HasMany
+    {
+        return $this->hasMany(AnnualTurnover::class, 'umkm_id');
+    }
+
+    public function annualWorkerStats(): HasMany
+    {
+        return $this->hasMany(AnnualWorkerStat::class, 'umkm_id');
+    }
+
+    public function annualWorkerTrainingStats(): HasMany
+    {
+        return $this->hasMany(AnnualWorkerTrainingStat::class, 'umkm_id');
+    }
 }

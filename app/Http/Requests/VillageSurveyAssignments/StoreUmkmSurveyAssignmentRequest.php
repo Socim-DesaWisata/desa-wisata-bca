@@ -26,6 +26,15 @@ class StoreUmkmSurveyAssignmentRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'annual_turnovers' => $this->filledRows($this->input('annual_turnovers', [])),
+            'annual_worker_stats' => $this->filledRows($this->input('annual_worker_stats', [])),
+            'annual_worker_training_stats' => $this->filledRows($this->input('annual_worker_training_stats', [])),
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -79,6 +88,21 @@ class StoreUmkmSurveyAssignmentRequest extends FormRequest
                 Rule::exists('umkm_survey_questions', 'id')->whereNull('deleted_at'),
             ],
             'answers.*.score' => ['required', 'numeric', 'min:0', 'max:100'],
+            'annual_turnovers' => ['nullable', 'array', 'max:50'],
+            'annual_turnovers.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
+            'annual_turnovers.*.value' => ['required', 'numeric', 'min:0'],
+            'annual_turnovers.*.notes' => ['nullable', 'string'],
+            'annual_worker_stats' => ['nullable', 'array', 'max:100'],
+            'annual_worker_stats.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
+            'annual_worker_stats.*.dimension' => ['required', 'string', Rule::in(['age', 'gender', 'education'])],
+            'annual_worker_stats.*.category_value' => ['required', 'string', 'max:150'],
+            'annual_worker_stats.*.total_people' => ['required', 'integer', 'min:0'],
+            'annual_worker_stats.*.notes' => ['nullable', 'string'],
+            'annual_worker_training_stats' => ['nullable', 'array', 'max:100'],
+            'annual_worker_training_stats.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
+            'annual_worker_training_stats.*.training_name' => ['nullable', 'string', 'max:150'],
+            'annual_worker_training_stats.*.total_people' => ['required', 'integer', 'min:0'],
+            'annual_worker_training_stats.*.notes' => ['nullable', 'string'],
         ];
     }
 
@@ -134,7 +158,44 @@ class StoreUmkmSurveyAssignmentRequest extends FormRequest
                         $validator->errors()->add("documents.{$index}.document_name", 'Nama dokumen wajib diisi.');
                     }
                 }
+
+                $turnoverYears = collect($this->input('annual_turnovers', []))
+                    ->pluck('year')
+                    ->filter()
+                    ->map(fn (mixed $year): int => (int) $year);
+
+                if ($turnoverYears->duplicates()->isNotEmpty()) {
+                    $validator->errors()->add('annual_turnovers', 'Tahun omset tahunan tidak boleh duplikat.');
+                }
+
+                $workerKeys = collect($this->input('annual_worker_stats', []))
+                    ->map(fn (array $row): string => implode('|', [
+                        $row['year'] ?? '',
+                        $row['dimension'] ?? '',
+                        $row['category_value'] ?? '',
+                    ]))
+                    ->filter(fn (string $key): bool => trim(str_replace('|', '', $key)) !== '');
+
+                if ($workerKeys->duplicates()->isNotEmpty()) {
+                    $validator->errors()->add('annual_worker_stats', 'Kombinasi tahun, dimensi, dan kategori pekerja tidak boleh duplikat.');
+                }
             },
         ];
+    }
+
+    /**
+     * @param  mixed  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function filledRows(mixed $rows): array
+    {
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        return collect($rows)
+            ->filter(fn (mixed $row): bool => is_array($row) && collect($row)->contains(fn (mixed $value): bool => filled($value)))
+            ->values()
+            ->all();
     }
 }

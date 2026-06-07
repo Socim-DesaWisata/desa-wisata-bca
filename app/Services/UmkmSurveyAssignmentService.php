@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\AnnualTurnover;
+use App\Models\AnnualWorkerStat;
+use App\Models\AnnualWorkerTrainingStat;
 use App\Models\SurveyTemplate;
 use App\Models\UmkmSurveyAnswer;
 use App\Models\UmkmSurveyQuestion;
@@ -172,6 +175,9 @@ class UmkmSurveyAssignmentService
             }
 
             $this->storeDocuments($umkm, $data['documents'] ?? [], $user, (int) $village->id);
+            $this->createAnnualTurnovers($umkm, $data['annual_turnovers'] ?? [], $user);
+            $this->createAnnualWorkerStats($umkm, $data['annual_worker_stats'] ?? [], $user);
+            $this->createAnnualWorkerTrainingStats($umkm, $data['annual_worker_training_stats'] ?? [], $user);
 
             return $umkm;
         });
@@ -445,6 +451,71 @@ class UmkmSurveyAssignmentService
     private function storeDocumentFile(UploadedFile $file, int $villageId): string
     {
         return $file->storePublicly("umkms/{$villageId}/documents", 'public');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function createAnnualTurnovers(VillageUmkm $umkm, array $rows, User $user): void
+    {
+        foreach ($rows as $row) {
+            AnnualTurnover::query()->create([
+                'entity_type' => 'umkm',
+                'umkm_id' => $umkm->id,
+                'pariwisata_id' => null,
+                'entity_key' => $this->umkmEntityKey($umkm),
+                'year' => $row['year'],
+                'value' => $row['value'],
+                'notes' => $row['notes'] ?? null,
+                'created_by' => $user->id,
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function createAnnualWorkerStats(VillageUmkm $umkm, array $rows, User $user): void
+    {
+        foreach ($rows as $row) {
+            AnnualWorkerStat::query()->create([
+                'entity_type' => 'umkm',
+                'umkm_id' => $umkm->id,
+                'pariwisata_id' => null,
+                'entity_key' => $this->umkmEntityKey($umkm),
+                'year' => $row['year'],
+                'dimension' => $row['dimension'],
+                'category_value' => $row['category_value'],
+                'total_people' => $row['total_people'],
+                'notes' => $row['notes'] ?? null,
+                'created_by' => $user->id,
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function createAnnualWorkerTrainingStats(VillageUmkm $umkm, array $rows, User $user): void
+    {
+        foreach ($rows as $row) {
+            AnnualWorkerTrainingStat::query()->create([
+                'entity_type' => 'umkm',
+                'umkm_id' => $umkm->id,
+                'pariwisata_id' => null,
+                'entity_key' => $this->umkmEntityKey($umkm),
+                'year' => $row['year'],
+                'training_name' => $row['training_name'] ?? null,
+                'total_people' => $row['total_people'],
+                'notes' => $row['notes'] ?? null,
+                'created_by' => $user->id,
+            ]);
+        }
+    }
+
+    private function umkmEntityKey(VillageUmkm $umkm): string
+    {
+        return "umkm:{$umkm->id}";
     }
 
     private function ensureUmkmBelongsToAssignment(VillageSurveyAssignment $assignment, VillageUmkm $umkm): void

@@ -34,6 +34,12 @@ const legalBusinessOptions: Option[] = [
     { value: 'Perorangan', label: 'Perorangan' },
 ];
 
+const workerDimensionOptions: Option[] = [
+    { value: 'age', label: 'Usia' },
+    { value: 'gender', label: 'Gender' },
+    { value: 'education', label: 'Pendidikan' },
+];
+
 type UmkmQuestion = {
     id: number;
     question_number: number;
@@ -90,6 +96,27 @@ type DocumentForm = {
     file: File | null;
 };
 
+type AnnualTurnoverForm = {
+    year: string;
+    value: string;
+    notes: string;
+};
+
+type AnnualWorkerStatForm = {
+    year: string;
+    dimension: string;
+    category_value: string;
+    total_people: string;
+    notes: string;
+};
+
+type AnnualWorkerTrainingStatForm = {
+    year: string;
+    training_name: string;
+    total_people: string;
+    notes: string;
+};
+
 type UmkmForm = {
     business_owner_name: string;
     name: string;
@@ -127,6 +154,9 @@ type UmkmForm = {
     export_destination_countries: string;
     product_photo: File | null;
     documents: DocumentForm[];
+    annual_turnovers: AnnualTurnoverForm[];
+    annual_worker_stats: AnnualWorkerStatForm[];
+    annual_worker_training_stats: AnnualWorkerTrainingStatForm[];
     answers: AnswerForm[];
 };
 
@@ -187,6 +217,9 @@ function initialForm(criteriaGroups: CriteriaGroup[]): UmkmForm {
         export_destination_countries: '',
         product_photo: null,
         documents: [],
+        annual_turnovers: [],
+        annual_worker_stats: [],
+        annual_worker_training_stats: [],
         answers: criteriaGroups.flatMap((group) =>
             group.questions.map((question) => ({
                 question_id: question.id,
@@ -404,6 +437,92 @@ export default function CreateUmkmSurveyAssignment({
                 documentIndex === index
                     ? { ...document, ...values }
                     : document,
+            ),
+        );
+    }
+
+    function addAnnualTurnover() {
+        setData('annual_turnovers', [
+            ...data.annual_turnovers,
+            { year: '', value: '', notes: '' },
+        ]);
+    }
+
+    function updateAnnualTurnover(
+        index: number,
+        values: Partial<AnnualTurnoverForm>,
+    ) {
+        setData(
+            'annual_turnovers',
+            data.annual_turnovers.map((row, rowIndex) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualTurnover(index: number) {
+        setData(
+            'annual_turnovers',
+            data.annual_turnovers.filter((_, rowIndex) => rowIndex !== index),
+        );
+    }
+
+    function addAnnualWorkerStat() {
+        setData('annual_worker_stats', [
+            ...data.annual_worker_stats,
+            {
+                year: '',
+                dimension: '',
+                category_value: '',
+                total_people: '',
+                notes: '',
+            },
+        ]);
+    }
+
+    function updateAnnualWorkerStat(
+        index: number,
+        values: Partial<AnnualWorkerStatForm>,
+    ) {
+        setData(
+            'annual_worker_stats',
+            data.annual_worker_stats.map((row, rowIndex) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualWorkerStat(index: number) {
+        setData(
+            'annual_worker_stats',
+            data.annual_worker_stats.filter((_, rowIndex) => rowIndex !== index),
+        );
+    }
+
+    function addAnnualWorkerTrainingStat() {
+        setData('annual_worker_training_stats', [
+            ...data.annual_worker_training_stats,
+            { year: '', training_name: '', total_people: '', notes: '' },
+        ]);
+    }
+
+    function updateAnnualWorkerTrainingStat(
+        index: number,
+        values: Partial<AnnualWorkerTrainingStatForm>,
+    ) {
+        setData(
+            'annual_worker_training_stats',
+            data.annual_worker_training_stats.map((row, rowIndex) =>
+                rowIndex === index ? { ...row, ...values } : row,
+            ),
+        );
+    }
+
+    function removeAnnualWorkerTrainingStat(index: number) {
+        setData(
+            'annual_worker_training_stats',
+            data.annual_worker_training_stats.filter(
+                (_, rowIndex) => rowIndex !== index,
             ),
         );
     }
@@ -832,18 +951,18 @@ export default function CreateUmkmSurveyAssignment({
 
                             <SectionCard
                                 icon={FileText}
-                                title="Dokumen Pendukung"
-                                description="Unggah dokumen legalitas, sertifikasi, katalog, atau dokumen pendukung lain milik UMKM."
+                                title="File Pendukung"
+                                description="Untuk dokumen penting, penghargaan, atau foto produk."
                             >
                                 <div className="space-y-3">
                                     {data.documents.length === 0 && (
                                         <div className="rounded-2xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-4 py-6 text-center">
                                             <FileText className="mx-auto size-8 text-[#0066AE]" />
                                             <p className="mt-2 text-sm font-bold text-[#172033]">
-                                                Belum ada dokumen pendukung
+                                                Belum ada file pendukung
                                             </p>
                                             <p className="mt-1 text-xs text-[#64748B]">
-                                                Tambahkan dokumen jika tersedia.
+                                                Tambahkan file jika tersedia.
                                             </p>
                                         </div>
                                     )}
@@ -869,7 +988,7 @@ export default function CreateUmkmSurveyAssignment({
                                             />
                                             <label className="block min-w-0">
                                                 <span className="text-xs font-bold text-[#344256]">
-                                                    File Dokumen
+                                                    File Pendukung
                                                 </span>
                                                 <input
                                                     type="file"
@@ -914,7 +1033,7 @@ export default function CreateUmkmSurveyAssignment({
                                         className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#BFD6EA] bg-white px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
                                     >
                                         <Plus className="size-4" />
-                                        Tambah Dokumen
+                                        Tambah File
                                     </button>
                                 </div>
                             </SectionCard>
@@ -1158,6 +1277,279 @@ export default function CreateUmkmSurveyAssignment({
                             </SectionCard>
 
                             <SectionCard
+                                icon={Banknote}
+                                title="Omset Tahunan"
+                                description="Tambahkan riwayat omset tahunan UMKM. Data ini disimpan sebagai annual turnover."
+                            >
+                                <div className="space-y-3">
+                                    {data.annual_turnovers.length === 0 && (
+                                        <div className="rounded-2xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-4 py-6 text-center">
+                                            <Banknote className="mx-auto size-8 text-[#0066AE]" />
+                                            <p className="mt-2 text-sm font-bold text-[#172033]">
+                                                Belum ada omset tahunan
+                                            </p>
+                                            <p className="mt-1 text-xs text-[#64748B]">
+                                                Tambahkan data tahun dan nominal omset jika tersedia.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {data.annual_turnovers.map((row, index) => (
+                                        <div
+                                            key={index}
+                                            className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)_44px] lg:items-start"
+                                        >
+                                            <TextInput
+                                                label="Tahun"
+                                                value={row.year}
+                                                onChange={(value) =>
+                                                    updateAnnualTurnover(index, {
+                                                        year: digitsOnly(value),
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_turnovers.${index}.year`)}
+                                                placeholder="2024"
+                                                type="number"
+                                            />
+                                            <TextInput
+                                                label="Nilai Omset"
+                                                value={formatThousands(row.value)}
+                                                onChange={(value) =>
+                                                    updateAnnualTurnover(index, {
+                                                        value: digitsOnly(value),
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_turnovers.${index}.value`)}
+                                                placeholder="Nominal rupiah"
+                                            />
+                                            <TextInput
+                                                label="Catatan"
+                                                value={row.notes}
+                                                onChange={(value) =>
+                                                    updateAnnualTurnover(index, {
+                                                        notes: value,
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_turnovers.${index}.notes`)}
+                                                placeholder="Opsional"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAnnualTurnover(index)}
+                                                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
+                                                aria-label="Hapus omset tahunan"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={addAnnualTurnover}
+                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#BFD6EA] bg-white px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Omset Tahunan
+                                    </button>
+                                </div>
+                            </SectionCard>
+
+                            <SectionCard
+                                icon={Factory}
+                                title="Data Pekerja Tahunan"
+                                description="Catat jumlah pekerja berdasarkan usia, gender, atau pendidikan per tahun."
+                            >
+                                <div className="space-y-3">
+                                    {data.annual_worker_stats.length === 0 && (
+                                        <div className="rounded-2xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-4 py-6 text-center">
+                                            <Factory className="mx-auto size-8 text-[#0066AE]" />
+                                            <p className="mt-2 text-sm font-bold text-[#172033]">
+                                                Belum ada data pekerja tahunan
+                                            </p>
+                                            <p className="mt-1 text-xs text-[#64748B]">
+                                                Tambahkan data jika ingin mencatat profil pekerja UMKM.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {data.annual_worker_stats.map((row, index) => (
+                                        <div
+                                            key={index}
+                                            className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[120px_170px_minmax(0,1fr)_150px_minmax(0,1fr)_44px] lg:items-start"
+                                        >
+                                            <TextInput
+                                                label="Tahun"
+                                                value={row.year}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerStat(index, {
+                                                        year: digitsOnly(value),
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_stats.${index}.year`)}
+                                                placeholder="2024"
+                                                type="number"
+                                            />
+                                            <SelectInput
+                                                label="Dimensi"
+                                                value={row.dimension}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerStat(index, {
+                                                        dimension: value,
+                                                    })
+                                                }
+                                                options={workerDimensionOptions}
+                                                error={fieldError(errors, `annual_worker_stats.${index}.dimension`)}
+                                                placeholder="Pilih dimensi"
+                                            />
+                                            <TextInput
+                                                label="Kategori"
+                                                value={row.category_value}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerStat(index, {
+                                                        category_value: value,
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_stats.${index}.category_value`)}
+                                                placeholder="Contoh: perempuan, S1, 22 tahun"
+                                            />
+                                            <TextInput
+                                                label="Jumlah Orang"
+                                                value={row.total_people}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerStat(index, {
+                                                        total_people: digitsOnly(value),
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_stats.${index}.total_people`)}
+                                                placeholder="0"
+                                                type="number"
+                                            />
+                                            <TextInput
+                                                label="Catatan"
+                                                value={row.notes}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerStat(index, {
+                                                        notes: value,
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_stats.${index}.notes`)}
+                                                placeholder="Opsional"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAnnualWorkerStat(index)}
+                                                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
+                                                aria-label="Hapus data pekerja"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={addAnnualWorkerStat}
+                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#BFD6EA] bg-white px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Data Pekerja
+                                    </button>
+                                </div>
+                            </SectionCard>
+
+                            <SectionCard
+                                icon={ClipboardCheck}
+                                title="Pelatihan Pekerja Tahunan"
+                                description="Catat jumlah pekerja yang mengikuti pelatihan per tahun."
+                            >
+                                <div className="space-y-3">
+                                    {data.annual_worker_training_stats.length === 0 && (
+                                        <div className="rounded-2xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-4 py-6 text-center">
+                                            <ClipboardCheck className="mx-auto size-8 text-[#0066AE]" />
+                                            <p className="mt-2 text-sm font-bold text-[#172033]">
+                                                Belum ada data pelatihan
+                                            </p>
+                                            <p className="mt-1 text-xs text-[#64748B]">
+                                                Tambahkan data pelatihan pekerja jika tersedia.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {data.annual_worker_training_stats.map((row, index) => (
+                                        <div
+                                            key={index}
+                                            className="grid gap-3 rounded-2xl border border-[#E4EAF0] bg-[#FBFCFE] p-3 lg:grid-cols-[120px_minmax(0,1fr)_150px_minmax(0,1fr)_44px] lg:items-start"
+                                        >
+                                            <TextInput
+                                                label="Tahun"
+                                                value={row.year}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(index, {
+                                                        year: digitsOnly(value),
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_training_stats.${index}.year`)}
+                                                placeholder="2024"
+                                                type="number"
+                                            />
+                                            <TextInput
+                                                label="Nama Pelatihan"
+                                                value={row.training_name}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(index, {
+                                                        training_name: value,
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_training_stats.${index}.training_name`)}
+                                                placeholder="Contoh: Digital Marketing"
+                                            />
+                                            <TextInput
+                                                label="Jumlah Orang"
+                                                value={row.total_people}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(index, {
+                                                        total_people: digitsOnly(value),
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_training_stats.${index}.total_people`)}
+                                                placeholder="0"
+                                                type="number"
+                                            />
+                                            <TextInput
+                                                label="Catatan"
+                                                value={row.notes}
+                                                onChange={(value) =>
+                                                    updateAnnualWorkerTrainingStat(index, {
+                                                        notes: value,
+                                                    })
+                                                }
+                                                error={fieldError(errors, `annual_worker_training_stats.${index}.notes`)}
+                                                placeholder="Opsional"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAnnualWorkerTrainingStat(index)}
+                                                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#F2C7C7] bg-white text-[#D81313] transition hover:bg-[#FFF6F6] lg:mt-6"
+                                                aria-label="Hapus data pelatihan"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={addAnnualWorkerTrainingStat}
+                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#BFD6EA] bg-white px-4 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F8FF]"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Data Pelatihan
+                                    </button>
+                                </div>
+                            </SectionCard>
+
+                            <SectionCard
                                 icon={ClipboardCheck}
                                 title="Assessment Pelaku UMKM"
                                 description="Isi nilai 1 sampai 4 untuk semua pertanyaan assessment."
@@ -1295,6 +1687,30 @@ export default function CreateUmkmSurveyAssignment({
                                         </span>
                                         <span className="font-bold text-[#172033]">
                                             {answeredCount}/{totalQuestions}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-xl bg-[#F7FAFC] px-3 py-2">
+                                        <span className="text-[#64748B]">
+                                            Omset Tahunan
+                                        </span>
+                                        <span className="font-bold text-[#172033]">
+                                            {data.annual_turnovers.length}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-xl bg-[#F7FAFC] px-3 py-2">
+                                        <span className="text-[#64748B]">
+                                            Data Pekerja
+                                        </span>
+                                        <span className="font-bold text-[#172033]">
+                                            {data.annual_worker_stats.length}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-xl bg-[#F7FAFC] px-3 py-2">
+                                        <span className="text-[#64748B]">
+                                            Data Pelatihan
+                                        </span>
+                                        <span className="font-bold text-[#172033]">
+                                            {data.annual_worker_training_stats.length}
                                         </span>
                                     </div>
                                 </div>

@@ -1,0 +1,132 @@
+*** Begin Patch
+*** Update File: app\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest.php
+@@
+ class StorePariwisataSurveyAssignmentRequest extends FormRequest
+ {
+     public function authorize(): bool
+     {
+         return true;
+     }
++
++    protected function prepareForValidation(): void
++    {
++        ->merge([
++            'annual_turnovers' => ->filledRows(->input('annual_turnovers', [])),
++            'annual_visitors' => ->filledRows(->input('annual_visitors', [])),
++            'visitor_type_annuals' => ->filledRows(->input('visitor_type_annuals', [])),
++            'packages' => ->filledRows(->input('packages', [])),
++            'annual_worker_stats' => ->filledRows(->input('annual_worker_stats', [])),
++            'annual_worker_training_stats' => ->filledRows(->input('annual_worker_training_stats', [])),
++        ]);
++    }
+@@
+     public function rules(): array
+     {
+         return [
+@@
+             'person_in_charge_phone' => ['nullable', 'string', 'max:30'],
+             'person_in_charge_address' => ['nullable', 'string'],
+             'is_active' => ['required', 'boolean'],
++            'annual_turnovers' => ['nullable', 'array', 'max:50'],
++            'annual_turnovers.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
++            'annual_turnovers.*.value' => ['required', 'numeric', 'min:0'],
++            'annual_turnovers.*.notes' => ['nullable', 'string'],
++            'annual_visitors' => ['nullable', 'array', 'max:50'],
++            'annual_visitors.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
++            'annual_visitors.*.value' => ['required', 'integer', 'min:0'],
++            'annual_visitors.*.notes' => ['nullable', 'string'],
++            'visitor_type_annuals' => ['nullable', 'array', 'max:100'],
++            'visitor_type_annuals.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
++            'visitor_type_annuals.*.visitor_type' => ['required', 'string', Rule::in(['domestik', 'mancanegara', 'pelajar', 'rombongan'])],
++            'visitor_type_annuals.*.value' => ['required', 'integer', 'min:0'],
++            'visitor_type_annuals.*.notes' => ['nullable', 'string'],
++            'packages' => ['nullable', 'array', 'max:100'],
++            'packages.*.name' => ['required', 'string', 'max:150'],
++            'packages.*.package_type' => ['nullable', 'string', 'max:100'],
++            'packages.*.duration' => ['nullable', 'string', 'max:100'],
++            'packages.*.facilities' => ['nullable', 'string'],
++            'packages.*.description' => ['nullable', 'string'],
++            'packages.*.price' => ['nullable', 'numeric', 'min:0'],
++            'packages.*.is_active' => ['required', 'boolean'],
++            'annual_worker_stats' => ['nullable', 'array', 'max:100'],
++            'annual_worker_stats.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
++            'annual_worker_stats.*.dimension' => ['required', 'string', Rule::in(['age', 'gender', 'education'])],
++            'annual_worker_stats.*.category_value' => ['required', 'string', 'max:150'],
++            'annual_worker_stats.*.total_people' => ['required', 'integer', 'min:0'],
++            'annual_worker_stats.*.notes' => ['nullable', 'string'],
++            'annual_worker_training_stats' => ['nullable', 'array', 'max:100'],
++            'annual_worker_training_stats.*.year' => ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
++            'annual_worker_training_stats.*.training_name' => ['nullable', 'string', 'max:150'],
++            'annual_worker_training_stats.*.total_people' => ['required', 'integer', 'min:0'],
++            'annual_worker_training_stats.*.notes' => ['nullable', 'string'],
+         ];
+     }
++
++    /**
++     * @return array<int, \Closure(\Illuminate\Validation\Validator): void>
++     */
++    public function after(): array
++    {
++        return [
++            function (\Illuminate\Validation\Validator ): void {
++                 = collect(->input('annual_turnovers', []))
++                    ->pluck('year')
++                    ->filter()
++                    ->map(fn (mixed ): int => (int) );
++
++                if (->duplicates()->isNotEmpty()) {
++                    ->errors()->add('annual_turnovers', 'Tahun omset tahunan tidak boleh duplikat.');
++                }
++
++                 = collect(->input('annual_visitors', []))
++                    ->pluck('year')
++                    ->filter()
++                    ->map(fn (mixed ): int => (int) );
++
++                if (->duplicates()->isNotEmpty()) {
++                    ->errors()->add('annual_visitors', 'Tahun pengunjung tahunan tidak boleh duplikat.');
++                }
++
++                 = collect(->input('visitor_type_annuals', []))
++                    ->map(fn (array ): string => implode('|', [
++                        ['year'] ?? '',
++                        ['visitor_type'] ?? '',
++                    ]))
++                    ->filter(fn (string ): bool => trim(str_replace('|', '', )) !== '');
++
++                if (->duplicates()->isNotEmpty()) {
++                    ->errors()->add('visitor_type_annuals', 'Kombinasi tahun dan jenis pengunjung tidak boleh duplikat.');
++                }
++
++                 = collect(->input('annual_worker_stats', []))
++                    ->map(fn (array ): string => implode('|', [
++                        ['year'] ?? '',
++                        ['dimension'] ?? '',
++                        ['category_value'] ?? '',
++                    ]))
++                    ->filter(fn (string ): bool => trim(str_replace('|', '', )) !== '');
++
++                if (->duplicates()->isNotEmpty()) {
++                    ->errors()->add('annual_worker_stats', 'Kombinasi tahun, dimensi, dan kategori pekerja tidak boleh duplikat.');
++                }
++            },
++        ];
++    }
++
++    /**
++     * @param  mixed  
++     * @return array<int, array<string, mixed>>
++     */
++    private function filledRows(mixed ): array
++    {
++        if (! is_array()) {
++            return [];
++        }
++
++        return collect()
++            ->filter(fn (mixed ): bool => is_array() && collect()->contains(fn (mixed ): bool => filled()))
++            ->values()
++            ->all();
++    }
+ }
+*** End Patch

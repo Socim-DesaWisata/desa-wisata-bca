@@ -1021,6 +1021,474 @@ Table pariwisata_survey_answer_documents {
 }
 
 
+Table turnover_umkm_annuals{ 
+  id int  
+  umkm_id bigint
+  year int  
+  value int 
+  created_at timestamp
+  updated_at timestamp
+
+}
+
+// ======================================================
+// ENUMS - ANNUAL DATA & IMPACT DATA
+// ======================================================
+
+Enum annual_turnover_entity_type {
+  umkm
+  pariwisata
+}
+
+Enum annual_worker_entity_type {
+  umkm
+  pariwisata
+}
+
+Enum worker_stat_dimension {
+  age
+  gender
+  education
+}
+
+Enum pariwisata_visitor_type {
+  lokal
+  domestik
+  mancanegara
+  pelajar
+  komunitas
+}
+
+Enum village_population_dimension {
+  gender
+  education
+  skill
+  livelihood
+}
+
+Enum active_group_category_type {
+  community_group
+  partnership
+}
+
+
+// ======================================================
+// ANNUAL TURNOVER - UMKM & PARIWISATA
+// ======================================================
+// Table ini menyimpan omset tahunan untuk UMKM dan Pariwisata.
+// Dipakai untuk menggantikan table terpisah:
+// - turnover_umkm_annuals
+// - turnover_pariwisata_annuals
+//
+// Contoh:
+// entity_type = umkm, entity_key = "umkm:1", year = 2022, value = 120000000
+// entity_type = pariwisata, entity_key = "pariwisata:5", year = 2022, value = 350000000
+
+Table annual_turnovers {
+  id bigint [pk, increment]
+
+  entity_type annual_turnover_entity_type [not null]
+
+  // Isi salah satu sesuai entity_type.
+  // Jika entity_type = umkm, maka umkm_id wajib diisi.
+  // Jika entity_type = pariwisata, maka pariwisata_id wajib diisi.
+  umkm_id bigint
+  pariwisata_id bigint
+
+  // Key unik untuk memudahkan validasi unique di MySQL.
+  // Contoh:
+  // umkm:1
+  // pariwisata:5
+  entity_key varchar(100) [not null]
+
+  year int [not null]
+  value decimal(18,2) [not null] // Omset dalam Rupiah
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (entity_type)
+    (entity_key)
+    (umkm_id)
+    (pariwisata_id)
+    (year)
+    (entity_key, year) [unique]
+  }
+}
+
+
+// ======================================================
+// PARIWISATA - ANNUAL VISITORS
+// ======================================================
+// Table ini menyimpan total pengunjung tahunan untuk satu destinasi pariwisata.
+// Contoh:
+// pariwisata_id = 5, year = 2022, value = 25000
+
+Table pariwisata_annual_visitors {
+  id bigint [pk, increment]
+
+  pariwisata_id bigint [not null]
+
+  year int [not null]
+  value int [not null] // Total pengunjung dalam satu tahun
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (pariwisata_id)
+    (year)
+    (pariwisata_id, year) [unique]
+  }
+}
+
+
+// ======================================================
+// PARIWISATA - ANNUAL VISITOR TYPES
+// ======================================================
+// Table ini menyimpan jumlah pengunjung tahunan berdasarkan jenis pengunjung.
+// Contoh:
+// 2022, lokal, 1000
+// 2022, domestik, 500
+// 2022, mancanegara, 120
+// 2022, pelajar, 300
+// 2022, komunitas, 50
+
+Table pariwisata_visitor_type_annuals {
+  id bigint [pk, increment]
+
+  pariwisata_id bigint [not null]
+
+  year int [not null]
+  visitor_type pariwisata_visitor_type [not null]
+  value int [not null] // Jumlah pengunjung berdasarkan jenis
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (pariwisata_id)
+    (year)
+    (visitor_type)
+    (pariwisata_id, year, visitor_type) [unique]
+  }
+}
+
+
+// ======================================================
+// PARIWISATA - PACKAGES
+// ======================================================
+// Table ini menyimpan paket wisata yang dimiliki oleh destinasi pariwisata.
+// Contoh:
+// Nama Paket: Paket Edukasi Membatik
+// Jenis Paket: Edukasi
+// Durasi: 3 jam
+// Fasilitas: Mentor, alat batik, snack, dokumentasi
+
+Table pariwisata_packages {
+  id bigint [pk, increment]
+
+  pariwisata_id bigint [not null]
+
+  name varchar(150) [not null] // Nama paket wisata
+  package_type varchar(100) // Jenis paket
+  duration varchar(100) // Durasi paket
+  facilities text // Fasilitas yang didapat
+
+  description text
+  price decimal(12,2)
+
+  is_active boolean [not null, default: true]
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (pariwisata_id)
+    (name)
+    (package_type)
+    (is_active)
+  }
+}
+
+
+// ======================================================
+// ANNUAL WORKER STATS - UMKM & PARIWISATA
+// ======================================================
+// Table ini menyimpan data pekerja tahunan untuk UMKM dan Pariwisata.
+// Dimensi yang didukung:
+// - age
+// - gender
+// - education
+//
+// Contoh input:
+// 2022, 22 tahun, 100 orang
+// 2022, lelaki, 80 orang
+// 2022, S1, 25 orang
+
+Table annual_worker_stats {
+  id bigint [pk, increment]
+
+  entity_type annual_worker_entity_type [not null]
+
+  // Isi salah satu sesuai entity_type.
+  umkm_id bigint
+  pariwisata_id bigint
+
+  // Key unik untuk memudahkan validasi unique di MySQL.
+  // Contoh:
+  // umkm:1
+  // pariwisata:5
+  entity_key varchar(100) [not null]
+
+  year int [not null]
+
+  // age / gender / education
+  dimension worker_stat_dimension [not null]
+
+  // Contoh:
+  // Jika dimension = age, category_value = "22 tahun"
+  // Jika dimension = gender, category_value = "lelaki"
+  // Jika dimension = education, category_value = "S1"
+  category_value varchar(150) [not null]
+
+  total_people int [not null]
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (entity_type)
+    (entity_key)
+    (umkm_id)
+    (pariwisata_id)
+    (year)
+    (dimension)
+    (category_value)
+    (entity_key, year, dimension, category_value) [unique]
+  }
+}
+
+
+// ======================================================
+// ANNUAL WORKER TRAINING STATS - UMKM & PARIWISATA
+// ======================================================
+// Table ini menyimpan jumlah pekerja yang ikut pelatihan per tahun.
+// Contoh:
+// 2022, 35 orang
+// 2023, 50 orang
+
+Table annual_worker_training_stats {
+  id bigint [pk, increment]
+
+  entity_type annual_worker_entity_type [not null]
+
+  // Isi salah satu sesuai entity_type.
+  umkm_id bigint
+  pariwisata_id bigint
+
+  // Contoh:
+  // umkm:1
+  // pariwisata:5
+  entity_key varchar(100) [not null]
+
+  year int [not null]
+
+  // Optional jika nanti ingin mencatat nama pelatihan.
+  training_name varchar(150)
+
+  total_people int [not null]
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (entity_type)
+    (entity_key)
+    (umkm_id)
+    (pariwisata_id)
+    (year)
+    (training_name)
+  }
+}
+
+
+// ======================================================
+// VILLAGE - ANNUAL POPULATION STATS
+// ======================================================
+// Table ini menyimpan data masyarakat desa per tahun.
+// Dimensi yang didukung:
+// - gender
+// - education
+// - skill
+// - livelihood
+//
+// Contoh:
+// 2022, gender, pria, 50
+// 2022, education, S2, 20
+// 2022, skill, pemandu wisata, 15
+// 2022, livelihood, petani, 200
+
+Table village_annual_population_stats {
+  id bigint [pk, increment]
+
+  village_id bigint [not null]
+
+  year int [not null]
+
+  // gender / education / skill / livelihood
+  dimension village_population_dimension [not null]
+
+  // Untuk skill dan livelihood, value bisa custom.
+  // Contoh:
+  // pria, wanita, SD, SMP, SMA, S1, S2,
+  // pemandu wisata, membatik, digital marketing,
+  // petani, nelayan, pedagang, pengrajin
+  category_value varchar(150) [not null]
+
+  total_people int [not null]
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (village_id)
+    (year)
+    (dimension)
+    (category_value)
+    (village_id, year, dimension, category_value) [unique]
+  }
+}
+
+
+
+Table village_vulnerable_group_annuals {
+  id bigint [pk, increment]
+
+  village_id bigint [not null]
+  vulnerable_category string
+
+  year int [not null]
+  total_people int [not null]
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (village_id)
+    (year)
+    (village_id, year) [unique]
+  }
+}
+
+
+
+
+Table village_active_group_annuals {
+  id bigint [pk, increment]
+
+  village_id bigint [not null]
+  active_category string 
+
+  year int [not null]
+  value int [not null]
+
+  notes text
+
+  created_by bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (village_id)
+    (year)
+    (village_id, year) [unique]
+  }
+}
+
+
+// ======================================================
+// REFS - ANNUAL TURNOVER
+// ======================================================
+
+Ref: annual_turnovers.umkm_id > village_umkms.id
+Ref: annual_turnovers.pariwisata_id > pariwisata_village_table.id
+Ref: annual_turnovers.created_by > users.id
+
+
+// ======================================================
+// REFS - PARIWISATA ANNUAL DATA
+// ======================================================
+
+Ref: pariwisata_annual_visitors.pariwisata_id > pariwisata_village_table.id
+Ref: pariwisata_annual_visitors.created_by > users.id
+
+Ref: pariwisata_visitor_type_annuals.pariwisata_id > pariwisata_village_table.id
+Ref: pariwisata_visitor_type_annuals.created_by > users.id
+
+Ref: pariwisata_packages.pariwisata_id > pariwisata_village_table.id
+Ref: pariwisata_packages.created_by > users.id
+
+
+// ======================================================
+// REFS - WORKER STATS
+// ======================================================
+
+Ref: annual_worker_stats.umkm_id > village_umkms.id
+Ref: annual_worker_stats.pariwisata_id > pariwisata_village_table.id
+Ref: annual_worker_stats.created_by > users.id
+
+Ref: annual_worker_training_stats.umkm_id > village_umkms.id
+Ref: annual_worker_training_stats.pariwisata_id > pariwisata_village_table.id
+Ref: annual_worker_training_stats.created_by > users.id
+
+
+// ======================================================
+// REFS - VILLAGE ANNUAL DATA
+// ======================================================
+
+Ref: village_annual_population_stats.village_id > tourism_villages.id
+Ref: village_annual_population_stats.created_by > users.id
+
+Ref: village_vulnerable_group_annuals.village_id > tourism_villages.id
+Ref: village_vulnerable_group_annuals.created_by > users.id
+
+Ref: village_active_group_annuals.village_id > tourism_villages.id
+Ref: village_active_group_annuals.created_by > users.id
+
+
 // ======================================================
 // REFS - USERS & PROGRAMS
 // ======================================================

@@ -7,6 +7,7 @@ import {
     BarChart3,
     UserCog,
     Users,
+    MapPinned,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -51,6 +52,12 @@ const navGroups: SidebarNavGroup[] = [
                 href: dashboard(),
                 icon: LayoutDashboard,
             },
+            {
+                title: 'Desa',
+                href: villages(),
+                icon: MapPinned,
+                roles: ['admin'],
+            },
         ],
     },
     {
@@ -62,7 +69,6 @@ const navGroups: SidebarNavGroup[] = [
                 icon: BarChart3,
                 roles: ['admin'],
                 children: [
-                    { title: 'Kemenpar', href: villages() },
                     { title: 'UMKM', href: umkm() },
                     { title: 'ISTC', href: pariwisata() },
                 ],

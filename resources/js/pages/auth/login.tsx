@@ -203,7 +203,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <div className="mt-6 h-px w-full bg-[#c7d0df]" />
                             <p className="mt-4 text-center text-xs font-medium text-[#7d8aa0] sm:text-sm">
-                                © 2026 PT Bank Central Asia Tbk. All rights
+                                © 2026 All rights
                                 reserved.
                             </p>
                         </div>

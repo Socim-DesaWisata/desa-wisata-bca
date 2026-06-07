@@ -81,4 +81,19 @@ class TourismVillage extends Model
     {
         return $this->hasOne(VillageSurveyAssignment::class, 'village_id');
     }
+
+    public function annualPopulationStats(): HasMany
+    {
+        return $this->hasMany(VillageAnnualPopulationStat::class, 'village_id');
+    }
+
+    public function vulnerableGroupAnnuals(): HasMany
+    {
+        return $this->hasMany(VillageVulnerableGroupAnnual::class, 'village_id');
+    }
+
+    public function activeGroupAnnuals(): HasMany
+    {
+        return $this->hasMany(VillageActiveGroupAnnual::class, 'village_id');
+    }
 }

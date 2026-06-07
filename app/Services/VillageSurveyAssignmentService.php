@@ -123,7 +123,7 @@ class VillageSurveyAssignmentService
             ]);
         }
 
-        return DB::transaction(function () use ($data, $template, $user): VillageSurveyAssignment {
+        return DB::transaction(function () use ($data, $user): VillageSurveyAssignment {
             $assignment = VillageSurveyAssignment::query()->create([
                 'village_id' => $data['village_id'],
                 'survey_template_id' => 1,
@@ -524,6 +524,8 @@ class VillageSurveyAssignmentService
             ] : null,
             'survey_summary' => $this->buildPariwisataSurveySummary($questions, $answersByQuestion),
             'survey_groups' => $this->formatPariwisataSurveyGroups($questions, $answersByQuestion),
+            'category_options' => $this->pariwisataCategoryOptions(),
+            'edit_values' => $this->formatPariwisataEditValues($pariwisata),
         ];
     }
 
@@ -1725,6 +1727,45 @@ class VillageSurveyAssignmentService
             'wisata_kuliner' => 'Wisata Kuliner',
             'wisata_edukasi' => 'Wisata Edukasi',
         ][$value ?? ''] ?? Str::headline((string) $value);
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function pariwisataCategoryOptions(): array
+    {
+        return collect([
+            'wisata_alam',
+            'wisata_buatan',
+            'wisata_religi',
+            'wisata_budaya',
+            'wisata_kuliner',
+            'wisata_edukasi',
+        ])->map(fn (string $value): array => [
+            'value' => $value,
+            'label' => $this->categoryLabel($value),
+        ])->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatPariwisataEditValues(PariwisataVillage $pariwisata): array
+    {
+        return [
+            'name' => (string) ($pariwisata->name ?? ''),
+            'categories' => $pariwisata->categories->pluck('category')->values()->all(),
+            'operational_days' => (string) ($pariwisata->operational_days ?? ''),
+            'operational_hours' => (string) ($pariwisata->operational_hours ?? ''),
+            'operational_schedule_notes' => (string) data_get($pariwisata->operational_schedule, 'notes', ''),
+            'entrance_ticket_price' => $pariwisata->entrance_ticket_price ? (string) $pariwisata->entrance_ticket_price : '',
+            'entrance_ticket_description' => (string) ($pariwisata->entrance_ticket_description ?? ''),
+            'address' => (string) ($pariwisata->address ?? ''),
+            'person_in_charge_name' => (string) ($pariwisata->person_in_charge_name ?? ''),
+            'person_in_charge_phone' => (string) ($pariwisata->person_in_charge_phone ?? ''),
+            'person_in_charge_address' => (string) ($pariwisata->person_in_charge_address ?? ''),
+            'is_active' => (bool) $pariwisata->is_active,
+        ];
     }
 
     /**

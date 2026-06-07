@@ -282,6 +282,25 @@ export default function SurveyAssignmentIndex({
     }
 
     function openAccessModal(assignment: AssignmentRow, action: AccessAction) {
+        if (!isEnumerator) {
+            if (!assignment.code) {
+                setSelectedAssignment(assignment);
+                setSelectedAction(action);
+                setAccessCode('');
+                setAccessError('Kode assignment belum tersedia. Hubungi admin.');
+                setIsAccessOpen(true);
+                return;
+            }
+
+            router.visit(
+                action === 'detail'
+                    ? showSurveyAssignment.url(assignment.code)
+                    : takeSurvey.url(assignment.code),
+            );
+
+            return;
+        }
+
         setSelectedAssignment(assignment);
         setSelectedAction(action);
         setAccessCode('');

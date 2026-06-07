@@ -1059,7 +1059,7 @@ function PariwisataCard({
                     </div>
                 </div>
 
-                <div className="grid gap-2 text-xs sm:grid-cols-3">
+                <div className="grid gap-2 text-xs sm:grid-cols-2 xl:grid-cols-4">
                     <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
                         <p className="font-semibold text-[#7C7C7C]">Jawaban</p>
                         <p className="mt-0.5 truncate font-bold text-[#303030]">
@@ -1077,6 +1077,12 @@ function PariwisataCard({
                         <p className="font-semibold text-[#7C7C7C]">Tiket</p>
                         <p className="mt-0.5 truncate font-bold text-[#303030]">
                             {item.entrance_ticket_price}
+                        </p>
+                    </div>
+                    <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
+                        <p className="font-semibold text-[#7C7C7C]">No. PIC</p>
+                        <p className="mt-0.5 truncate font-bold text-[#303030]">
+                            {item.person_in_charge_phone ?? '-'}
                         </p>
                     </div>
                 </div>

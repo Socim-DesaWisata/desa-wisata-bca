@@ -8,12 +8,13 @@ use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRe
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreSurveyAnswerDraftRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreUmkmSurveyAssignmentRequest;
-use App\Http\Requests\VillageSurveyAssignments\StoreVillageUmkmDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StoreVillageSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\StoreVillageUmkmDocumentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdatePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAnswerRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAssignmentRequest;
-use App\Http\Requests\VillageSurveyAssignments\UpdateVillageUmkmDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateVillageUmkmDocumentRequest;
 use App\Models\PariwisataSurveyAnswerDocument;
 use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswerDocument;
@@ -78,7 +79,7 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignment $assignment,
         PariwisataSurveyAssignmentService $service
     ): RedirectResponse {
-        $service->create($request->validated(), $assignment);
+        $service->create($request->validated(), $request->user(), $assignment);
 
         return redirect()
             ->route('survey-assignments.show', $assignment)
@@ -107,6 +108,17 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show-pariwisata', $service->getPariwisataShowData($assignment, $pariwisata));
+    }
+
+    public function updatePariwisata(
+        UpdatePariwisataSurveyAssignmentRequest $request,
+        VillageSurveyAssignment $assignment,
+        PariwisataVillage $pariwisata,
+        PariwisataSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->update($request->validated(), $assignment, $pariwisata);
+
+        return back()->with('success', 'Data pariwisata berhasil diperbarui.');
     }
 
     public function showUmkm(

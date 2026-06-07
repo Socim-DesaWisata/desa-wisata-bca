@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     CalendarDays,
@@ -7,13 +7,18 @@ import {
     Eye,
     FileText,
     MapPin,
+    Pencil,
     RefreshCcw,
+    Save,
     Search,
     Ticket,
     UserRound,
+    X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -24,7 +29,10 @@ import {
 
 import { dashboard, surveyAssignments } from '@/routes';
 import { show as showAssignment } from '@/routes/survey-assignments';
-import { takeSurvey as takePariwisataSurvey } from '@/routes/survey-assignments/pariwisata';
+import {
+    takeSurvey as takePariwisataSurvey,
+    update as updatePariwisata,
+} from '@/routes/survey-assignments/pariwisata';
 
 type Assignment = {
     id: number;
@@ -135,6 +143,8 @@ type SurveyGroup = {
 type ShowPariwisataProps = {
     assignment: Assignment;
     pariwisata: Pariwisata;
+    category_options: CategoryOption[];
+    edit_values: PariwisataEditValues;
     survey_template: SurveyTemplate | null;
     survey_summary: {
         total_questions: number;
@@ -147,6 +157,53 @@ type ShowPariwisataProps = {
     };
     survey_groups: SurveyGroup[];
 };
+
+type CategoryOption = {
+    value: string;
+    label: string;
+};
+
+type PariwisataEditValues = {
+    name: string;
+    categories: string[];
+    operational_days: string;
+    operational_hours: string;
+    operational_schedule_notes: string;
+    entrance_ticket_price: string;
+    entrance_ticket_description: string;
+    address: string;
+    person_in_charge_name: string;
+    person_in_charge_phone: string;
+    person_in_charge_address: string;
+    is_active: boolean;
+};
+
+type PariwisataEditForm = PariwisataEditValues & {
+    _method: 'patch';
+};
+
+type ErrorBag = Record<string, string | undefined>;
+
+const operationalDayOptions = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Minggu',
+];
+
+function initialEditForm(values: PariwisataEditValues): PariwisataEditForm {
+    return {
+        _method: 'patch',
+        ...values,
+    };
+}
+
+function fieldError(errors: Partial<ErrorBag>, name: string) {
+    return errors[name];
+}
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
@@ -192,6 +249,93 @@ function InfoItem({
                 </p>
             </div>
         </div>
+    );
+}
+
+function FieldError({ message }: { message?: string }) {
+    if (!message) {
+        return null;
+    }
+
+    return (
+        <p className="mt-1 text-xs font-semibold text-[#D81313]">{message}</p>
+    );
+}
+
+function TextInput({
+    label,
+    value,
+    onChange,
+    error,
+    type = 'text',
+    placeholder,
+    required = false,
+}: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    type?: string;
+    placeholder?: string;
+    required?: boolean;
+}) {
+    return (
+        <label className="block min-w-0">
+            <span className="text-xs font-bold text-[#344256]">
+                {label} {required && <span className="text-[#D81313]">*</span>}
+            </span>
+            <input
+                type={type}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={placeholder}
+                className="mt-2 h-10 w-full rounded-xl border border-[#DCE3EA] bg-white px-3 text-sm font-semibold text-[#172033] transition outline-none focus:border-[#0066AE] focus:ring-2 focus:ring-[#AAD2F8]/35"
+            />
+            <FieldError message={error} />
+        </label>
+    );
+}
+
+function TextArea({
+    label,
+    value,
+    onChange,
+    error,
+    placeholder,
+}: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    placeholder?: string;
+}) {
+    return (
+        <label className="block min-w-0">
+            <span className="text-xs font-bold text-[#344256]">{label}</span>
+            <textarea
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={placeholder}
+                rows={3}
+                className="mt-2 w-full resize-y rounded-xl border border-[#DCE3EA] bg-white px-3 py-2 text-sm font-semibold text-[#172033] transition outline-none focus:border-[#0066AE] focus:ring-2 focus:ring-[#AAD2F8]/35"
+            />
+            <FieldError message={error} />
+        </label>
+    );
+}
+
+function EditSection({
+    title,
+    children,
+}: {
+    title: string;
+    children: ReactNode;
+}) {
+    return (
+        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+            <h3 className="text-sm font-bold text-[#172033]">{title}</h3>
+            <div className="mt-4 space-y-4">{children}</div>
+        </section>
     );
 }
 
@@ -487,9 +631,338 @@ function AnswerDetailModal({
     );
 }
 
+function PariwisataEditSidebar({
+    open,
+    onClose,
+    assignment,
+    form,
+    categoryOptions,
+    onSubmit,
+}: {
+    open: boolean;
+    onClose: () => void;
+    assignment: Assignment;
+    form: ReturnType<typeof useForm<PariwisataEditForm>>;
+    categoryOptions: CategoryOption[];
+    onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+    const { data, setData, processing, errors } = form;
+
+    function selectedOperationalDays() {
+        return data.operational_days
+            .split(',')
+            .map((day) => day.trim())
+            .filter(Boolean);
+    }
+
+    function toggleCategory(value: string) {
+        setData(
+            'categories',
+            data.categories.includes(value)
+                ? data.categories.filter((category) => category !== value)
+                : [...data.categories, value],
+        );
+    }
+
+    function toggleOperationalDay(day: string) {
+        const selectedDays = selectedOperationalDays();
+        const nextDays = selectedDays.includes(day)
+            ? selectedDays.filter((selectedDay) => selectedDay !== day)
+            : operationalDayOptions.filter(
+                  (option) => selectedDays.includes(option) || option === day,
+              );
+
+        setData('operational_days', nextDays.join(', '));
+    }
+
+    return (
+        <>
+            <div
+                className={classNames(
+                    'fixed inset-0 z-40 bg-[#031120]/35 transition-opacity',
+                    open
+                        ? 'pointer-events-auto opacity-100'
+                        : 'pointer-events-none opacity-0',
+                )}
+                onClick={onClose}
+            />
+            <aside
+                className={classNames(
+                    'fixed top-0 right-0 z-50 flex h-dvh w-full max-w-[540px] flex-col border-l border-[#DDE4EC] bg-[#F7F7F7] shadow-[-18px_0_40px_rgba(3,17,32,0.18)] transition-transform duration-300',
+                    open ? 'translate-x-0' : 'translate-x-full',
+                )}
+                aria-hidden={!open}
+            >
+                <div className="flex items-start justify-between gap-4 border-b border-[#E2E8F0] bg-white px-5 py-4">
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#0066AE]">
+                            {assignment.village.name}
+                        </p>
+                        <h2 className="mt-1 text-lg font-bold text-[#172033]">
+                            Edit Data Pariwisata
+                        </h2>
+                        <p className="mt-1 text-xs leading-5 font-semibold text-[#64748B]">
+                            Ubah profil destinasi pariwisata.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#DDE4EC] bg-white text-[#303030] transition hover:bg-[#F1F5F8]"
+                        aria-label="Tutup edit pariwisata"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <form
+                    onSubmit={onSubmit}
+                    className="flex min-h-0 flex-1 flex-col"
+                >
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+                        <EditSection title="Identitas Destinasi">
+                            <TextInput
+                                label="Nama Destinasi Wisata"
+                                value={data.name}
+                                onChange={(value) => setData('name', value)}
+                                error={fieldError(errors, 'name')}
+                                placeholder="Nama destinasi"
+                                required
+                            />
+                            <div className="min-w-0">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs font-bold text-[#344256]">
+                                        Kategori Destinasi{' '}
+                                        <span className="text-[#D81313]">
+                                            *
+                                        </span>
+                                    </span>
+                                    <span className="text-[11px] font-semibold text-[#7C7C7C]">
+                                        Bisa pilih lebih dari satu
+                                    </span>
+                                </div>
+                                <div className="mt-2 grid grid-cols-1 gap-2 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2">
+                                    {categoryOptions.map((option) => {
+                                        const checked =
+                                            data.categories.includes(
+                                                option.value,
+                                            );
+
+                                        return (
+                                            <label
+                                                key={option.value}
+                                                className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#303030] ring-1 ring-[#E6ECF2] transition hover:ring-[#AAD2F8]"
+                                            >
+                                                <Checkbox
+                                                    checked={checked}
+                                                    onCheckedChange={() =>
+                                                        toggleCategory(
+                                                            option.value,
+                                                        )
+                                                    }
+                                                    className="border-[#AAD2F8] data-[state=checked]:border-[#0066AE] data-[state=checked]:bg-[#0066AE]"
+                                                />
+                                                <span className="truncate">
+                                                    {option.label}
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <FieldError
+                                    message={fieldError(errors, 'categories')}
+                                />
+                            </div>
+                            <TextArea
+                                label="Alamat Destinasi"
+                                value={data.address}
+                                onChange={(value) => setData('address', value)}
+                                error={fieldError(errors, 'address')}
+                                placeholder="Alamat lengkap destinasi"
+                            />
+                        </EditSection>
+
+                        <EditSection title="Operasional dan Tiket">
+                            <div className="min-w-0">
+                                <span className="text-xs font-bold text-[#344256]">
+                                    Hari Operasional
+                                </span>
+                                <div className="mt-2 grid grid-cols-1 gap-2 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2">
+                                    {operationalDayOptions.map((day) => {
+                                        const checked =
+                                            selectedOperationalDays().includes(
+                                                day,
+                                            );
+
+                                        return (
+                                            <label
+                                                key={day}
+                                                className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#303030] ring-1 ring-[#E6ECF2] transition hover:ring-[#AAD2F8]"
+                                            >
+                                                <Checkbox
+                                                    checked={checked}
+                                                    onCheckedChange={() =>
+                                                        toggleOperationalDay(
+                                                            day,
+                                                        )
+                                                    }
+                                                    className="border-[#AAD2F8] data-[state=checked]:border-[#0066AE] data-[state=checked]:bg-[#0066AE]"
+                                                />
+                                                <span>{day}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <p className="mt-1 text-[11px] font-semibold text-[#7C7C7C]">
+                                    Tersimpan sebagai:{' '}
+                                    {data.operational_days || '-'}
+                                </p>
+                                <FieldError
+                                    message={fieldError(
+                                        errors,
+                                        'operational_days',
+                                    )}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <TextInput
+                                    label="Jam Operasional"
+                                    value={data.operational_hours}
+                                    onChange={(value) =>
+                                        setData('operational_hours', value)
+                                    }
+                                    error={fieldError(
+                                        errors,
+                                        'operational_hours',
+                                    )}
+                                    placeholder="08.00 - 17.00"
+                                />
+                                <TextInput
+                                    label="Harga Tiket"
+                                    value={data.entrance_ticket_price}
+                                    onChange={(value) =>
+                                        setData('entrance_ticket_price', value)
+                                    }
+                                    error={fieldError(
+                                        errors,
+                                        'entrance_ticket_price',
+                                    )}
+                                    placeholder="25000"
+                                    type="number"
+                                />
+                            </div>
+                            <TextInput
+                                label="Keterangan Tiket"
+                                value={data.entrance_ticket_description}
+                                onChange={(value) =>
+                                    setData(
+                                        'entrance_ticket_description',
+                                        value,
+                                    )
+                                }
+                                error={fieldError(
+                                    errors,
+                                    'entrance_ticket_description',
+                                )}
+                                placeholder="Termasuk parkir"
+                            />
+                            <TextArea
+                                label="Catatan Jadwal Operasional"
+                                value={data.operational_schedule_notes}
+                                onChange={(value) =>
+                                    setData('operational_schedule_notes', value)
+                                }
+                                error={fieldError(
+                                    errors,
+                                    'operational_schedule_notes',
+                                )}
+                                placeholder="Catatan libur atau jadwal khusus"
+                            />
+                        </EditSection>
+
+                        <EditSection title="Penanggung Jawab">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <TextInput
+                                    label="Nama PIC"
+                                    value={data.person_in_charge_name}
+                                    onChange={(value) =>
+                                        setData('person_in_charge_name', value)
+                                    }
+                                    error={fieldError(
+                                        errors,
+                                        'person_in_charge_name',
+                                    )}
+                                    placeholder="Nama penanggung jawab"
+                                />
+                                <TextInput
+                                    label="Telepon PIC"
+                                    value={data.person_in_charge_phone}
+                                    onChange={(value) =>
+                                        setData('person_in_charge_phone', value)
+                                    }
+                                    error={fieldError(
+                                        errors,
+                                        'person_in_charge_phone',
+                                    )}
+                                    placeholder="08xxxxxxxxxx"
+                                />
+                            </div>
+                            <TextArea
+                                label="Alamat PIC"
+                                value={data.person_in_charge_address}
+                                onChange={(value) =>
+                                    setData('person_in_charge_address', value)
+                                }
+                                error={fieldError(
+                                    errors,
+                                    'person_in_charge_address',
+                                )}
+                                placeholder="Alamat penanggung jawab"
+                            />
+                            <label className="flex items-center justify-between gap-3 rounded-xl border border-[#DCE3EA] bg-white px-3 py-2 text-sm font-bold text-[#303030]">
+                                Status Aktif
+                                <Checkbox
+                                    checked={data.is_active}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_active', Boolean(checked))
+                                    }
+                                    className="border-[#AAD2F8] data-[state=checked]:border-[#0066AE] data-[state=checked]:bg-[#0066AE]"
+                                />
+                            </label>
+                            <FieldError
+                                message={fieldError(errors, 'is_active')}
+                            />
+                        </EditSection>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 border-t border-[#E2E8F0] bg-white px-5 py-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="inline-flex h-10 items-center justify-center rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white transition hover:bg-[#093967] disabled:opacity-60"
+                        >
+                            <Save size={16} />
+                            {processing ? 'Menyimpan...' : 'Simpan'}
+                        </button>
+                    </div>
+                </form>
+            </aside>
+        </>
+    );
+}
+
 export default function ShowPariwisata({
     assignment,
     pariwisata,
+    category_options,
+    edit_values,
     survey_template,
     survey_summary,
     survey_groups,
@@ -499,6 +972,28 @@ export default function ShowPariwisata({
     const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(
         null,
     );
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const editForm = useForm<PariwisataEditForm>(initialEditForm(edit_values));
+
+    function closeEditSidebar() {
+        setIsEditOpen(false);
+        editForm.clearErrors();
+    }
+
+    function submitEdit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        editForm.post(
+            updatePariwisata.url({
+                assignment: assignment.code,
+                pariwisata: pariwisata.id,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: closeEditSidebar,
+            },
+        );
+    }
 
     const filteredGroups = useMemo(
         () =>
@@ -601,6 +1096,14 @@ export default function ShowPariwisata({
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsEditOpen(true)}
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]"
+                            >
+                                <Pencil size={16} />
+                                Edit Data Pariwisata
+                            </button>
                             <Link href={showAssignment.url(assignment.code)}>
                                 <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
                                     <ArrowLeft size={16} />
@@ -831,6 +1334,14 @@ export default function ShowPariwisata({
                         setDetailQuestion(null);
                     }
                 }}
+            />
+            <PariwisataEditSidebar
+                open={isEditOpen}
+                onClose={closeEditSidebar}
+                assignment={assignment}
+                form={editForm}
+                categoryOptions={category_options}
+                onSubmit={submitEdit}
             />
         </>
     );
