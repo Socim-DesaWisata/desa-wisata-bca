@@ -42,7 +42,7 @@ type PariwisataRow = {
     id: number;
     name: string;
     categories: string[];
-    category_label: string;
+    total_score: number;
     operational_days: string;
     operational_hours: string;
     ticket_price: string;
@@ -344,7 +344,7 @@ export default function PariwisataIndex({
                                         {[
                                             'Wisata',
                                             'Desa',
-                                            'Kategori',
+                                            'Total Skor',
                                             'Operasional',
                                             'Harga Tiket',
                                             'PIC',
@@ -412,7 +412,7 @@ export default function PariwisataIndex({
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-3 text-xs font-semibold text-[#303030]">
-                                                    {item.category_label}
+                                                    {item.total_score}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <span className="block font-bold text-[#303030]">

@@ -45,7 +45,7 @@ type UmkmRow = {
     business_owner_name: string;
     brand_name: string;
     product_category: string;
-    annual_revenue: string;
+    total_score: number;
     has_exported: boolean;
     export_label: string;
     payment_label: string;
@@ -348,7 +348,7 @@ export default function UmkmIndex({
                                             'UMKM',
                                             'Desa',
                                             'Kategori / Brand',
-                                            'Omzet',
+                                            'Total Skor',
                                             'Payment',
                                             'Export',
                                             'Dokumen',
@@ -437,7 +437,7 @@ export default function UmkmIndex({
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-3 font-bold text-[#303030]">
-                                                    {umkm.annual_revenue}
+                                                    {umkm.total_score}
                                                 </td>
                                                 <td className="px-3 py-3 text-xs font-semibold text-[#303030]">
                                                     {umkm.payment_label}

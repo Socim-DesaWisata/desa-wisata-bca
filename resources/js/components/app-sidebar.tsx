@@ -69,6 +69,7 @@ const navGroups: SidebarNavGroup[] = [
                 icon: BarChart3,
                 roles: ['admin'],
                 children: [
+                    { title: 'Kemenpar', href: villages() },
                     { title: 'UMKM', href: umkm() },
                     { title: 'ISTC', href: pariwisata() },
                 ],

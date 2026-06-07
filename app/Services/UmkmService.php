@@ -51,6 +51,7 @@ class UmkmService
                 'village:id,code,name,city,province',
                 'village.surveyAssignment:id,code,village_id',
                 'dataCollector:id,name,email',
+                'surveyAnswers:id,umkm_id,score,max_score_snapshot,question_weight_percent_snapshot',
             ])
             ->withCount(['documents', 'surveyAnswers'])
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
@@ -157,6 +158,13 @@ class UmkmService
      */
     private function formatUmkm(VillageUmkm $umkm): array
     {
+        $totalScore = $umkm->surveyAnswers->sum(function ($answer) {
+            $score = (float) $answer->score;
+            $maxScore = (float) ($answer->max_score_snapshot ?: 100);
+            $weight = (float) ($answer->question_weight_percent_snapshot ?: 0);
+            return $maxScore > 0 ? round(($score / $maxScore) * $weight, 4) : 0;
+        });
+
         return [
             'id' => $umkm->id,
             'name' => $umkm->name,
@@ -164,7 +172,7 @@ class UmkmService
             'business_owner_name' => $umkm->business_owner_name ?: '-',
             'brand_name' => $umkm->brand_name ?: '-',
             'product_category' => $umkm->product_category ?: '-',
-            'annual_revenue' => $this->formatCurrency($umkm->annual_revenue),
+            'total_score' => round($totalScore, 2),
             'has_qris' => (bool) $umkm->has_qris,
             'has_edc' => (bool) $umkm->has_edc,
             'has_credit_card' => (bool) $umkm->has_credit_card,

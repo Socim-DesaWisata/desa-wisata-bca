@@ -47,6 +47,7 @@ class PariwisataService
                 'village:id,code,name,city,province',
                 'village.surveyAssignment:id,code,village_id',
                 'categories:id,pariwisata_village_id,category',
+                'surveyAnswers:id,pariwisata_village_id,pariwisata_survey_question_id,score',
             ])
             ->withCount('surveyAnswers')
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
@@ -150,11 +151,13 @@ class PariwisataService
      */
     private function formatPariwisata(PariwisataVillage $pariwisata): array
     {
+        $totalScore = $pariwisata->surveyAnswers->sum('score');
+
         return [
             'id' => $pariwisata->id,
             'name' => $pariwisata->name,
             'categories' => $pariwisata->categories->pluck('category')->filter()->values()->all(),
-            'category_label' => $pariwisata->categories->pluck('category')->filter()->join(', ') ?: '-',
+            'total_score' => $totalScore,
             'operational_days' => $pariwisata->operational_days ?: '-',
             'operational_hours' => $pariwisata->operational_hours ?: '-',
             'ticket_price' => $this->formatCurrency($pariwisata->entrance_ticket_price),
