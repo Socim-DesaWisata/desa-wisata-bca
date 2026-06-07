@@ -277,6 +277,17 @@ class UmkmSurveyAssignmentService
             $umkm->update($payload);
             $this->syncCategories($umkm, $data['categories'] ?? []);
 
+            $user = auth()->user();
+            if ($user) {
+                AnnualTurnover::query()->where('umkm_id', $umkm->id)->delete();
+                AnnualWorkerStat::query()->where('umkm_id', $umkm->id)->delete();
+                AnnualWorkerTrainingStat::query()->where('umkm_id', $umkm->id)->delete();
+
+                $this->createAnnualTurnovers($umkm, $data['annual_turnovers'] ?? [], $user);
+                $this->createAnnualWorkerStats($umkm, $data['annual_worker_stats'] ?? [], $user);
+                $this->createAnnualWorkerTrainingStats($umkm, $data['annual_worker_training_stats'] ?? [], $user);
+            }
+
             return $umkm->refresh();
         });
     }

@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeDollarSign,
+    Banknote,
     CalendarDays,
     Camera,
     CheckCircle2,
@@ -199,11 +200,35 @@ type UmkmEditValues = {
     banking_notes: string;
     has_exported: string;
     export_destination_countries: string;
+    annual_turnovers: AnnualTurnoverForm[];
+    annual_worker_stats: AnnualWorkerStatForm[];
+    annual_worker_training_stats: AnnualWorkerTrainingStatForm[];
 };
 
 type UmkmEditForm = UmkmEditValues & {
     _method: 'patch';
     product_photo: File | null;
+};
+
+type AnnualTurnoverForm = {
+    year: string;
+    value: string;
+    notes: string;
+};
+
+type AnnualWorkerStatForm = {
+    year: string;
+    dimension: string;
+    category_value: string;
+    total_people: string;
+    notes: string;
+};
+
+type AnnualWorkerTrainingStatForm = {
+    year: string;
+    training_name: string;
+    total_people: string;
+    notes: string;
 };
 
 type UmkmAnswerEditForm = {
@@ -238,6 +263,33 @@ function formatThousands(value: string) {
     const digits = digitsOnly(value);
 
     return digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
+}
+
+function emptyAnnualTurnover(): AnnualTurnoverForm {
+    return {
+        year: String(new Date().getFullYear()),
+        value: '',
+        notes: '',
+    };
+}
+
+function emptyAnnualWorkerStat(): AnnualWorkerStatForm {
+    return {
+        year: String(new Date().getFullYear()),
+        dimension: 'age',
+        category_value: '',
+        total_people: '',
+        notes: '',
+    };
+}
+
+function emptyAnnualWorkerTrainingStat(): AnnualWorkerTrainingStatForm {
+    return {
+        year: String(new Date().getFullYear()),
+        training_name: '',
+        total_people: '',
+        notes: '',
+    };
 }
 
 const legalBusinessOptions: Option[] = [
@@ -447,15 +499,29 @@ function SelectInput({
 }
 
 function EditSection({
+    icon,
     title,
+    description,
     children,
 }: {
+    icon?: ReactNode;
     title: string;
+    description?: string;
     children: ReactNode;
 }) {
     return (
-        <section className="space-y-4 rounded-2xl border border-[#E6EDF4] bg-white p-4">
-            <h3 className="text-sm font-bold text-[#172033]">{title}</h3>
+        <section className="rounded-xl border border-[#EFEFEF] bg-[#F8FBFE] p-4">
+            <div className="mb-4">
+                <div className="flex items-center gap-2">
+                    {icon && <span className="text-[#0066AE]">{icon}</span>}
+                    <h3 className="text-sm font-bold text-[#303030]">{title}</h3>
+                </div>
+                {description && (
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        {description}
+                    </p>
+                )}
+            </div>
             {children}
         </section>
     );
@@ -823,6 +889,15 @@ function UmkmEditSidebar({
                 ? data.categories.filter((category) => category !== value)
                 : [...data.categories, value],
         );
+    }
+
+    function updateArrayField<K extends keyof UmkmEditForm>(
+        field: K,
+        updater: (
+            rows: UmkmEditForm[K] extends any[] ? UmkmEditForm[K] : never,
+        ) => UmkmEditForm[K],
+    ) {
+        setData(field, updater(data[field] as any) as any);
     }
 
     return (
@@ -1336,8 +1411,467 @@ function UmkmEditSidebar({
                                         errors,
                                         'export_destination_countries',
                                     )}
-                                    placeholder="Malaysia, Singapura, Jepang"
+                                    placeholder="Jika ya, sebutkan negaranya"
                                 />
+                            </div>
+                        </EditSection>
+
+                        <EditSection
+                            icon={<Banknote size={16} />}
+                            title="Omset Tahunan"
+                            description="Tabel annual_turnovers."
+                        >
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        updateArrayField(
+                                            'annual_turnovers',
+                                            (rows) => [
+                                                ...rows,
+                                                emptyAnnualTurnover(),
+                                            ],
+                                        )
+                                    }
+                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
+                            </div>
+                            <FieldError
+                                message={
+                                    fieldError(errors, 'annual_turnovers') as
+                                        | string
+                                        | undefined
+                                }
+                            />
+                            <div className="mt-4 space-y-3">
+                                {data.annual_turnovers.length === 0 && (
+                                    <p className="rounded-lg bg-white px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                                        Belum ada data omset tahunan.
+                                    </p>
+                                )}
+                                {data.annual_turnovers.map((row, index) => {
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="rounded-xl border border-[#EFEFEF] bg-white p-3"
+                                        >
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <TextInput
+                                                    label="Tahun"
+                                                    value={row.year}
+                                                    onChange={(value) =>
+                                                        updateArrayField(
+                                                            'annual_turnovers',
+                                                            (rows) =>
+                                                                rows.map((r, i) =>
+                                                                    i === index
+                                                                        ? { ...r, year: value }
+                                                                        : r,
+                                                                ),
+                                                        )
+                                                    }
+                                                    error={
+                                                        fieldError(
+                                                            errors,
+                                                            `annual_turnovers.${index}.year` as any,
+                                                        ) as string | undefined
+                                                    }
+                                                    type="number"
+                                                />
+                                                <TextInput
+                                                    label="Nilai Omset (Rp)"
+                                                    value={formatThousands(row.value)}
+                                                    onChange={(value) =>
+                                                        updateArrayField(
+                                                            'annual_turnovers',
+                                                            (rows) =>
+                                                                rows.map((r, i) =>
+                                                                    i === index
+                                                                        ? { ...r, value: digitsOnly(value) }
+                                                                        : r,
+                                                                ),
+                                                        )
+                                                    }
+                                                    error={
+                                                        fieldError(
+                                                            errors,
+                                                            `annual_turnovers.${index}.value` as any,
+                                                        ) as string | undefined
+                                                    }
+                                                />
+                                                <div className="sm:col-span-2">
+                                                    <TextInput
+                                                        label="Catatan"
+                                                        value={row.notes}
+                                                        onChange={(value) =>
+                                                            updateArrayField(
+                                                                'annual_turnovers',
+                                                                (rows) =>
+                                                                    rows.map((r, i) =>
+                                                                        i === index
+                                                                            ? { ...r, notes: value }
+                                                                            : r,
+                                                                    ),
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateArrayField(
+                                                            'annual_turnovers',
+                                                            (rows) =>
+                                                                rows.filter(
+                                                                    (_, i) => i !== index,
+                                                                ),
+                                                        )
+                                                    }
+                                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#F3C8C8] px-3 text-xs font-bold text-[#D81313] hover:bg-[#FDECEC]"
+                                                >
+                                                    <Trash2 size={14} />
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </EditSection>
+
+                        <EditSection
+                            icon={<UserRound size={16} />}
+                            title="Statistik Tenaga Kerja"
+                            description="Tabel annual_worker_stats."
+                        >
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        updateArrayField(
+                                            'annual_worker_stats',
+                                            (rows) => [
+                                                ...rows,
+                                                emptyAnnualWorkerStat(),
+                                            ],
+                                        )
+                                    }
+                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
+                            </div>
+                            <FieldError
+                                message={
+                                    fieldError(errors, 'annual_worker_stats') as
+                                        | string
+                                        | undefined
+                                }
+                            />
+                            <div className="mt-4 space-y-3">
+                                {data.annual_worker_stats.length === 0 && (
+                                    <p className="rounded-lg bg-white px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                                        Belum ada data tenaga kerja.
+                                    </p>
+                                )}
+                                {data.annual_worker_stats.map((row, index) => {
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="rounded-xl border border-[#EFEFEF] bg-white p-3"
+                                        >
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <TextInput
+                                                    label="Tahun"
+                                                    value={row.year}
+                                                    onChange={(value) =>
+                                                        updateArrayField(
+                                                            'annual_worker_stats',
+                                                            (rows) =>
+                                                                rows.map((r, i) =>
+                                                                    i === index
+                                                                        ? { ...r, year: value }
+                                                                        : r,
+                                                                ),
+                                                        )
+                                                    }
+                                                    error={
+                                                        fieldError(
+                                                            errors,
+                                                            `annual_worker_stats.${index}.year` as any,
+                                                        ) as string | undefined
+                                                    }
+                                                    type="number"
+                                                />
+                                                <SelectInput
+                                                    label="Dimensi"
+                                                    value={row.dimension}
+                                                    onChange={(value) =>
+                                                        updateArrayField(
+                                                            'annual_worker_stats',
+                                                            (rows) =>
+                                                                rows.map((r, i) =>
+                                                                    i === index
+                                                                        ? { ...r, dimension: value }
+                                                                        : r,
+                                                                ),
+                                                        )
+                                                    }
+                                                    options={[
+                                                        { value: 'age', label: 'Usia' },
+                                                        { value: 'gender', label: 'Gender' },
+                                                        { value: 'education', label: 'Pendidikan' },
+                                                    ]}
+                                                    error={
+                                                        fieldError(
+                                                            errors,
+                                                            `annual_worker_stats.${index}.dimension` as any,
+                                                        ) as string | undefined
+                                                    }
+                                                />
+                                                <TextInput
+                                                    label="Kategori / Rentang"
+                                                    value={row.category_value}
+                                                    onChange={(value) =>
+                                                        updateArrayField(
+                                                            'annual_worker_stats',
+                                                            (rows) =>
+                                                                rows.map((r, i) =>
+                                                                    i === index
+                                                                        ? { ...r, category_value: value }
+                                                                        : r,
+                                                                ),
+                                                        )
+                                                    }
+                                                    error={
+                                                        fieldError(
+                                                            errors,
+                                                            `annual_worker_stats.${index}.category_value` as any,
+                                                        ) as string | undefined
+                                                    }
+                                                />
+                                                <TextInput
+                                                    label="Jumlah Orang"
+                                                    value={row.total_people}
+                                                    onChange={(value) =>
+                                                        updateArrayField(
+                                                            'annual_worker_stats',
+                                                            (rows) =>
+                                                                rows.map((r, i) =>
+                                                                    i === index
+                                                                        ? { ...r, total_people: value }
+                                                                        : r,
+                                                                ),
+                                                        )
+                                                    }
+                                                    error={
+                                                        fieldError(
+                                                            errors,
+                                                            `annual_worker_stats.${index}.total_people` as any,
+                                                        ) as string | undefined
+                                                    }
+                                                    type="number"
+                                                />
+                                                <div className="sm:col-span-2">
+                                                    <TextInput
+                                                        label="Catatan"
+                                                        value={row.notes}
+                                                        onChange={(value) =>
+                                                            updateArrayField(
+                                                                'annual_worker_stats',
+                                                                (rows) =>
+                                                                    rows.map((r, i) =>
+                                                                        i === index
+                                                                            ? { ...r, notes: value }
+                                                                            : r,
+                                                                    ),
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateArrayField(
+                                                            'annual_worker_stats',
+                                                            (rows) =>
+                                                                rows.filter(
+                                                                    (_, i) => i !== index,
+                                                                ),
+                                                        )
+                                                    }
+                                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#F3C8C8] px-3 text-xs font-bold text-[#D81313] hover:bg-[#FDECEC]"
+                                                >
+                                                    <Trash2 size={14} />
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </EditSection>
+
+                        <EditSection
+                            icon={<CheckCircle2 size={16} />}
+                            title="Pelatihan Pekerja"
+                            description="Tabel annual_worker_training_stats."
+                        >
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        updateArrayField(
+                                            'annual_worker_training_stats',
+                                            (rows) => [
+                                                ...rows,
+                                                emptyAnnualWorkerTrainingStat(),
+                                            ],
+                                        )
+                                    }
+                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
+                            </div>
+                            <FieldError
+                                message={
+                                    fieldError(
+                                        errors,
+                                        'annual_worker_training_stats',
+                                    ) as string | undefined
+                                }
+                            />
+                            <div className="mt-4 space-y-3">
+                                {data.annual_worker_training_stats.length ===
+                                    0 && (
+                                    <p className="rounded-lg bg-white px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                                        Belum ada data pelatihan.
+                                    </p>
+                                )}
+                                {data.annual_worker_training_stats.map(
+                                    (row, index) => {
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="rounded-xl border border-[#EFEFEF] bg-white p-3"
+                                            >
+                                                <div className="grid gap-3 sm:grid-cols-2">
+                                                    <TextInput
+                                                        label="Tahun"
+                                                        value={row.year}
+                                                        onChange={(value) =>
+                                                            updateArrayField(
+                                                                'annual_worker_training_stats',
+                                                                (rows) =>
+                                                                    rows.map((r, i) =>
+                                                                        i === index
+                                                                            ? { ...r, year: value }
+                                                                            : r,
+                                                                    ),
+                                                            )
+                                                        }
+                                                        error={
+                                                            fieldError(
+                                                                errors,
+                                                                `annual_worker_training_stats.${index}.year` as any,
+                                                            ) as string | undefined
+                                                        }
+                                                        type="number"
+                                                    />
+                                                    <TextInput
+                                                        label="Nama Pelatihan"
+                                                        value={row.training_name}
+                                                        onChange={(value) =>
+                                                            updateArrayField(
+                                                                'annual_worker_training_stats',
+                                                                (rows) =>
+                                                                    rows.map((r, i) =>
+                                                                        i === index
+                                                                            ? { ...r, training_name: value }
+                                                                            : r,
+                                                                    ),
+                                                            )
+                                                        }
+                                                        error={
+                                                            fieldError(
+                                                                errors,
+                                                                `annual_worker_training_stats.${index}.training_name` as any,
+                                                            ) as string | undefined
+                                                        }
+                                                    />
+                                                    <TextInput
+                                                        label="Jumlah Peserta"
+                                                        value={row.total_people}
+                                                        onChange={(value) =>
+                                                            updateArrayField(
+                                                                'annual_worker_training_stats',
+                                                                (rows) =>
+                                                                    rows.map((r, i) =>
+                                                                        i === index
+                                                                            ? { ...r, total_people: value }
+                                                                            : r,
+                                                                    ),
+                                                            )
+                                                        }
+                                                        error={
+                                                            fieldError(
+                                                                errors,
+                                                                `annual_worker_training_stats.${index}.total_people` as any,
+                                                            ) as string | undefined
+                                                        }
+                                                        type="number"
+                                                    />
+                                                    <div className="sm:col-span-2">
+                                                        <TextInput
+                                                            label="Catatan"
+                                                            value={row.notes}
+                                                            onChange={(value) =>
+                                                                updateArrayField(
+                                                                    'annual_worker_training_stats',
+                                                                    (rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === index
+                                                                                ? { ...r, notes: value }
+                                                                                : r,
+                                                                        ),
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-3 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            updateArrayField(
+                                                                'annual_worker_training_stats',
+                                                                (rows) =>
+                                                                    rows.filter(
+                                                                        (_, i) =>
+                                                                            i !== index,
+                                                                    ),
+                                                            )
+                                                        }
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#F3C8C8] px-3 text-xs font-bold text-[#D81313] hover:bg-[#FDECEC]"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    },
+                                )}
                             </div>
                         </EditSection>
                     </div>

@@ -484,6 +484,9 @@ class VillageSurveyAssignmentService
             'creator:id,name,email',
             'documents:id,village_umkm_id,uploaded_by,document_name,file_path,mime_type,file_size,created_at,updated_at',
             'documents.uploadedBy:id,name,email',
+            'annualTurnovers:id,umkm_id,year,value,notes',
+            'annualWorkerStats:id,umkm_id,year,dimension,category_value,total_people,notes',
+            'annualWorkerTrainingStats:id,umkm_id,year,training_name,total_people,notes',
             'surveyAnswers' => fn ($query) => $query
                 ->select([
                     'id',
@@ -1447,6 +1450,24 @@ class VillageSurveyAssignmentService
             'banking_notes' => (string) ($umkm->banking_notes ?? ''),
             'has_exported' => $this->formatBooleanValue($umkm->has_exported),
             'export_destination_countries' => (string) ($umkm->export_destination_countries ?? ''),
+            'annual_turnovers' => collect($umkm->annualTurnovers)->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'value' => (string) $item->value,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
+            'annual_worker_stats' => collect($umkm->annualWorkerStats)->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'dimension' => $item->dimension,
+                'category_value' => $item->category_value,
+                'total_people' => (string) $item->total_people,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
+            'annual_worker_training_stats' => collect($umkm->annualWorkerTrainingStats)->map(fn ($item) => [
+                'year' => (string) $item->year,
+                'training_name' => $item->training_name ?? '',
+                'total_people' => (string) $item->total_people,
+                'notes' => $item->notes ?? '',
+            ])->values()->all(),
         ];
     }
 
