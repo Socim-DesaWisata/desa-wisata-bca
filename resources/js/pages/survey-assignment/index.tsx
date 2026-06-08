@@ -68,6 +68,7 @@ type AssignmentRow = {
     reviewed_at: string;
     created_at: string;
     updated_at: string;
+    total_score: number;
     answers_count: number;
     documents_count: number;
 };
@@ -523,6 +524,7 @@ export default function SurveyAssignmentIndex({
                                             'Desa',
                                             'Status',
                                             'Created At',
+                                            'Total Skor',
                                             'Progress',
                                             'Aksi',
                                         ].map((head) => (
@@ -568,6 +570,11 @@ export default function SurveyAssignmentIndex({
                                             </td>
                                             <td className="px-3 py-3 font-medium text-[#303030]">
                                                 {assignment.created_at}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <span className="inline-flex min-w-20 items-center justify-center rounded-full bg-[#EAF3FF] px-3 py-1 text-sm font-bold text-[#0066AE]">
+                                                    {assignment.total_score.toFixed(1)}
+                                                </span>
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#0066AE]">
@@ -898,3 +905,4 @@ SurveyAssignmentIndex.layout = {
         { title: 'Survey Assignment', href: surveyAssignments() },
     ],
 };
+

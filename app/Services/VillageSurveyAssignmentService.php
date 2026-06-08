@@ -70,6 +70,7 @@ class VillageSurveyAssignmentService
                 'submittedBy:id,name,email',
                 'reviewedBy:id,name,email',
             ])
+            ->withAvg('answers as average_score', 'score')
             ->withCount(['answers', 'documents'])
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
@@ -1124,6 +1125,7 @@ class VillageSurveyAssignmentService
             'reviewed_at' => $this->formatDate($assignment->reviewed_at),
             'created_at' => $this->formatDate($assignment->created_at),
             'updated_at' => $this->formatDate($assignment->updated_at),
+            'total_score' => round(((float) ($assignment->average_score ?? 0)) * 20, 1),
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
         ];
@@ -1960,3 +1962,5 @@ class VillageSurveyAssignmentService
         return $date?->format('Y-m-d\TH:i') ?? '';
     }
 }
+
+

@@ -6,6 +6,7 @@ import {
     CalendarDays,
     Camera,
     CheckCircle2,
+    ChevronDown,
     Download,
     Eye,
     FileText,
@@ -25,6 +26,15 @@ import {
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ReactNode } from 'react';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    LabelList,
+    ResponsiveContainer,
+    XAxis,
+    YAxis,
+} from 'recharts';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -330,6 +340,10 @@ function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
 }
 
+function criteriaLabel(criteriaCode: string, criteriaName: string) {
+    return criteriaCode + '. ' + criteriaName;
+}
+
 function Card({
     children,
     className,
@@ -375,6 +389,483 @@ function MetricCard({
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
                     {icon}
                 </span>
+            </div>
+        </Card>
+    );
+}
+
+type ScoreBucket = {
+    key: string;
+    label: string;
+    min: number;
+    max: number;
+    color: string;
+    textColor: string;
+};
+
+const scoreBuckets: ScoreBucket[] = [
+    {
+        key: '0-20',
+        label: '0-20',
+        min: 0,
+        max: 20,
+        color: '#EF4444',
+        textColor: 'text-[#EF4444]',
+    },
+    {
+        key: '21-40',
+        label: '21-40',
+        min: 21,
+        max: 40,
+        color: '#F97316',
+        textColor: 'text-[#F97316]',
+    },
+    {
+        key: '41-60',
+        label: '41-60',
+        min: 41,
+        max: 60,
+        color: '#FACC15',
+        textColor: 'text-[#CA8A04]',
+    },
+    {
+        key: '61-80',
+        label: '61-80',
+        min: 61,
+        max: 80,
+        color: '#22C55E',
+        textColor: 'text-[#16A34A]',
+    },
+    {
+        key: '81-100',
+        label: '81-100',
+        min: 81,
+        max: 100,
+        color: '#2563EB',
+        textColor: 'text-[#2563EB]',
+    },
+];
+
+const performanceLegends = [
+    { label: 'Rendah (0-40)', color: '#EF4444' },
+    { label: 'Cukup (41-60)', color: '#FACC15' },
+    { label: 'Baik (61-80)', color: '#22C55E' },
+    { label: 'Sangat Baik (81-100)', color: '#2563EB' },
+];
+
+function clampScore(value: number) {
+    if (!Number.isFinite(value)) {
+        return 0;
+    }
+
+    return Math.min(100, Math.max(0, value));
+}
+
+function answerScorePercent(answer: UmkmSurveyAnswer) {
+    if (answer.max_score <= 0) {
+        return 0;
+    }
+
+    return clampScore((answer.score / answer.max_score) * 100);
+}
+
+function criteriaPerformanceScore(group: UmkmSurveyGroup) {
+    if (group.criteria_weight_percent > 0) {
+        return clampScore(
+            (group.weighted_score / group.criteria_weight_percent) * 100,
+        );
+    }
+
+    if (group.answers.length === 0) {
+        return 0;
+    }
+
+    return clampScore(
+        group.answers.reduce(
+            (total, answer) => total + answerScorePercent(answer),
+            0,
+        ) / group.answers.length,
+    );
+}
+
+function scoreBucketFor(value: number) {
+    const rounded = Math.round(clampScore(value));
+
+    return (
+        scoreBuckets.find(
+            (bucket) => rounded >= bucket.min && rounded <= bucket.max,
+        ) ?? scoreBuckets[0]
+    );
+}
+
+function formatStatScore(value: number) {
+    return clampScore(value).toLocaleString('id-ID', {
+        maximumFractionDigits: 1,
+    });
+}
+
+type AnnualChartDatum = {
+    year: string;
+    value: number;
+};
+
+function numericValue(value: string) {
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function aggregateByYear<T extends { year: string }>(
+    rows: T[],
+    valueResolver: (row: T) => number,
+): AnnualChartDatum[] {
+    const totals = rows.reduce<Record<string, number>>((result, row) => {
+        const year = row.year?.trim();
+
+        if (!year) {
+            return result;
+        }
+
+        result[year] = (result[year] ?? 0) + valueResolver(row);
+
+        return result;
+    }, {});
+
+    return Object.entries(totals)
+        .map(([year, value]) => ({ year, value }))
+        .sort((first, second) => Number(first.year) - Number(second.year));
+}
+
+function formatCompactNumber(value: number) {
+    return new Intl.NumberFormat('id-ID', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(value);
+}
+
+function AnnualBarChartCard({
+    title,
+    description,
+    data,
+    barColor,
+    valuePrefix = '',
+}: {
+    title: string;
+    description: string;
+    data: AnnualChartDatum[];
+    barColor: string;
+    valuePrefix?: string;
+}) {
+    return (
+        <div className="min-w-0 rounded-xl border border-[#E7ECF2] bg-white p-4">
+            <div>
+                <h3 className="text-sm font-bold text-[#303030]">{title}</h3>
+                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                    {description}
+                </p>
+            </div>
+
+            <div className="mt-4 h-56 w-full">
+                {data.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={data}
+                            margin={{ top: 22, right: 8, left: -18, bottom: 0 }}
+                            accessibilityLayer
+                        >
+                            <CartesianGrid
+                                vertical={false}
+                                stroke="#E7ECF2"
+                                strokeDasharray="3 3"
+                            />
+                            <XAxis
+                                dataKey="year"
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={8}
+                                tick={{
+                                    fill: '#64748B',
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={8}
+                                tickFormatter={formatCompactNumber}
+                                tick={{
+                                    fill: '#94A3B8',
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                }}
+                            />
+                            <Bar
+                                dataKey="value"
+                                fill={barColor}
+                                radius={[8, 8, 0, 0]}
+                            >
+                                <LabelList
+                                    dataKey="value"
+                                    position="top"
+                                    offset={8}
+                                    formatter={(value) =>
+                                        `${valuePrefix}${formatCompactNumber(Number(value ?? 0))}`
+                                    }
+                                    fill="#303030"
+                                    fontSize={11}
+                                    fontWeight={800}
+                                />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-[#DDE4EC] bg-[#F8FBFE] px-4 text-center text-xs font-semibold text-[#7C7C7C]">
+                        Belum ada data tahunan.
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function UmkmAnnualCharts({ values }: { values: UmkmEditValues }) {
+    const turnoverData = aggregateByYear(values.annual_turnovers, (row) =>
+        numericValue(row.value),
+    );
+    const workerData = aggregateByYear(values.annual_worker_stats, (row) =>
+        numericValue(row.total_people),
+    );
+    const trainingData = aggregateByYear(
+        values.annual_worker_training_stats,
+        (row) => numericValue(row.total_people),
+    );
+
+    return (
+        <Card className="p-5">
+            <div className="grid gap-4 xl:grid-cols-3">
+                <AnnualBarChartCard
+                    title="Omset Tahunan"
+                    description="Total annual_turnovers per tahun"
+                    data={turnoverData}
+                    barColor="#0066AE"
+                    valuePrefix="Rp"
+                />
+                <AnnualBarChartCard
+                    title="Statistik Pekerja"
+                    description="Total annual_worker_stats per tahun"
+                    data={workerData}
+                    barColor="#22C55E"
+                />
+                <AnnualBarChartCard
+                    title="Pelatihan Pekerja"
+                    description="Total annual_worker_training_stats per tahun"
+                    data={trainingData}
+                    barColor="#F97316"
+                />
+            </div>
+        </Card>
+    );
+}
+
+function UmkmSurveyStatistics({ groups }: { groups: UmkmSurveyGroup[] }) {
+    const criteriaRows = groups.map((group) => ({
+        code: group.criteria_code,
+        name: criteriaLabel(group.criteria_code, group.criteria_name),
+        score: criteriaPerformanceScore(group),
+    }));
+
+    const answers = groups.flatMap((group) => group.answers);
+    const totalAnswers = answers.length;
+    const distribution = scoreBuckets.map((bucket) => {
+        const count = answers.filter((answer) => {
+            const score = Math.round(answerScorePercent(answer));
+
+            return score >= bucket.min && score <= bucket.max;
+        }).length;
+
+        return {
+            ...bucket,
+            count,
+            percentage: totalAnswers > 0 ? (count / totalAnswers) * 100 : 0,
+        };
+    });
+
+    const radius = 58;
+    const circumference = 2 * Math.PI * radius;
+    let currentOffset = 0;
+
+    return (
+        <Card className="overflow-hidden p-5">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+                <div className="min-w-0">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h2 className="text-base font-bold text-[#303030]">
+                                Performa per Kriteria
+                            </h2>
+                            <p className="text-sm font-semibold text-[#7C7C7C]">
+                                Skor tertimbang (0-100)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 space-y-4">
+                        {criteriaRows.length > 0 ? (
+                            criteriaRows.map((row) => {
+                                const bucket = scoreBucketFor(row.score);
+
+                                return (
+                                    <div
+                                        key={row.code}
+                                        className="grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_52px] md:items-center"
+                                    >
+                                        <p className="truncate text-xs font-bold text-[#344256]">
+                                            {row.name}
+                                        </p>
+                                        <div className="relative h-7 overflow-hidden rounded-full bg-[#EEF3F8]">
+                                            <div className="absolute inset-y-0 left-0 w-1/5 border-r border-white/90" />
+                                            <div className="absolute inset-y-0 left-[40%] w-px bg-white/90" />
+                                            <div className="absolute inset-y-0 left-[60%] w-px bg-white/90" />
+                                            <div className="absolute inset-y-0 left-[80%] w-px bg-white/90" />
+                                            <div
+                                                className="h-full rounded-full transition-[width]"
+                                                style={{
+                                                    width: `${clampScore(row.score)}%`,
+                                                    backgroundColor:
+                                                        bucket.color,
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-right text-xs font-black text-[#303030]">
+                                            {formatStatScore(row.score)}
+                                        </p>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-[#DDE4EC] bg-[#F8FBFE] px-4 py-8 text-center text-sm font-semibold text-[#7C7C7C]">
+                                Belum ada data survey untuk dihitung.
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-6 gap-2 pl-0 text-[11px] font-bold text-[#8A97A8] md:ml-[180px]">
+                        {[0, 20, 40, 60, 80, 100].map((value) => (
+                            <span
+                                key={value}
+                                className="text-right first:text-left"
+                            >
+                                {value}
+                            </span>
+                        ))}
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-4">
+                        {performanceLegends.map((legend) => (
+                            <span
+                                key={legend.label}
+                                className="inline-flex items-center gap-2 text-xs font-bold text-[#566579]"
+                            >
+                                <span
+                                    className="size-2.5 rounded-full"
+                                    style={{ backgroundColor: legend.color }}
+                                />
+                                {legend.label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="min-w-0 border-t border-[#E7ECF2] pt-5 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-6">
+                    <h2 className="text-base font-bold text-[#303030]">
+                        Distribusi Skor Jawaban
+                    </h2>
+                    <p className="text-sm font-semibold text-[#7C7C7C]">
+                        Total {totalAnswers} jawaban
+                    </p>
+
+                    <div className="mt-5 grid gap-5 sm:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-1">
+                        <div className="relative mx-auto size-44">
+                            <svg
+                                viewBox="0 0 160 160"
+                                className="size-full -rotate-90"
+                                aria-hidden="true"
+                            >
+                                <circle
+                                    cx="80"
+                                    cy="80"
+                                    r={radius}
+                                    fill="none"
+                                    stroke="#EEF3F8"
+                                    strokeWidth="22"
+                                />
+                                {totalAnswers > 0 &&
+                                    distribution.map((bucket) => {
+                                        const length =
+                                            (bucket.percentage / 100) *
+                                            circumference;
+                                        const dashOffset = -currentOffset;
+                                        currentOffset += length;
+
+                                        if (bucket.count === 0) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <circle
+                                                key={bucket.key}
+                                                cx="80"
+                                                cy="80"
+                                                r={radius}
+                                                fill="none"
+                                                stroke={bucket.color}
+                                                strokeWidth="22"
+                                                strokeDasharray={`${length} ${circumference - length}`}
+                                                strokeDashoffset={dashOffset}
+                                            />
+                                        );
+                                    })}
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <p className="text-3xl font-black text-[#303030]">
+                                    {totalAnswers}
+                                </p>
+                                <p className="text-xs font-bold text-[#7C7C7C]">
+                                    Jawaban
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            {distribution.map((bucket) => (
+                                <div
+                                    key={bucket.key}
+                                    className="flex items-center justify-between gap-3 rounded-lg bg-[#F8FBFE] px-3 py-2"
+                                >
+                                    <span className="inline-flex items-center gap-2 text-sm font-bold text-[#344256]">
+                                        <span
+                                            className="size-2.5 rounded-full"
+                                            style={{
+                                                backgroundColor: bucket.color,
+                                            }}
+                                        />
+                                        {bucket.label}
+                                    </span>
+                                    <span
+                                        className={classNames(
+                                            'text-sm font-black',
+                                            bucket.textColor,
+                                        )}
+                                    >
+                                        {bucket.count} (
+                                        {formatStatScore(bucket.percentage)}%)
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </Card>
     );
@@ -2023,6 +2514,11 @@ export default function ShowUmkm({
 }: ShowUmkmProps) {
     const [search, setSearch] = useState('');
     const [groupFilter, setGroupFilter] = useState('all');
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+        Object.fromEntries(
+            survey_groups.map((group) => [group.criteria_code, true]),
+        ),
+    );
     const [detailAnswer, setDetailAnswer] = useState<UmkmSurveyAnswer | null>(
         null,
     );
@@ -2397,6 +2893,10 @@ export default function ShowUmkm({
                         />
                     </div>
 
+                    <UmkmAnnualCharts values={edit_values} />
+
+                    <UmkmSurveyStatistics groups={survey_groups} />
+
                     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
                         <Card className="overflow-hidden">
                             <div className="flex flex-col gap-3 border-b border-[#EFEFEF] p-4 lg:flex-row lg:items-center lg:justify-between">
@@ -2439,7 +2939,10 @@ export default function ShowUmkm({
                                                 key={group.criteria_code}
                                                 value={group.criteria_code}
                                             >
-                                                {group.criteria_code}
+                                                {criteriaLabel(
+                                                    group.criteria_code,
+                                                    group.criteria_name,
+                                                )}
                                             </option>
                                         ))}
                                     </select>
@@ -2459,55 +2962,83 @@ export default function ShowUmkm({
 
                             <div className="overflow-x-auto">
                                 <div className="min-w-[780px]">
-                                    {filteredGroups.map((group) => (
-                                        <section key={group.criteria_code}>
-                                            <div className="border-b border-[#DDE9F6] bg-[#F8FBFE] px-4 py-3">
-                                                <div className="flex items-center justify-between gap-3">
+                                    {filteredGroups.map((group) => {
+                                        const isOpen =
+                                            openGroups[group.criteria_code] ??
+                                            true;
+
+                                        return (
+                                            <section key={group.criteria_code}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setOpenGroups(
+                                                            (current) => ({
+                                                                ...current,
+                                                                [group.criteria_code]:
+                                                                    !isOpen,
+                                                            }),
+                                                        )
+                                                    }
+                                                    className="flex w-full items-center justify-between gap-3 border-b border-[#DDE9F6] bg-[#F8FBFE] px-4 py-3 text-left transition hover:bg-[#F1F7FD]"
+                                                >
                                                     <div>
-                                                        <p className="text-xs font-bold text-[#0066AE]">
-                                                            {
-                                                                group.criteria_code
-                                                            }
-                                                        </p>
                                                         <h3 className="text-sm font-bold text-[#303030]">
-                                                            {
-                                                                group.criteria_name
-                                                            }
+                                                            {criteriaLabel(
+                                                                group.criteria_code,
+                                                                group.criteria_name,
+                                                            )}
                                                         </h3>
                                                     </div>
-                                                    <p className="text-xs font-bold text-[#7C7C7C]">
-                                                        {
-                                                            group.answered_questions
-                                                        }{' '}
-                                                        jawaban · weighted{' '}
-                                                        {group.weighted_score}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            {group.answers.map(
-                                                (answer, index) => (
-                                                    <QuestionRow
-                                                        key={answer.id}
-                                                        answer={answer}
-                                                        number={
-                                                            (groupStartNumbers[
-                                                                group
-                                                                    .criteria_code
-                                                            ] ?? 0) +
-                                                            index +
-                                                            1
-                                                        }
-                                                        onViewDetail={
-                                                            setDetailAnswer
-                                                        }
-                                                        onEditAnswer={
-                                                            openAnswerEdit
-                                                        }
-                                                    />
-                                                ),
-                                            )}
-                                        </section>
-                                    ))}
+                                                    <div className="flex items-center gap-3">
+                                                        <p className="text-xs font-bold text-[#7C7C7C]">
+                                                            {
+                                                                group.answered_questions
+                                                            }{' '}
+                                                            jawaban · Pembobotan
+                                                            :{' '}
+                                                            {
+                                                                group.weighted_score
+                                                            }
+                                                        </p>
+                                                        <span className="flex size-8 items-center justify-center rounded-full border border-[#D6E4F2] bg-white text-[#0066AE]">
+                                                            <ChevronDown
+                                                                size={16}
+                                                                className={classNames(
+                                                                    'transition-transform duration-200',
+                                                                    isOpen &&
+                                                                        'rotate-180',
+                                                                )}
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                                {isOpen &&
+                                                    group.answers.map(
+                                                        (answer, index) => (
+                                                            <QuestionRow
+                                                                key={answer.id}
+                                                                answer={answer}
+                                                                number={
+                                                                    (groupStartNumbers[
+                                                                        group
+                                                                            .criteria_code
+                                                                    ] ?? 0) +
+                                                                    index +
+                                                                    1
+                                                                }
+                                                                onViewDetail={
+                                                                    setDetailAnswer
+                                                                }
+                                                                onEditAnswer={
+                                                                    openAnswerEdit
+                                                                }
+                                                            />
+                                                        ),
+                                                    )}
+                                            </section>
+                                        );
+                                    })}
                                     {filteredGroups.length === 0 && (
                                         <div className="px-4 py-10 text-center text-sm font-semibold text-[#7C7C7C]">
                                             Tidak ada jawaban sesuai filter.

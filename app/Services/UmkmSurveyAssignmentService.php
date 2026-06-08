@@ -279,9 +279,7 @@ class UmkmSurveyAssignmentService
 
             $user = auth()->user();
             if ($user) {
-                AnnualTurnover::query()->where('umkm_id', $umkm->id)->delete();
-                AnnualWorkerStat::query()->where('umkm_id', $umkm->id)->delete();
-                AnnualWorkerTrainingStat::query()->where('umkm_id', $umkm->id)->delete();
+                $this->forceDeleteAnnualData($umkm);
 
                 $this->createAnnualTurnovers($umkm, $data['annual_turnovers'] ?? [], $user);
                 $this->createAnnualWorkerStats($umkm, $data['annual_worker_stats'] ?? [], $user);
@@ -481,6 +479,21 @@ class UmkmSurveyAssignmentService
                 'created_by' => $user->id,
             ]);
         }
+    }
+
+    private function forceDeleteAnnualData(VillageUmkm $umkm): void
+    {
+        $entityKey = $this->umkmEntityKey($umkm);
+
+        AnnualTurnover::withTrashed()
+            ->where('entity_key', $entityKey)
+            ->forceDelete();
+        AnnualWorkerStat::withTrashed()
+            ->where('entity_key', $entityKey)
+            ->forceDelete();
+        AnnualWorkerTrainingStat::withTrashed()
+            ->where('entity_key', $entityKey)
+            ->forceDelete();
     }
 
     /**
