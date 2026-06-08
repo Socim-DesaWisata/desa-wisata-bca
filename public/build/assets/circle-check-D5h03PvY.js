@@ -1,1 +1,0 @@
-import{J as e}from"./app-Bfw9s4QQ.js";var t=e(`CircleCheck`,[[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}],[`path`,{d:`m9 12 2 2 4-4`,key:`dzmm74`}]]);export{t};

@@ -82,6 +82,13 @@ class UserService
         ])->save();
     }
 
+    public function updateRole(User $user, string $role): void
+    {
+        $user->forceFill([
+            'role' => $role,
+        ])->save();
+    }
+
     /**
      * @return array<int, array<string, string>>
      */

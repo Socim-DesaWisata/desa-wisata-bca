@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @import 'tailwindcss';
 
@@ -12,9 +12,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: 'Inter', Arial, sans-serif;
-    --font-tight: 'Inter Tight', 'Inter', Arial, sans-serif;
-    --font-bca: 'Inter', Arial, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', Arial, sans-serif;
+    --font-tight: 'Plus Jakarta Sans', Arial, sans-serif;
+    --font-bca: 'Plus Jakarta Sans', Arial, sans-serif;
 
     --text-hero: 56px;
     --text-hero--line-height: 64px;
@@ -97,7 +97,7 @@
 }
 
 :root {
-    --font-bca: 'Inter', Arial, sans-serif;
+    --font-bca: 'Plus Jakarta Sans', Arial, sans-serif;
 
     --text-hero-size: 56px;
     --text-hero-line-height: 64px;
@@ -202,5 +202,32 @@
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+@layer components {
+    .dashboard-village-map .leaflet-popup-content-wrapper {
+        border-radius: 24px;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .dashboard-village-map .leaflet-popup-content {
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .dashboard-village-map .leaflet-popup-tip-container {
+        margin-top: -2px;
+    }
+
+    .dashboard-village-map .leaflet-popup-tip {
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(3, 17, 32, 0.12);
+    }
+
+    .dashboard-village-map .leaflet-popup-close-button {
+        display: none;
     }
 }

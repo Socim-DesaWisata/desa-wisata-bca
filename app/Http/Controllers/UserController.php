@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Users\IndexUserRequest;
 use App\Http\Requests\Users\ResetUserPasswordRequest;
 use App\Http\Requests\Users\StoreUserRequest;
+use App\Http\Requests\Users\UpdateUserRoleRequest;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
@@ -33,5 +34,15 @@ class UserController extends Controller
         $userService->resetPassword($user, $request->validated('password'));
 
         return back()->with('success', 'Password user berhasil direset.');
+    }
+
+    public function updateRole(
+        UpdateUserRoleRequest $request,
+        User $user,
+        UserService $userService
+    ): RedirectResponse {
+        $userService->updateRole($user, $request->validated('role'));
+
+        return back()->with('success', 'Role user berhasil diubah.');
     }
 }

@@ -27,6 +27,7 @@ import {
     villages as villagesRoute,
 } from '@/routes';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
+import DashboardVillageMap from '@/components/dashboard-village-map';
 
 const colors = {
     blue100: '#F1F5F8',
@@ -94,9 +95,30 @@ type TopSurveyRow = {
     url: string | null;
 };
 
+type VillageMapPoint = {
+    id: number;
+    code: string;
+    name: string;
+    city: string | null;
+    province: string | null;
+    district: string | null;
+    subdistrict: string | null;
+    latitude: number;
+    longitude: number;
+    status: string;
+    manager_name: string | null;
+    manager_phone: string | null;
+    manager_email: string | null;
+    umkm_count: number;
+    pariwisata_count: number;
+    location: string;
+    url: string;
+};
+
 type DashboardProps = {
     dashboard_mode?: 'admin' | 'enumerator';
     kpis?: Kpi[];
+    village_map_points?: VillageMapPoint[];
     top_village_surveys?: TopSurveyRow[];
     top_umkm_surveys?: TopSurveyRow[];
     top_pariwisata_surveys?: TopSurveyRow[];
@@ -329,6 +351,7 @@ function TopSurveyTable({
 export default function Dashboard({
     dashboard_mode = 'admin',
     kpis = [],
+    village_map_points = [],
     top_village_surveys = [],
     top_umkm_surveys = [],
     top_pariwisata_surveys = [],
@@ -494,6 +517,8 @@ export default function Dashboard({
                             );
                         })}
                     </section>
+
+                    <DashboardVillageMap points={village_map_points} />
 
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
                         <main className="min-w-0 space-y-4 xl:col-span-8 2xl:col-span-9">

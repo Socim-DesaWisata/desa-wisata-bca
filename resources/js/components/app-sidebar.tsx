@@ -8,6 +8,8 @@ import {
     UserCog,
     Users,
     MapPinned,
+    Store,
+    ChartColumnBig,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,7 +36,7 @@ import type { NavItem } from '@/types';
 type SidebarNavItem = NavItem & {
     badge?: string;
     warning?: boolean;
-    children?: Array<Pick<NavItem, 'title' | 'href'>>;
+    children?: Array<Pick<NavItem, 'title' | 'href' | 'icon'>>;
     roles?: Array<'admin' | 'enumerator'>;
 };
 
@@ -69,9 +71,13 @@ const navGroups: SidebarNavGroup[] = [
                 icon: BarChart3,
                 roles: ['admin'],
                 children: [
-                    { title: 'Kemenpar', href: villages() },
-                    { title: 'UMKM', href: umkm() },
-                    { title: 'ISTC', href: pariwisata() },
+                    {
+                        title: 'Kemenpar',
+                        href: surveyAssignments(),
+                        icon: ClipboardCheck,
+                    },
+                    { title: 'UMKM', href: umkm(), icon: Store },
+                    { title: 'ISTC', href: pariwisata(), icon: ChartColumnBig },
                 ],
             },
             {
@@ -84,6 +90,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Survey Assignment',
                 href: surveyAssignments(),
                 icon: ClipboardCheck,
+                roles: ['enumerator'],
             },
         ],
     },
@@ -257,22 +264,37 @@ export function AdminSidebarContent({
                                             {isOpen && (
                                                 <div className="mt-1 ml-5 space-y-1 border-l border-white/14 pl-3">
                                                     {item.children?.map(
-                                                        (child) => (
-                                                            <Link
-                                                                key={
-                                                                    child.title
-                                                                }
-                                                                href={
-                                                                    child.href
-                                                                }
-                                                                onClick={
-                                                                    onNavigate
-                                                                }
-                                                                className="flex h-9 items-center rounded-lg px-3 text-[13px] font-medium text-white/68 transition hover:bg-white/10 hover:text-white"
-                                                            >
-                                                                {child.title}
-                                                            </Link>
-                                                        ),
+                                                        (child) => {
+                                                            const ChildIcon =
+                                                                child.icon;
+
+                                                            return (
+                                                                <Link
+                                                                    key={
+                                                                        child.title
+                                                                    }
+                                                                    href={
+                                                                        child.href
+                                                                    }
+                                                                    onClick={
+                                                                        onNavigate
+                                                                    }
+                                                                    className="flex h-9 items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-white/68 transition hover:bg-white/10 hover:text-white"
+                                                                >
+                                                                    {ChildIcon && (
+                                                                        <ChildIcon
+                                                                            className="size-4 shrink-0"
+                                                                            strokeWidth={1.8}
+                                                                        />
+                                                                    )}
+                                                                    <span className="truncate">
+                                                                        {
+                                                                            child.title
+                                                                        }
+                                                                    </span>
+                                                                </Link>
+                                                            );
+                                                        },
                                                     )}
                                                 </div>
                                             )}

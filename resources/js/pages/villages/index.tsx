@@ -72,6 +72,7 @@ type VillageRow = {
     manager_email: string | null;
     status: string;
     status_label: string;
+    total_score: number;
     created_by: string;
     updated_at: string;
 };
@@ -787,6 +788,7 @@ export default function VillagesIndex({
                                                 'Desa Wisata',
                                                 'Pengelola',
                                                 'Status',
+                                                'Skor Survey',
                                                 'Dibuat Oleh',
                                                 'Diperbarui',
                                                 'Aksi',
@@ -844,6 +846,9 @@ export default function VillagesIndex({
                                                     >
                                                         {village.status_label}
                                                     </Badge>
+                                                </td>
+                                                <td className="px-3 py-3 font-medium text-[#303030]">
+                                                    {village.total_score}
                                                 </td>
                                                 <td className="px-3 py-3 font-medium text-[#303030]">
                                                     {village.created_by}

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -80,6 +81,18 @@ class TourismVillage extends Model
     public function surveyAssignment(): HasOne
     {
         return $this->hasOne(VillageSurveyAssignment::class, 'village_id');
+    }
+
+    public function surveyAnswers(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            SurveyAnswer::class,
+            VillageSurveyAssignment::class,
+            'village_id',
+            'village_survey_assignment_id',
+            'id',
+            'id'
+        );
     }
 
     public function annualPopulationStats(): HasMany

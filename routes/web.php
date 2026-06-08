@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password.update');
+        Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.role.update');
 
         Route::get('/questions', SurveyQuestionController::class)->name('questions');
         Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])

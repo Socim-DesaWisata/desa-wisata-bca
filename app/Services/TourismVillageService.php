@@ -56,6 +56,7 @@ class TourismVillageService
             ])
             ->with(['creator:id,name'])
             ->withCount(['enumeratorAssignments', 'media', 'profileItems'])
+            ->withSum('surveyAnswers as total_score', 'score')
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
 
@@ -305,6 +306,7 @@ class TourismVillageService
             'category_label' => $this->categoryFor($progress),
             'enumerators' => $village->enumerator_assignments_count.' enumerator',
             'survey_progress' => $progress,
+            'total_score' => $village->total_score ?? 0,
             'score' => $progress >= 100 ? 'Siap review' : 'Belum final',
             'created_by' => $village->creator?->name ?? '-',
             'updated_at' => $this->formatDate($village->updated_at),

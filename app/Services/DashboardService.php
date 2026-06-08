@@ -20,6 +20,7 @@ class DashboardService
     {
         return [
             'kpis' => $this->kpis(),
+            'village_map_points' => $this->villageMapPoints(),
             'top_village_surveys' => $this->topVillageSurveys(),
             'top_umkm_surveys' => $this->topUmkmSurveys(),
             'top_pariwisata_surveys' => $this->topPariwisataSurveys(),
@@ -47,6 +48,7 @@ class DashboardService
         $currentMonthPariwisata = PariwisataVillage::query()
             ->where('created_at', '>=', now()->startOfMonth())
             ->count();
+
         return [
             [
                 'title' => 'Total Desa Wisata',
@@ -73,6 +75,64 @@ class DashboardService
                 'tone' => 'warning',
             ],
         ];
+    }
+
+    /**
+     * @return array<int, array<string, int|string|null>>
+     */
+    private function villageMapPoints(): array
+    {
+        return TourismVillage::query()
+            ->select([
+                'id',
+                'code',
+                'name',
+                'city',
+                'province',
+                'district',
+                'subdistrict',
+                'latitude',
+                'longitude',
+                'status',
+                'manager_name',
+                'manager_phone',
+                'manager_email',
+            ])
+            ->withCount([
+                'umkms as umkm_count',
+                'pariwisataVillages as pariwisata_count',
+            ])
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->orderBy('name')
+            ->get()
+            ->map(function (TourismVillage $village): array {
+                return [
+                    'id' => $village->id,
+                    'code' => $village->code,
+                    'name' => $village->name,
+                    'city' => $village->city,
+                    'province' => $village->province,
+                    'district' => $village->district,
+                    'subdistrict' => $village->subdistrict,
+                    'latitude' => (float) $village->latitude,
+                    'longitude' => (float) $village->longitude,
+                    'status' => $village->status,
+                    'manager_name' => $village->manager_name,
+                    'manager_phone' => $village->manager_phone,
+                    'manager_email' => $village->manager_email,
+                    'umkm_count' => (int) ($village->umkm_count ?? 0),
+                    'pariwisata_count' => (int) ($village->pariwisata_count ?? 0),
+                    'location' => collect([
+                        $village->subdistrict,
+                        $village->district,
+                        $village->city,
+                        $village->province,
+                    ])->filter()->implode(', ') ?: '-',
+                    'url' => route('villages.show', $village),
+                ];
+            })
+            ->all();
     }
 
     /**

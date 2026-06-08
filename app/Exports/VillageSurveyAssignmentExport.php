@@ -13,6 +13,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -201,20 +202,20 @@ class VillageSurveyAssignmentExport
         $sheet->freezePane('A2');
         $lastColumnIndex = count($headings);
         $lastColumn = Coordinate::stringFromColumnIndex($lastColumnIndex);
-        
+
         $sheet->getStyle("A1:{$lastColumn}1")->applyFromArray($this->headerStyle());
         $sheet->getStyle("A:{$lastColumn}")->getAlignment()->setVertical(Alignment::VERTICAL_TOP)->setWrapText(true);
 
         foreach ([8, 12, 14, 18, 22, 36, 22, 18, 22, 22, 20, 20, 14, 30] as $index => $width) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($index + 1))->setWidth($width);
         }
-        
+
         for ($i = 14; $i < $lastColumnIndex; $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i + 1))->setWidth(40);
         }
 
         $lastRow = max(count($rows), 1);
-        $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
+        $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new Color('FFE2E8F0'));
     }
 
     private function filename(VillageSurveyAssignment $assignment): string

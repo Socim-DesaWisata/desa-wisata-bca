@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SurveyQuestions\IndexSurveyQuestionRequest;
-use App\Http\Requests\SurveyQuestions\UpdatePariwisataSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\StoreSurveyQuestionRequest;
+use App\Http\Requests\SurveyQuestions\UpdatePariwisataSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\UpdateSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\UpdateSurveyTemplateRequest;
 use App\Http\Requests\SurveyQuestions\UpdateUmkmSurveyQuestionRequest;

@@ -162,6 +162,7 @@ class UmkmService
             $score = (float) $answer->score;
             $maxScore = (float) ($answer->max_score_snapshot ?: 100);
             $weight = (float) ($answer->question_weight_percent_snapshot ?: 0);
+
             return $maxScore > 0 ? round(($score / $maxScore) * $weight, 4) : 0;
         });
 

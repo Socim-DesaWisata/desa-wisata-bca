@@ -2,7 +2,4 @@
 
 namespace App\Http\Requests\VillageSurveyAssignments;
 
-
-class UpdateUmkmSurveyAssignmentRequest extends StoreUmkmSurveyAssignmentRequest
-{
-}
+class UpdateUmkmSurveyAssignmentRequest extends StoreUmkmSurveyAssignmentRequest {}

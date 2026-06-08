@@ -40,6 +40,7 @@ import {
     index as usersIndex,
     resetPassword as resetUserPassword,
     store as storeUser,
+    updateRole as updateUserRole,
 } from '@/actions/App/Http/Controllers/UserController';
 import { dashboard } from '@/routes';
 
@@ -120,6 +121,10 @@ type ResetPasswordForm = {
     password_confirmation: string;
 };
 
+type UpdateRoleForm = {
+    role: string;
+};
+
 const statIcons = {
     users: Users,
     shield: Shield,
@@ -185,6 +190,7 @@ export default function UsersIndex({
     const [perPage, setPerPage] = useState(String(filters.per_page ?? 10));
     const [createOpen, setCreateOpen] = useState(false);
     const [resetUser, setResetUser] = useState<UserRow | null>(null);
+    const [roleUser, setRoleUser] = useState<UserRow | null>(null);
 
     const createForm = useForm<CreateUserForm>({
         name: '',
@@ -199,6 +205,10 @@ export default function UsersIndex({
     const resetForm = useForm<ResetPasswordForm>({
         password: '',
         password_confirmation: '',
+    });
+
+    const roleForm = useForm<UpdateRoleForm>({
+        role: '',
     });
 
     function visitWithFilters(overrides: Partial<UserFilters> = {}) {
@@ -243,6 +253,12 @@ export default function UsersIndex({
         setResetUser(user);
     }
 
+    function openRoleModal(user: UserRow) {
+        roleForm.setData('role', user.role);
+        roleForm.clearErrors();
+        setRoleUser(user);
+    }
+
     function submitResetPassword(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -255,6 +271,21 @@ export default function UsersIndex({
             onSuccess: () => {
                 resetForm.reset();
                 setResetUser(null);
+            },
+        });
+    }
+
+    function submitUpdateRole(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        if (!roleUser) {
+            return;
+        }
+
+        roleForm.patch(updateUserRole.url(roleUser.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setRoleUser(null);
             },
         });
     }
@@ -518,6 +549,17 @@ export default function UsersIndex({
                                                                 align="end"
                                                                 className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                             >
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        openRoleModal(
+                                                                            user,
+                                                                        )
+                                                                    }
+                                                                    className="gap-2 text-xs"
+                                                                >
+                                                                    <Shield className="size-4 text-[#303030]" />
+                                                                    Ubah Role
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
                                                                         openResetModal(
@@ -844,6 +886,67 @@ export default function UsersIndex({
                                 className="h-10 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white disabled:opacity-60"
                             >
                                 Reset Password
+                            </button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={Boolean(roleUser)}
+                onOpenChange={() => setRoleUser(null)}
+            >
+                <DialogContent className="max-w-[460px] rounded-xl border-[#EFEFEF] bg-white p-0">
+                    <form onSubmit={submitUpdateRole}>
+                        <DialogHeader className="border-b border-[#EFEFEF] px-5 py-4">
+                            <DialogTitle className="text-lg font-bold text-[#303030]">
+                                Ubah Role User
+                            </DialogTitle>
+                            <DialogDescription>
+                                Ubah role untuk {roleUser?.name ?? 'user'}.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 px-5 py-4">
+                            <label className="space-y-1.5">
+                                <span className="text-xs font-bold text-[#303030]">
+                                    Role
+                                </span>
+                                <Select
+                                    value={roleForm.data.role}
+                                    onValueChange={(value) =>
+                                        roleForm.setData('role', value)
+                                    }
+                                >
+                                    <SelectTrigger className="h-10 w-full border-[#DDE4EC]">
+                                        <SelectValue placeholder="Pilih role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {role_options.map((option) => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errorText(roleForm.errors.role)}
+                            </label>
+                        </div>
+                        <DialogFooter className="border-t border-[#EFEFEF] px-5 py-4">
+                            <button
+                                type="button"
+                                onClick={() => setRoleUser(null)}
+                                className="h-10 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030]"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                disabled={roleForm.processing}
+                                className="h-10 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white disabled:opacity-60"
+                            >
+                                Simpan Role
                             </button>
                         </DialogFooter>
                     </form>

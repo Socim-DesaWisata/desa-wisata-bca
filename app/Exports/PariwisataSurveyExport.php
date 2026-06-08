@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -82,7 +83,7 @@ class PariwisataSurveyExport
             ['Lokasi', $this->villageLocation($assignment)],
             ['Hari Operasional', $pariwisata->operational_days ?? '-'],
             ['Jam Operasional', $pariwisata->operational_hours ?? '-'],
-            ['Harga Tiket Masuk', $pariwisata->entrance_ticket_price ? 'Rp ' . number_format((float) $pariwisata->entrance_ticket_price, 0, ',', '.') : '-'],
+            ['Harga Tiket Masuk', $pariwisata->entrance_ticket_price ? 'Rp '.number_format((float) $pariwisata->entrance_ticket_price, 0, ',', '.') : '-'],
             ['Deskripsi Tiket', $pariwisata->entrance_ticket_description ?? '-'],
             ['Alamat', $pariwisata->address ?? '-'],
             ['Nama PIC', $pariwisata->person_in_charge_name ?? '-'],
@@ -132,7 +133,7 @@ class PariwisataSurveyExport
 
         $questions = PariwisataSurveyQuestion::query()->orderBy('category_code')->orderBy('id')->get();
         $answers = $pariwisata->surveyAnswers->keyBy('pariwisata_survey_question_id');
-        
+
         $maxDocuments = 0;
         $rows = $questions
             ->map(function (PariwisataSurveyQuestion $question, int $index) use ($answers): array {
@@ -181,20 +182,20 @@ class PariwisataSurveyExport
         $sheet->freezePane('A2');
         $lastColumnIndex = count($headings);
         $lastColumn = Coordinate::stringFromColumnIndex($lastColumnIndex);
-        
+
         $sheet->getStyle("A1:{$lastColumn}1")->applyFromArray($this->headerStyle());
         $sheet->getStyle("A:{$lastColumn}")->getAlignment()->setVertical(Alignment::VERTICAL_TOP)->setWrapText(true);
 
         foreach ([8, 22, 22, 26, 36, 18, 14, 30, 22, 22, 20, 20, 14] as $index => $width) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($index + 1))->setWidth($width);
         }
-        
+
         for ($i = 13; $i < $lastColumnIndex; $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i + 1))->setWidth(40);
         }
 
         $lastRow = max(count($rows), 1);
-        $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
+        $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new Color('FFE2E8F0'));
     }
 
     private function filename(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): string

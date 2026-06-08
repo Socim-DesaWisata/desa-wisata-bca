@@ -184,7 +184,6 @@ class StoreUmkmSurveyAssignmentRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $rows
      * @return array<int, array<string, mixed>>
      */
     private function filledRows(mixed $rows): array
