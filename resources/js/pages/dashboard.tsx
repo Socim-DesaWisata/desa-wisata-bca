@@ -209,24 +209,24 @@ function CurrentTimeCard() {
     }).format(now);
 
     return (
-        <Panel className="p-3.5 sm:p-4">
+        <section className="rounded-xl border border-[#0066AE] bg-[#0066AE] p-3.5 sm:p-4 shadow-[0_4px_14px_rgba(0,102,174,0.3)]">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-sm leading-5 font-semibold text-[#303030]">
+                    <p className="text-sm leading-5 font-semibold text-[#AAD2F8]">
                         Jam Sekarang
                     </p>
-                    <p className="mt-2 font-tight text-[22px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[28px] sm:leading-8">
+                    <p className="mt-2 font-tight text-[22px] leading-7 font-bold tracking-[-0.02em] text-white sm:text-[28px] sm:leading-8">
                         {time}
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-[#7C7C7C]">
+                    <p className="mt-1 text-xs leading-5 text-[#EAF3FF]">
                         {date}
                     </p>
                 </div>
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE] sm:size-11">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white sm:size-11 shadow-inner">
                     <Timer className="size-6" strokeWidth={1.9} />
                 </span>
             </div>
-        </Panel>
+        </section>
     );
 }
 
@@ -473,7 +473,7 @@ export default function Dashboard({
                     </header>
 
                     <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        {kpis.map((kpi, index) => {
+                        {kpis.map((kpi) => {
                             const Icon = kpiIcons[kpi.icon];
                             const trendColor =
                                 kpi.tone === 'success'
@@ -481,41 +481,39 @@ export default function Dashboard({
                                     : 'text-[#FF944C]';
 
                             return (
-                                <Fragment key={kpi.title}>
-                                    <Panel className="p-3.5 sm:p-4">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <p className="text-sm leading-5 font-semibold text-[#303030]">
-                                                    {kpi.title}
-                                                </p>
-                                                <p className="mt-2 text-[22px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[28px] sm:leading-8">
-                                                    {kpi.value}
-                                                </p>
-                                                <p className="mt-1 text-xs leading-5 text-[#7C7C7C]">
-                                                    {kpi.desc}
-                                                </p>
-                                            </div>
-                                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE] sm:size-11">
-                                                <Icon
-                                                    className="size-6"
-                                                    strokeWidth={1.9}
-                                                />
-                                            </span>
+                                <Panel key={kpi.title} className="p-3.5 sm:p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm leading-5 font-semibold text-[#303030]">
+                                                {kpi.title}
+                                            </p>
+                                            <p className="mt-2 text-[22px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[28px] sm:leading-8">
+                                                {kpi.value}
+                                            </p>
+                                            <p className="mt-1 text-xs leading-5 text-[#7C7C7C]">
+                                                {kpi.desc}
+                                            </p>
                                         </div>
-                                        <p
-                                            className={`mt-3 flex items-center gap-1 text-xs font-semibold ${trendColor}`}
-                                        >
-                                            <ArrowUpRight
-                                                className="size-3.5"
-                                                strokeWidth={2.2}
+                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE] sm:size-11">
+                                            <Icon
+                                                className="size-6"
+                                                strokeWidth={1.9}
                                             />
-                                            {kpi.trend}
-                                        </p>
-                                    </Panel>
-                                    {index === 0 && <CurrentTimeCard />}
-                                </Fragment>
+                                        </span>
+                                    </div>
+                                    <p
+                                        className={`mt-3 flex items-center gap-1 text-xs font-semibold ${trendColor}`}
+                                    >
+                                        <ArrowUpRight
+                                            className="size-3.5"
+                                            strokeWidth={2.2}
+                                        />
+                                        {kpi.trend}
+                                    </p>
+                                </Panel>
                             );
                         })}
+                        <CurrentTimeCard />
                     </section>
 
                     <DashboardVillageMap points={village_map_points} />
