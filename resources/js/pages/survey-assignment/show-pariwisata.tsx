@@ -2034,8 +2034,8 @@ export default function ShowPariwisata({
                                 onClick={() => setIsEditOpen(true)}
                                 className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]"
                             >
-                                    <Pencil size={16} />
-                                    Edit Data
+                                <Pencil size={16} />
+                                Edit Data
                             </button>
                             <a
                                 href={exportPariwisataSurvey.url({

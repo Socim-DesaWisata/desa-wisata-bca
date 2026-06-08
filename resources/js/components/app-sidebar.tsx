@@ -284,7 +284,9 @@ export function AdminSidebarContent({
                                                                     {ChildIcon && (
                                                                         <ChildIcon
                                                                             className="size-4 shrink-0"
-                                                                            strokeWidth={1.8}
+                                                                            strokeWidth={
+                                                                                1.8
+                                                                            }
                                                                         />
                                                                     )}
                                                                     <span className="truncate">

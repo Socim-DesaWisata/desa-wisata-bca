@@ -514,7 +514,9 @@ function EditSection({
             <div className="mb-4">
                 <div className="flex items-center gap-2">
                     {icon && <span className="text-[#0066AE]">{icon}</span>}
-                    <h3 className="text-sm font-bold text-[#303030]">{title}</h3>
+                    <h3 className="text-sm font-bold text-[#303030]">
+                        {title}
+                    </h3>
                 </div>
                 {description && (
                     <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
@@ -1466,10 +1468,15 @@ function UmkmEditSidebar({
                                                         updateArrayField(
                                                             'annual_turnovers',
                                                             (rows) =>
-                                                                rows.map((r, i) =>
-                                                                    i === index
-                                                                        ? { ...r, year: value }
-                                                                        : r,
+                                                                rows.map(
+                                                                    (r, i) =>
+                                                                        i ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  year: value,
+                                                                              }
+                                                                            : r,
                                                                 ),
                                                         )
                                                     }
@@ -1483,15 +1490,24 @@ function UmkmEditSidebar({
                                                 />
                                                 <TextInput
                                                     label="Nilai Omset (Rp)"
-                                                    value={formatThousands(row.value)}
+                                                    value={formatThousands(
+                                                        row.value,
+                                                    )}
                                                     onChange={(value) =>
                                                         updateArrayField(
                                                             'annual_turnovers',
                                                             (rows) =>
-                                                                rows.map((r, i) =>
-                                                                    i === index
-                                                                        ? { ...r, value: digitsOnly(value) }
-                                                                        : r,
+                                                                rows.map(
+                                                                    (r, i) =>
+                                                                        i ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  value: digitsOnly(
+                                                                                      value,
+                                                                                  ),
+                                                                              }
+                                                                            : r,
                                                                 ),
                                                         )
                                                     }
@@ -1510,10 +1526,18 @@ function UmkmEditSidebar({
                                                             updateArrayField(
                                                                 'annual_turnovers',
                                                                 (rows) =>
-                                                                    rows.map((r, i) =>
-                                                                        i === index
-                                                                            ? { ...r, notes: value }
-                                                                            : r,
+                                                                    rows.map(
+                                                                        (
+                                                                            r,
+                                                                            i,
+                                                                        ) =>
+                                                                            i ===
+                                                                            index
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      notes: value,
+                                                                                  }
+                                                                                : r,
                                                                     ),
                                                             )
                                                         }
@@ -1528,7 +1552,9 @@ function UmkmEditSidebar({
                                                             'annual_turnovers',
                                                             (rows) =>
                                                                 rows.filter(
-                                                                    (_, i) => i !== index,
+                                                                    (_, i) =>
+                                                                        i !==
+                                                                        index,
                                                                 ),
                                                         )
                                                     }
@@ -1569,9 +1595,10 @@ function UmkmEditSidebar({
                             </div>
                             <FieldError
                                 message={
-                                    fieldError(errors, 'annual_worker_stats') as
-                                        | string
-                                        | undefined
+                                    fieldError(
+                                        errors,
+                                        'annual_worker_stats',
+                                    ) as string | undefined
                                 }
                             />
                             <div className="mt-4 space-y-3">
@@ -1594,10 +1621,15 @@ function UmkmEditSidebar({
                                                         updateArrayField(
                                                             'annual_worker_stats',
                                                             (rows) =>
-                                                                rows.map((r, i) =>
-                                                                    i === index
-                                                                        ? { ...r, year: value }
-                                                                        : r,
+                                                                rows.map(
+                                                                    (r, i) =>
+                                                                        i ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  year: value,
+                                                                              }
+                                                                            : r,
                                                                 ),
                                                         )
                                                     }
@@ -1616,17 +1648,32 @@ function UmkmEditSidebar({
                                                         updateArrayField(
                                                             'annual_worker_stats',
                                                             (rows) =>
-                                                                rows.map((r, i) =>
-                                                                    i === index
-                                                                        ? { ...r, dimension: value }
-                                                                        : r,
+                                                                rows.map(
+                                                                    (r, i) =>
+                                                                        i ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  dimension:
+                                                                                      value,
+                                                                              }
+                                                                            : r,
                                                                 ),
                                                         )
                                                     }
                                                     options={[
-                                                        { value: 'age', label: 'Usia' },
-                                                        { value: 'gender', label: 'Gender' },
-                                                        { value: 'education', label: 'Pendidikan' },
+                                                        {
+                                                            value: 'age',
+                                                            label: 'Usia',
+                                                        },
+                                                        {
+                                                            value: 'gender',
+                                                            label: 'Gender',
+                                                        },
+                                                        {
+                                                            value: 'education',
+                                                            label: 'Pendidikan',
+                                                        },
                                                     ]}
                                                     error={
                                                         fieldError(
@@ -1642,10 +1689,16 @@ function UmkmEditSidebar({
                                                         updateArrayField(
                                                             'annual_worker_stats',
                                                             (rows) =>
-                                                                rows.map((r, i) =>
-                                                                    i === index
-                                                                        ? { ...r, category_value: value }
-                                                                        : r,
+                                                                rows.map(
+                                                                    (r, i) =>
+                                                                        i ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  category_value:
+                                                                                      value,
+                                                                              }
+                                                                            : r,
                                                                 ),
                                                         )
                                                     }
@@ -1663,10 +1716,16 @@ function UmkmEditSidebar({
                                                         updateArrayField(
                                                             'annual_worker_stats',
                                                             (rows) =>
-                                                                rows.map((r, i) =>
-                                                                    i === index
-                                                                        ? { ...r, total_people: value }
-                                                                        : r,
+                                                                rows.map(
+                                                                    (r, i) =>
+                                                                        i ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  total_people:
+                                                                                      value,
+                                                                              }
+                                                                            : r,
                                                                 ),
                                                         )
                                                     }
@@ -1686,10 +1745,18 @@ function UmkmEditSidebar({
                                                             updateArrayField(
                                                                 'annual_worker_stats',
                                                                 (rows) =>
-                                                                    rows.map((r, i) =>
-                                                                        i === index
-                                                                            ? { ...r, notes: value }
-                                                                            : r,
+                                                                    rows.map(
+                                                                        (
+                                                                            r,
+                                                                            i,
+                                                                        ) =>
+                                                                            i ===
+                                                                            index
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      notes: value,
+                                                                                  }
+                                                                                : r,
                                                                     ),
                                                             )
                                                         }
@@ -1704,7 +1771,9 @@ function UmkmEditSidebar({
                                                             'annual_worker_stats',
                                                             (rows) =>
                                                                 rows.filter(
-                                                                    (_, i) => i !== index,
+                                                                    (_, i) =>
+                                                                        i !==
+                                                                        index,
                                                                 ),
                                                         )
                                                     }
@@ -1773,10 +1842,18 @@ function UmkmEditSidebar({
                                                             updateArrayField(
                                                                 'annual_worker_training_stats',
                                                                 (rows) =>
-                                                                    rows.map((r, i) =>
-                                                                        i === index
-                                                                            ? { ...r, year: value }
-                                                                            : r,
+                                                                    rows.map(
+                                                                        (
+                                                                            r,
+                                                                            i,
+                                                                        ) =>
+                                                                            i ===
+                                                                            index
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      year: value,
+                                                                                  }
+                                                                                : r,
                                                                     ),
                                                             )
                                                         }
@@ -1784,21 +1861,34 @@ function UmkmEditSidebar({
                                                             fieldError(
                                                                 errors,
                                                                 `annual_worker_training_stats.${index}.year` as any,
-                                                            ) as string | undefined
+                                                            ) as
+                                                                | string
+                                                                | undefined
                                                         }
                                                         type="number"
                                                     />
                                                     <TextInput
                                                         label="Nama Pelatihan"
-                                                        value={row.training_name}
+                                                        value={
+                                                            row.training_name
+                                                        }
                                                         onChange={(value) =>
                                                             updateArrayField(
                                                                 'annual_worker_training_stats',
                                                                 (rows) =>
-                                                                    rows.map((r, i) =>
-                                                                        i === index
-                                                                            ? { ...r, training_name: value }
-                                                                            : r,
+                                                                    rows.map(
+                                                                        (
+                                                                            r,
+                                                                            i,
+                                                                        ) =>
+                                                                            i ===
+                                                                            index
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      training_name:
+                                                                                          value,
+                                                                                  }
+                                                                                : r,
                                                                     ),
                                                             )
                                                         }
@@ -1806,7 +1896,9 @@ function UmkmEditSidebar({
                                                             fieldError(
                                                                 errors,
                                                                 `annual_worker_training_stats.${index}.training_name` as any,
-                                                            ) as string | undefined
+                                                            ) as
+                                                                | string
+                                                                | undefined
                                                         }
                                                     />
                                                     <TextInput
@@ -1816,10 +1908,19 @@ function UmkmEditSidebar({
                                                             updateArrayField(
                                                                 'annual_worker_training_stats',
                                                                 (rows) =>
-                                                                    rows.map((r, i) =>
-                                                                        i === index
-                                                                            ? { ...r, total_people: value }
-                                                                            : r,
+                                                                    rows.map(
+                                                                        (
+                                                                            r,
+                                                                            i,
+                                                                        ) =>
+                                                                            i ===
+                                                                            index
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      total_people:
+                                                                                          value,
+                                                                                  }
+                                                                                : r,
                                                                     ),
                                                             )
                                                         }
@@ -1827,7 +1928,9 @@ function UmkmEditSidebar({
                                                             fieldError(
                                                                 errors,
                                                                 `annual_worker_training_stats.${index}.total_people` as any,
-                                                            ) as string | undefined
+                                                            ) as
+                                                                | string
+                                                                | undefined
                                                         }
                                                         type="number"
                                                     />
@@ -1839,10 +1942,18 @@ function UmkmEditSidebar({
                                                                 updateArrayField(
                                                                     'annual_worker_training_stats',
                                                                     (rows) =>
-                                                                        rows.map((r, i) =>
-                                                                            i === index
-                                                                                ? { ...r, notes: value }
-                                                                                : r,
+                                                                        rows.map(
+                                                                            (
+                                                                                r,
+                                                                                i,
+                                                                            ) =>
+                                                                                i ===
+                                                                                index
+                                                                                    ? {
+                                                                                          ...r,
+                                                                                          notes: value,
+                                                                                      }
+                                                                                    : r,
                                                                         ),
                                                                 )
                                                             }
@@ -1857,8 +1968,12 @@ function UmkmEditSidebar({
                                                                 'annual_worker_training_stats',
                                                                 (rows) =>
                                                                     rows.filter(
-                                                                        (_, i) =>
-                                                                            i !== index,
+                                                                        (
+                                                                            _,
+                                                                            i,
+                                                                        ) =>
+                                                                            i !==
+                                                                            index,
                                                                     ),
                                                             )
                                                         }

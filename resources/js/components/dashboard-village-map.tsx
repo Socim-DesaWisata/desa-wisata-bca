@@ -65,17 +65,20 @@ const mapThemes: Record<
     light: {
         label: 'Terang',
         url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors',
+        attribution:
+            '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors',
     },
     bw: {
         label: 'Hitam Putih',
         url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; Stadia Maps &copy; Stamen Design &copy; OpenMapTiles &copy; OpenStreetMap contributors',
+        attribution:
+            '&copy; Stadia Maps &copy; Stamen Design &copy; OpenMapTiles &copy; OpenStreetMap contributors',
     },
     dark: {
         label: 'Gelap',
         url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors',
+        attribution:
+            '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors',
     },
     minimal: {
         label: 'Minimal',
@@ -189,7 +192,10 @@ export default function DashboardVillageMap({
 
     const markerIcons = useMemo(() => {
         if (!modules) {
-            return new Map<number, ReturnType<typeof import('leaflet').divIcon>>();
+            return new Map<
+                number,
+                ReturnType<typeof import('leaflet').divIcon>
+            >();
         }
 
         return new Map(
@@ -229,21 +235,34 @@ export default function DashboardVillageMap({
                 <div className="border-b border-[#EFEFEF] bg-gradient-to-r from-[#F7FBFF] to-white p-5 sm:p-6">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0066AE]">
+                            <p className="text-xs font-semibold tracking-[0.24em] text-[#0066AE] uppercase">
                                 Peta Desa
                             </p>
                             <h2 className="mt-2 text-[22px] leading-8 font-bold tracking-[-0.02em] text-[#303030]">
                                 Map desa belum bisa ditampilkan
                             </h2>
                             <p className="mt-1 max-w-3xl text-sm leading-6 text-[#7C7C7C]">
-                                Belum ada desa dengan koordinat latitude dan longitude yang valid di database.
+                                Belum ada desa dengan koordinat latitude dan
+                                longitude yang valid di database.
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            <MapStatCard icon={MapPinned} label="Titik" value="0" />
+                            <MapStatCard
+                                icon={MapPinned}
+                                label="Titik"
+                                value="0"
+                            />
                             <MapStatCard icon={Store} label="UMKM" value="0" />
-                            <MapStatCard icon={Ticket} label="Pariwisata" value="0" />
-                            <MapStatCard icon={Building2} label="Aktif" value="0" />
+                            <MapStatCard
+                                icon={Ticket}
+                                label="Pariwisata"
+                                value="0"
+                            />
+                            <MapStatCard
+                                icon={Building2}
+                                label="Aktif"
+                                value="0"
+                            />
                         </div>
                     </div>
                 </div>
@@ -256,7 +275,8 @@ export default function DashboardVillageMap({
                             Koordinat desa belum tersedia
                         </p>
                         <p className="mt-2 text-sm leading-6 text-[#7C7C7C]">
-                            Isi latitude dan longitude pada data desa agar pin muncul di map dashboard.
+                            Isi latitude dan longitude pada data desa agar pin
+                            muncul di map dashboard.
                         </p>
                     </div>
                 </div>
@@ -270,14 +290,15 @@ export default function DashboardVillageMap({
                 <div className="border-b border-[#EFEFEF] bg-gradient-to-r from-[#F7FBFF] to-white p-5 sm:p-6">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0066AE]">
+                            <p className="text-xs font-semibold tracking-[0.24em] text-[#0066AE] uppercase">
                                 Peta Desa
                             </p>
                             <h2 className="mt-2 text-[22px] leading-8 font-bold tracking-[-0.02em] text-[#303030]">
                                 Memuat map desa
                             </h2>
                             <p className="mt-1 max-w-3xl text-sm leading-6 text-[#7C7C7C]">
-                                Menyiapkan layer peta dan pin desa dari database.
+                                Menyiapkan layer peta dan pin desa dari
+                                database.
                             </p>
                         </div>
                     </div>
@@ -294,14 +315,16 @@ export default function DashboardVillageMap({
             <div className="border-b border-[#EFEFEF] bg-gradient-to-r from-[#F7FBFF] to-white p-5 sm:p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0066AE]">
+                        <p className="text-xs font-semibold tracking-[0.24em] text-[#0066AE] uppercase">
                             Peta Desa
                         </p>
                         <h2 className="mt-2 text-[22px] leading-8 font-bold tracking-[-0.02em] text-[#303030] sm:text-[26px]">
                             Peta Lokasi Desa Binaan
                         </h2>
                         <p className="mt-1 max-w-3xl text-sm leading-6 text-[#7C7C7C]">
-                            Tampilan awal menampilkan keseluruhan wilayah Indonesia. Ubah gaya map lalu klik pin untuk melihat ringkasan desa.
+                            Tampilan awal menampilkan keseluruhan wilayah
+                            Indonesia. Ubah gaya map lalu klik pin untuk melihat
+                            ringkasan desa.
                         </p>
                     </div>
 
@@ -364,7 +387,8 @@ export default function DashboardVillageMap({
                                 Ringkasan titik map
                             </h3>
                             <p className="mt-1 text-sm leading-6 text-[#7C7C7C]">
-                                Klik pin merah untuk melihat detail desa di panel ini.
+                                Klik pin merah untuk melihat detail desa di
+                                panel ini.
                             </p>
                         </div>
                         <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.06)]">
@@ -374,14 +398,15 @@ export default function DashboardVillageMap({
 
                     <div className="mt-5 space-y-3">
                         <div className="rounded-2xl border border-[#EFEFEF] bg-white p-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7C7C7C]">
+                            <p className="text-xs font-semibold tracking-[0.22em] text-[#7C7C7C] uppercase">
                                 Desa dipilih
                             </p>
                             <p className="mt-2 text-lg font-bold text-[#303030]">
                                 {selectedVillage?.name ?? '-'}
                             </p>
                             <p className="mt-1 text-sm leading-6 text-[#7C7C7C]">
-                                {selectedVillage?.location ?? 'Klik pin untuk lihat detail desa.'}
+                                {selectedVillage?.location ??
+                                    'Klik pin untuk lihat detail desa.'}
                             </p>
                         </div>
 
@@ -392,7 +417,9 @@ export default function DashboardVillageMap({
                                 </p>
                                 <p className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[#0066AE]">
                                     {selectedVillage
-                                        ? formatCount(selectedVillage.umkm_count)
+                                        ? formatCount(
+                                              selectedVillage.umkm_count,
+                                          )
                                         : '0'}
                                 </p>
                             </div>
@@ -402,24 +429,28 @@ export default function DashboardVillageMap({
                                 </p>
                                 <p className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[#0066AE]">
                                     {selectedVillage
-                                        ? formatCount(selectedVillage.pariwisata_count)
+                                        ? formatCount(
+                                              selectedVillage.pariwisata_count,
+                                          )
                                         : '0'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="rounded-2xl border border-[#EFEFEF] bg-white p-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7C7C7C]">
+                            <p className="text-xs font-semibold tracking-[0.22em] text-[#7C7C7C] uppercase">
                                 Pengelola Desa
                             </p>
                             <p className="mt-2 text-sm font-semibold text-[#303030]">
                                 {selectedVillage?.manager_name ?? '-'}
                             </p>
                             <p className="mt-1 text-xs leading-5 text-[#7C7C7C]">
-                                {selectedVillage?.manager_phone ?? 'Telepon belum tersedia'}
+                                {selectedVillage?.manager_phone ??
+                                    'Telepon belum tersedia'}
                             </p>
                             <p className="text-xs leading-5 text-[#7C7C7C]">
-                                {selectedVillage?.manager_email ?? 'Email belum tersedia'}
+                                {selectedVillage?.manager_email ??
+                                    'Email belum tersedia'}
                             </p>
                         </div>
                     </div>

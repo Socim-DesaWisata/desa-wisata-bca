@@ -1477,8 +1477,9 @@ export default function SurveyAssignmentShow({
     ) {
         villageAnnualForm.setData(
             'annual_population_stats',
-            villageAnnualForm.data.annual_population_stats.map((row, rowIndex) =>
-                rowIndex === index ? { ...row, [key]: value } : row,
+            villageAnnualForm.data.annual_population_stats.map(
+                (row, rowIndex) =>
+                    rowIndex === index ? { ...row, [key]: value } : row,
             ),
         );
     }
@@ -2597,7 +2598,10 @@ export default function SurveyAssignmentShow({
                                                             villageAnnualForm.setData(
                                                                 'annual_population_stats',
                                                                 villageAnnualForm.data.annual_population_stats.filter(
-                                                                    (_, rowIndex) =>
+                                                                    (
+                                                                        _,
+                                                                        rowIndex,
+                                                                    ) =>
                                                                         rowIndex !==
                                                                         index,
                                                                 ),
@@ -2774,7 +2778,10 @@ export default function SurveyAssignmentShow({
                                                             villageAnnualForm.setData(
                                                                 'vulnerable_group_annuals',
                                                                 villageAnnualForm.data.vulnerable_group_annuals.filter(
-                                                                    (_, rowIndex) =>
+                                                                    (
+                                                                        _,
+                                                                        rowIndex,
+                                                                    ) =>
                                                                         rowIndex !==
                                                                         index,
                                                                 ),
@@ -2949,7 +2956,10 @@ export default function SurveyAssignmentShow({
                                                             villageAnnualForm.setData(
                                                                 'active_group_annuals',
                                                                 villageAnnualForm.data.active_group_annuals.filter(
-                                                                    (_, rowIndex) =>
+                                                                    (
+                                                                        _,
+                                                                        rowIndex,
+                                                                    ) =>
                                                                         rowIndex !==
                                                                         index,
                                                                 ),
@@ -2970,7 +2980,10 @@ export default function SurveyAssignmentShow({
                     </div>
 
                     <div className="flex items-center justify-end gap-2 border-t border-[#EFEFEF] px-5 py-4">
-                        <button type="button" onClick={closeVillageAnnualSidebar}>
+                        <button
+                            type="button"
+                            onClick={closeVillageAnnualSidebar}
+                        >
                             <Button>Batal</Button>
                         </button>
                         <button
