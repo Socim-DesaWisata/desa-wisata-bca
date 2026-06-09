@@ -2244,8 +2244,9 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                 />
                                 <ChartTooltip
                                     cursor={false}
-                                    content={
+                                    content={(props) => (
                                         <ChartTooltipContent
+                                            {...props}
                                             labelFormatter={(label) => `Tahun ${label}`}
                                             valueFormatter={(value, key) =>
                                                 key === 'pengunjung'
@@ -2253,9 +2254,13 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                                     : formatCompactRupiah(value)
                                             }
                                         />
-                                    }
+                                    )}
                                 />
-                                <ChartLegend content={<ChartLegendContent />} />
+                                <ChartLegend
+                                    content={(props) => (
+                                        <ChartLegendContent {...props} />
+                                    )}
+                                />
                                 {visibleSeries !== 'pengunjung' && (
                                     <Area
                                         type="monotone"
@@ -2332,14 +2337,15 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                             <PieChart>
                                 <ChartTooltip
                                     cursor={false}
-                                    content={
+                                    content={(props) => (
                                         <ChartTooltipContent
+                                            {...props}
                                             hideLabel
                                             valueFormatter={(value) =>
                                                 formatVisitorCount(value)
                                             }
                                         />
-                                    }
+                                    )}
                                 />
                                 <Pie
                                     data={pieChartData}
@@ -2378,7 +2384,12 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                 <ChartLegend
                                     verticalAlign="bottom"
                                     align="center"
-                                    content={<ChartLegendContent className="justify-center pt-4" />}
+                                    content={(props) => (
+                                        <ChartLegendContent
+                                            {...props}
+                                            className="justify-center pt-4"
+                                        />
+                                    )}
                                 />
                             </PieChart>
                         </ChartContainer>
@@ -3001,6 +3012,7 @@ export default function ShowPariwisata({
         </>
     );
 }
+
 
 
 

@@ -17,29 +17,29 @@ type ChartContextValue = {
 
 type TooltipPayloadItem = {
     color?: string;
-    dataKey?: string | number;
-    name?: string | number;
-    value?: string | number;
+    dataKey?: string | number | ((obj: any) => any);
+    name?: React.ReactNode;
+    value?: React.ReactNode;
 };
 
 type LegendPayloadItem = {
     color?: string;
-    dataKey?: string | number;
-    value?: string | number;
+    dataKey?: string | number | ((obj: any) => any);
+    value?: React.ReactNode;
 };
 
 type ChartTooltipContentProps = {
     active?: boolean;
-    payload?: TooltipPayloadItem[];
+    payload?: readonly any[];
     label?: React.ReactNode;
     hideLabel?: boolean;
     valueFormatter?: (value: number, key: string) => React.ReactNode;
-    labelFormatter?: (label: React.ReactNode) => React.ReactNode;
+    labelFormatter?: (label: React.ReactNode, payload: readonly any[]) => React.ReactNode;
     className?: string;
 };
 
 type ChartLegendContentProps = {
-    payload?: LegendPayloadItem[];
+    payload?: readonly LegendPayloadItem[];
     className?: string;
 };
 
@@ -142,7 +142,7 @@ function ChartTooltipContent({
         >
             {!hideLabel && label !== undefined && (
                 <p className="mb-2 text-xs font-bold text-[#344256]">
-                    {labelFormatter ? labelFormatter(label) : label}
+                    {labelFormatter ? labelFormatter(label, payload) : label}
                 </p>
             )}
             <div className="space-y-1.5">
@@ -216,3 +216,10 @@ export {
     ChartTooltip,
     ChartTooltipContent,
 };
+
+
+
+
+
+
+
