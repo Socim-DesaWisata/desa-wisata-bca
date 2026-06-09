@@ -45,7 +45,7 @@ type LeafletModules = {
     leaflet: typeof import('leaflet');
 };
 
-type MapThemeKey = 'default' | 'light' | 'bw' | 'dark' | 'minimal';
+type MapThemeKey = 'default' | 'minimal';
 
 const INDONESIA_CENTER: [number, number] = [-2.5, 118];
 const INDONESIA_BOUNDS: [[number, number], [number, number]] = [
@@ -61,24 +61,6 @@ const mapThemes: Record<
         label: 'Standar',
         url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         attribution: '&copy; OpenStreetMap contributors',
-    },
-    light: {
-        label: 'Terang',
-        url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
-        attribution:
-            '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors',
-    },
-    bw: {
-        label: 'Hitam Putih',
-        url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png',
-        attribution:
-            '&copy; Stadia Maps &copy; Stamen Design &copy; OpenMapTiles &copy; OpenStreetMap contributors',
-    },
-    dark: {
-        label: 'Gelap',
-        url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-        attribution:
-            '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors',
     },
     minimal: {
         label: 'Minimal',

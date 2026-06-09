@@ -459,177 +459,167 @@ export default function VillageShow({ village }: VillageShowProps) {
         <>
             <Head title={`${village.name} - Desa Wisata BCA`} />
 
-            <main className="min-h-screen bg-white font-sans text-[#1E293B]">
-                <header className="sticky top-0 z-40 border-b border-[#EAF0F6] bg-white/96 shadow-[0_10px_30px_rgba(9,57,103,0.06)] backdrop-blur">
-                    <div className="mx-auto flex h-20 max-w-[1180px] items-center gap-8 px-6">
-                        <a className="flex min-w-fit items-center gap-3">
-                            <span className="flex size-11 items-center justify-center rounded-2xl bg-[#0066AE] text-white">
-                                <Home className="size-5" />
-                            </span>
-                            <span className="text-lg font-black tracking-[-0.01em] text-[#093967]">
-                                Desa Wisata BCA
-                            </span>
-                        </a>
+            <main className="min-h-screen bg-[#F7FBFF] font-sans text-[#172033]">
+                <section className="relative min-h-[720px] overflow-hidden bg-[#F7FBFF]">
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_48%,rgba(47,166,252,0.14),transparent_22%),radial-gradient(circle_at_72%_12%,rgba(0,102,174,0.12),transparent_20%)]" />
+                    <div className="pointer-events-none absolute top-28 right-0 h-80 w-80 rounded-full border border-[#AAD2F8]/35 [mask-image:radial-gradient(circle,black_45%,transparent_67%)] opacity-70" />
+                    <div className="pointer-events-none absolute bottom-0 left-0 h-52 w-80 bg-[radial-gradient(ellipse_at_bottom_left,rgba(0,102,174,0.12),transparent_62%)]" />
 
-                        <nav className="hidden flex-1 items-center justify-center gap-7 text-sm font-extrabold text-[#334155] lg:flex">
-                            {[
-                                'Home',
-                                'Destinasi',
-                                'Fasilitas',
-                                'Galeri',
-                                'Homestay',
-                                'Lokasi',
-                                'Kontak',
-                            ].map((item, index) => (
-                                <a
-                                    key={item}
-                                    className={classNames(
-                                        'transition hover:text-[#0066AE]',
-                                        index === 0 && 'text-[#0066AE]',
-                                    )}
-                                >
-                                    {item}
-                                </a>
-                            ))}
-                        </nav>
+                    <header className="relative z-30">
+                        <div className="mx-auto flex h-22 max-w-[1400px] items-center gap-7 px-8 2xl:px-12">
+                            <a className="flex min-w-fit items-center gap-3">
+                                <span className="relative flex size-14 items-center justify-center rounded-full border-2 border-[#0066AE] text-[#0066AE]">
+                                    <Home
+                                        className="size-6"
+                                        strokeWidth={1.8}
+                                    />
+                                    <span className="absolute top-5 -right-1 size-3 rounded-full bg-[#2FA6FC]" />
+                                </span>
+                                <span>
+                                    <span className="block text-[24px] leading-7 font-bold tracking-[-0.03em] text-[#093967]">
+                                        Desa Wisata
+                                    </span>
+                                    <span className="mt-0.5 block text-[12px] font-medium tracking-[0.32em] text-[#2FA6FC]">
+                                        Indonesia
+                                    </span>
+                                </span>
+                            </a>
 
-                        <div className="hidden h-11 w-[260px] items-center gap-3 rounded-full border border-[#EAF0F6] bg-[#F4F8FC] px-4 text-sm font-semibold text-[#94A3B8] xl:flex">
-                            <Search className="size-4 text-[#0066AE]" />
-                            Cari destinasi, fasilitas...
+                            <nav className="hidden flex-1 items-center justify-center gap-7 text-[14px] font-semibold text-[#172033] xl:flex">
+                                {[
+                                    'Beranda',
+                                    'Tentang Desa',
+                                    'Destinasi',
+                                    'Aktivitas',
+                                    'Produk UMKM',
+                                    'Galeri',
+                                    'Blog',
+                                ].map((item, index) => (
+                                    <a
+                                        key={item}
+                                        className={classNames(
+                                            'relative transition hover:text-[#0066AE]',
+                                            index === 0 && 'text-[#0066AE]',
+                                        )}
+                                    >
+                                        {item}
+                                        {index === 0 && (
+                                            <span className="absolute top-8 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#0066AE]" />
+                                        )}
+                                    </a>
+                                ))}
+                            </nav>
+
+                            <div className="ml-auto hidden items-center gap-6 xl:flex">
+                                <button className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#172033]">
+                                    <Map className="size-5" strokeWidth={1.8} />
+                                    ID
+                                    <ChevronRight className="size-3 rotate-90" />
+                                </button>
+                                <span className="h-7 w-px bg-[#C8DEF0]" />
+                                <button className="inline-flex h-11 items-center justify-center gap-3 rounded-full bg-[#0066AE] px-6 text-sm font-bold text-white shadow-[0_12px_30px_rgba(0,102,174,0.24)] transition hover:bg-[#093967] active:scale-[0.98]">
+                                    Rencanakan Kunjungan
+                                    <Navigation
+                                        className="size-4"
+                                        strokeWidth={1.9}
+                                    />
+                                </button>
+                            </div>
+
+                            <button className="ml-auto flex size-11 items-center justify-center rounded-full border border-[#C8DEF0] bg-white/70 text-[#0066AE] xl:hidden">
+                                <Menu className="size-5" />
+                            </button>
                         </div>
-                        <button className="hidden h-11 rounded-full bg-[#0066AE] px-5 text-sm font-black text-white shadow-[0_12px_24px_rgba(0,102,174,0.24)] lg:block">
-                            Rencanakan Kunjungan
-                        </button>
-                        <button className="ml-auto lg:hidden">
-                            <Menu className="size-6 text-[#093967]" />
-                        </button>
-                    </div>
-                </header>
+                    </header>
 
-                <section className="relative min-h-[720px] overflow-hidden">
-                    <img
-                        src={cover}
-                        alt={village.name}
-                        className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#06213D]/88 via-[#093967]/58 to-[#093967]/12" />
-                    <div className="relative mx-auto grid min-h-[720px] max-w-[1180px] grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-[minmax(0,1fr)_410px]">
-                        <div className="max-w-2xl pt-12 text-white">
-                            <p className="mb-5 inline-flex rounded-full border border-white/20 bg-white/14 px-4 py-2 text-sm font-black backdrop-blur">
-                                Selamat Datang di
-                            </p>
-                            <h1 className="text-6xl leading-[0.95] font-black tracking-[-0.035em] md:text-7xl">
-                                Desa Wisata BCA
+                    <div className="relative z-10 mx-auto grid min-h-[600px] max-w-[1400px] grid-cols-1 items-center gap-10 px-8 pt-4 pb-14 lg:grid-cols-[0.84fr_1.16fr] 2xl:px-12">
+                        <div className="relative max-w-[540px]">
+                            <div className="mb-6 flex items-center gap-3 text-[14px] font-semibold text-[#2FA6FC]">
+                                <span className="h-px w-10 bg-[#2FA6FC]" />
+                                <Sparkles
+                                    className="size-4.5"
+                                    strokeWidth={1.5}
+                                />
+                                <span>Alam. Budaya. Kearifan Lokal.</span>
+                            </div>
+
+                            <h1 className="text-[54px] leading-[0.98] font-extrabold tracking-[-0.04em] text-[#172033] md:text-[66px] xl:text-[72px]">
+                                Discover the
+                                <br />
+                                Beauty of
+                                <br />
+                                <span className="text-[#0066AE]">
+                                    Desa Wisata
+                                </span>
                             </h1>
-                            <p className="mt-7 max-w-xl text-3xl leading-tight font-black">
-                                Pesona Alam, Budaya, dan Keramahan dalam Satu
-                                Perjalanan
+
+                            <p className="mt-6 max-w-[500px] text-[16px] leading-7 font-medium text-[#45566A]">
+                                Jelajahi keindahan alam, budaya yang hidup, dan
+                                keramahan warga. Nikmati pengalaman wisata desa
+                                yang autentik, dukung UMKM lokal, dan ciptakan
+                                kenangan tak terlupakan.
                             </p>
-                            <p className="mt-6 max-w-xl text-lg leading-8 font-medium text-white/84">
-                                Jelajahi desa wisata yang menghubungkan lanskap
-                                indah, tradisi lokal, produk kreatif, dan
-                                pengalaman menginap yang hangat.
-                            </p>
-                        </div>
-                    </div>
-                </section>
 
-                <section className="bg-white py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            align="center"
-                            eyebrow="Keunggulan"
-                            title="Pengalaman wisata yang tertata dari awal"
-                            description="Setiap elemen perjalanan disiapkan agar pengunjung merasa aman, mendapat informasi jelas, dan tetap dekat dengan kehidupan warga."
-                        />
-                        <div className="grid gap-6 md:grid-cols-4">
-                            <InfoCard
-                                icon={<Building2 className="size-6" />}
-                                title="Fasilitas Lengkap"
-                                body="Area publik, pusat informasi, parkir, dan fasilitas dasar yang mudah dijangkau."
-                            />
-                            <InfoCard
-                                icon={<Landmark className="size-6" />}
-                                title="Budaya & Tradisi"
-                                body="Agenda seni, kerajinan, dan cerita lokal yang dikemas dengan hormat."
-                            />
-                            <InfoCard
-                                icon={<Route className="size-6" />}
-                                title="Tur & Aktivitas"
-                                body="Pemandu lokal membantu wisatawan menikmati rute dan aktivitas desa."
-                            />
-                            <InfoCard
-                                icon={<Headphones className="size-6" />}
-                                title="Dukungan 24/7"
-                                body="Tim kontak siap membantu pertanyaan reservasi dan kebutuhan perjalanan."
-                            />
-                        </div>
-                    </div>
-                </section>
+                            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                                <button className="inline-flex h-13 items-center justify-center gap-7 rounded-full bg-[#0066AE] px-7 text-sm font-bold text-white shadow-[0_16px_32px_rgba(0,102,174,0.22)] transition hover:bg-[#093967] active:scale-[0.98]">
+                                    Explore Village
+                                    <ChevronRight className="size-4.5" />
+                                </button>
+                                <button className="inline-flex h-13 items-center justify-center gap-7 rounded-full border border-[#AAD2F8] bg-white/62 px-7 text-sm font-bold text-[#0066AE] transition hover:bg-white active:scale-[0.98]">
+                                    Learn More
+                                    <ChevronRight className="size-4.5" />
+                                </button>
+                            </div>
 
-                <section className="bg-[#F4F8FC] py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            eyebrow="Fasilitas"
-                            title="Fasilitas Desa"
-                            description="Fasilitas dibuat ringkas, bersih, dan mudah ditemukan agar kunjungan terasa nyaman."
-                        />
-                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                            <FacilityCard
-                                icon={<CircleParking className="size-6" />}
-                                title="Area Parkir"
-                                body="Parkir motor dan mobil dekat titik kumpul wisata."
-                            />
-                            <FacilityCard
-                                icon={<Bath className="size-6" />}
-                                title="Toilet Umum"
-                                body="Toilet bersih dengan jadwal perawatan rutin."
-                            />
-                            <FacilityCard
-                                icon={<Umbrella className="size-6" />}
-                                title="Mushola"
-                                body="Tempat ibadah nyaman untuk pengunjung."
-                            />
-                            <FacilityCard
-                                icon={<Map className="size-6" />}
-                                title="Pusat Informasi"
-                                body="Titik informasi rute, harga, dan jadwal aktivitas."
-                            />
-                            <FacilityCard
-                                icon={<Utensils className="size-6" />}
-                                title="Warung Kuliner"
-                                body="Pilihan makanan lokal dari warga desa."
-                            />
-                            <FacilityCard
-                                icon={<Wifi className="size-6" />}
-                                title="Wi-Fi Area"
-                                body="Akses internet di area publik tertentu."
-                            />
-                            <FacilityCard
-                                icon={<Camera className="size-6" />}
-                                title="Spot Foto"
-                                body="Titik foto dengan pemandangan sawah dan bukit."
-                            />
-                            <FacilityCard
-                                icon={<Bus className="size-6" />}
-                                title="Pemandu Wisata"
-                                body="Pemandu lokal untuk tur keluarga dan grup."
-                            />
+                            <svg
+                                className="pointer-events-none absolute -bottom-16 left-40 hidden h-20 w-[300px] text-[#2FA6FC] lg:block"
+                                viewBox="0 0 360 96"
+                                fill="none"
+                            >
+                                <path
+                                    d="M4 16C78 84 171 86 178 48C183 20 132 23 149 57C170 100 289 84 350 24"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeDasharray="8 9"
+                                    strokeLinecap="round"
+                                />
+                                <path
+                                    d="M330 10C342 20 346 34 336 48C323 36 318 24 330 10Z"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                />
+                            </svg>
                         </div>
-                    </div>
-                </section>
 
-                <section className="bg-white py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            eyebrow="Destinasi"
-                            title="Wisata Liburan"
-                            description="Empat pilihan wisata utama untuk menikmati alam, budaya, dan aktivitas desa dalam ritme yang nyaman."
-                        />
-                        <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-4">
-                            {destinationCards.map((card) => (
-                                <DestinationCard key={card.title} {...card} />
-                            ))}
+                        <div className="relative min-h-[500px] lg:min-h-[560px]">
+                            <img
+                                src={cover}
+                                alt={village.name}
+                                className="absolute top-4 left-[8%] h-[430px] w-[58%] rounded-[28px] border border-white/70 object-cover shadow-[0_22px_48px_rgba(0,102,174,0.14)] ring-2 ring-[#D7EAFB]/80"
+                            />
+                            <img
+                                src={images.homestay}
+                                alt="Rumah tradisional desa wisata"
+                                className="absolute top-18 right-[3%] h-[210px] w-[43%] rounded-[24px] border border-white/75 object-cover shadow-[0_18px_42px_rgba(0,102,174,0.13)] ring-2 ring-[#D7EAFB]/80"
+                            />
+                            <img
+                                src={images.culture}
+                                alt="Aktivitas budaya desa"
+                                className="absolute right-0 bottom-3 h-[260px] w-[42%] rounded-[24px] border border-white/75 object-cover shadow-[0_18px_42px_rgba(0,102,174,0.13)] ring-2 ring-[#D7EAFB]/80"
+                            />
+                            <img
+                                src={images.food}
+                                alt="Kuliner lokal desa wisata"
+                                className="absolute bottom-8 left-0 h-[155px] w-[31%] rounded-[20px] border border-white/75 object-cover shadow-[0_16px_34px_rgba(0,102,174,0.12)] ring-2 ring-[#D7EAFB]/80"
+                            />
+                            <div className="absolute right-[36%] bottom-[140px] flex size-24 items-center justify-center rounded-full border border-white/80 bg-[#EAF3FF] text-center shadow-[0_14px_28px_rgba(0,102,174,0.12)] ring-2 ring-[#D7EAFB]/80">
+                                <div className="rounded-full border border-[#AAD2F8] p-3">
+                                    <Sparkles className="mx-auto size-5 text-[#0066AE]" />
+                                    <p className="mt-1.5 text-[8px] font-bold tracking-[0.28em] text-[#093967]">
+                                        WISATA DESA
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>

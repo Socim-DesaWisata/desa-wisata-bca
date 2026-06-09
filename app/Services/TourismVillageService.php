@@ -127,6 +127,8 @@ class TourismVillageService
             'surveyAssignment.submittedBy:id,name',
             'surveyAssignment.reviewedBy:id,name',
             'enumerators:id,name,email',
+            'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
+            'pariwisataVillages.categories:id,pariwisata_village_id,category',
         ])->loadCount(['enumeratorAssignments', 'media', 'profileItems']);
 
         return [
@@ -674,8 +676,49 @@ class TourismVillageService
         };
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatPariwisataVillage(object $pariwisata): array
+    {
+        return [
+            'id' => $pariwisata->id,
+            'name' => $pariwisata->name,
+            'operational_days' => $pariwisata->operational_days,
+            'operational_hours' => $pariwisata->operational_hours,
+            'entrance_ticket_price' => $pariwisata->entrance_ticket_price !== null ? $this->formatCurrency((float) $pariwisata->entrance_ticket_price) : null,
+            'address' => $pariwisata->address,
+            'status_label' => $pariwisata->is_active ? 'Aktif' : 'Nonaktif',
+            'categories' => $pariwisata->categories
+                ->map(fn ($category): array => [
+                    'id' => $category->id,
+                    'value' => $category->category,
+                    'label' => $this->pariwisataCategoryLabel($category->category),
+                ])
+                ->values(),
+        ];
+    }
+
+    private function pariwisataCategoryLabel(?string $value): string
+    {
+        return match ($value) {
+            'alam' => 'Nature',
+            'budaya' => 'Culture',
+            'kuliner' => 'Culinary',
+            'edukasi' => 'Education',
+            'keluarga' => 'Family',
+            default => Str::headline((string) $value),
+        };
+    }
+
+    private function formatCurrency(float $value): string
+    {
+        return 'Rp '.number_format($value, 0, ',', '.');
+    }
+
     private function formatDate(?CarbonInterface $date): string
     {
         return $date?->translatedFormat('d M Y') ?? '-';
     }
 }
+

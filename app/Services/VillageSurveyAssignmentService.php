@@ -70,6 +70,7 @@ class VillageSurveyAssignmentService
                 'submittedBy:id,name,email',
                 'reviewedBy:id,name,email',
             ])
+            ->withAvg('answers as average_score', 'score')
             ->withCount(['answers', 'documents'])
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
@@ -1124,6 +1125,7 @@ class VillageSurveyAssignmentService
             'reviewed_at' => $this->formatDate($assignment->reviewed_at),
             'created_at' => $this->formatDate($assignment->created_at),
             'updated_at' => $this->formatDate($assignment->updated_at),
+            'total_score' => round(((float) ($assignment->average_score ?? 0)) * 20, 1),
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
         ];
@@ -1140,7 +1142,9 @@ class VillageSurveyAssignmentService
             ->groupBy('aspect')
             ->map(fn (Collection $aspectQuestions, string $aspect): array => [
                 'name' => $aspect,
+                'min_sort_order' => $aspectQuestions->min('sort_order'),
                 'questions' => $aspectQuestions
+                    ->sortBy('sort_order')
                     ->values()
                     ->map(function (SurveyQuestion $question) use ($answersByQuestion): array {
                         $answer = $answersByQuestion->get($question->id);
@@ -1179,6 +1183,7 @@ class VillageSurveyAssignmentService
                     })
                     ->all(),
             ])
+            ->sortBy('min_sort_order')
             ->values()
             ->all();
     }
@@ -1194,6 +1199,7 @@ class VillageSurveyAssignmentService
             ->groupBy('aspect')
             ->map(function (Collection $aspectQuestions, string $aspect) use ($answersByQuestion): array {
                 $questionRows = $aspectQuestions
+                    ->sortBy('sort_order')
                     ->values()
                     ->map(function (SurveyQuestion $question, int $index) use ($answersByQuestion): array {
                         $answer = $answersByQuestion->get($question->id);
@@ -1251,9 +1257,11 @@ class VillageSurveyAssignmentService
                 $score = $questionRows->sum(fn (array $question): int => (int) ($question['answer']['score'] ?? 0));
                 $maxScore = $questionRows->sum(fn (array $question): int => (int) $question['max_score']);
                 $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 1) : 0.0;
+                $minSortOrder = $questionRows->min('sort_order') ?? 999;
 
                 return [
                     'name' => $aspect,
+                    'min_sort_order' => $minSortOrder,
                     'question_count' => $questionRows->count(),
                     'answered_count' => $answeredCount,
                     'documents_count' => $documentsCount,
@@ -1263,6 +1271,7 @@ class VillageSurveyAssignmentService
                     'questions' => $questionRows->values()->all(),
                 ];
             })
+            ->sortBy('min_sort_order')
             ->values()
             ->all();
     }
@@ -1535,6 +1544,7 @@ class VillageSurveyAssignmentService
             ->groupBy('category_name')
             ->map(function (Collection $categoryQuestions, string $categoryName) use ($answersByQuestion): array {
                 $questionRows = $categoryQuestions
+                    ->sortBy('sort_order')
                     ->values()
                     ->map(function (PariwisataSurveyQuestion $question) use ($answersByQuestion): array {
                         $answer = $answersByQuestion->get($question->id);
@@ -1587,12 +1597,16 @@ class VillageSurveyAssignmentService
 
                 return [
                     'category_name' => $categoryName,
+                    'min_sort_order' => $categoryQuestions->min('sort_order') ?? 999,
                     'question_count' => $questionRows->count(),
                     'answered_count' => $questionRows->whereNotNull('answer')->count(),
                     'documents_count' => $questionRows->sum(fn (array $question): int => count($question['answer']['documents'] ?? [])),
+                    'score' => $questionRows->sum(fn (array $question): int => (int) ($question['answer']['score'] ?? 0)),
+                    'max_score' => $questionRows->sum(fn (array $question): int => (int) $question['max_score']),
                     'questions' => $questionRows->all(),
                 ];
             })
+            ->sortBy('min_sort_order')
             ->values()
             ->all();
     }
@@ -1960,3 +1974,5 @@ class VillageSurveyAssignmentService
         return $date?->format('Y-m-d\TH:i') ?? '';
     }
 }
+
+

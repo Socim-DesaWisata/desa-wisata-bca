@@ -68,6 +68,7 @@ type AssignmentRow = {
     reviewed_at: string;
     created_at: string;
     updated_at: string;
+    total_score: number;
     answers_count: number;
     documents_count: number;
 };
@@ -356,14 +357,14 @@ export default function SurveyAssignmentIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Survey Assignment
+                                    Survey KEMENPAR
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Survey Assignment
+                                Manajemen Survey KEMENPAR
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
-                                Pantau assignment survey desa wisata, status
+                                Pantau KEMENPAR survey desa wisata, status
                                 pengerjaan, reviewer, dan riwayat waktu dari
                                 database.
                             </p>
@@ -523,6 +524,7 @@ export default function SurveyAssignmentIndex({
                                             'Desa',
                                             'Status',
                                             'Created At',
+                                            'Total Skor',
                                             'Progress',
                                             'Aksi',
                                         ].map((head) => (
@@ -568,6 +570,13 @@ export default function SurveyAssignmentIndex({
                                             </td>
                                             <td className="px-3 py-3 font-medium text-[#303030]">
                                                 {assignment.created_at}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <span className="inline-flex min-w-20 items-center justify-center rounded-full bg-[#EAF3FF] px-3 py-1 text-sm font-bold text-[#0066AE]">
+                                                    {assignment.total_score.toFixed(
+                                                        1,
+                                                    )}
+                                                </span>
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#0066AE]">

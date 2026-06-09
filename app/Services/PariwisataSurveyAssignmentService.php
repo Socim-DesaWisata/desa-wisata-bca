@@ -119,12 +119,8 @@ class PariwisataSurveyAssignmentService
                 ]);
             }
 
-            AnnualTurnover::query()->where('pariwisata_id', $pariwisata->id)->delete();
-            PariwisataAnnualVisitor::query()->where('pariwisata_id', $pariwisata->id)->delete();
-            PariwisataVisitorTypeAnnual::query()->where('pariwisata_id', $pariwisata->id)->delete();
-            PariwisataPackage::query()->where('pariwisata_id', $pariwisata->id)->delete();
-            AnnualWorkerStat::query()->where('pariwisata_id', $pariwisata->id)->delete();
-            AnnualWorkerTrainingStat::query()->where('pariwisata_id', $pariwisata->id)->delete();
+            $this->forceDeleteAnnualData($pariwisata);
+            $this->forceDeletePariwisataChildren($pariwisata);
 
             $this->createAnnualTurnovers($pariwisata, $data['annual_turnovers'] ?? [], $user);
             $this->createAnnualVisitors($pariwisata, $data['annual_visitors'] ?? [], $user);
@@ -302,8 +298,38 @@ class PariwisataSurveyAssignmentService
         }
     }
 
+
+    private function forceDeleteAnnualData(PariwisataVillage $pariwisata): void
+    {
+        $entityKey = $this->pariwisataEntityKey($pariwisata);
+
+        AnnualTurnover::withTrashed()
+            ->where('entity_key', $entityKey)
+            ->forceDelete();
+        AnnualWorkerStat::withTrashed()
+            ->where('entity_key', $entityKey)
+            ->forceDelete();
+        AnnualWorkerTrainingStat::withTrashed()
+            ->where('entity_key', $entityKey)
+            ->forceDelete();
+    }
+
+    private function forceDeletePariwisataChildren(PariwisataVillage $pariwisata): void
+    {
+        PariwisataAnnualVisitor::withTrashed()
+            ->where('pariwisata_id', $pariwisata->id)
+            ->forceDelete();
+        PariwisataVisitorTypeAnnual::withTrashed()
+            ->where('pariwisata_id', $pariwisata->id)
+            ->forceDelete();
+        PariwisataPackage::withTrashed()
+            ->where('pariwisata_id', $pariwisata->id)
+            ->forceDelete();
+    }
+
     private function pariwisataEntityKey(PariwisataVillage $pariwisata): string
     {
         return "pariwisata:{$pariwisata->id}";
     }
 }
+
