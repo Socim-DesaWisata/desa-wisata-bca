@@ -1,0 +1,12 @@
+*** Begin Patch
+*** Update File: resources\js\pages\survey-assignment\show-pariwisata.tsx
+@@
+     Area,
+     AreaChart,
+     CartesianGrid,
+     Cell,
+-    Legend,
+     Pie,
+     PieChart,
+     ResponsiveContainer,
+*** End Patch

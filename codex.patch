@@ -1,0 +1,204 @@
+*** Begin Patch
+*** Update File: resources\js\pages\survey-assignment\show-pariwisata.tsx
+@@
+ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
+     const [selectedVisitorYear, setSelectedVisitorYear] = useState('');
+-    const [visibleSeries, setVisibleSeries] = useState<'all' | 'omset' | 'pengunjung'>('all');
++    const [visibleSeries, setVisibleSeries] = useState<
++        'all' | 'omset' | 'pengunjung'
++    >('all');
+@@
+     const pieChartData = useMemo(
+         () =>
+             activeVisitorYear
+                 ? buildVisitorPieData(values, activeVisitorYear)
+                 : [],
+         [activeVisitorYear, values],
+     );
++    const totalVisitorBreakdown = useMemo(
++        () => pieChartData.reduce((total, entry) => total + entry.value, 0),
++        [pieChartData],
++    );
+@@
+                         <div className="h-[320px] w-full">
+                             <ResponsiveContainer width="100%" height="100%">
+-                            <AreaChart data={trendChartData} margin={{ left: 12, right: 12, top: 8 }}>
++                                <AreaChart
++                                    data={trendChartData}
++                                    margin={{ left: 12, right: 12, top: 8 }}
++                                >
+@@
+-                                <Tooltip
+-                                    cursor={false}
+-                                    labelFormatter={(label) => `Tahun ${label}`}
+-                                    formatter={(value, name) => {
+-                                        const key = String(name);
+-                                        const formattedValue =
+-                                            key === 'pengunjung'
+-                                                ? formatVisitorCount(
+-                                                      Number(value),
+-                                                  )
+-                                                : formatCompactRupiah(
+-                                                      Number(value),
+-                                                  );
+-
+-                                        return [
+-                                            formattedValue,
+-                                            (key === 'pengunjung' ? 'Pengunjung Tahunan' : 'Omset Tahunan'),
+-                                        ];
+-                                    }}
++                                <Tooltip
++                                    cursor={false}
+                                     contentStyle={{
+                                         borderRadius: '0.75rem',
+                                         borderColor: '#E7ECF2',
+@@
+-                                <Legend
+-                                    formatter={(value) =>
+-                                        (String(value) === 'pengunjung' ? 'Pengunjung Tahunan' : 'Omset Tahunan')
+-                                    }
+-                                />
+                                 {visibleSeries !== 'pengunjung' && (
+                                     <Area
+                                         type="monotone"
+                                         dataKey="omset"
++                                        name="Omset Tahunan"
+                                         stroke="#0066AE"
+                                         fill="url(#fillOmset)"
+                                         strokeWidth={2.5}
+@@
+                                     <Area
+                                         type="monotone"
+                                         dataKey="pengunjung"
++                                        name="Pengunjung Tahunan"
+                                         stroke="#22C55E"
+                                         fill="url(#fillPengunjung)"
+                                         strokeWidth={2.5}
+@@
+-                            </AreaChart>
++                                </AreaChart>
+                             </ResponsiveContainer>
+                         </div>
++                        <div className="mt-4 flex flex-wrap gap-3">
++                            {visibleSeries !== 'pengunjung' && (
++                                <div className="inline-flex items-center gap-2 rounded-full bg-[#EAF3FF] px-3 py-1 text-xs font-bold text-[#0066AE]">
++                                    <span className="size-2.5 rounded-full bg-[#0066AE]" />
++                                    Omset Tahunan
++                                </div>
++                            )}
++                            {visibleSeries !== 'omset' && (
++                                <div className="inline-flex items-center gap-2 rounded-full bg-[#EAF8F0] px-3 py-1 text-xs font-bold text-[#15803D]">
++                                    <span className="size-2.5 rounded-full bg-[#22C55E]" />
++                                    Pengunjung Tahunan
++                                </div>
++                            )}
++                        </div>
+                     </div>
+                 ) : (
+@@
+                         <div className="mx-auto h-[320px] max-w-[360px]">
+                             <ResponsiveContainer width="100%" height="100%">
+-                            <PieChart>
++                                <PieChart>
+                                     <Tooltip
+                                         cursor={false}
+-                                    formatter={(value, name) => [
+-                                        formatVisitorCount(Number(value)),
+-                                        String(name),
+-                                    ]}
+                                     contentStyle={{
+                                         borderRadius: '0.75rem',
+                                         borderColor: '#E7ECF2',
+@@
+                                     <Pie
+                                         data={pieChartData}
+                                         dataKey="value"
+@@
+                                         innerRadius={52}
+                                         outerRadius={96}
+                                         paddingAngle={3}
+                                         labelLine={false}
+-                                    label={(props) => {
+-                                        const { cx, cy, midAngle, outerRadius, percent, payload } = props;
+-                                        
+-                                        // Guard: pastikan semua nilai ada
+-                                        if (!payload || !cx || !cy || !outerRadius) return null;
+-                                        
+-                                        const RADIAN = Math.PI / 180;
+-                                        const safeMidAngle = midAngle ?? 0;
+-                                        const safePercent = percent ?? 0;
+-                                        const radius = Number(outerRadius) + 22;
+-                                        const x = Number(cx) + radius * Math.cos(-safeMidAngle * RADIAN);
+-                                        const y = Number(cy) + radius * Math.sin(-safeMidAngle * RADIAN);
+-                                        
+-                                        return (
+-                                            <text
+-                                                x={x}
+-                                                y={y}
+-                                                fill={payload?.fill ?? '#334155'}
+-                                                textAnchor={x > Number(cx) ? 'start' : 'end'}
+-                                                dominantBaseline="central"
+-                                                fontSize={11}
+-                                                fontWeight={700}
+-                                            >
+-                                                {`${payload.label} ${(safePercent * 100).toFixed(0)}%`}
+-                                            </text>
+-                                        );
+-                                    }}
+-                                >
++                                    >
+                                     {pieChartData.map((entry) => (
+                                         <Cell key={entry.type} fill={entry.fill} />
+                                     ))}
+                                 </Pie>
+-                                <Legend
+-                                    verticalAlign="bottom"
+-                                    align="center"
+-                                    wrapperStyle={{ paddingTop: '1rem' }}
+-                                    formatter={(value) =>
+-                                        String(value)
+-                                    }
+-                                />
+-                            </PieChart>
++                                </PieChart>
+                             </ResponsiveContainer>
+                         </div>
++                        <div className="mt-4 space-y-2">
++                            {pieChartData.map((entry) => {
++                                const percent =
++                                    totalVisitorBreakdown > 0
++                                        ? (entry.value / totalVisitorBreakdown) *
++                                          100
++                                        : 0;
++
++                                return (
++                                    <div
++                                        key={entry.type}
++                                        className="flex items-center justify-between gap-3 rounded-xl border border-[#E7ECF2] bg-[#F8FBFE] px-3 py-2"
++                                    >
++                                        <div className="flex min-w-0 items-center gap-2">
++                                            <span
++                                                className="size-2.5 shrink-0 rounded-full"
++                                                style={{
++                                                    backgroundColor: entry.fill,
++                                                }}
++                                            />
++                                            <span className="truncate text-sm font-bold text-[#344256]">
++                                                {entry.label}
++                                            </span>
++                                        </div>
++                                        <div className="text-right text-xs font-bold text-[#172033]">
++                                            <div>
++                                                {formatVisitorCount(entry.value)}
++                                            </div>
++                                            <div className="text-[#64748B]">
++                                                {formatStatScore(percent)}%
++                                            </div>
++                                        </div>
++                                    </div>
++                                );
++                            })}
++                        </div>
+                     </div>
+                 ) : (
+*** End Patch
