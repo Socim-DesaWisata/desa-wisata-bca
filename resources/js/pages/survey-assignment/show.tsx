@@ -518,32 +518,313 @@ function MetricCard({
     );
 }
 
-function ScoreBar({ aspect }: { aspect: SurveyAspect }) {
-    const color =
-        aspect.score_percent < 70
-            ? '#FF944C'
-            : aspect.score_percent >= 85
-              ? '#00893D'
-              : '#0066AE';
+type ScoreBucket = {
+    key: string;
+    label: string;
+    min: number;
+    max: number;
+    color: string;
+    textColor: string;
+};
+
+const aspectScoreBuckets: ScoreBucket[] = [
+    {
+        key: '0-20',
+        label: '0-20',
+        min: 0,
+        max: 20,
+        color: '#EF4444',
+        textColor: 'text-[#EF4444]',
+    },
+    {
+        key: '21-40',
+        label: '21-40',
+        min: 21,
+        max: 40,
+        color: '#F97316',
+        textColor: 'text-[#F97316]',
+    },
+    {
+        key: '41-60',
+        label: '41-60',
+        min: 41,
+        max: 60,
+        color: '#FACC15',
+        textColor: 'text-[#CA8A04]',
+    },
+    {
+        key: '61-80',
+        label: '61-80',
+        min: 61,
+        max: 80,
+        color: '#22C55E',
+        textColor: 'text-[#16A34A]',
+    },
+    {
+        key: '81-100',
+        label: '81-100',
+        min: 81,
+        max: 100,
+        color: '#2563EB',
+        textColor: 'text-[#2563EB]',
+    },
+];
+
+const answerScoreBuckets: ScoreBucket[] = [
+    {
+        key: '1',
+        label: 'Skor 1',
+        min: 1,
+        max: 1,
+        color: '#EF4444',
+        textColor: 'text-[#EF4444]',
+    },
+    {
+        key: '2',
+        label: 'Skor 2',
+        min: 2,
+        max: 2,
+        color: '#F97316',
+        textColor: 'text-[#F97316]',
+    },
+    {
+        key: '3',
+        label: 'Skor 3',
+        min: 3,
+        max: 3,
+        color: '#FACC15',
+        textColor: 'text-[#CA8A04]',
+    },
+    {
+        key: '4',
+        label: 'Skor 4',
+        min: 4,
+        max: 4,
+        color: '#22C55E',
+        textColor: 'text-[#16A34A]',
+    },
+];
+
+const performanceLegends = [
+    { label: 'Rendah (0-40)', color: '#EF4444' },
+    { label: 'Cukup (41-60)', color: '#FACC15' },
+    { label: 'Baik (61-80)', color: '#22C55E' },
+    { label: 'Sangat Baik (81-100)', color: '#2563EB' },
+];
+
+function clampScore(value: number) {
+    if (!Number.isFinite(value)) {
+        return 0;
+    }
+
+    return Math.min(100, Math.max(0, value));
+}
+
+function scoreBucketFor(value: number) {
+    const rounded = Math.round(clampScore(value));
 
     return (
-        <div className="grid grid-cols-[130px_1fr_64px] items-center gap-3">
-            <span className="truncate text-xs font-bold text-[#303030]">
+        aspectScoreBuckets.find(
+            (bucket) => rounded >= bucket.min && rounded <= bucket.max,
+        ) ?? aspectScoreBuckets[0]
+    );
+}
+
+function formatStatScore(value: number) {
+    return clampScore(value).toLocaleString('id-ID', {
+        maximumFractionDigits: 1,
+    });
+}
+
+function ScoreBar({ aspect }: { aspect: SurveyAspect }) {
+    const bucket = scoreBucketFor(aspect.score_percent);
+
+    return (
+        <div className="grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_52px] md:items-center">
+            <p className="truncate text-xs font-bold text-[#344256]">
                 {aspect.name}
-            </span>
-            <div className="h-2 overflow-hidden rounded-full bg-[#E8ECF2]">
+            </p>
+            <div className="relative h-7 overflow-hidden rounded-full bg-[#EEF3F8]">
+                <div className="absolute inset-y-0 left-0 w-1/5 border-r border-white/90" />
+                <div className="absolute inset-y-0 left-[40%] w-px bg-white/90" />
+                <div className="absolute inset-y-0 left-[60%] w-px bg-white/90" />
+                <div className="absolute inset-y-0 left-[80%] w-px bg-white/90" />
                 <div
-                    className="h-full rounded-full"
+                    className="h-full rounded-full transition-[width]"
                     style={{
-                        width: `${Math.min(aspect.score_percent, 100)}%`,
-                        backgroundColor: color,
+                        width: `${clampScore(aspect.score_percent)}%`,
+                        backgroundColor: bucket.color,
                     }}
                 />
             </div>
-            <span className="text-right text-xs font-bold" style={{ color }}>
-                {aspect.score_percent}
-            </span>
+            <p className="text-right text-xs font-black text-[#303030]">
+                {formatStatScore(aspect.score_percent)}
+            </p>
         </div>
+    );
+}
+
+function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
+    const answers = aspects.flatMap((aspect) =>
+        aspect.questions.map((q) => q.answer).filter(Boolean),
+    );
+    const totalAnswers = answers.length;
+    const distribution = answerScoreBuckets.map((bucket) => {
+        const count = answers.filter((answer) => {
+            const score = answer ? Math.round(answer.score) : 0;
+            return score === bucket.min;
+        }).length;
+
+        return {
+            ...bucket,
+            count,
+            percentage: totalAnswers > 0 ? (count / totalAnswers) * 100 : 0,
+        };
+    });
+
+    const radius = 58;
+    const circumference = 2 * Math.PI * radius;
+    let currentOffset = 0;
+
+    return (
+        <Card className="overflow-hidden p-5">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+                <div className="min-w-0">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h2 className="text-base font-bold text-[#303030]">
+                                Skor per Aspek
+                            </h2>
+                            <p className="text-sm font-semibold text-[#7C7C7C]">
+                                Skor tertimbang (0-100)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 space-y-4">
+                        {aspects.map((aspect) => (
+                            <ScoreBar key={aspect.name} aspect={aspect} />
+                        ))}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-6 gap-2 pl-0 text-[11px] font-bold text-[#8A97A8] md:ml-[180px]">
+                        {[0, 20, 40, 60, 80, 100].map((value) => (
+                            <span
+                                key={value}
+                                className="text-right first:text-left"
+                            >
+                                {value}
+                            </span>
+                        ))}
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-4">
+                        {performanceLegends.map((legend) => (
+                            <span
+                                key={legend.label}
+                                className="inline-flex items-center gap-2 text-xs font-bold text-[#566579]"
+                            >
+                                <span
+                                    className="size-2.5 rounded-full"
+                                    style={{ backgroundColor: legend.color }}
+                                />
+                                {legend.label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="min-w-0 border-t border-[#E7ECF2] pt-5 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-6">
+                    <h2 className="text-base font-bold text-[#303030]">
+                        Distribusi Skor Jawaban
+                    </h2>
+                    <p className="text-sm font-semibold text-[#7C7C7C]">
+                        Total {totalAnswers} jawaban
+                    </p>
+
+                    <div className="mt-5 grid gap-5 sm:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-1">
+                        <div className="relative mx-auto size-44">
+                            <svg
+                                viewBox="0 0 160 160"
+                                className="size-full -rotate-90"
+                                aria-hidden="true"
+                            >
+                                <circle
+                                    cx="80"
+                                    cy="80"
+                                    r={radius}
+                                    fill="none"
+                                    stroke="#EEF3F8"
+                                    strokeWidth="22"
+                                />
+                                {totalAnswers > 0 &&
+                                    distribution.map((bucket) => {
+                                        const length =
+                                            (bucket.percentage / 100) *
+                                            circumference;
+                                        const dashOffset = -currentOffset;
+                                        currentOffset += length;
+
+                                        if (bucket.count === 0) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <circle
+                                                key={bucket.key}
+                                                cx="80"
+                                                cy="80"
+                                                r={radius}
+                                                fill="none"
+                                                stroke={bucket.color}
+                                                strokeWidth="22"
+                                                strokeDasharray={`${length} ${circumference - length}`}
+                                                strokeDashoffset={dashOffset}
+                                            />
+                                        );
+                                    })}
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <p className="text-3xl font-black text-[#303030]">
+                                    {totalAnswers}
+                                </p>
+                                <p className="text-xs font-bold text-[#7C7C7C]">
+                                    Jawaban
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            {distribution.map((bucket) => (
+                                <div
+                                    key={bucket.key}
+                                    className="flex items-center justify-between gap-3 rounded-lg bg-[#F8FBFE] px-3 py-2"
+                                >
+                                    <span className="inline-flex items-center gap-2 text-sm font-bold text-[#344256]">
+                                        <span
+                                            className="size-2.5 rounded-full"
+                                            style={{
+                                                backgroundColor: bucket.color,
+                                            }}
+                                        />
+                                        {bucket.label}
+                                    </span>
+                                    <span
+                                        className={classNames(
+                                            'text-sm font-black',
+                                            bucket.textColor,
+                                        )}
+                                    >
+                                        {bucket.count} (
+                                        {formatStatScore(bucket.percentage)}%)
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Card>
     );
 }
 
@@ -1777,19 +2058,7 @@ export default function SurveyAssignmentShow({
                                     />
                                 </div>
 
-                                <Card className="p-4">
-                                    <h3 className="text-sm font-bold text-[#303030]">
-                                        Skor per Aspek
-                                    </h3>
-                                    <div className="mt-4 grid gap-x-8 gap-y-3 lg:grid-cols-2">
-                                        {aspects.map((aspect) => (
-                                            <ScoreBar
-                                                key={aspect.name}
-                                                aspect={aspect}
-                                            />
-                                        ))}
-                                    </div>
-                                </Card>
+                                <SurveyStatistics aspects={aspects} />
 
                                 <Card className="overflow-hidden">
                                     <div className="border-b border-[#EFEFEF] p-4">

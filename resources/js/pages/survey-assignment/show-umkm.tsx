@@ -2897,338 +2897,318 @@ export default function ShowUmkm({
 
                     <UmkmSurveyStatistics groups={survey_groups} />
 
-                    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-                        <Card className="overflow-hidden">
-                            <div className="flex flex-col gap-3 border-b border-[#EFEFEF] p-4 lg:flex-row lg:items-center lg:justify-between">
-                                <div>
-                                    <h2 className="text-base font-bold text-[#303030]">
-                                        Jawaban Survey UMKM
-                                    </h2>
-                                    <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
-                                        Tabel jawaban dikelompokkan berdasarkan
-                                        kriteria assessment.
-                                    </p>
-                                </div>
-                                <div className="grid gap-2 sm:grid-cols-[minmax(180px,1fr)_180px_auto]">
-                                    <label className="relative min-w-0">
-                                        <Search
-                                            size={16}
-                                            className="absolute top-1/2 left-3 -translate-y-1/2 text-[#7C7C7C]"
-                                        />
-                                        <input
-                                            value={search}
-                                            onChange={(event) =>
-                                                setSearch(event.target.value)
-                                            }
-                                            placeholder="Cari pertanyaan..."
-                                            className="h-10 w-full rounded-lg border border-[#DDE4EC] bg-white pr-3 pl-9 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
-                                        />
-                                    </label>
-                                    <select
-                                        value={groupFilter}
-                                        onChange={(event) =>
-                                            setGroupFilter(event.target.value)
-                                        }
-                                        className="h-10 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
-                                    >
-                                        <option value="all">
-                                            Semua kriteria
-                                        </option>
-                                        {survey_groups.map((group) => (
-                                            <option
-                                                key={group.criteria_code}
-                                                value={group.criteria_code}
-                                            >
-                                                {criteriaLabel(
-                                                    group.criteria_code,
-                                                    group.criteria_name,
-                                                )}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSearch('');
-                                            setGroupFilter('all');
-                                        }}
-                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
-                                    >
-                                        <RefreshCcw size={15} />
-                                        Reset
-                                    </button>
-                                </div>
+                    <div className="grid gap-4 xl:grid-cols-4">
+                        <Card className="p-4 xl:col-span-2">
+                            <div className="flex items-center justify-between gap-3">
+                                <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
+                                    <FileText
+                                        size={16}
+                                        className="text-[#0066AE]"
+                                    />
+                                    Dokumen Pendukung
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={openCreateDocument}
+                                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#0066AE] px-2.5 text-xs font-bold text-white transition hover:bg-[#093967]"
+                                >
+                                    <Plus size={14} />
+                                    Tambah
+                                </button>
                             </div>
 
-                            <div className="overflow-x-auto">
-                                <div className="min-w-[780px]">
-                                    {filteredGroups.map((group) => {
-                                        const isOpen =
-                                            openGroups[group.criteria_code] ??
-                                            true;
+                            <div className="mt-4 space-y-3">
+                                {umkm.documents.length === 0 && (
+                                    <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-3 py-5 text-center">
+                                        <FileText className="mx-auto size-7 text-[#0066AE]" />
+                                        <p className="mt-2 text-sm font-bold text-[#303030]">
+                                            Belum ada dokumen
+                                        </p>
+                                        <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                            Tambahkan dokumen pendukung UMKM.
+                                        </p>
+                                    </div>
+                                )}
 
-                                        return (
-                                            <section key={group.criteria_code}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setOpenGroups(
-                                                            (current) => ({
-                                                                ...current,
-                                                                [group.criteria_code]:
-                                                                    !isOpen,
-                                                            }),
-                                                        )
-                                                    }
-                                                    className="flex w-full items-center justify-between gap-3 border-b border-[#DDE9F6] bg-[#F8FBFE] px-4 py-3 text-left transition hover:bg-[#F1F7FD]"
-                                                >
-                                                    <div>
-                                                        <h3 className="text-sm font-bold text-[#303030]">
-                                                            {criteriaLabel(
-                                                                group.criteria_code,
-                                                                group.criteria_name,
-                                                            )}
-                                                        </h3>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <p className="text-xs font-bold text-[#7C7C7C]">
-                                                            {
-                                                                group.answered_questions
-                                                            }{' '}
-                                                            jawaban · Pembobotan
-                                                            :{' '}
-                                                            {
-                                                                group.weighted_score
-                                                            }
-                                                        </p>
-                                                        <span className="flex size-8 items-center justify-center rounded-full border border-[#D6E4F2] bg-white text-[#0066AE]">
-                                                            <ChevronDown
-                                                                size={16}
-                                                                className={classNames(
-                                                                    'transition-transform duration-200',
-                                                                    isOpen &&
-                                                                        'rotate-180',
-                                                                )}
-                                                            />
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                                {isOpen &&
-                                                    group.answers.map(
-                                                        (answer, index) => (
-                                                            <QuestionRow
-                                                                key={answer.id}
-                                                                answer={answer}
-                                                                number={
-                                                                    (groupStartNumbers[
-                                                                        group
-                                                                            .criteria_code
-                                                                    ] ?? 0) +
-                                                                    index +
-                                                                    1
-                                                                }
-                                                                onViewDetail={
-                                                                    setDetailAnswer
-                                                                }
-                                                                onEditAnswer={
-                                                                    openAnswerEdit
-                                                                }
-                                                            />
-                                                        ),
-                                                    )}
-                                            </section>
-                                        );
-                                    })}
-                                    {filteredGroups.length === 0 && (
-                                        <div className="px-4 py-10 text-center text-sm font-semibold text-[#7C7C7C]">
-                                            Tidak ada jawaban sesuai filter.
+                                {umkm.documents.map((document) => (
+                                    <div
+                                        key={document.id}
+                                        className="rounded-xl border border-[#E6EDF4] bg-[#F8FBFE] p-3"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#0066AE] ring-1 ring-[#DDE8F2]">
+                                                <FileText size={16} />
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-bold text-[#303030]">
+                                                    {document.document_name}
+                                                </p>
+                                                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                                    {document.file_size_label} ·{' '}
+                                                    {document.uploaded_by.name}
+                                                </p>
+                                                <p className="mt-1 text-[11px] font-semibold text-[#9AA7B5]">
+                                                    {document.created_at}
+                                                </p>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
+                                        <div className="mt-3 grid grid-cols-3 gap-2">
+                                            <a
+                                                href={document.file_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                                            >
+                                                <Download size={13} />
+                                                Lihat
+                                            </a>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    openEditDocument(document)
+                                                }
+                                                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
+                                            >
+                                                <Pencil size={13} />
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    deleteDocument(document)
+                                                }
+                                                disabled={
+                                                    documentDeleteForm.processing
+                                                }
+                                                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#F2C7C7] bg-white px-2 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6] disabled:opacity-60"
+                                            >
+                                                <Trash2 size={13} />
+                                                Hapus
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </Card>
 
-                        <aside className="space-y-4">
-                            <Card className="p-4">
-                                <div className="flex items-center justify-between gap-3">
-                                    <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
-                                        <FileText
-                                            size={16}
-                                            className="text-[#0066AE]"
-                                        />
-                                        Dokumen Pendukung
-                                    </h2>
-                                    <button
-                                        type="button"
-                                        onClick={openCreateDocument}
-                                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#0066AE] px-2.5 text-xs font-bold text-white transition hover:bg-[#093967]"
-                                    >
-                                        <Plus size={14} />
-                                        Tambah
-                                    </button>
-                                </div>
+                        <Card className="p-4">
+                            <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
+                                <Store size={16} className="text-[#0066AE]" />
+                                Data Ringkas
+                            </h2>
+                            <div className="mt-4 space-y-3">
+                                <DetailPair
+                                    label="Collector"
+                                    value={umkm.collector.name}
+                                />
+                                <DetailPair
+                                    label="Dibuat Oleh"
+                                    value={umkm.creator.name}
+                                />
+                                <DetailPair
+                                    label="Kapasitas Bulanan"
+                                    value={umkm.monthly_production_capacity}
+                                />
+                                <DetailPair
+                                    label="Sertifikasi"
+                                    value={umkm.certifications}
+                                />
+                            </div>
+                        </Card>
 
-                                <div className="mt-4 space-y-3">
-                                    {umkm.documents.length === 0 && (
-                                        <div className="rounded-xl border border-dashed border-[#BFD6EA] bg-[#F8FBFE] px-3 py-5 text-center">
-                                            <FileText className="mx-auto size-7 text-[#0066AE]" />
-                                            <p className="mt-2 text-sm font-bold text-[#303030]">
-                                                Belum ada dokumen
-                                            </p>
-                                            <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                                Tambahkan dokumen pendukung
-                                                UMKM.
-                                            </p>
-                                        </div>
-                                    )}
+                        <Card className="p-4">
+                            <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
+                                <MapPin size={16} className="text-[#0066AE]" />
+                                Marketing dan Bank
+                            </h2>
+                            <div className="mt-4 space-y-3">
+                                <DetailPair
+                                    label="Website"
+                                    value={umkm.company_website_url}
+                                />
+                                <DetailPair
+                                    label="E-commerce"
+                                    value={umkm.ecommerce_profile_url}
+                                />
+                                <DetailPair
+                                    label="Bank"
+                                    value={umkm.bank_name}
+                                />
+                                <DetailPair
+                                    label="Provider QRIS"
+                                    value={umkm.qris_provider}
+                                />
+                            </div>
+                        </Card>
 
-                                    {umkm.documents.map((document) => (
-                                        <div
-                                            key={document.id}
-                                            className="rounded-xl border border-[#E6EDF4] bg-[#F8FBFE] p-3"
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#0066AE] ring-1 ring-[#DDE8F2]">
-                                                    <FileText size={16} />
-                                                </span>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-bold text-[#303030]">
-                                                        {document.document_name}
-                                                    </p>
-                                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                                        {
-                                                            document.file_size_label
-                                                        }{' '}
-                                                        ·{' '}
-                                                        {
-                                                            document.uploaded_by
-                                                                .name
-                                                        }
-                                                    </p>
-                                                    <p className="mt-1 text-[11px] font-semibold text-[#9AA7B5]">
-                                                        {document.created_at}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="mt-3 grid grid-cols-3 gap-2">
-                                                <a
-                                                    href={document.file_url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                                                >
-                                                    <Download size={13} />
-                                                    Lihat
-                                                </a>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        openEditDocument(
-                                                            document,
-                                                        )
-                                                    }
-                                                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
-                                                >
-                                                    <Pencil size={13} />
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        deleteDocument(document)
-                                                    }
-                                                    disabled={
-                                                        documentDeleteForm.processing
-                                                    }
-                                                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#F2C7C7] bg-white px-2 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6] disabled:opacity-60"
-                                                >
-                                                    <Trash2 size={13} />
-                                                    Hapus
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </Card>
-                            <Card className="p-4">
-                                <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
-                                    <Store
-                                        size={16}
-                                        className="text-[#0066AE]"
-                                    />
-                                    Data Ringkas
-                                </h2>
-                                <div className="mt-4 space-y-3">
-                                    <DetailPair
-                                        label="Collector"
-                                        value={umkm.collector.name}
-                                    />
-                                    <DetailPair
-                                        label="Dibuat Oleh"
-                                        value={umkm.creator.name}
-                                    />
-                                    <DetailPair
-                                        label="Kapasitas Bulanan"
-                                        value={umkm.monthly_production_capacity}
-                                    />
-                                    <DetailPair
-                                        label="Sertifikasi"
-                                        value={umkm.certifications}
-                                    />
-                                </div>
-                            </Card>
-                            <Card className="p-4">
-                                <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
-                                    <MapPin
-                                        size={16}
-                                        className="text-[#0066AE]"
-                                    />
-                                    Marketing dan Bank
-                                </h2>
-                                <div className="mt-4 space-y-3">
-                                    <DetailPair
-                                        label="Website"
-                                        value={umkm.company_website_url}
-                                    />
-                                    <DetailPair
-                                        label="E-commerce"
-                                        value={umkm.ecommerce_profile_url}
-                                    />
-                                    <DetailPair
-                                        label="Bank"
-                                        value={umkm.bank_name}
-                                    />
-                                    <DetailPair
-                                        label="Provider QRIS"
-                                        value={umkm.qris_provider}
-                                    />
-                                </div>
-                            </Card>
-                            <Card className="p-4">
-                                <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
-                                    <UserRound
-                                        size={16}
-                                        className="text-[#0066AE]"
-                                    />
-                                    Catatan
-                                </h2>
-                                <div className="mt-4 space-y-3">
-                                    <DetailPair
-                                        label="Kendala"
-                                        value={umkm.current_obstacles}
-                                    />
-                                    <DetailPair
-                                        label="Marketing"
-                                        value={umkm.marketing_notes}
-                                    />
-                                    <DetailPair
-                                        label="Keberlanjutan"
-                                        value={umkm.sustainability_notes}
-                                    />
-                                </div>
-                            </Card>
-                        </aside>
+                        <Card className="p-4 xl:col-span-4">
+                            <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
+                                <UserRound
+                                    size={16}
+                                    className="text-[#0066AE]"
+                                />
+                                Catatan
+                            </h2>
+                            <div className="mt-4 grid gap-3 md:grid-cols-3">
+                                <DetailPair
+                                    label="Kendala"
+                                    value={umkm.current_obstacles}
+                                />
+                                <DetailPair
+                                    label="Marketing"
+                                    value={umkm.marketing_notes}
+                                />
+                                <DetailPair
+                                    label="Keberlanjutan"
+                                    value={umkm.sustainability_notes}
+                                />
+                            </div>
+                        </Card>
                     </div>
+
+                    <Card className="overflow-hidden">
+                        <div className="flex flex-col gap-3 border-b border-[#EFEFEF] p-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <h2 className="text-base font-bold text-[#303030]">
+                                    Jawaban Survey UMKM
+                                </h2>
+                                <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
+                                    Tabel jawaban dikelompokkan berdasarkan
+                                    kriteria assessment.
+                                </p>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-[minmax(180px,1fr)_180px_auto]">
+                                <label className="relative min-w-0">
+                                    <Search
+                                        size={16}
+                                        className="absolute top-1/2 left-3 -translate-y-1/2 text-[#7C7C7C]"
+                                    />
+                                    <input
+                                        value={search}
+                                        onChange={(event) =>
+                                            setSearch(event.target.value)
+                                        }
+                                        placeholder="Cari pertanyaan..."
+                                        className="h-10 w-full rounded-lg border border-[#DDE4EC] bg-white pr-3 pl-9 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                                    />
+                                </label>
+                                <select
+                                    value={groupFilter}
+                                    onChange={(event) =>
+                                        setGroupFilter(event.target.value)
+                                    }
+                                    className="h-10 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                                >
+                                    <option value="all">Semua kriteria</option>
+                                    {survey_groups.map((group) => (
+                                        <option
+                                            key={group.criteria_code}
+                                            value={group.criteria_code}
+                                        >
+                                            {criteriaLabel(
+                                                group.criteria_code,
+                                                group.criteria_name,
+                                            )}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearch('');
+                                        setGroupFilter('all');
+                                    }}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
+                                >
+                                    <RefreshCcw size={15} />
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <div className="min-w-[780px]">
+                                {filteredGroups.map((group) => {
+                                    const isOpen =
+                                        openGroups[group.criteria_code] ?? true;
+
+                                    return (
+                                        <section key={group.criteria_code}>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setOpenGroups(
+                                                        (current) => ({
+                                                            ...current,
+                                                            [group.criteria_code]:
+                                                                !isOpen,
+                                                        }),
+                                                    )
+                                                }
+                                                className="flex w-full items-center justify-between gap-3 border-b border-[#DDE9F6] bg-[#F8FBFE] px-4 py-3 text-left transition hover:bg-[#F1F7FD]"
+                                            >
+                                                <div>
+                                                    <h3 className="text-sm font-bold text-[#303030]">
+                                                        {criteriaLabel(
+                                                            group.criteria_code,
+                                                            group.criteria_name,
+                                                        )}
+                                                    </h3>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="text-xs font-bold text-[#7C7C7C]">
+                                                        {
+                                                            group.answered_questions
+                                                        }{' '}
+                                                        jawaban · Pembobotan:{' '}
+                                                        {group.weighted_score}
+                                                    </p>
+                                                    <span className="flex size-8 items-center justify-center rounded-full border border-[#D6E4F2] bg-white text-[#0066AE]">
+                                                        <ChevronDown
+                                                            size={16}
+                                                            className={classNames(
+                                                                'transition-transform duration-200',
+                                                                isOpen &&
+                                                                    'rotate-180',
+                                                            )}
+                                                        />
+                                                    </span>
+                                                </div>
+                                            </button>
+                                            {isOpen &&
+                                                group.answers.map(
+                                                    (answer, index) => (
+                                                        <QuestionRow
+                                                            key={answer.id}
+                                                            answer={answer}
+                                                            number={
+                                                                (groupStartNumbers[
+                                                                    group
+                                                                        .criteria_code
+                                                                ] ?? 0) +
+                                                                index +
+                                                                1
+                                                            }
+                                                            onViewDetail={
+                                                                setDetailAnswer
+                                                            }
+                                                            onEditAnswer={
+                                                                openAnswerEdit
+                                                            }
+                                                        />
+                                                    ),
+                                                )}
+                                        </section>
+                                    );
+                                })}
+                                {filteredGroups.length === 0 && (
+                                    <div className="px-4 py-10 text-center text-sm font-semibold text-[#7C7C7C]">
+                                        Tidak ada jawaban sesuai filter.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
                 </div>
             </main>
 

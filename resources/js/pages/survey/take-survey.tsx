@@ -421,11 +421,11 @@ function QuestionCard({
             <p className="mt-5 text-sm font-semibold text-[#0066AE]">
                 Pertanyaan survey
             </p>
-            <h2 className="mt-2 max-w-3xl text-2xl leading-tight font-bold text-[#303030] sm:text-[26px]">
+            <h2 className="mt-2 max-w-3xl text-lg leading-tight font-bold text-[#303030] sm:text-xl">
                 {question.question_text}
             </h2>
             {question.document_hint && (
-                <p className="mt-3 max-w-2xl text-sm leading-6 font-medium text-[#7C7C7C] sm:text-[15px]">
+                <p className="mt-2 max-w-2xl text-[13px] leading-5 font-medium text-[#7C7C7C] sm:text-sm sm:leading-6">
                     {question.document_hint}
                 </p>
             )}

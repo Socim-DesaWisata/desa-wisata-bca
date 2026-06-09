@@ -1142,7 +1142,9 @@ class VillageSurveyAssignmentService
             ->groupBy('aspect')
             ->map(fn (Collection $aspectQuestions, string $aspect): array => [
                 'name' => $aspect,
+                'min_sort_order' => $aspectQuestions->min('sort_order'),
                 'questions' => $aspectQuestions
+                    ->sortBy('sort_order')
                     ->values()
                     ->map(function (SurveyQuestion $question) use ($answersByQuestion): array {
                         $answer = $answersByQuestion->get($question->id);
@@ -1181,6 +1183,7 @@ class VillageSurveyAssignmentService
                     })
                     ->all(),
             ])
+            ->sortBy('min_sort_order')
             ->values()
             ->all();
     }
@@ -1196,6 +1199,7 @@ class VillageSurveyAssignmentService
             ->groupBy('aspect')
             ->map(function (Collection $aspectQuestions, string $aspect) use ($answersByQuestion): array {
                 $questionRows = $aspectQuestions
+                    ->sortBy('sort_order')
                     ->values()
                     ->map(function (SurveyQuestion $question, int $index) use ($answersByQuestion): array {
                         $answer = $answersByQuestion->get($question->id);
@@ -1253,9 +1257,11 @@ class VillageSurveyAssignmentService
                 $score = $questionRows->sum(fn (array $question): int => (int) ($question['answer']['score'] ?? 0));
                 $maxScore = $questionRows->sum(fn (array $question): int => (int) $question['max_score']);
                 $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 1) : 0.0;
+                $minSortOrder = $questionRows->min('sort_order') ?? 999;
 
                 return [
                     'name' => $aspect,
+                    'min_sort_order' => $minSortOrder,
                     'question_count' => $questionRows->count(),
                     'answered_count' => $answeredCount,
                     'documents_count' => $documentsCount,
@@ -1265,6 +1271,7 @@ class VillageSurveyAssignmentService
                     'questions' => $questionRows->values()->all(),
                 ];
             })
+            ->sortBy('min_sort_order')
             ->values()
             ->all();
     }
@@ -1537,6 +1544,7 @@ class VillageSurveyAssignmentService
             ->groupBy('category_name')
             ->map(function (Collection $categoryQuestions, string $categoryName) use ($answersByQuestion): array {
                 $questionRows = $categoryQuestions
+                    ->sortBy('sort_order')
                     ->values()
                     ->map(function (PariwisataSurveyQuestion $question) use ($answersByQuestion): array {
                         $answer = $answersByQuestion->get($question->id);
@@ -1589,12 +1597,16 @@ class VillageSurveyAssignmentService
 
                 return [
                     'category_name' => $categoryName,
+                    'min_sort_order' => $categoryQuestions->min('sort_order') ?? 999,
                     'question_count' => $questionRows->count(),
                     'answered_count' => $questionRows->whereNotNull('answer')->count(),
                     'documents_count' => $questionRows->sum(fn (array $question): int => count($question['answer']['documents'] ?? [])),
+                    'score' => $questionRows->sum(fn (array $question): int => (int) ($question['answer']['score'] ?? 0)),
+                    'max_score' => $questionRows->sum(fn (array $question): int => (int) $question['max_score']),
                     'questions' => $questionRows->all(),
                 ];
             })
+            ->sortBy('min_sort_order')
             ->values()
             ->all();
     }
