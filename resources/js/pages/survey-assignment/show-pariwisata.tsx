@@ -27,12 +27,18 @@ import {
     Cell,
     Pie,
     PieChart,
-    ResponsiveContainer,
-    Tooltip as RechartsTooltip,
     XAxis,
     YAxis,
 } from 'recharts';
 
+import {
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig,
+} from '@/components/ui/chart';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -41,6 +47,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { dashboard, surveyAssignments } from '@/routes';
 import { show as showAssignment } from '@/routes/survey-assignments';
@@ -283,6 +297,105 @@ function formatThousands(value: string) {
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
+}
+
+type TrendChartRow = {
+    year: string;
+    omset: number;
+    pengunjung: number;
+};
+
+type VisitorPieRow = {
+    type: string;
+    label: string;
+    value: number;
+    fill: string;
+};
+
+const visitorTypeColors: Record<string, string> = {
+    domestik: '#0066AE',
+    mancanegara: '#22C55E',
+    pelajar: '#F59E0B',
+    rombongan: '#8B5CF6',
+};
+
+function toNumber(value: string) {
+    const normalized = Number.parseFloat(value);
+
+    return Number.isFinite(normalized) ? normalized : 0;
+}
+
+function formatCompactRupiah(value: number) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        notation: value >= 1000000 ? 'compact' : 'standard',
+        maximumFractionDigits: value >= 1000000 ? 1 : 0,
+    }).format(value);
+}
+
+function formatVisitorCount(value: number) {
+    return new Intl.NumberFormat('id-ID', {
+        maximumFractionDigits: 0,
+    }).format(value);
+}
+
+function visitorTypeLabel(type: string) {
+    return (
+        visitorTypeOptions.find((option) => option.value === type)?.label ??
+        type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+    );
+}
+
+function buildTrendChartData(values: PariwisataEditValues): TrendChartRow[] {
+    const years = new Set<string>();
+
+    values.annual_turnovers.forEach((row) => {
+        if (row.year) {
+            years.add(row.year);
+        }
+    });
+
+    values.annual_visitors.forEach((row) => {
+        if (row.year) {
+            years.add(row.year);
+        }
+    });
+
+    return Array.from(years)
+        .sort((left, right) => Number(left) - Number(right))
+        .map((year) => ({
+            year,
+            omset: values.annual_turnovers
+                .filter((row) => row.year === year)
+                .reduce((total, row) => total + toNumber(row.value), 0),
+            pengunjung: values.annual_visitors
+                .filter((row) => row.year === year)
+                .reduce((total, row) => total + toNumber(row.value), 0),
+        }));
+}
+
+function buildVisitorPieData(
+    values: PariwisataEditValues,
+    selectedYear: string,
+): VisitorPieRow[] {
+    const totals = new Map<string, number>();
+
+    values.visitor_type_annuals
+        .filter((row) => row.year === selectedYear)
+        .forEach((row) => {
+            const currentTotal = totals.get(row.visitor_type) ?? 0;
+            totals.set(row.visitor_type, currentTotal + toNumber(row.value));
+        });
+
+    return Array.from(totals.entries())
+        .map(([type, value]) => ({
+            type,
+            label: visitorTypeLabel(type),
+            value,
+            fill: visitorTypeColors[type] ?? '#94A3B8',
+        }))
+        .sort((left, right) => right.value - left.value);
 }
 
 function Card({
@@ -2018,6 +2131,275 @@ function formatStatScore(value: number) {
     });
 }
 
+function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
+    const [selectedVisitorYear, setSelectedVisitorYear] = useState('');
+    const [visibleSeries, setVisibleSeries] = useState<'all' | 'omset' | 'pengunjung'>('all');
+
+    const trendChartData = useMemo(() => buildTrendChartData(values), [values]);
+    const visitorYears = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    values.visitor_type_annuals
+                        .map((row) => row.year)
+                        .filter(Boolean),
+                ),
+            ).sort((left, right) => Number(right) - Number(left)),
+        [values.visitor_type_annuals],
+    );
+
+    const activeVisitorYear =
+        selectedVisitorYear || visitorYears[0] || '';
+
+    const pieChartData = useMemo(
+        () =>
+            activeVisitorYear
+                ? buildVisitorPieData(values, activeVisitorYear)
+                : [],
+        [activeVisitorYear, values],
+    );
+
+    const trendChartConfig = {
+        omset: {
+            label: 'Omset Tahunan',
+            color: '#0066AE',
+        },
+        pengunjung: {
+            label: 'Pengunjung Tahunan',
+            color: '#22C55E',
+        },
+    } satisfies ChartConfig;
+
+    const pieChartConfig = pieChartData.reduce<ChartConfig>((config, row) => {
+        config[row.type] = {
+            label: row.label,
+            color: row.fill,
+        };
+
+        return config;
+    }, {});
+
+    return (
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+            <Card className="overflow-hidden p-5">
+                <div className="flex flex-col gap-4 border-b border-[#E7ECF2] pb-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <h2 className="text-base font-bold text-[#303030]">
+                            Omset & Pengunjung Tahunan
+                        </h2>
+                        <p className="text-sm font-semibold text-[#7C7C7C]">
+                            Perbandingan performa bisnis dan trafik pengunjung per tahun.
+                        </p>
+                    </div>
+                    <ToggleGroup
+                        type="single"
+                        value={visibleSeries}
+                        onValueChange={(value) => {
+                            if (value) {
+                                setVisibleSeries(
+                                    value as 'all' | 'omset' | 'pengunjung',
+                                );
+                            }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-fit"
+                    >
+                        <ToggleGroupItem value="all">Semua</ToggleGroupItem>
+                        <ToggleGroupItem value="omset">Omset</ToggleGroupItem>
+                        <ToggleGroupItem value="pengunjung">
+                            Pengunjung
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+                </div>
+
+                {trendChartData.length > 0 ? (
+                    <div className="pt-5">
+                        <ChartContainer
+                            config={trendChartConfig}
+                            className="h-[320px] w-full"
+                        >
+                            <AreaChart data={trendChartData} margin={{ left: 12, right: 12, top: 8 }}>
+                                <defs>
+                                    <linearGradient id="fillOmset" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--color-omset)" stopOpacity={0.32} />
+                                        <stop offset="95%" stopColor="var(--color-omset)" stopOpacity={0.04} />
+                                    </linearGradient>
+                                    <linearGradient id="fillPengunjung" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--color-pengunjung)" stopOpacity={0.28} />
+                                        <stop offset="95%" stopColor="var(--color-pengunjung)" stopOpacity={0.04} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid vertical={false} />
+                                <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                                <YAxis
+                                    tickLine={false}
+                                    axisLine={false}
+                                    width={72}
+                                    tickFormatter={(value) =>
+                                        visibleSeries === 'pengunjung'
+                                            ? formatVisitorCount(Number(value))
+                                            : formatCompactRupiah(Number(value))
+                                    }
+                                />
+                                <ChartTooltip
+                                    cursor={false}
+                                    content={
+                                        <ChartTooltipContent
+                                            labelFormatter={(label) => `Tahun ${label}`}
+                                            valueFormatter={(value, key) =>
+                                                key === 'pengunjung'
+                                                    ? formatVisitorCount(value)
+                                                    : formatCompactRupiah(value)
+                                            }
+                                        />
+                                    }
+                                />
+                                <ChartLegend content={<ChartLegendContent />} />
+                                {visibleSeries !== 'pengunjung' && (
+                                    <Area
+                                        type="monotone"
+                                        dataKey="omset"
+                                        stroke="var(--color-omset)"
+                                        fill="url(#fillOmset)"
+                                        strokeWidth={2.5}
+                                        activeDot={{ r: 5 }}
+                                    />
+                                )}
+                                {visibleSeries !== 'omset' && (
+                                    <Area
+                                        type="monotone"
+                                        dataKey="pengunjung"
+                                        stroke="var(--color-pengunjung)"
+                                        fill="url(#fillPengunjung)"
+                                        strokeWidth={2.5}
+                                        activeDot={{ r: 5 }}
+                                    />
+                                )}
+                            </AreaChart>
+                        </ChartContainer>
+                    </div>
+                ) : (
+                    <div className="flex min-h-[320px] items-center justify-center rounded-xl bg-[#F8FBFE] text-center">
+                        <div>
+                            <p className="text-sm font-bold text-[#303030]">
+                                Belum ada data omset atau pengunjung tahunan
+                            </p>
+                            <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                Isi data tahunan pada form pariwisata untuk menampilkan grafik ini.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </Card>
+
+            <Card className="overflow-hidden p-5">
+                <div className="flex flex-col gap-4 border-b border-[#E7ECF2] pb-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h2 className="text-base font-bold text-[#303030]">
+                            Jenis Pengunjung Tahunan
+                        </h2>
+                        <p className="text-sm font-semibold text-[#7C7C7C]">
+                            Komposisi pengunjung berdasarkan tahun terpilih.
+                        </p>
+                    </div>
+                    <div className="w-full sm:w-[170px]">
+                        <Select
+                            value={activeVisitorYear}
+                            onValueChange={setSelectedVisitorYear}
+                            disabled={visitorYears.length === 0}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Pilih tahun" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {visitorYears.map((year) => (
+                                    <SelectItem key={year} value={year}>
+                                        {year}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                {pieChartData.length > 0 ? (
+                    <div className="pt-5">
+                        <ChartContainer
+                            config={pieChartConfig}
+                            className="mx-auto h-[320px] max-w-[360px]"
+                        >
+                            <PieChart>
+                                <ChartTooltip
+                                    cursor={false}
+                                    content={
+                                        <ChartTooltipContent
+                                            hideLabel
+                                            valueFormatter={(value) =>
+                                                formatVisitorCount(value)
+                                            }
+                                        />
+                                    }
+                                />
+                                <Pie
+                                    data={pieChartData}
+                                    dataKey="value"
+                                    nameKey="label"
+                                    innerRadius={52}
+                                    outerRadius={96}
+                                    paddingAngle={3}
+                                    labelLine={false}
+                                    label={({ cx, cy, midAngle, outerRadius, percent, payload }) => {
+                                        const RADIAN = Math.PI / 180;
+                                        const safeMidAngle = midAngle ?? 0;
+                                        const safePercent = percent ?? 0;
+                                        const radius = Number(outerRadius ?? 0) + 22;
+                                        const x = Number(cx ?? 0) + radius * Math.cos(-safeMidAngle * RADIAN);
+                                        const y = Number(cy ?? 0) + radius * Math.sin(-safeMidAngle * RADIAN);
+
+                                        return (
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                fill={payload.fill}
+                                                textAnchor={x > Number(cx ?? 0) ? 'start' : 'end'}
+                                                dominantBaseline="central"
+                                                className="text-[11px] font-bold"
+                                            >
+                                                {`${payload.label} ${(safePercent * 100).toFixed(0)}%`}
+                                            </text>
+                                        );
+                                    }}
+                                >
+                                    {pieChartData.map((entry) => (
+                                        <Cell key={entry.type} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                                <ChartLegend
+                                    verticalAlign="bottom"
+                                    align="center"
+                                    content={<ChartLegendContent className="justify-center pt-4" />}
+                                />
+                            </PieChart>
+                        </ChartContainer>
+                    </div>
+                ) : (
+                    <div className="flex min-h-[320px] items-center justify-center rounded-xl bg-[#F8FBFE] text-center">
+                        <div>
+                            <p className="text-sm font-bold text-[#303030]">
+                                Belum ada data jenis pengunjung
+                            </p>
+                            <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                Pilih tahun lain atau isi data jenis pengunjung tahunan terlebih dahulu.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </Card>
+        </div>
+    );
+}
+
 function SurveyStatistics({ groups }: { groups: SurveyGroup[] }) {
     const answers = groups.flatMap((group) =>
         group.questions.map((q) => q.answer).filter(Boolean),
@@ -2499,6 +2881,8 @@ export default function ShowPariwisata({
                         ))}
                     </div>
 
+                    <PariwisataTrendCharts values={edit_values} />
+
                     <SurveyStatistics groups={survey_groups} />
 
                     <Card className="overflow-hidden">
@@ -2617,3 +3001,8 @@ export default function ShowPariwisata({
         </>
     );
 }
+
+
+
+
+
