@@ -1,1 +1,0 @@
-import{Tt as e,kt as t}from"./app-DG34jtQD.js";var n=t(e(),1);function r(e){let t=n.useRef({value:e,previous:e});return n.useMemo(()=>(t.current.value!==e&&(t.current.previous=t.current.value,t.current.value=e),t.current.previous),[e])}export{r as t};
