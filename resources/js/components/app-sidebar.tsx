@@ -136,8 +136,71 @@ export function AdminSidebarContent({
         .filter((group) => group.items.length > 0);
 
     return (
-        <div className="relative flex h-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(47,166,252,0.45),transparent_34%),linear-gradient(180deg,#0066AE_0%,#00508F_42%,#093967_100%)] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
+        <div className="relative flex h-full flex-col overflow-hidden bg-[#093967] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_28%,rgba(255,255,255,0.04)_100%)]" />
+            <div
+                className="pointer-events-none absolute right-0 bottom-0 left-0 flex items-end justify-center text-white opacity-30"
+                style={{ height: '300px' }}
+            >
+                <svg
+                    viewBox="0 0 200 200"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="preserve-3d h-full w-full opacity-60 mix-blend-overlay"
+                >
+                    <path
+                        d="M0 150 L50 100 L100 130 L150 80 L200 120 L200 200 L0 200 Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                        fill="none"
+                    />
+                    <path
+                        d="M40 180 L40 130 L60 130 L60 180"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <path
+                        d="M50 130 L50 100"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <path
+                        d="M120 190 L120 140 L160 140 L160 190"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <path
+                        d="M140 140 L140 110"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <circle
+                        cx="150"
+                        cy="50"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <path
+                        d="M15 60 L30 55 L45 60"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        fill="none"
+                    />
+                    <path
+                        d="M60 40 L70 35 L80 40"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        fill="none"
+                    />
+                </svg>
+            </div>
 
             <div className="relative">
                 <Link
@@ -194,12 +257,7 @@ export function AdminSidebarContent({
 
                                 const content = (
                                     <>
-                                        {isActive && (
-                                            <>
-                                                <span className="absolute left-0 h-[22px] w-[3px] rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.75)]" />
-                                                <span className="pointer-events-none absolute right-2 size-8 rounded-full bg-[#2FA6FC]/18 blur-md" />
-                                            </>
-                                        )}
+                                        {isActive && <></>}
                                         {Icon && (
                                             <Icon
                                                 className="relative size-[18px] shrink-0"
@@ -236,7 +294,7 @@ export function AdminSidebarContent({
                                 const className = [
                                     'group relative flex h-[42px] items-center gap-2.5 rounded-xl px-3 text-[13.5px] leading-5 transition-all duration-150',
                                     isActive || isOpen
-                                        ? 'bg-gradient-to-r from-white/22 to-white/12 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_rgba(3,17,32,0.16)]'
+                                        ? 'bg-[#2FA6FC] font-semibold text-white shadow-sm'
                                         : isPlaceholder
                                           ? 'cursor-default font-medium text-white/42'
                                           : 'font-medium text-white/72 hover:translate-x-0.5 hover:bg-white/10 hover:text-white',
@@ -279,7 +337,7 @@ export function AdminSidebarContent({
                                                                     onClick={
                                                                         onNavigate
                                                                     }
-                                                                    className="flex h-9 items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-white/68 transition hover:bg-white/10 hover:text-white"
+                                                                    className={`flex h-9 items-center gap-2 rounded-lg px-3 text-[13px] font-medium transition ${isCurrentUrl(child.href) ? 'bg-white/20 font-semibold text-white' : 'text-white/68 hover:bg-white/10 hover:text-white'}`}
                                                                 >
                                                                     {ChildIcon && (
                                                                         <ChildIcon

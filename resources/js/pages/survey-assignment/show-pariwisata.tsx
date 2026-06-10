@@ -2133,7 +2133,9 @@ function formatStatScore(value: number) {
 
 function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
     const [selectedVisitorYear, setSelectedVisitorYear] = useState('');
-    const [visibleSeries, setVisibleSeries] = useState<'all' | 'omset' | 'pengunjung'>('all');
+    const [visibleSeries, setVisibleSeries] = useState<
+        'all' | 'omset' | 'pengunjung'
+    >('all');
 
     const trendChartData = useMemo(() => buildTrendChartData(values), [values]);
     const visitorYears = useMemo(
@@ -2148,8 +2150,7 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
         [values.visitor_type_annuals],
     );
 
-    const activeVisitorYear =
-        selectedVisitorYear || visitorYears[0] || '';
+    const activeVisitorYear = selectedVisitorYear || visitorYears[0] || '';
 
     const pieChartData = useMemo(
         () =>
@@ -2188,7 +2189,8 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                             Omset & Pengunjung Tahunan
                         </h2>
                         <p className="text-sm font-semibold text-[#7C7C7C]">
-                            Perbandingan performa bisnis dan trafik pengunjung per tahun.
+                            Perbandingan performa bisnis dan trafik pengunjung
+                            per tahun.
                         </p>
                     </div>
                     <ToggleGroup
@@ -2219,19 +2221,54 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                             config={trendChartConfig}
                             className="h-[320px] w-full"
                         >
-                            <AreaChart data={trendChartData} margin={{ left: 12, right: 12, top: 8 }}>
+                            <AreaChart
+                                data={trendChartData}
+                                margin={{ left: 12, right: 12, top: 8 }}
+                            >
                                 <defs>
-                                    <linearGradient id="fillOmset" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--color-omset)" stopOpacity={0.32} />
-                                        <stop offset="95%" stopColor="var(--color-omset)" stopOpacity={0.04} />
+                                    <linearGradient
+                                        id="fillOmset"
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                    >
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-omset)"
+                                            stopOpacity={0.32}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-omset)"
+                                            stopOpacity={0.04}
+                                        />
                                     </linearGradient>
-                                    <linearGradient id="fillPengunjung" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--color-pengunjung)" stopOpacity={0.28} />
-                                        <stop offset="95%" stopColor="var(--color-pengunjung)" stopOpacity={0.04} />
+                                    <linearGradient
+                                        id="fillPengunjung"
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                    >
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-pengunjung)"
+                                            stopOpacity={0.28}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-pengunjung)"
+                                            stopOpacity={0.04}
+                                        />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid vertical={false} />
-                                <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                                <XAxis
+                                    dataKey="year"
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
                                 <YAxis
                                     tickLine={false}
                                     axisLine={false}
@@ -2247,7 +2284,9 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                     content={(props) => (
                                         <ChartTooltipContent
                                             {...props}
-                                            labelFormatter={(label) => `Tahun ${label}`}
+                                            labelFormatter={(label) =>
+                                                `Tahun ${label}`
+                                            }
                                             valueFormatter={(value, key) =>
                                                 key === 'pengunjung'
                                                     ? formatVisitorCount(value)
@@ -2291,7 +2330,8 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                 Belum ada data omset atau pengunjung tahunan
                             </p>
                             <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                Isi data tahunan pada form pariwisata untuk menampilkan grafik ini.
+                                Isi data tahunan pada form pariwisata untuk
+                                menampilkan grafik ini.
                             </p>
                         </div>
                     </div>
@@ -2355,20 +2395,42 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                     outerRadius={96}
                                     paddingAngle={3}
                                     labelLine={false}
-                                    label={({ cx, cy, midAngle, outerRadius, percent, payload }) => {
+                                    label={({
+                                        cx,
+                                        cy,
+                                        midAngle,
+                                        outerRadius,
+                                        percent,
+                                        payload,
+                                    }) => {
                                         const RADIAN = Math.PI / 180;
                                         const safeMidAngle = midAngle ?? 0;
                                         const safePercent = percent ?? 0;
-                                        const radius = Number(outerRadius ?? 0) + 22;
-                                        const x = Number(cx ?? 0) + radius * Math.cos(-safeMidAngle * RADIAN);
-                                        const y = Number(cy ?? 0) + radius * Math.sin(-safeMidAngle * RADIAN);
+                                        const radius =
+                                            Number(outerRadius ?? 0) + 22;
+                                        const x =
+                                            Number(cx ?? 0) +
+                                            radius *
+                                                Math.cos(
+                                                    -safeMidAngle * RADIAN,
+                                                );
+                                        const y =
+                                            Number(cy ?? 0) +
+                                            radius *
+                                                Math.sin(
+                                                    -safeMidAngle * RADIAN,
+                                                );
 
                                         return (
                                             <text
                                                 x={x}
                                                 y={y}
                                                 fill={payload.fill}
-                                                textAnchor={x > Number(cx ?? 0) ? 'start' : 'end'}
+                                                textAnchor={
+                                                    x > Number(cx ?? 0)
+                                                        ? 'start'
+                                                        : 'end'
+                                                }
                                                 dominantBaseline="central"
                                                 className="text-[11px] font-bold"
                                             >
@@ -2378,7 +2440,10 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                     }}
                                 >
                                     {pieChartData.map((entry) => (
-                                        <Cell key={entry.type} fill={entry.fill} />
+                                        <Cell
+                                            key={entry.type}
+                                            fill={entry.fill}
+                                        />
                                     ))}
                                 </Pie>
                                 <ChartLegend
@@ -2401,7 +2466,8 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                 Belum ada data jenis pengunjung
                             </p>
                             <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                Pilih tahun lain atau isi data jenis pengunjung tahunan terlebih dahulu.
+                                Pilih tahun lain atau isi data jenis pengunjung
+                                tahunan terlebih dahulu.
                             </p>
                         </div>
                     </div>
@@ -3012,9 +3078,3 @@ export default function ShowPariwisata({
         </>
     );
 }
-
-
-
-
-
-

@@ -19,15 +19,18 @@ import {
     Timer,
     TrendingUp,
     UserRound,
+    X,
 } from 'lucide-react';
 
 import {
     dashboard,
     surveyAssignments,
+    umkm,
     villages as villagesRoute,
 } from '@/routes';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 import DashboardVillageMap from '@/components/dashboard-village-map';
+import { DashboardCharts } from '@/components/dashboard-charts';
 
 const colors = {
     blue100: '#F1F5F8',
@@ -187,9 +190,11 @@ function statusClass(status: string) {
 }
 
 function CurrentTimeCard() {
+    const [mounted, setMounted] = useState(false);
     const [now, setNow] = useState(() => new Date());
 
     useEffect(() => {
+        setMounted(true);
         const timer = window.setInterval(() => setNow(new Date()), 1000);
 
         return () => window.clearInterval(timer);
@@ -200,13 +205,13 @@ function CurrentTimeCard() {
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-    }).format(now);
+    }).format(mounted ? now : new Date('2026-06-10T09:17:49'));
     const date = new Intl.DateTimeFormat('id-ID', {
         weekday: 'short',
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    }).format(now);
+    }).format(mounted ? now : new Date('2026-06-10T09:17:49'));
 
     return (
         <section className="rounded-xl border border-[#0066AE] bg-[#0066AE] p-3.5 shadow-[0_4px_14px_rgba(0,102,174,0.3)] sm:p-4">
@@ -256,33 +261,24 @@ function TopSurveyTable({
     rows: TopSurveyRow[];
 }) {
     return (
-        <Panel className="p-3.5 sm:p-4">
-            <div className="mb-3 flex items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-base leading-6 font-bold text-[#303030]">
-                        {title}
-                    </h2>
-                    <p className="text-xs leading-5 text-[#7C7C7C]">
-                        {description}
-                    </p>
-                </div>
+        <Panel className="flex h-full flex-col p-3.5 sm:p-4">
+            <div className="mb-3">
+                <h2 className="text-sm leading-6 font-bold text-[#303030]">
+                    {title}
+                </h2>
+                <p className="text-xs leading-5 text-[#7C7C7C]">
+                    {description}
+                </p>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-[#EFEFEF]">
-                <table className="w-full min-w-[880px] border-collapse text-left text-sm">
-                    <thead className="bg-[#F1F5F8] text-xs text-[#303030]">
+            <div className="flex-1 overflow-x-auto rounded-lg border border-[#EFEFEF]">
+                <table className="w-full border-collapse text-left text-xs">
+                    <thead className="bg-[#F1F5F8] text-[10px] tracking-wider text-[#7C7C7C] uppercase">
                         <tr>
-                            {[
-                                'Nama Survey',
-                                'Info',
-                                'Jawaban',
-                                'Skor',
-                                'Status',
-                                'Aksi',
-                            ].map((head) => (
+                            {['Survey', 'Skor'].map((head) => (
                                 <th
                                     key={head}
-                                    className="h-10 px-4 font-bold whitespace-nowrap"
+                                    className="h-8 px-3 font-bold whitespace-nowrap"
                                 >
                                     {head}
                                 </th>
@@ -290,52 +286,28 @@ function TopSurveyTable({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EFEFEF] bg-white">
-                        {rows.map((row) => (
+                        {rows.slice(0, 3).map((row) => (
                             <tr
                                 key={row.id}
-                                className="h-12 hover:bg-[#F7F7F7]"
+                                className="h-10 hover:bg-[#F7F7F7]"
                             >
-                                <td className="px-4 font-semibold whitespace-nowrap text-[#303030]">
-                                    {row.name}
+                                <td className="px-3 font-semibold text-[#303030]">
+                                    <div className="max-w-[150px] truncate">
+                                        {row.name}
+                                    </div>
                                 </td>
-                                <td className="px-4 whitespace-nowrap text-[#303030]">
-                                    {row.meta}
-                                </td>
-                                <td className="px-4 whitespace-nowrap text-[#303030]">
-                                    {row.answers}
-                                </td>
-                                <td className="px-4 whitespace-nowrap text-[#303030]">
-                                    <span className="inline-flex h-6 min-w-16 items-center justify-center rounded-full bg-[#EAF3FF] px-3 text-xs font-bold text-[#0066AE]">
+                                <td className="px-3">
+                                    <span className="inline-flex h-5 items-center justify-center rounded-full bg-[#EAF3FF] px-2 text-[10px] font-bold text-[#0066AE]">
                                         {row.score}
                                     </span>
-                                </td>
-                                <td className="px-4">
-                                    <span className="inline-flex h-6 min-w-24 items-center justify-center rounded-full bg-[#F1F5F8] px-3 text-xs font-bold text-[#0066AE]">
-                                        {row.status}
-                                    </span>
-                                </td>
-                                <td className="px-4 text-center">
-                                    {row.url ? (
-                                        <Link
-                                            href={row.url}
-                                            className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-[#F1F5F8]"
-                                            aria-label={`Detail ${row.name}`}
-                                        >
-                                            <MoreVertical className="size-4 text-[#7C7C7C]" />
-                                        </Link>
-                                    ) : (
-                                        <span className="text-xs font-semibold text-[#B0B0B0]">
-                                            -
-                                        </span>
-                                    )}
                                 </td>
                             </tr>
                         ))}
                         {rows.length === 0 && (
                             <tr>
                                 <td
-                                    colSpan={6}
-                                    className="px-4 py-8 text-center text-sm font-semibold text-[#7C7C7C]"
+                                    colSpan={2}
+                                    className="px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]"
                                 >
                                     Belum ada data.
                                 </td>
@@ -427,12 +399,14 @@ export default function Dashboard({
         );
     }
 
+    const [showBanner, setShowBanner] = useState(true);
+
     return (
         <>
             <Head title="Dashboard Admin" />
             <div className="min-w-0 bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
                 <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
-                    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <header className="mb-2 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="min-w-0">
                             <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-[#7C7C7C]">
                                 <span>Dashboard</span>
@@ -442,38 +416,44 @@ export default function Dashboard({
                                 />
                                 <span>Admin</span>
                             </div>
-                            <h1 className="text-[23px] leading-8 font-bold tracking-[-0.01em] text-[#303030] sm:text-[26px]">
-                                Dashboard Admin
-                            </h1>
-                            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#7C7C7C]">
-                                Pantau perkembangan assessment, desa wisata
-                                binaan, dan aktivitas program CSR.
-                            </p>
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:shrink-0">
-                            <Link
-                                href={surveyAssignments.url()}
-                                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-semibold text-white shadow-[0_6px_14px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] active:translate-y-[1px] sm:w-auto"
-                            >
-                                <Plus className="size-4" strokeWidth={2} />
-                                Buat Assignment
-                            </Link>
-                            <Link
-                                href={surveyAssignments.url()}
-                                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#AAD2F8] bg-white px-4 text-sm font-semibold text-[#0066AE] transition hover:bg-[#F1F5F8] active:translate-y-[1px] sm:w-auto"
-                            >
-                                <ArrowDownToLine
-                                    className="size-4"
-                                    strokeWidth={2}
-                                />
-                                Export Laporan
-                            </Link>
+                            {/* Actions moved or removed to match reference */}
                         </div>
                     </header>
 
-                    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        {kpis.map((kpi) => {
+                    {showBanner && (
+                        <div className="mb-2 flex items-center justify-between rounded-lg bg-[#0066AE] px-4 py-3 text-sm font-semibold text-white shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <Info className="size-5" />
+                                <span>
+                                    Pantau assessment desa wisata dan program
+                                    CSR BCA secara real-time dalam satu
+                                    platform.
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowBanner(false)}
+                                className="text-white hover:text-gray-200"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+                    )}
+
+                    <section className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        {[
+                            { type: 'time' },
+                            { type: 'kpi', data: kpis[0] },
+                            { type: 'kpi', data: kpis[1] },
+                            { type: 'kpi', data: kpis[2] },
+                        ].map((item, index) => {
+                            if (item.type === 'time') {
+                                return <CurrentTimeCard key="time" />;
+                            }
+
+                            const kpi = item.data!;
                             const Icon = kpiIcons[kpi.icon];
                             const trendColor =
                                 kpi.tone === 'success'
@@ -484,352 +464,332 @@ export default function Dashboard({
                                 <Panel key={kpi.title} className="p-3.5 sm:p-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <p className="text-sm leading-5 font-semibold text-[#303030]">
+                                            <p className="flex items-center gap-2 text-sm leading-5 font-bold text-[#303030]">
+                                                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0066AE] text-white">
+                                                    <Icon
+                                                        className="size-4"
+                                                        strokeWidth={2}
+                                                    />
+                                                </span>
                                                 {kpi.title}
                                             </p>
-                                            <p className="mt-2 text-[22px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[28px] sm:leading-8">
+                                            <p className="mt-3 text-[28px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[32px] sm:leading-8">
                                                 {kpi.value}
                                             </p>
-                                            <p className="mt-1 text-xs leading-5 text-[#7C7C7C]">
-                                                {kpi.desc}
-                                            </p>
                                         </div>
-                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F8] text-[#0066AE] sm:size-11">
-                                            <Icon
-                                                className="size-6"
-                                                strokeWidth={1.9}
-                                            />
-                                        </span>
                                     </div>
-                                    <p
-                                        className={`mt-3 flex items-center gap-1 text-xs font-semibold ${trendColor}`}
-                                    >
-                                        <ArrowUpRight
-                                            className="size-3.5"
-                                            strokeWidth={2.2}
-                                        />
-                                        {kpi.trend}
-                                    </p>
+                                    <div className="mt-4 flex items-center justify-between text-xs">
+                                        <p className="font-medium text-[#7C7C7C]">
+                                            {kpi.desc}
+                                        </p>
+                                        <p
+                                            className={`flex items-center gap-1 font-bold ${trendColor}`}
+                                        >
+                                            <ArrowUpRight
+                                                className="size-3.5"
+                                                strokeWidth={2.2}
+                                            />
+                                            {kpi.trend}
+                                        </p>
+                                    </div>
                                 </Panel>
                             );
                         })}
-                        <CurrentTimeCard />
                     </section>
 
-                    <DashboardVillageMap points={village_map_points} />
+                    <DashboardCharts />
 
-                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-                        <main className="min-w-0 space-y-4 xl:col-span-8 2xl:col-span-9">
-                            <div className="space-y-4">
-                                <TopSurveyTable
-                                    title="Top 3 Survey Desa"
-                                    description="Skor tertinggi survey Kemenpar."
-                                    rows={top_village_surveys}
-                                />
-                                <TopSurveyTable
-                                    title="Top 3 Survey UMKM"
-                                    description="Skor tertinggi assessment UMKM."
-                                    rows={top_umkm_surveys}
-                                />
-                                <TopSurveyTable
-                                    title="Top 3 Survey Pariwisata"
-                                    description="Skor tertinggi survey ISTC."
-                                    rows={top_pariwisata_surveys}
+                    <div className="mb-2 grid grid-cols-1 gap-4 xl:grid-cols-3">
+                        <div className="xl:col-span-2">
+                            <DashboardVillageMap points={village_map_points} />
+                        </div>
+                        <div className="space-y-4 xl:col-span-1">
+                            <Panel className="flex h-full flex-col p-4">
+                                <div className="mb-4 flex items-center justify-between gap-3">
+                                    <div>
+                                        <h2 className="text-sm leading-6 font-bold text-[#303030]">
+                                            Top Kategori UMKM
+                                        </h2>
+                                    </div>
+                                    <select className="h-8 rounded-lg border border-[#EFEFEF] bg-white px-2 text-xs font-semibold text-[#7C7C7C] outline-none">
+                                        <option>Minggu Ini</option>
+                                        <option>Bulan Ini</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-1 flex-col justify-center space-y-3">
+                                    {top_umkm_categories.length > 0 ? (
+                                        top_umkm_categories
+                                            .slice(0, 4)
+                                            .map((item, index) => (
+                                                <div
+                                                    key={item.category}
+                                                    className="flex items-center justify-between"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="w-3 text-center text-xs font-bold text-[#303030]">
+                                                            {index + 1}
+                                                        </span>
+                                                        <span className="flex size-8 items-center justify-center rounded-full bg-[#F1F5F8] text-[#0066AE]">
+                                                            <Store className="size-4" />
+                                                        </span>
+                                                        <span className="text-sm font-semibold text-[#303030]">
+                                                            {item.label}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-[#303030]">
+                                                        {item.total}
+                                                    </span>
+                                                </div>
+                                            ))
+                                    ) : (
+                                        <div className="rounded-xl border border-dashed border-[#DCE3EA] bg-[#F8FBFE] px-3 py-6 text-center text-sm font-semibold text-[#7C7C7C]">
+                                            Belum ada kategori UMKM.
+                                        </div>
+                                    )}
+                                </div>
+                                <Link href={umkm.url()} className="mt-4 flex w-full items-center justify-between rounded-lg bg-[#F8FBFE] px-4 py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]">
+                                    Lihat Semua Kategori{' '}
+                                    <ChevronRight className="size-4" />
+                                </Link>
+                            </Panel>
+                        </div>
+                    </div>
+
+                    <div className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Panel className="flex items-center overflow-hidden border-none bg-gradient-to-r from-[#F1F5F8] to-[#E2EEF8] p-0">
+                            <div className="flex-1 p-5 pl-6">
+                                <h3 className="mb-1 text-[17px] font-bold text-[#0066AE]">
+                                    Dukung Desa Wisata, Dukung Indonesia
+                                </h3>
+                                <p className="mb-4 text-xs font-medium text-[#7C7C7C]">
+                                    Kelola program CSR BCA dan bantu desa wisata
+                                    tumbuh berkelanjutan.
+                                </p>
+                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#0066AE] px-5 text-xs font-bold text-white transition hover:bg-[#093967]">
+                                    Kelola Program CSR{' '}
+                                    <ArrowUpRight className="size-3.5" />
+                                </Link>
+                            </div>
+                            <div className="w-1/3 max-w-[200px] min-w-[120px] opacity-90 mix-blend-multiply">
+                                <img
+                                    src="https://images.unsplash.com/photo-1596422846543-75c6fc197f0a?q=80&w=600&auto=format&fit=crop"
+                                    className="h-full w-full object-cover object-left"
+                                    alt="CSR"
+                                    onError={(e) =>
+                                        (e.currentTarget.style.display = 'none')
+                                    }
                                 />
                             </div>
+                        </Panel>
 
-                            <Panel className="p-3.5 sm:p-4">
-                                <div className="mb-3 flex items-center justify-between gap-4">
-                                    <div>
-                                        <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                            Assignment Survey Terbaru
-                                        </h2>
-                                        <p className="text-xs leading-5 text-[#7C7C7C]">
-                                            Daftar progress assessment terbaru.
-                                        </p>
-                                    </div>
+                        <Panel className="flex items-center overflow-hidden border-none bg-gradient-to-r from-[#F2FBF6] to-[#E1F6EB] p-0">
+                            <div className="flex-1 p-5 pl-6">
+                                <h3 className="mb-1 text-[17px] font-bold text-[#00893D]">
+                                    Buat Assignment Survey Baru
+                                </h3>
+                                <p className="mb-4 text-xs font-medium text-[#7C7C7C]">
+                                    Undang enumerator dan mulai assessment
+                                    dengan mudah dan terstruktur.
+                                </p>
+                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#00893D] px-5 text-xs font-bold text-white transition hover:bg-[#006E31]">
+                                    Buat Assignment{' '}
+                                    <Plus className="size-3.5" />
+                                </Link>
+                            </div>
+                            <div className="w-1/3 max-w-[200px] min-w-[120px] opacity-90 mix-blend-multiply">
+                                <img
+                                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop"
+                                    className="h-full w-full object-cover object-left"
+                                    alt="Survey"
+                                    onError={(e) =>
+                                        (e.currentTarget.style.display = 'none')
+                                    }
+                                />
+                            </div>
+                        </Panel>
+                    </div>
+
+                    <div className="mb-4 space-y-4">
+                        <Panel className="p-3.5 sm:p-4">
+                            <div className="mb-3 flex items-center justify-between gap-4">
+                                <h2 className="text-base leading-6 font-bold text-[#303030]">
+                                    Assignment Survey Terbaru
+                                </h2>
+                                <div className="flex gap-2">
+                                    <button onClick={() => alert('Fitur Export segera hadir')} className="flex h-8 items-center gap-2 rounded-lg border border-[#EFEFEF] px-3 text-xs font-semibold text-[#303030] transition hover:bg-[#F7F7F7]">
+                                        <ArrowDownToLine className="size-3.5" />{' '}
+                                        Export Excel
+                                    </button>
+                                    <button onClick={() => alert('Fitur Export segera hadir')} className="flex h-8 items-center gap-2 rounded-lg border border-[#EFEFEF] px-3 text-xs font-semibold text-[#303030] transition hover:bg-[#F7F7F7]">
+                                        <ArrowDownToLine className="size-3.5" />{' '}
+                                        Export PDF
+                                    </button>
                                     <Link
                                         href={surveyAssignments.url()}
-                                        className="hidden h-9 items-center gap-2 rounded-lg border border-[#AAD2F8] px-3 text-xs font-semibold text-[#0066AE] hover:bg-[#F1F5F8] md:inline-flex"
+                                        className="inline-flex h-8 items-center justify-center rounded-lg bg-[#F8FBFE] px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]"
                                     >
                                         Lihat Semua
-                                        <ChevronRight className="size-4" />
                                     </Link>
                                 </div>
+                            </div>
 
-                                <div className="space-y-3 md:hidden">
-                                    {recent_assignments.map((row) => (
-                                        <article
-                                            key={row.id}
-                                            className="rounded-2xl border border-[#EFEFEF] bg-white p-4 shadow-[0_4px_14px_rgba(3,17,32,0.05)]"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <h3 className="truncate text-sm leading-5 font-bold text-[#303030]">
-                                                        {row.village}
-                                                    </h3>
-                                                    <p className="mt-0.5 text-xs leading-5 text-[#7C7C7C]">
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+                                    <thead className="border-b border-[#EFEFEF] text-[11px] font-bold tracking-wider text-[#7C7C7C] uppercase">
+                                        <tr>
+                                            {[
+                                                'Desa Wisata',
+                                                'Lokasi',
+                                                'Progress',
+                                                'Status',
+                                                'Enumerator',
+                                                'Update Terakhir',
+                                                'Aksi',
+                                            ].map((head) => (
+                                                <th
+                                                    key={head}
+                                                    className="h-10 px-2 font-bold whitespace-nowrap first:pl-0 last:pr-0"
+                                                >
+                                                    {head}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#EFEFEF] bg-white">
+                                        {recent_assignments.map((row) => (
+                                            <tr
+                                                key={row.id}
+                                                className="h-14 transition-colors hover:bg-[#F8FBFE]"
+                                            >
+                                                <td className="px-2 py-2 whitespace-nowrap first:pl-0">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="size-8 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                                                            <img
+                                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(row.village)}&background=random`}
+                                                                alt={
+                                                                    row.village
+                                                                }
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <span className="font-bold text-[#303030]">
+                                                            {row.village}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-2 whitespace-nowrap">
+                                                    <p className="text-xs text-[#303030]">
                                                         {row.location}
                                                     </p>
-                                                </div>
-                                                <span
-                                                    className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-[11px] font-bold ${statusClass(row.status)}`}
-                                                >
-                                                    {row.status_label}
-                                                </span>
-                                            </div>
-                                            <div className="mt-4">
-                                                <div className="mb-2 flex items-center justify-between text-xs">
-                                                    <span className="font-semibold text-[#303030]">
-                                                        Progress
-                                                    </span>
-                                                    <span className="font-bold text-[#0066AE]">
-                                                        {row.progress}%
-                                                    </span>
-                                                </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-[#E6EEF5]">
-                                                    <div
-                                                        className="h-full rounded-full bg-[#0066AE]"
-                                                        style={{
-                                                            width: `${row.progress}%`,
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 grid grid-cols-2 gap-3 text-xs leading-5 text-[#7C7C7C]">
-                                                <div>
-                                                    <span className="block font-semibold text-[#303030]">
-                                                        {row.enumerators}{' '}
-                                                        enumerator
-                                                    </span>
-                                                    Enumerator
-                                                </div>
-                                                <div>
-                                                    <span className="block font-semibold text-[#303030]">
-                                                        {row.updated_at}
-                                                    </span>
-                                                    Diperbarui
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 flex gap-2">
-                                                <Link
-                                                    href={showSurveyAssignment.url(
-                                                        row.code,
-                                                    )}
-                                                    className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-[#0066AE] px-3 text-xs font-semibold text-white"
-                                                >
-                                                    Lihat Detail
-                                                </Link>
-                                                <button
-                                                    className="flex size-9 items-center justify-center rounded-lg border border-[#EFEFEF] text-[#7C7C7C]"
-                                                    aria-label={`Aksi ${row.village}`}
-                                                >
-                                                    <MoreVertical className="size-4" />
-                                                </button>
-                                            </div>
-                                        </article>
-                                    ))}
-                                </div>
-
-                                <div className="hidden overflow-x-auto rounded-lg border border-[#EFEFEF] md:block">
-                                    <table className="w-full min-w-[880px] border-collapse text-left text-sm">
-                                        <thead className="bg-[#F1F5F8] text-xs text-[#303030]">
-                                            <tr>
-                                                {[
-                                                    'Desa Wisata',
-                                                    'Lokasi',
-                                                    'Progress',
-                                                    'Status',
-                                                    'Enumerator',
-                                                    'Update',
-                                                    'Aksi',
-                                                ].map((head) => (
-                                                    <th
-                                                        key={head}
-                                                        className="h-10 px-4 font-bold whitespace-nowrap"
-                                                    >
-                                                        {head}
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-[#EFEFEF] bg-white">
-                                            {recent_assignments.map((row) => (
-                                                <tr
-                                                    key={row.id}
-                                                    className="h-12 hover:bg-[#F7F7F7]"
-                                                >
-                                                    <td className="px-4 font-semibold whitespace-nowrap text-[#303030]">
-                                                        {row.village}
-                                                    </td>
-                                                    <td className="px-4 whitespace-nowrap text-[#303030]">
-                                                        {row.location}
-                                                    </td>
-                                                    <td className="px-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="w-9 text-xs font-semibold text-[#303030]">
-                                                                {row.progress}%
-                                                            </span>
-                                                            <span className="h-2 w-24 overflow-hidden rounded-full bg-[#E6EEF5]">
-                                                                <span
-                                                                    className="block h-full rounded-full bg-[#0066AE]"
-                                                                    style={{
-                                                                        width: `${row.progress}%`,
-                                                                    }}
-                                                                />
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4">
-                                                        <span
-                                                            className={`inline-flex h-6 min-w-24 items-center justify-center rounded-full px-3 text-xs font-bold ${statusClass(row.status)}`}
-                                                        >
-                                                            {row.status_label}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <div className="flex w-24 flex-col gap-1">
+                                                        <span className="text-xs font-bold text-[#303030]">
+                                                            {row.progress}%
                                                         </span>
-                                                    </td>
-                                                    <td className="px-4 whitespace-nowrap text-[#303030]">
-                                                        {row.enumerators}{' '}
-                                                        enumerator
-                                                    </td>
-                                                    <td className="px-4 whitespace-nowrap text-[#303030]">
-                                                        {row.updated_at}
-                                                    </td>
-                                                    <td className="px-4 text-center">
+                                                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-[#E6EEF5]">
+                                                            <span
+                                                                className="block h-full rounded-full bg-[#0066AE]"
+                                                                style={{
+                                                                    width: `${row.progress}%`,
+                                                                }}
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <span
+                                                        className={`inline-flex h-6 min-w-20 items-center justify-center rounded-md px-2 text-[10px] font-bold ${statusClass(row.status)}`}
+                                                    >
+                                                        {row.status_label}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-2 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="flex -space-x-2">
+                                                            <div className="z-20 size-6 rounded-full border-2 border-white bg-gray-300"></div>
+                                                            <div className="z-10 size-6 rounded-full border-2 border-white bg-gray-400"></div>
+                                                        </div>
+                                                        {row.enumerators >
+                                                            2 && (
+                                                            <span className="ml-1 text-[10px] font-bold text-[#7C7C7C]">
+                                                                +
+                                                                {row.enumerators -
+                                                                    2}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-2 text-xs whitespace-nowrap text-[#303030]">
+                                                    {row.updated_at}
+                                                </td>
+                                                <td className="px-2 py-2 text-center last:pr-0">
+                                                    <div className="flex items-center justify-center gap-1">
                                                         <Link
                                                             href={showSurveyAssignment.url(
                                                                 row.code,
                                                             )}
-                                                            className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-[#F1F5F8]"
+                                                            className="inline-flex size-7 items-center justify-center rounded hover:bg-[#F1F5F8]"
                                                             aria-label={`Detail ${row.village}`}
                                                         >
-                                                            <MoreVertical className="size-4 text-[#7C7C7C]" />
+                                                            <Info className="size-4 text-[#7C7C7C]" />
                                                         </Link>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </Panel>
-                        </main>
-
-                        <aside className="space-y-4 xl:col-span-4 2xl:col-span-3">
-                            <Panel className="p-3.5 sm:p-4">
-                                <div className="mb-3 flex items-center justify-between gap-3">
-                                    <div>
-                                        <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                            Top Kategori UMKM
-                                        </h2>
-                                        <p className="text-xs leading-5 text-[#7C7C7C]">
-                                            4 kategori terbanyak terdata
-                                        </p>
-                                    </div>
-                                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
-                                        <Store className="size-4" />
-                                    </span>
-                                </div>
-                                {top_umkm_categories.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {top_umkm_categories.map((item) => (
-                                            <div
-                                                key={item.category}
-                                                className="min-w-0 rounded-xl border border-[#EFEFEF] bg-[#F8FBFE] p-3"
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <span className="min-w-0 text-xs leading-5 font-bold text-[#303030]">
-                                                        {item.label}
-                                                    </span>
-                                                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-[#0066AE] ring-1 ring-[#AAD2F8]/50">
-                                                        #
-                                                        {top_umkm_categories.findIndex(
-                                                            (category) =>
-                                                                category.category ===
-                                                                item.category,
-                                                        ) + 1}
-                                                    </span>
-                                                </div>
-                                                <div className="mt-3 flex items-end gap-1">
-                                                    <span className="text-2xl leading-none font-bold text-[#0066AE]">
-                                                        {item.total}
-                                                    </span>
-                                                    <span className="text-xs font-semibold text-[#7C7C7C]">
-                                                        UMKM
-                                                    </span>
-                                                </div>
-                                            </div>
+                                                        <button className="inline-flex size-7 items-center justify-center rounded hover:bg-[#F1F5F8]">
+                                                            <MoreVertical className="size-4 text-[#7C7C7C]" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         ))}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-xl border border-dashed border-[#DCE3EA] bg-[#F8FBFE] px-3 py-6 text-center text-sm font-semibold text-[#7C7C7C]">
-                                        Belum ada kategori UMKM.
-                                    </div>
-                                )}
-                            </Panel>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Panel>
 
-                            <Panel className="p-3.5 sm:p-4">
-                                <h2 className="mb-3 text-base leading-6 font-bold text-[#303030]">
-                                    Aktivitas Terbaru
-                                </h2>
-                                <div className="space-y-4">
-                                    {activities.map((item) => {
-                                        const Icon = activityIcons[item.icon];
-                                        const color = toneColors[item.tone];
-                                        return (
-                                            <div
-                                                key={item.title}
-                                                className="flex gap-3"
-                                            >
-                                                <span
-                                                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F8]"
-                                                    style={{
-                                                        color,
-                                                    }}
-                                                >
-                                                    <Icon
-                                                        className="size-4.5"
-                                                        strokeWidth={2}
-                                                    />
-                                                </span>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs leading-5 font-semibold text-[#303030]">
-                                                        {item.title}
-                                                    </p>
-                                                    <p className="mt-0.5 text-[11px] leading-4 text-[#7C7C7C]">
-                                                        {item.time}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </Panel>
+                        <div className="flex items-start gap-3 rounded-xl border border-[#EAF3FF] bg-[#F8FBFE] p-4">
+                            <Info
+                                className="mt-0.5 size-5 shrink-0 text-[#0066AE]"
+                                strokeWidth={2}
+                            />
+                            <div>
+                                <h3 className="text-sm font-bold text-[#0066AE]">
+                                    Important Notes
+                                </h3>
+                                <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs font-medium text-[#0066AE]/80">
+                                    <li>
+                                        Pastikan setiap assignment survey
+                                        memiliki minimal 2 enumerator.
+                                    </li>
+                                    <li>
+                                        Update data desa dan UMKM secara berkala
+                                        untuk menjaga akurasi laporan.
+                                    </li>
+                                    <li>
+                                        Perhatikan status survey yang belum
+                                        dimulai agar program berjalan tepat
+                                        waktu.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
 
-                            <Panel className="p-3.5 sm:p-4">
-                                <h2 className="mb-3 text-base leading-6 font-bold text-[#303030]">
-                                    Quick Actions
-                                </h2>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {quickActions.map((item) => {
-                                        const Icon = item.icon;
-                                        return (
-                                            <Link
-                                                href={item.href}
-                                                key={item.label}
-                                                className="flex min-h-16 flex-col items-start justify-between rounded-lg border border-[#EFEFEF] bg-white p-3 text-left transition hover:border-[#AAD2F8] hover:bg-[#F1F5F8]"
-                                            >
-                                                <Icon
-                                                    className="size-5 text-[#0066AE]"
-                                                    strokeWidth={2}
-                                                />
-                                                <span className="mt-2 text-xs leading-4 font-bold text-[#303030]">
-                                                    {item.label}
-                                                </span>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </Panel>
-                        </aside>
+                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                            <TopSurveyTable
+                                title="Top 3 Survey Desa"
+                                description="Skor tertinggi survey Kemenpar."
+                                rows={top_village_surveys}
+                            />
+                            <TopSurveyTable
+                                title="Top 3 Survey UMKM"
+                                description="Skor tertinggi assessment UMKM."
+                                rows={top_umkm_surveys}
+                            />
+                            <TopSurveyTable
+                                title="Top 3 Survey Pariwisata"
+                                description="Skor tertinggi assessment Pariwisata."
+                                rows={top_pariwisata_surveys}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -927,9 +887,9 @@ export default function Dashboard({
                                 <h2 className="text-sm font-bold text-[#303030]">
                                     Recent Activities
                                 </h2>
-                                <button className="text-xs font-bold text-[#0066AE]">
+                                <Link href={surveyAssignments.url()} className="text-xs font-bold text-[#0066AE]">
                                     Lihat Semua
-                                </button>
+                                </Link>
                             </div>
                             <div className="space-y-4">
                                 <div className="relative flex gap-3">
@@ -1063,9 +1023,9 @@ export default function Dashboard({
                                 <h2 className="text-sm font-bold text-[#303030]">
                                     Aktivitas Program
                                 </h2>
-                                <button className="text-xs font-bold text-[#0066AE]">
+                                <Link href={surveyAssignments.url()} className="text-xs font-bold text-[#0066AE]">
                                     Lihat Semua
-                                </button>
+                                </Link>
                             </div>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
