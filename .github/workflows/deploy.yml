@@ -101,10 +101,11 @@ jobs:
             exit 1
           fi
 
-          ssh-keyscan -p 65002 "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-
-          # Added legacy RSA support configurations in case the key is RSA format on newer OpenSSH client
-          SSH_CMD="ssh -p 65002 -i ~/.ssh/deploy_key -o ConnectTimeout=30 -o StrictHostKeyChecking=no -o PubkeyAcceptedKeyTypes=+ssh-rsa -o HostKeyAlgorithms=+ssh-rsa ${SSH_USER}@${SSH_HOST}"
+          # Removed ssh-keyscan as it often triggers Hostinger's anti-DDoS/BitNinja firewall as a port scan
+          # StrictHostKeyChecking=no already handles the host key verification bypass
+          
+          # Force IPv4 with -4 and add ServerAliveInterval to keep connection stable
+          SSH_CMD="ssh -4 -p 65002 -i ~/.ssh/deploy_key -o ConnectTimeout=60 -o ServerAliveInterval=60 -o StrictHostKeyChecking=no -o PubkeyAcceptedKeyTypes=+ssh-rsa -o HostKeyAlgorithms=+ssh-rsa ${SSH_USER}@${SSH_HOST}"
 
           DEPLOY_SCRIPT="
             cd ${PROJECT_PATH}
@@ -118,9 +119,9 @@ jobs:
             echo '✅ Deployment completed successfully'
           "
 
-          MAX_RETRIES=3
+          MAX_RETRIES=5
           RETRY=0
-          WAIT=15
+          WAIT=10
 
           until [ $RETRY -ge $MAX_RETRIES ]; do
             echo "🚀 Deploy attempt $((RETRY + 1))/$MAX_RETRIES..."
