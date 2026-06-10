@@ -160,7 +160,7 @@ export function DashboardCharts() {
                                 dibanding bulan lalu
                             </span>
                         </p>
-                        <Link href={surveyAssignments()} className="mt-4 flex justify-center w-full rounded-lg border border-[#0066AE] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
+                        <Link href={surveyAssignments.url()} className="mt-4 flex justify-center w-full rounded-lg border border-[#0066AE] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
                             Lihat Detail Laporan <ChevronRight className="inline size-3 ml-1" />
                         </Link>
                     </div>
@@ -333,7 +333,7 @@ export function DashboardCharts() {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <Link href={surveyAssignments()} className="mt-4 flex justify-center w-full rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
+                <Link href={surveyAssignments.url()} className="mt-4 flex justify-center w-full rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
                     Lihat Semua Aktivitas{' '}
                     <ChevronRight className="inline size-3 ml-1" />
                 </Link>
@@ -400,7 +400,7 @@ export function DashboardCharts() {
                         </div>
                     ))}
                 </div>
-                <Link href={surveyAssignments()} className="mt-6 flex w-full items-center justify-between border-t border-[#EFEFEF] pt-3 text-xs font-bold text-[#0066AE] transition hover:text-[#093967]">
+                <Link href={surveyAssignments.url()} className="mt-6 flex w-full items-center justify-between border-t border-[#EFEFEF] pt-3 text-xs font-bold text-[#0066AE] transition hover:text-[#093967]">
                     Lihat Detail <ChevronRight className="size-4" />
                 </Link>
             </Panel>
