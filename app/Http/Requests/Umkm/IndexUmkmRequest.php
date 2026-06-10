@@ -21,6 +21,7 @@ class IndexUmkmRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:150'],
             'product_category' => ['nullable', 'string', 'max:150'],
             'has_exported' => ['nullable', 'string', Rule::in(['1', '0'])],
+            'view' => ['nullable', 'string', Rule::in(['active', 'trash'])],
             'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
         ];
     }
