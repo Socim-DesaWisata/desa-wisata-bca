@@ -36,10 +36,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/villages/{village}', [TourismVillageController::class, 'show'])->name('villages.show');
     Route::get('/villages/{village}/edit', [TourismVillageController::class, 'edit'])->name('villages.edit');
     Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
+
     Route::get('/umkm', [UmkmController::class, 'index'])->name('umkm');
+    Route::delete('/umkm/{umkm}', [UmkmController::class, 'destroy'])->name('umkm.destroy');
+    Route::patch('/umkm/{umkm}/restore', [UmkmController::class, 'restore'])->name('umkm.restore');
+
     Route::get('/pariwisata', [PariwisataController::class, 'index'])->name('pariwisata');
+    Route::delete('/pariwisata/{pariwisata}', [PariwisataController::class, 'destroy'])->name('pariwisata.destroy');
+    Route::patch('/pariwisata/{pariwisata}/restore', [PariwisataController::class, 'restore'])->name('pariwisata.restore');
+
     Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
     Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
+    Route::delete('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'destroy'])->name('survey-assignments.destroy');
+    Route::patch('/survey-assignments/{assignment}/restore', [VillageSurveyAssignmentController::class, 'restore'])->name('survey-assignments.restore');
     Route::get('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'createUmkm'])
         ->name('survey-assignments.create-umkm');
     Route::post('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'storeUmkm'])

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'survey_answer_id', 'village_survey_assignment_id', 'survey_question_id', 'actor_id',
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class SurveyAnswerHistory extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     public const UPDATED_AT = null;
 

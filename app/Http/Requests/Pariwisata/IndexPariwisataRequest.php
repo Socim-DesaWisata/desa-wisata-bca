@@ -21,6 +21,7 @@ class IndexPariwisataRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:150'],
             'category' => ['nullable', 'string', 'max:150'],
             'is_active' => ['nullable', 'string', Rule::in(['1', '0'])],
+            'view' => ['nullable', 'string', Rule::in(['active', 'trash'])],
             'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
         ];
     }

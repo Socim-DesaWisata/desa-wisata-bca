@@ -6,13 +6,19 @@ import {
     Eye,
     MapPinned,
     MoreHorizontal,
+    RotateCcw,
     Search,
     Tag,
+    Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { index as pariwisataIndex } from '@/actions/App/Http/Controllers/PariwisataController';
+import {
+    destroy as destroyPariwisata,
+    index as pariwisataIndex,
+    restore as restorePariwisata,
+} from '@/actions/App/Http/Controllers/PariwisataController';
 
 import {
     DropdownMenu,
@@ -57,6 +63,7 @@ type PariwisataRow = {
     village_location: string;
     survey_answers_count: number;
     updated_at: string;
+    is_trashed: boolean;
     detail_url: string | null;
 };
 
@@ -83,6 +90,7 @@ type PariwisataFilters = {
     search: string;
     category: string | null;
     is_active: string | null;
+    view?: 'active' | 'trash' | null;
     per_page: number;
 };
 
@@ -141,6 +149,7 @@ export default function PariwisataIndex({
     const [search, setSearch] = useState(filters.search ?? '');
     const [category, setCategory] = useState(filters.category ?? '');
     const [status, setStatus] = useState(filters.is_active ?? '');
+    const [view, setView] = useState(filters.view ?? 'active');
     const [perPage, setPerPage] = useState(String(filters.per_page ?? 10));
 
     function visitWithFilters(overrides: Partial<PariwisataFilters> = {}) {
@@ -150,6 +159,7 @@ export default function PariwisataIndex({
                     search: (overrides.search ?? search) || undefined,
                     category: (overrides.category ?? category) || undefined,
                     is_active: (overrides.is_active ?? status) || undefined,
+                    view: overrides.view ?? view,
                     per_page: overrides.per_page ?? Number(perPage),
                 },
             }),
@@ -167,8 +177,34 @@ export default function PariwisataIndex({
         setSearch('');
         setCategory('');
         setStatus('');
+        setView('active');
         setPerPage('10');
         router.get(pariwisataIndex.url(), {}, { preserveState: true });
+    }
+
+    function changeView(nextView: 'active' | 'trash') {
+        setView(nextView);
+        visitWithFilters({ view: nextView });
+    }
+
+    function handleDelete(pariwisataId: number) {
+        if (!window.confirm('Pindahkan data pariwisata ini ke trash?')) {
+            return;
+        }
+
+        router.delete(destroyPariwisata.url(pariwisataId), {
+            preserveScroll: true,
+        });
+    }
+
+    function handleRestore(pariwisataId: number) {
+        if (!window.confirm('Pulihkan data pariwisata ini dari trash?')) {
+            return;
+        }
+
+        router.patch(restorePariwisata.url(pariwisataId), {}, {
+            preserveScroll: true,
+        });
     }
 
     return (
@@ -196,13 +232,31 @@ export default function PariwisataIndex({
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                        >
-                            <Download className="size-4" />
-                            Export Data
-                        </button>
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('active')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
+                                >
+                                    Data Aktif
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('trash')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
+                                >
+                                    Trash
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                            >
+                                <Download className="size-4" />
+                                Export Data
+                            </button>
+                        </div>
                     </header>
 
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -489,6 +543,29 @@ export default function PariwisataIndex({
                                                                     Lihat Detail
                                                                 </DropdownMenuItem>
                                                             )}
+                                                            {item.is_trashed ? (
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                    onSelect={(event) => {
+                                                                        event.preventDefault();
+                                                                        handleRestore(item.id);
+                                                                    }}
+                                                                >
+                                                                    <RotateCcw className="size-4 text-[#00893D]" />
+                                                                    Pulihkan
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                    onSelect={(event) => {
+                                                                        event.preventDefault();
+                                                                        handleDelete(item.id);
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                    Hapus
+                                                                </DropdownMenuItem>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>
@@ -564,3 +641,10 @@ PariwisataIndex.layout = {
         { title: 'Pariwisata', href: pariwisataRoute() },
     ],
 };
+
+
+
+
+
+
+

@@ -2,10 +2,21 @@
 
 namespace App\Services;
 
+use App\Models\AnnualTurnover;
+use App\Models\AnnualWorkerStat;
+use App\Models\AnnualWorkerTrainingStat;
+use App\Models\PariwisataAnnualVisitor;
+use App\Models\PariwisataPackage;
+use App\Models\PariwisataSurveyAnswer;
+use App\Models\PariwisataSurveyAnswerDocument;
 use App\Models\PariwisataVillage;
 use App\Models\PariwisataVillageCategory;
+use App\Models\PariwisataVisitorTypeAnnual;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PariwisataService
 {
@@ -25,10 +36,11 @@ class PariwisataService
             'search' => trim((string) Arr::get($filters, 'search', '')),
             'category' => Arr::get($filters, 'category'),
             'is_active' => Arr::get($filters, 'is_active'),
+            'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => $perPage,
         ];
 
-        $paginator = PariwisataVillage::query()
+        $query = PariwisataVillage::query()
             ->select([
                 'id',
                 'village_id',
@@ -42,6 +54,7 @@ class PariwisataService
                 'person_in_charge_phone',
                 'is_active',
                 'updated_at',
+                'deleted_at',
             ])
             ->with([
                 'village:id,code,name,city,province',
@@ -49,24 +62,30 @@ class PariwisataService
                 'categories:id,pariwisata_village_id,category',
                 'surveyAnswers:id,pariwisata_village_id,pariwisata_survey_question_id,score',
             ])
-            ->withCount('surveyAnswers')
-            ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
+            ->withCount('surveyAnswers');
+
+        if ($normalizedFilters['view'] === 'trash') {
+            $query->onlyTrashed();
+        }
+
+        $paginator = $query
+            ->when($normalizedFilters['search'] !== '', function (Builder $query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
 
-                $query->where(function ($query) use ($search): void {
+                $query->where(function (Builder $query) use ($search): void {
                     $query
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('address', 'like', "%{$search}%")
                         ->orWhere('person_in_charge_name', 'like', "%{$search}%")
-                        ->orWhereHas('village', function ($query) use ($search): void {
+                        ->orWhereHas('village', function (Builder $query) use ($search): void {
                             $query
                                 ->where('name', 'like', "%{$search}%")
                                 ->orWhere('code', 'like', "%{$search}%");
                         });
                 });
             })
-            ->when($normalizedFilters['category'], fn ($query, string $category) => $query->whereHas('categories', fn ($query) => $query->where('category', $category)))
-            ->when($normalizedFilters['is_active'] !== null, fn ($query) => $query->where('is_active', $normalizedFilters['is_active'] === '1'))
+            ->when($normalizedFilters['category'], fn (Builder $query, string $category) => $query->whereHas('categories', fn (Builder $query) => $query->where('category', $category)))
+            ->when($normalizedFilters['is_active'] !== null, fn (Builder $query) => $query->where('is_active', $normalizedFilters['is_active'] === '1'))
             ->latest('updated_at')
             ->paginate($normalizedFilters['per_page'])
             ->withQueryString();
@@ -81,6 +100,59 @@ class PariwisataService
             'status_options' => $this->statusOptions(),
             'per_page_options' => [5, 10, 15, 25, 50],
         ];
+    }
+
+    public function delete(PariwisataVillage $pariwisata): void
+    {
+        DB::transaction(function () use ($pariwisata): void {
+            $answerIds = $pariwisata->surveyAnswers()->pluck('id');
+
+            PariwisataSurveyAnswerDocument::query()
+                ->whereIn('pariwisata_survey_answer_id', $answerIds)
+                ->delete();
+
+            $pariwisata->categories()->delete();
+            $pariwisata->surveyAnswers()->delete();
+            $pariwisata->annualTurnovers()->delete();
+            $pariwisata->annualVisitors()->delete();
+            $pariwisata->visitorTypeAnnuals()->delete();
+            $pariwisata->packages()->delete();
+            $pariwisata->annualWorkerStats()->delete();
+            $pariwisata->annualWorkerTrainingStats()->delete();
+            $pariwisata->delete();
+        });
+    }
+
+    public function restore(int $pariwisataId): void
+    {
+        $pariwisata = PariwisataVillage::withTrashed()->findOrFail($pariwisataId);
+
+        if (! $pariwisata->trashed()) {
+            throw ValidationException::withMessages([
+                'pariwisata' => 'Data pariwisata tidak berada di trash.',
+            ]);
+        }
+
+        DB::transaction(function () use ($pariwisata): void {
+            $pariwisata->restore();
+            PariwisataVillageCategory::withTrashed()->where('pariwisata_village_id', $pariwisata->id)->restore();
+            PariwisataSurveyAnswer::withTrashed()->where('pariwisata_village_id', $pariwisata->id)->restore();
+
+            $answerIds = PariwisataSurveyAnswer::withTrashed()
+                ->where('pariwisata_village_id', $pariwisata->id)
+                ->pluck('id');
+
+            PariwisataSurveyAnswerDocument::withTrashed()
+                ->whereIn('pariwisata_survey_answer_id', $answerIds)
+                ->restore();
+
+            AnnualTurnover::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
+            PariwisataAnnualVisitor::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
+            PariwisataVisitorTypeAnnual::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
+            PariwisataPackage::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
+            AnnualWorkerStat::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
+            AnnualWorkerTrainingStat::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
+        });
     }
 
     /**
@@ -172,9 +244,12 @@ class PariwisataService
             'village_location' => collect([$pariwisata->village?->city, $pariwisata->village?->province])->filter()->implode(', ') ?: '-',
             'survey_answers_count' => $pariwisata->survey_answers_count,
             'updated_at' => $this->formatDate($pariwisata->updated_at),
-            'detail_url' => $pariwisata->village?->surveyAssignment
-                ? route('survey-assignments.pariwisata.show', [$pariwisata->village->surveyAssignment, $pariwisata])
-                : null,
+            'is_trashed' => $pariwisata->trashed(),
+            'detail_url' => $pariwisata->trashed()
+                ? null
+                : ($pariwisata->village?->surveyAssignment
+                    ? route('survey-assignments.pariwisata.show', [$pariwisata->village->surveyAssignment, $pariwisata])
+                    : null),
         ];
     }
 

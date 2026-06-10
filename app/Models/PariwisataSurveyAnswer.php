@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'pariwisata_village_id', 'pariwisata_survey_question_id', 'pariwisata_suvey_option_id',
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class PariwisataSurveyAnswer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected function casts(): array
     {
