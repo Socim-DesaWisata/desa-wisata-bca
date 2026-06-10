@@ -445,16 +445,16 @@ export default function Dashboard({
                     <section className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {[
                             { type: 'time' },
-                            { type: 'kpi', data: kpis[0] },
-                            { type: 'kpi', data: kpis[1] },
-                            { type: 'kpi', data: kpis[2] },
+                            ...kpis.slice(0, 3).map(kpi => ({ type: 'kpi', data: kpi })),
                         ].map((item, index) => {
                             if (item.type === 'time') {
                                 return <CurrentTimeCard key="time" />;
                             }
 
-                            const kpi = item.data!;
+                            if (!('data' in item) || !item.data) return null;
+                            const kpi = item.data;
                             const Icon = kpiIcons[kpi.icon];
+                            if (!Icon) return null;
                             const trendColor =
                                 kpi.tone === 'success'
                                     ? 'text-[#00893D]'
