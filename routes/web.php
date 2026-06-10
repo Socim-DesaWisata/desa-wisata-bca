@@ -36,6 +36,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/villages/{village}', [TourismVillageController::class, 'show'])->name('villages.show');
     Route::get('/villages/{village}/edit', [TourismVillageController::class, 'edit'])->name('villages.edit');
     Route::patch('/villages/{village}', [TourismVillageController::class, 'update'])->name('villages.update');
+    Route::delete('/villages/{village}', [TourismVillageController::class, 'destroy'])->name('villages.destroy');
+    Route::patch('/villages/{village}/restore', [TourismVillageController::class, 'restore'])->name('villages.restore');
 
     Route::get('/umkm', [UmkmController::class, 'index'])->name('umkm');
     Route::delete('/umkm/{umkm}', [UmkmController::class, 'destroy'])->name('umkm.destroy');
@@ -95,6 +97,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.take-survey.store');
     Route::delete('/survey-assignments/{assignment}/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroySurveyDocument'])
         ->name('survey-assignments.take-survey.documents.destroy');
+
+    Route::get('/chatbot', function () {
+        return Inertia\Inertia::render('chatbot/index');
+    })->name('chatbot');
 });
+
 
 require __DIR__.'/settings.php';

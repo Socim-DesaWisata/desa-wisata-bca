@@ -44,4 +44,25 @@ class TourismVillageController extends Controller
 
         return back()->with('success', 'Desa wisata berhasil diperbarui.');
     }
+
+    public function destroy(
+        TourismVillage $village,
+        TourismVillageService $service
+    ): RedirectResponse {
+        $service->delete($village);
+
+        return back()->with('success', 'Desa wisata berhasil dipindahkan ke trash.');
+    }
+
+    public function restore(
+        int $village,
+        TourismVillageService $service
+    ): RedirectResponse {
+        $service->restore($village);
+
+        return redirect()
+            ->route('villages', ['view' => 'trash'])
+            ->with('success', 'Desa wisata berhasil dipulihkan.');
+    }
 }
+
