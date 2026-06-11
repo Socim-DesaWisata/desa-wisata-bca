@@ -609,7 +609,7 @@ function AnnualBarChartCard({
                                     dataKey="value"
                                     position="top"
                                     offset={8}
-                                    formatter={(value) =>
+                                    formatter={(value: any) =>
                                         `${valuePrefix}${formatCompactNumber(Number(value ?? 0))}`
                                     }
                                     fill="#303030"

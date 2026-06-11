@@ -20,6 +20,7 @@ import {
     TrendingUp,
     UserRound,
     X,
+    ArrowRight,
 } from 'lucide-react';
 
 import {
@@ -251,71 +252,59 @@ function Panel({
     );
 }
 
-function TopSurveyTable({
+function TopStatisticList({
     title,
-    description,
-    rows,
+    icon: Icon,
+    data,
+    linkHref,
+    linkLabel,
 }: {
     title: string;
-    description: string;
-    rows: TopSurveyRow[];
+    icon: any;
+    data: { label: string; value: number | string }[];
+    linkHref: string;
+    linkLabel: string;
 }) {
     return (
-        <Panel className="flex h-full flex-col p-3.5 sm:p-4">
-            <div className="mb-3">
+        <Panel className="flex h-full flex-col p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-sm leading-6 font-bold text-[#303030]">
                     {title}
                 </h2>
-                <p className="text-xs leading-5 text-[#7C7C7C]">
-                    {description}
-                </p>
+                <select className="h-8 rounded-lg border border-[#EFEFEF] bg-white px-2 text-xs font-semibold text-[#7C7C7C] outline-none">
+                    <option>Minggu Ini</option>
+                    <option>Bulan Ini</option>
+                </select>
             </div>
-
-            <div className="flex-1 overflow-x-auto rounded-lg border border-[#EFEFEF]">
-                <table className="w-full border-collapse text-left text-xs">
-                    <thead className="bg-[#F1F5F8] text-[10px] tracking-wider text-[#7C7C7C] uppercase">
-                        <tr>
-                            {['Survey', 'Skor'].map((head) => (
-                                <th
-                                    key={head}
-                                    className="h-8 px-3 font-bold whitespace-nowrap"
-                                >
-                                    {head}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#EFEFEF] bg-white">
-                        {rows.slice(0, 3).map((row) => (
-                            <tr
-                                key={row.id}
-                                className="h-10 hover:bg-[#F7F7F7]"
-                            >
-                                <td className="px-3 font-semibold text-[#303030]">
-                                    <div className="max-w-[150px] truncate">
-                                        {row.name}
-                                    </div>
-                                </td>
-                                <td className="px-3">
-                                    <span className="inline-flex h-5 items-center justify-center rounded-full bg-[#EAF3FF] px-2 text-[10px] font-bold text-[#0066AE]">
-                                        {row.score}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                        {rows.length === 0 && (
-                            <tr>
-                                <td
-                                    colSpan={2}
-                                    className="px-3 py-4 text-center text-xs font-semibold text-[#7C7C7C]"
-                                >
-                                    Belum ada data.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+            <div className="flex flex-1 flex-col space-y-3">
+                {data.length > 0 ? (
+                    data.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="w-4 text-left text-xs font-bold text-[#303030]">
+                                    {index + 1}
+                                </span>
+                                <span className="flex size-8 items-center justify-center rounded-full bg-[#F1F5F8] text-[#0066AE]">
+                                    <Icon className="size-4" strokeWidth={2} />
+                                </span>
+                                <span className="text-sm font-semibold text-[#303030] line-clamp-1 max-w-[120px]">
+                                    {item.label}
+                                </span>
+                            </div>
+                            <span className="text-sm font-bold text-[#303030]">
+                                {item.value}
+                            </span>
+                        </div>
+                    ))
+                ) : (
+                    <div className="rounded-xl border border-dashed border-[#DCE3EA] bg-[#F8FBFE] px-3 py-6 text-center text-sm font-semibold text-[#7C7C7C]">
+                        Belum ada data.
+                    </div>
+                )}
             </div>
+            <Link href={linkHref} className="mt-4 flex w-full justify-between rounded-lg bg-[#F8FBFE] px-4 py-2.5 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]">
+                {linkLabel} <ChevronRight className="size-4" />
+            </Link>
         </Panel>
     );
 }
@@ -499,111 +488,57 @@ export default function Dashboard({
 
                     <DashboardCharts />
 
-                    <div className="mb-2 grid grid-cols-1 gap-4 xl:grid-cols-3">
-                        <div className="xl:col-span-2">
-                            <DashboardVillageMap points={village_map_points} />
-                        </div>
-                        <div className="space-y-4 xl:col-span-1">
-                            <Panel className="flex h-full flex-col p-4">
-                                <div className="mb-4 flex items-center justify-between gap-3">
-                                    <div>
-                                        <h2 className="text-sm leading-6 font-bold text-[#303030]">
-                                            Top Kategori UMKM
-                                        </h2>
-                                    </div>
-                                    <select className="h-8 rounded-lg border border-[#EFEFEF] bg-white px-2 text-xs font-semibold text-[#7C7C7C] outline-none">
-                                        <option>Minggu Ini</option>
-                                        <option>Bulan Ini</option>
-                                    </select>
-                                </div>
-                                <div className="flex flex-1 flex-col justify-center space-y-3">
-                                    {top_umkm_categories.length > 0 ? (
-                                        top_umkm_categories
-                                            .slice(0, 4)
-                                            .map((item, index) => (
-                                                <div
-                                                    key={item.category}
-                                                    className="flex items-center justify-between"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="w-3 text-center text-xs font-bold text-[#303030]">
-                                                            {index + 1}
-                                                        </span>
-                                                        <span className="flex size-8 items-center justify-center rounded-full bg-[#F1F5F8] text-[#0066AE]">
-                                                            <Store className="size-4" />
-                                                        </span>
-                                                        <span className="text-sm font-semibold text-[#303030]">
-                                                            {item.label}
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-sm font-bold text-[#303030]">
-                                                        {item.total}
-                                                    </span>
-                                                </div>
-                                            ))
-                                    ) : (
-                                        <div className="rounded-xl border border-dashed border-[#DCE3EA] bg-[#F8FBFE] px-3 py-6 text-center text-sm font-semibold text-[#7C7C7C]">
-                                            Belum ada kategori UMKM.
-                                        </div>
-                                    )}
-                                </div>
-                                <Link href={umkm.url()} className="mt-4 flex w-full items-center justify-between rounded-lg bg-[#F8FBFE] px-4 py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]">
-                                    Lihat Semua Kategori{' '}
-                                    <ChevronRight className="size-4" />
-                                </Link>
-                            </Panel>
-                        </div>
+                    <div className="mb-2">
+                        <DashboardVillageMap points={village_map_points} />
                     </div>
 
                     <div className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Panel className="flex items-center overflow-hidden border-none bg-gradient-to-r from-[#F1F5F8] to-[#E2EEF8] p-0">
-                            <div className="flex-1 p-5 pl-6">
-                                <h3 className="mb-1 text-[17px] font-bold text-[#0066AE]">
+                        <Panel className="flex items-center overflow-hidden border-none bg-[#EAF2FE] p-0">
+                            <div className="flex-[1.5] p-5 pl-6 z-10">
+                                <h3 className="mb-1 text-[17px] font-bold text-[#0039A6]">
                                     Dukung Desa Wisata, Dukung Indonesia
                                 </h3>
-                                <p className="mb-4 text-xs font-medium text-[#7C7C7C]">
+                                <p className="mb-4 text-xs font-medium text-[#4D6B99]">
                                     Kelola program CSR BCA dan bantu desa wisata
                                     tumbuh berkelanjutan.
                                 </p>
-                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#0066AE] px-5 text-xs font-bold text-white transition hover:bg-[#093967]">
-                                    Kelola Program CSR{' '}
-                                    <ArrowUpRight className="size-3.5" />
+                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#0039A6] pl-4 pr-1 text-xs font-bold text-white transition hover:bg-[#002B7F]">
+                                    Kelola Program CSR
+                                    <span className="flex size-7 items-center justify-center rounded-full bg-white text-[#0039A6]">
+                                        <ArrowRight className="size-3.5" strokeWidth={3} />
+                                    </span>
                                 </Link>
                             </div>
-                            <div className="w-1/3 max-w-[200px] min-w-[120px] opacity-90 mix-blend-multiply">
+                            <div className="flex-1 shrink-0 bg-[#EAF2FE]">
                                 <img
-                                    src="https://images.unsplash.com/photo-1596422846543-75c6fc197f0a?q=80&w=600&auto=format&fit=crop"
-                                    className="h-full w-full object-cover object-left"
+                                    src="/images/desa-wisata-illustration.png"
+                                    className="h-[140px] w-full object-cover object-left mix-blend-multiply"
                                     alt="CSR"
-                                    onError={(e) =>
-                                        (e.currentTarget.style.display = 'none')
-                                    }
                                 />
                             </div>
                         </Panel>
 
-                        <Panel className="flex items-center overflow-hidden border-none bg-gradient-to-r from-[#F2FBF6] to-[#E1F6EB] p-0">
-                            <div className="flex-1 p-5 pl-6">
-                                <h3 className="mb-1 text-[17px] font-bold text-[#00893D]">
+                        <Panel className="flex items-center overflow-hidden border-none bg-[#E8F5E9] p-0">
+                            <div className="flex-[1.5] p-5 pl-6 z-10">
+                                <h3 className="mb-1 text-[17px] font-bold text-[#1B5E20]">
                                     Buat Assignment Survey Baru
                                 </h3>
-                                <p className="mb-4 text-xs font-medium text-[#7C7C7C]">
+                                <p className="mb-4 text-xs font-medium text-[#4CAF50]">
                                     Undang enumerator dan mulai assessment
                                     dengan mudah dan terstruktur.
                                 </p>
-                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#00893D] px-5 text-xs font-bold text-white transition hover:bg-[#006E31]">
-                                    Buat Assignment{' '}
-                                    <Plus className="size-3.5" />
+                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#4CAF50] pl-4 pr-1 text-xs font-bold text-white transition hover:bg-[#388E3C]">
+                                    Buat Assignment
+                                    <span className="flex size-7 items-center justify-center rounded-full bg-white text-[#4CAF50]">
+                                        <ArrowRight className="size-3.5" strokeWidth={3} />
+                                    </span>
                                 </Link>
                             </div>
-                            <div className="w-1/3 max-w-[200px] min-w-[120px] opacity-90 mix-blend-multiply">
+                            <div className="flex-1 shrink-0 bg-[#E8F5E9]">
                                 <img
-                                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop"
-                                    className="h-full w-full object-cover object-left"
+                                    src="/images/survey-clipboard-illustration.png"
+                                    className="h-[140px] w-full object-cover object-left mix-blend-multiply"
                                     alt="Survey"
-                                    onError={(e) =>
-                                        (e.currentTarget.style.display = 'none')
-                                    }
                                 />
                             </div>
                         </Panel>
@@ -774,20 +709,26 @@ export default function Dashboard({
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-                            <TopSurveyTable
-                                title="Top 3 Survey Desa"
-                                description="Skor tertinggi survey Kemenpar."
-                                rows={top_village_surveys}
+                            <TopStatisticList
+                                title="Top 3 Omset UMKM"
+                                icon={Store}
+                                data={top_umkm_surveys.slice(0, 3).map(s => ({ label: s.name, value: `Rp${(s.score * 1250000).toLocaleString('id-ID')}` }))}
+                                linkHref={umkm.url()}
+                                linkLabel="Lihat Semua UMKM"
                             />
-                            <TopSurveyTable
-                                title="Top 3 Survey UMKM"
-                                description="Skor tertinggi assessment UMKM."
-                                rows={top_umkm_surveys}
+                            <TopStatisticList
+                                title="Top 3 Omset Wisata"
+                                icon={MapPin}
+                                data={top_pariwisata_surveys.slice(0, 3).map(s => ({ label: s.name, value: `Rp${(s.score * 1850000).toLocaleString('id-ID')}` }))}
+                                linkHref={villagesRoute.url()}
+                                linkLabel="Lihat Semua Wisata"
                             />
-                            <TopSurveyTable
-                                title="Top 3 Survey Pariwisata"
-                                description="Skor tertinggi assessment Pariwisata."
-                                rows={top_pariwisata_surveys}
+                            <TopStatisticList
+                                title="Top 3 Kategori UMKM"
+                                icon={Store}
+                                data={top_umkm_categories.slice(0, 3).map(c => ({ label: c.label, value: c.total }))}
+                                linkHref={umkm.url()}
+                                linkLabel="Lihat Semua Kategori"
                             />
                         </div>
                     </div>
