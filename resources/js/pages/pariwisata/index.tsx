@@ -202,9 +202,13 @@ export default function PariwisataIndex({
             return;
         }
 
-        router.patch(restorePariwisata.url(pariwisataId), {}, {
-            preserveScroll: true,
-        });
+        router.patch(
+            restorePariwisata.url(pariwisataId),
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
     }
 
     return (
@@ -408,7 +412,11 @@ export default function PariwisataIndex({
                                         ].map((head) => (
                                             <th
                                                 key={head}
-                                                className="px-3 py-3 font-bold whitespace-nowrap"
+                                                className={
+                                                    head === 'Total Skor'
+                                                        ? 'px-5 py-4 font-bold whitespace-nowrap bg-[#EAF3FF] text-[#0066AE] text-sm text-center'
+                                                        : 'px-3 py-3 font-bold whitespace-nowrap'
+                                                }
                                             >
                                                 {head}
                                             </th>
@@ -465,8 +473,10 @@ export default function PariwisataIndex({
                                                         {item.village_location}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-3 text-xs font-semibold text-[#303030]">
-                                                    {item.total_score}
+                                                <td className="bg-[#F8FBFE] px-5 py-4 text-center text-sm font-black text-[#0066AE]">
+                                                    {item.total_score.toFixed(
+                                                        1,
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <span className="block font-bold text-[#303030]">
@@ -546,9 +556,13 @@ export default function PariwisataIndex({
                                                             {item.is_trashed ? (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                    onSelect={(event) => {
+                                                                    onSelect={(
+                                                                        event,
+                                                                    ) => {
                                                                         event.preventDefault();
-                                                                        handleRestore(item.id);
+                                                                        handleRestore(
+                                                                            item.id,
+                                                                        );
                                                                     }}
                                                                 >
                                                                     <RotateCcw className="size-4 text-[#00893D]" />
@@ -557,9 +571,13 @@ export default function PariwisataIndex({
                                                             ) : (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                    onSelect={(event) => {
+                                                                    onSelect={(
+                                                                        event,
+                                                                    ) => {
                                                                         event.preventDefault();
-                                                                        handleDelete(item.id);
+                                                                        handleDelete(
+                                                                            item.id,
+                                                                        );
                                                                     }}
                                                                 >
                                                                     <Trash2 className="size-4 text-[#D81313]" />
@@ -641,10 +659,3 @@ PariwisataIndex.layout = {
         { title: 'Pariwisata', href: pariwisataRoute() },
     ],
 };
-
-
-
-
-
-
-

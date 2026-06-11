@@ -11,6 +11,7 @@ use App\Models\UmkmSurveyQuestion;
 use App\Models\User;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageUmkm;
+use App\Models\VillageUmkmCategory;
 use App\Models\VillageUmkmDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -402,11 +403,31 @@ class UmkmSurveyAssignmentService
             ->unique()
             ->values();
 
-        $umkm->categories()->delete();
+        $existingCategories = VillageUmkmCategory::withTrashed()
+            ->where('village_umkm_id', $umkm->id)
+            ->get()
+            ->keyBy('category');
 
-        $uniqueCategories->each(fn (string $category): mixed => $umkm->categories()->create([
-            'category' => $category,
-        ]));
+        foreach ($uniqueCategories as $category) {
+            $existingCategory = $existingCategories->get($category);
+
+            if (! $existingCategory) {
+                $umkm->categories()->create([
+                    'category' => $category,
+                ]);
+
+                continue;
+            }
+
+            if ($existingCategory->trashed()) {
+                $existingCategory->restore();
+            }
+        }
+
+        VillageUmkmCategory::query()
+            ->where('village_umkm_id', $umkm->id)
+            ->whereNotIn('category', $uniqueCategories->all())
+            ->delete();
     }
 
     /**

@@ -9,12 +9,15 @@ use App\Models\PariwisataAnnualVisitor;
 use App\Models\PariwisataPackage;
 use App\Models\PariwisataSurveyAnswer;
 use App\Models\PariwisataSurveyAnswerDocument;
+use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataVillage;
 use App\Models\PariwisataVillageCategory;
 use App\Models\PariwisataVisitorTypeAnnual;
+use App\Models\SurveyTemplate;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -223,13 +226,11 @@ class PariwisataService
      */
     private function formatPariwisata(PariwisataVillage $pariwisata): array
     {
-        $totalScore = $pariwisata->surveyAnswers->sum('score');
-
         return [
             'id' => $pariwisata->id,
             'name' => $pariwisata->name,
             'categories' => $pariwisata->categories->pluck('category')->filter()->values()->all(),
-            'total_score' => $totalScore,
+            'total_score' => $this->pariwisataFinalScore($pariwisata),
             'operational_days' => $pariwisata->operational_days ?: '-',
             'operational_hours' => $pariwisata->operational_hours ?: '-',
             'ticket_price' => $this->formatCurrency($pariwisata->entrance_ticket_price),
@@ -251,6 +252,38 @@ class PariwisataService
                     ? route('survey-assignments.pariwisata.show', [$pariwisata->village->surveyAssignment, $pariwisata])
                     : null),
         ];
+    }
+
+    private function pariwisataFinalScore(PariwisataVillage $pariwisata): float
+    {
+        $questions = $this->pariwisataQuestionsForSummary();
+        $totalScore = $pariwisata->surveyAnswers->sum(fn (PariwisataSurveyAnswer $answer): int => (int) $answer->score);
+        $maxScore = $questions->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
+
+        return $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0;
+    }
+
+    /**
+     * @return Collection<int, PariwisataSurveyQuestion>
+     */
+    private function pariwisataQuestionsForSummary(): Collection
+    {
+        return once(fn (): Collection => SurveyTemplate::query()
+            ->select(['id', 'title', 'description', 'status', 'published_at'])
+            ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
+            ->where('status', 'published')
+            ->with([
+                'pariwisataSurveyQuestions' => fn ($query) => $query
+                    ->select(['id', 'survey_template_id'])
+                    ->where('is_active', true)
+                    ->orderBy('sort_order'),
+                'pariwisataSurveyQuestions.options' => fn ($query) => $query
+                    ->select(['id', 'pariwisata_survey_question_id', 'score'])
+                    ->orderBy('sort_order'),
+            ])
+            ->latest('published_at')
+            ->latest('id')
+            ->first()?->pariwisataSurveyQuestions ?? collect());
     }
 
     private function formatCurrency(mixed $value): string
