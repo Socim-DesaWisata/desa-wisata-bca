@@ -598,7 +598,11 @@ export default function SurveyAssignmentIndex({
                                         ].map((head) => (
                                             <th
                                                 key={head}
-                                                className="px-3 py-3 font-bold whitespace-nowrap"
+                                                className={
+                                                    head === 'Total Skor'
+                                                        ? 'px-5 py-4 font-bold whitespace-nowrap bg-[#EAF3FF] text-[#0066AE] text-sm text-center'
+                                                        : 'px-3 py-3 font-bold whitespace-nowrap'
+                                                }
                                             >
                                                 {head}
                                             </th>
@@ -639,12 +643,10 @@ export default function SurveyAssignmentIndex({
                                             <td className="px-3 py-3 font-medium text-[#303030]">
                                                 {assignment.created_at}
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <span className="inline-flex min-w-20 items-center justify-center rounded-full bg-[#EAF3FF] px-3 py-1 text-sm font-bold text-[#0066AE]">
-                                                    {assignment.total_score.toFixed(
-                                                        1,
-                                                    )}
-                                                </span>
+                                            <td className="bg-[#F8FBFE] px-5 py-4 text-center text-sm font-black text-[#0066AE]">
+                                                {assignment.total_score.toFixed(
+                                                    1,
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#0066AE]">

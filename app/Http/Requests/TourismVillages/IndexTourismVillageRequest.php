@@ -21,6 +21,7 @@ class IndexTourismVillageRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:150'],
             'status' => ['nullable', 'string', Rule::in(['draft', 'active', 'verified', 'review', 'archived'])],
             'province' => ['nullable', 'string', 'max:100'],
+            'view' => ['nullable', 'string', Rule::in(['active', 'trash'])],
             'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
         ];
     }

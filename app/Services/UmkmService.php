@@ -62,7 +62,7 @@ class UmkmService
                 'village:id,code,name,city,province',
                 'village.surveyAssignment:id,code,village_id',
                 'dataCollector:id,name,email',
-                'surveyAnswers:id,umkm_id,score,max_score_snapshot,question_weight_percent_snapshot',
+                'surveyAnswers:id,umkm_id,score,max_score_snapshot,question_weight_percent_snapshot,weighted_score',
             ])
             ->withCount(['documents', 'surveyAnswers']);
 
@@ -210,6 +210,10 @@ class UmkmService
     private function formatUmkm(VillageUmkm $umkm): array
     {
         $totalScore = $umkm->surveyAnswers->sum(function ($answer) {
+            if ($answer->weighted_score !== null) {
+                return (float) $answer->weighted_score;
+            }
+
             $score = (float) $answer->score;
             $maxScore = (float) ($answer->max_score_snapshot ?: 100);
             $weight = (float) ($answer->question_weight_percent_snapshot ?: 0);

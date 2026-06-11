@@ -68,11 +68,14 @@ class VillageSurveyAssignmentService
             ->with([
                 'village:id,code,name,city,province',
                 'template:id,title,status',
+                'template.questions' => fn ($query) => $query
+                    ->select(['id', 'survey_template_id'])
+                    ->with(['options:id,survey_question_id,score']),
                 'assignedBy:id,name,email',
                 'submittedBy:id,name,email',
                 'reviewedBy:id,name,email',
+                'answers:id,village_survey_assignment_id,score',
             ])
-            ->withAvg('answers as average_score', 'score')
             ->withCount(['answers', 'documents']);
 
         if ($normalizedFilters['view'] === 'trash') {
@@ -1181,10 +1184,19 @@ class VillageSurveyAssignmentService
             'created_at' => $this->formatDate($assignment->created_at),
             'updated_at' => $this->formatDate($assignment->updated_at),
             'is_trashed' => $assignment->trashed(),
-            'total_score' => round(((float) ($assignment->average_score ?? 0)) * 20, 1),
+            'total_score' => $this->assignmentFinalScore($assignment),
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
         ];
+    }
+
+    private function assignmentFinalScore(VillageSurveyAssignment $assignment): float
+    {
+        $totalScore = $assignment->answers->sum(fn (SurveyAnswer $answer): int => (int) $answer->score);
+        $maxScore = $assignment->template?->questions
+            ->sum(fn (SurveyQuestion $question): int => (int) $question->options->max('score')) ?? 0;
+
+        return $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0;
     }
 
     /**
@@ -2030,9 +2042,3 @@ class VillageSurveyAssignmentService
         return $date?->format('Y-m-d\TH:i') ?? '';
     }
 }
-
-
-
-
-
-

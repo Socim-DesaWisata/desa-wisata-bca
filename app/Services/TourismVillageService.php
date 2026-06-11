@@ -2,12 +2,36 @@
 
 namespace App\Services;
 
+use App\Models\AnnualTurnover;
+use App\Models\AnnualWorkerStat;
+use App\Models\AnnualWorkerTrainingStat;
+use App\Models\PariwisataAnnualVisitor;
+use App\Models\PariwisataPackage;
+use App\Models\PariwisataSurveyAnswer;
+use App\Models\PariwisataSurveyAnswerDocument;
+use App\Models\PariwisataVillage;
+use App\Models\PariwisataVillageCategory;
+use App\Models\PariwisataVisitorTypeAnnual;
+use App\Models\ProgramVillage;
+use App\Models\SurveyAnswer;
+use App\Models\SurveyAnswerDocument;
+use App\Models\SurveyAnswerHistory;
 use App\Models\TourismVillage;
+use App\Models\UmkmSurveyAnswer;
 use App\Models\User;
+use App\Models\VillageActiveGroupAnnual;
+use App\Models\VillageAnnualPopulationStat;
+use App\Models\VillageEnumeratorAssignment;
 use App\Models\VillageMedia;
 use App\Models\VillageProfileItem;
 use App\Models\VillageProfileItemCategory;
+use App\Models\VillageProfileItemMedia;
 use App\Models\VillageSurveyAssignment;
+use App\Models\VillageSurveyAssignmentLog;
+use App\Models\VillageUmkm;
+use App\Models\VillageUmkmCategory;
+use App\Models\VillageUmkmDocument;
+use App\Models\VillageVulnerableGroupAnnual;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -27,10 +51,11 @@ class TourismVillageService
             'search' => trim((string) Arr::get($filters, 'search', '')),
             'status' => Arr::get($filters, 'status'),
             'province' => Arr::get($filters, 'province'),
+            'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => (int) Arr::get($filters, 'per_page', 10),
         ];
 
-        $paginator = TourismVillage::query()
+        $query = TourismVillage::query()
             ->select([
                 'id',
                 'code',
@@ -53,10 +78,17 @@ class TourismVillageService
                 'created_by',
                 'created_at',
                 'updated_at',
+                'deleted_at',
             ])
             ->with(['creator:id,name'])
             ->withCount(['enumeratorAssignments', 'media', 'profileItems'])
-            ->withSum('surveyAnswers as total_score', 'score')
+            ->withSum('surveyAnswers as total_score', 'score');
+
+        if ($normalizedFilters['view'] === 'trash') {
+            $query->onlyTrashed();
+        }
+
+        $paginator = $query
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
 
@@ -187,6 +219,182 @@ class TourismVillageService
         return $village;
     }
 
+    public function delete(TourismVillage $village): void
+    {
+        DB::transaction(function () use ($village): void {
+            $this->deleteVillageSurveyAssignmentTree($village->id);
+            $this->deleteVillageUmkmTree($village->id);
+            $this->deleteVillagePariwisataTree($village->id);
+            $this->deleteVillageProfileTree($village->id);
+            $this->deleteVillageAnnualData($village->id);
+
+            ProgramVillage::query()->where('village_id', $village->id)->delete();
+            VillageEnumeratorAssignment::query()->where('village_id', $village->id)->delete();
+
+            $village->delete();
+        });
+    }
+
+    public function restore(int $villageId): TourismVillage
+    {
+        $village = TourismVillage::withTrashed()->findOrFail($villageId);
+
+        DB::transaction(function () use ($village): void {
+            $village->restore();
+
+            VillageMedia::withTrashed()->where('village_id', $village->id)->restore();
+            VillageProfileItem::withTrashed()->where('village_id', $village->id)->restore();
+
+            $profileItemIds = VillageProfileItem::withTrashed()
+                ->where('village_id', $village->id)
+                ->pluck('id');
+
+            VillageProfileItemMedia::withTrashed()
+                ->whereIn('village_profile_item_id', $profileItemIds)
+                ->restore();
+
+            $this->restoreVillageSurveyAssignmentTree($village->id);
+            $this->restoreVillageUmkmTree($village->id);
+            $this->restoreVillagePariwisataTree($village->id);
+            $this->restoreVillageAnnualData($village->id);
+        });
+
+        return $village->refresh();
+    }
+
+    private function deleteVillageProfileTree(int $villageId): void
+    {
+        $profileItemIds = VillageProfileItem::query()
+            ->where('village_id', $villageId)
+            ->pluck('id');
+
+        VillageProfileItemMedia::query()
+            ->whereIn('village_profile_item_id', $profileItemIds)
+            ->delete();
+
+        VillageMedia::query()->where('village_id', $villageId)->delete();
+        VillageProfileItem::query()->where('village_id', $villageId)->delete();
+    }
+
+    private function deleteVillageSurveyAssignmentTree(int $villageId): void
+    {
+        $assignmentIds = VillageSurveyAssignment::query()
+            ->where('village_id', $villageId)
+            ->pluck('id');
+
+        $answerIds = SurveyAnswer::query()
+            ->whereIn('village_survey_assignment_id', $assignmentIds)
+            ->pluck('id');
+
+        SurveyAnswerDocument::query()->whereIn('survey_answer_id', $answerIds)->delete();
+        SurveyAnswerHistory::query()->whereIn('village_survey_assignment_id', $assignmentIds)->delete();
+        VillageSurveyAssignmentLog::query()->whereIn('village_survey_assignment_id', $assignmentIds)->delete();
+        SurveyAnswer::query()->whereIn('village_survey_assignment_id', $assignmentIds)->delete();
+        VillageSurveyAssignment::query()->whereIn('id', $assignmentIds)->delete();
+    }
+
+    private function deleteVillageUmkmTree(int $villageId): void
+    {
+        $umkmIds = VillageUmkm::query()->where('village_id', $villageId)->pluck('id');
+
+        VillageUmkmDocument::query()->whereIn('village_umkm_id', $umkmIds)->delete();
+        VillageUmkmCategory::query()->whereIn('village_umkm_id', $umkmIds)->delete();
+        UmkmSurveyAnswer::query()->whereIn('umkm_id', $umkmIds)->delete();
+        AnnualTurnover::query()->whereIn('umkm_id', $umkmIds)->delete();
+        AnnualWorkerStat::query()->whereIn('umkm_id', $umkmIds)->delete();
+        AnnualWorkerTrainingStat::query()->whereIn('umkm_id', $umkmIds)->delete();
+        VillageUmkm::query()->whereIn('id', $umkmIds)->delete();
+    }
+
+    private function deleteVillagePariwisataTree(int $villageId): void
+    {
+        $pariwisataIds = PariwisataVillage::query()->where('village_id', $villageId)->pluck('id');
+        $pariwisataAnswerIds = PariwisataSurveyAnswer::query()
+            ->whereIn('pariwisata_village_id', $pariwisataIds)
+            ->pluck('id');
+
+        PariwisataSurveyAnswerDocument::query()
+            ->whereIn('pariwisata_survey_answer_id', $pariwisataAnswerIds)
+            ->delete();
+        PariwisataVillageCategory::query()->whereIn('pariwisata_village_id', $pariwisataIds)->delete();
+        PariwisataSurveyAnswer::query()->whereIn('pariwisata_village_id', $pariwisataIds)->delete();
+        AnnualTurnover::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
+        PariwisataAnnualVisitor::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
+        PariwisataVisitorTypeAnnual::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
+        PariwisataPackage::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
+        AnnualWorkerStat::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
+        AnnualWorkerTrainingStat::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
+        PariwisataVillage::query()->whereIn('id', $pariwisataIds)->delete();
+    }
+
+    private function deleteVillageAnnualData(int $villageId): void
+    {
+        VillageAnnualPopulationStat::query()->where('village_id', $villageId)->delete();
+        VillageVulnerableGroupAnnual::query()->where('village_id', $villageId)->delete();
+        VillageActiveGroupAnnual::query()->where('village_id', $villageId)->delete();
+    }
+
+    private function restoreVillageSurveyAssignmentTree(int $villageId): void
+    {
+        $assignmentIds = VillageSurveyAssignment::withTrashed()
+            ->where('village_id', $villageId)
+            ->pluck('id');
+
+        VillageSurveyAssignment::withTrashed()->whereIn('id', $assignmentIds)->restore();
+        SurveyAnswer::withTrashed()->whereIn('village_survey_assignment_id', $assignmentIds)->restore();
+
+        $answerIds = SurveyAnswer::withTrashed()
+            ->whereIn('village_survey_assignment_id', $assignmentIds)
+            ->pluck('id');
+
+        SurveyAnswerDocument::withTrashed()->whereIn('survey_answer_id', $answerIds)->restore();
+        SurveyAnswerHistory::withTrashed()->whereIn('village_survey_assignment_id', $assignmentIds)->restore();
+        VillageSurveyAssignmentLog::withTrashed()->whereIn('village_survey_assignment_id', $assignmentIds)->restore();
+    }
+
+    private function restoreVillageUmkmTree(int $villageId): void
+    {
+        $umkmIds = VillageUmkm::withTrashed()->where('village_id', $villageId)->pluck('id');
+
+        VillageUmkm::withTrashed()->whereIn('id', $umkmIds)->restore();
+        VillageUmkmDocument::withTrashed()->whereIn('village_umkm_id', $umkmIds)->restore();
+        VillageUmkmCategory::withTrashed()->whereIn('village_umkm_id', $umkmIds)->restore();
+        UmkmSurveyAnswer::withTrashed()->whereIn('umkm_id', $umkmIds)->restore();
+        AnnualTurnover::withTrashed()->whereIn('umkm_id', $umkmIds)->restore();
+        AnnualWorkerStat::withTrashed()->whereIn('umkm_id', $umkmIds)->restore();
+        AnnualWorkerTrainingStat::withTrashed()->whereIn('umkm_id', $umkmIds)->restore();
+    }
+
+    private function restoreVillagePariwisataTree(int $villageId): void
+    {
+        $pariwisataIds = PariwisataVillage::withTrashed()->where('village_id', $villageId)->pluck('id');
+
+        PariwisataVillage::withTrashed()->whereIn('id', $pariwisataIds)->restore();
+        PariwisataVillageCategory::withTrashed()->whereIn('pariwisata_village_id', $pariwisataIds)->restore();
+        PariwisataSurveyAnswer::withTrashed()->whereIn('pariwisata_village_id', $pariwisataIds)->restore();
+
+        $pariwisataAnswerIds = PariwisataSurveyAnswer::withTrashed()
+            ->whereIn('pariwisata_village_id', $pariwisataIds)
+            ->pluck('id');
+
+        PariwisataSurveyAnswerDocument::withTrashed()
+            ->whereIn('pariwisata_survey_answer_id', $pariwisataAnswerIds)
+            ->restore();
+        AnnualTurnover::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
+        PariwisataAnnualVisitor::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
+        PariwisataVisitorTypeAnnual::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
+        PariwisataPackage::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
+        AnnualWorkerStat::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
+        AnnualWorkerTrainingStat::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
+    }
+
+    private function restoreVillageAnnualData(int $villageId): void
+    {
+        VillageAnnualPopulationStat::withTrashed()->where('village_id', $villageId)->restore();
+        VillageVulnerableGroupAnnual::withTrashed()->where('village_id', $villageId)->restore();
+        VillageActiveGroupAnnual::withTrashed()->where('village_id', $villageId)->restore();
+    }
+
     /**
      * @return array<int, array<string, string>>
      */
@@ -310,6 +518,8 @@ class TourismVillageService
             'survey_progress' => $progress,
             'total_score' => $village->total_score ?? 0,
             'score' => $progress >= 100 ? 'Siap review' : 'Belum final',
+            'is_trashed' => $village->trashed(),
+            'deleted_at' => $this->formatDate($village->deleted_at),
             'created_by' => $village->creator?->name ?? '-',
             'updated_at' => $this->formatDate($village->updated_at),
             'media' => $village->media->map(fn (VillageMedia $media): array => $this->formatMedia($media))->values(),

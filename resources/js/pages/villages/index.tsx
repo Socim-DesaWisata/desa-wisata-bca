@@ -1,14 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import {
-    MapContainer,
-    Marker,
-    TileLayer,
-    useMap,
-    useMapEvents,
-} from 'react-leaflet';
 import {
     Building2,
     CheckCircle2,
@@ -25,6 +17,15 @@ import {
     Search,
     Trash2,
 } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+    MapContainer,
+    Marker,
+    TileLayer,
+    useMap,
+    useMapEvents,
+} from 'react-leaflet';
 
 import {
     Dialog,
@@ -42,7 +43,12 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard, villages as villagesRoute } from '@/routes';
-import { edit as editVillage, show as showVillage } from '@/routes/villages';
+import {
+    destroy as destroyVillage,
+    edit as editVillage,
+    restore as restoreVillage,
+    show as showVillage,
+} from '@/routes/villages';
 
 type StatCard = {
     label: string;
@@ -73,6 +79,8 @@ type VillageRow = {
     status: string;
     status_label: string;
     total_score: number;
+    is_trashed: boolean;
+    deleted_at: string;
     created_by: string;
     updated_at: string;
 };
@@ -100,6 +108,7 @@ type VillageFilters = {
     search: string;
     status: string | null;
     province: string | null;
+    view?: 'active' | 'trash' | null;
     per_page: number;
 };
 
@@ -466,6 +475,7 @@ export default function VillagesIndex({
         search: filters.search ?? '',
         status: filters.status ?? '',
         province: filters.province ?? '',
+        view: filters.view ?? 'active',
         per_page: String(filters.per_page ?? 10),
     });
     const [isResolvingAddress, setIsResolvingAddress] = useState(false);
@@ -560,6 +570,7 @@ export default function VillagesIndex({
                 search: filterForm.search || undefined,
                 status: filterForm.status || undefined,
                 province: filterForm.province || undefined,
+                view: filterForm.view || undefined,
                 per_page: filterForm.per_page || undefined,
             },
             {
@@ -574,6 +585,7 @@ export default function VillagesIndex({
             search: '',
             status: '',
             province: '',
+            view: 'active',
             per_page: '10',
         });
 
@@ -591,6 +603,52 @@ export default function VillagesIndex({
                 setIsCreateOpen(false);
             },
         });
+    }
+
+    function changeView(view: 'active' | 'trash') {
+        setFilterForm((current) => ({
+            ...current,
+            view,
+        }));
+
+        router.get(
+            villagesRoute.url(),
+            {
+                search: filterForm.search || undefined,
+                status: filterForm.status || undefined,
+                province: filterForm.province || undefined,
+                view,
+                per_page: filterForm.per_page || undefined,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    }
+
+    function handleDelete(village: VillageRow) {
+        if (!window.confirm('Pindahkan desa wisata ini ke trash?')) {
+            return;
+        }
+
+        router.delete(destroyVillage.url(village.id), {
+            preserveScroll: true,
+        });
+    }
+
+    function handleRestore(village: VillageRow) {
+        if (!window.confirm('Pulihkan desa wisata ini dari trash?')) {
+            return;
+        }
+
+        router.patch(
+            restoreVillage.url(village.id),
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
     }
 
     function openCreateModal() {
@@ -639,15 +697,33 @@ export default function VillagesIndex({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <button
-                                type="button"
-                                onClick={openCreateModal}
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
-                            >
-                                <Plus className="size-4" />
-                                Tambah Desa
-                            </button>
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('active')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
+                                >
+                                    Data Aktif
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('trash')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
+                                >
+                                    Trash
+                                </button>
+                            </div>
+                            {filterForm.view !== 'trash' && (
+                                <button
+                                    type="button"
+                                    onClick={openCreateModal}
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Desa
+                                </button>
+                            )}
                             <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]">
                                 <Download className="size-4" />
                                 Export Data
@@ -869,37 +945,71 @@ export default function VillagesIndex({
                                                             align="end"
                                                             className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                         >
-                                                            <DropdownMenuItem
-                                                                asChild
-                                                                className="gap-2 text-xs"
-                                                            >
-                                                                <Link
-                                                                    href={showVillage(
-                                                                        village.id,
-                                                                    )}
+                                                            {filterForm.view ===
+                                                            'trash' ? (
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                    onSelect={(
+                                                                        event,
+                                                                    ) => {
+                                                                        event.preventDefault();
+                                                                        handleRestore(
+                                                                            village,
+                                                                        );
+                                                                    }}
                                                                 >
-                                                                    <Eye className="size-4 text-[#303030]" />
-                                                                    Lihat Detail
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                asChild
-                                                                className="gap-2 text-xs"
-                                                            >
-                                                                <Link
-                                                                    href={editVillage(
-                                                                        village.id,
-                                                                    )}
-                                                                >
-                                                                    <Pencil className="size-4 text-[#303030]" />
-                                                                    Edit Desa
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
-                                                                <Trash2 className="size-4 text-[#D81313]" />
-                                                                Hapus Desa
-                                                            </DropdownMenuItem>
+                                                                    <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                    Pulihkan
+                                                                    Desa
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <>
+                                                                    <DropdownMenuItem
+                                                                        asChild
+                                                                        className="gap-2 text-xs"
+                                                                    >
+                                                                        <Link
+                                                                            href={showVillage(
+                                                                                village.id,
+                                                                            )}
+                                                                        >
+                                                                            <Eye className="size-4 text-[#303030]" />
+                                                                            Lihat
+                                                                            Detail
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        asChild
+                                                                        className="gap-2 text-xs"
+                                                                    >
+                                                                        <Link
+                                                                            href={editVillage(
+                                                                                village.id,
+                                                                            )}
+                                                                        >
+                                                                            <Pencil className="size-4 text-[#303030]" />
+                                                                            Edit
+                                                                            Desa
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                        onSelect={(
+                                                                            event,
+                                                                        ) => {
+                                                                            event.preventDefault();
+                                                                            handleDelete(
+                                                                                village,
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="size-4 text-[#D81313]" />
+                                                                        Hapus
+                                                                        Desa
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>
@@ -915,21 +1025,25 @@ export default function VillagesIndex({
                                         <MapPinned className="size-7" />
                                     </span>
                                     <h3 className="mt-4 text-lg font-bold text-[#303030]">
-                                        Belum ada desa wisata
+                                        {filterForm.view === 'trash'
+                                            ? 'Trash desa wisata kosong'
+                                            : 'Belum ada desa wisata'}
                                     </h3>
                                     <p className="mt-1 max-w-md text-sm leading-5 text-[#7C7C7C]">
-                                        Tambahkan desa wisata pertama untuk
-                                        mulai mengelola program CSR dan survey
-                                        assessment.
+                                        {filterForm.view === 'trash'
+                                            ? 'Desa wisata yang dipindahkan ke trash akan muncul di sini.'
+                                            : 'Tambahkan desa wisata pertama untuk mulai mengelola program CSR dan survey assessment.'}
                                     </p>
-                                    <button
-                                        type="button"
-                                        onClick={openCreateModal}
-                                        className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
-                                    >
-                                        <Plus className="size-4" />
-                                        Tambah Desa
-                                    </button>
+                                    {filterForm.view !== 'trash' && (
+                                        <button
+                                            type="button"
+                                            onClick={openCreateModal}
+                                            className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                        >
+                                            <Plus className="size-4" />
+                                            Tambah Desa
+                                        </button>
+                                    )}
                                 </div>
                             )}
 
@@ -937,7 +1051,9 @@ export default function VillagesIndex({
                                 <span>
                                     Menampilkan {villages.from ?? 0}-
                                     {villages.to ?? 0} dari {villages.total}{' '}
-                                    desa
+                                    {filterForm.view === 'trash'
+                                        ? 'desa di trash'
+                                        : 'desa'}
                                 </span>
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-[#303030]">
@@ -964,6 +1080,9 @@ export default function VillagesIndex({
                                                             undefined,
                                                         province:
                                                             filterForm.province ||
+                                                            undefined,
+                                                        view:
+                                                            filterForm.view ||
                                                             undefined,
                                                         per_page: perPage,
                                                     },
