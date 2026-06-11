@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\PariwisataSurveyExport;
-use App\Exports\VillageSurveyAssignmentExport;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
@@ -48,6 +46,26 @@ class VillageSurveyAssignmentController extends Controller
         $service->create($request->validated(), $request->user());
 
         return back()->with('success', 'Survey assignment berhasil dibuat.');
+    }
+
+    public function destroy(
+        VillageSurveyAssignment $assignment,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->delete($assignment);
+
+        return back()->with('success', 'Survey assignment berhasil dipindahkan ke trash.');
+    }
+
+    public function restore(
+        string $assignment,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->restore($assignment);
+
+        return redirect()
+            ->route('survey-assignments', ['view' => 'trash'])
+            ->with('success', 'Survey assignment berhasil dipulihkan.');
     }
 
     public function createUmkm(
@@ -97,7 +115,7 @@ class VillageSurveyAssignmentController extends Controller
 
     public function export(
         VillageSurveyAssignment $assignment,
-        VillageSurveyAssignmentExport $export
+        \App\Exports\VillageSurveyAssignmentExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment);
 
@@ -115,7 +133,7 @@ class VillageSurveyAssignmentController extends Controller
     public function exportPariwisata(
         VillageSurveyAssignment $assignment,
         PariwisataVillage $pariwisata,
-        PariwisataSurveyExport $export
+        \App\Exports\PariwisataSurveyExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment, $pariwisata);
 

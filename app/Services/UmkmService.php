@@ -2,10 +2,19 @@
 
 namespace App\Services;
 
+use App\Models\AnnualTurnover;
+use App\Models\AnnualWorkerStat;
+use App\Models\AnnualWorkerTrainingStat;
+use App\Models\UmkmSurveyAnswer;
 use App\Models\VillageUmkm;
+use App\Models\VillageUmkmCategory;
+use App\Models\VillageUmkmDocument;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class UmkmService
 {
@@ -25,10 +34,11 @@ class UmkmService
             'search' => trim((string) Arr::get($filters, 'search', '')),
             'product_category' => Arr::get($filters, 'product_category'),
             'has_exported' => Arr::get($filters, 'has_exported'),
+            'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => $perPage,
         ];
 
-        $paginator = VillageUmkm::query()
+        $query = VillageUmkm::query()
             ->select([
                 'id',
                 'village_id',
@@ -46,6 +56,7 @@ class UmkmService
                 'has_exported',
                 'product_photo_path',
                 'updated_at',
+                'deleted_at',
             ])
             ->with([
                 'village:id,code,name,city,province',
@@ -53,25 +64,31 @@ class UmkmService
                 'dataCollector:id,name,email',
                 'surveyAnswers:id,umkm_id,score,max_score_snapshot,question_weight_percent_snapshot',
             ])
-            ->withCount(['documents', 'surveyAnswers'])
-            ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
+            ->withCount(['documents', 'surveyAnswers']);
+
+        if ($normalizedFilters['view'] === 'trash') {
+            $query->onlyTrashed();
+        }
+
+        $paginator = $query
+            ->when($normalizedFilters['search'] !== '', function (Builder $query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
 
-                $query->where(function ($query) use ($search): void {
+                $query->where(function (Builder $query) use ($search): void {
                     $query
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('business_owner_name', 'like', "%{$search}%")
                         ->orWhere('brand_name', 'like', "%{$search}%")
                         ->orWhere('product_category', 'like', "%{$search}%")
-                        ->orWhereHas('village', function ($query) use ($search): void {
+                        ->orWhereHas('village', function (Builder $query) use ($search): void {
                             $query
                                 ->where('name', 'like', "%{$search}%")
                                 ->orWhere('code', 'like', "%{$search}%");
                         });
                 });
             })
-            ->when($normalizedFilters['product_category'], fn ($query, string $category) => $query->where('product_category', $category))
-            ->when($normalizedFilters['has_exported'] !== null, fn ($query) => $query->where('has_exported', $normalizedFilters['has_exported'] === '1'))
+            ->when($normalizedFilters['product_category'], fn (Builder $query, string $category) => $query->where('product_category', $category))
+            ->when($normalizedFilters['has_exported'] !== null, fn (Builder $query) => $query->where('has_exported', $normalizedFilters['has_exported'] === '1'))
             ->latest('updated_at')
             ->paginate($normalizedFilters['per_page'])
             ->withQueryString();
@@ -86,6 +103,40 @@ class UmkmService
             'export_options' => $this->exportOptions(),
             'per_page_options' => [5, 10, 15, 25, 50],
         ];
+    }
+
+    public function delete(VillageUmkm $umkm): void
+    {
+        DB::transaction(function () use ($umkm): void {
+            $umkm->documents()->delete();
+            $umkm->categories()->delete();
+            $umkm->surveyAnswers()->delete();
+            $umkm->annualTurnovers()->delete();
+            $umkm->annualWorkerStats()->delete();
+            $umkm->annualWorkerTrainingStats()->delete();
+            $umkm->delete();
+        });
+    }
+
+    public function restore(int $umkmId): void
+    {
+        $umkm = VillageUmkm::withTrashed()->findOrFail($umkmId);
+
+        if (! $umkm->trashed()) {
+            throw ValidationException::withMessages([
+                'umkm' => 'Data UMKM tidak berada di trash.',
+            ]);
+        }
+
+        DB::transaction(function () use ($umkm): void {
+            $umkm->restore();
+            VillageUmkmDocument::withTrashed()->where('village_umkm_id', $umkm->id)->restore();
+            VillageUmkmCategory::withTrashed()->where('village_umkm_id', $umkm->id)->restore();
+            UmkmSurveyAnswer::withTrashed()->where('umkm_id', $umkm->id)->restore();
+            AnnualTurnover::withTrashed()->where('umkm_id', $umkm->id)->restore();
+            AnnualWorkerStat::withTrashed()->where('umkm_id', $umkm->id)->restore();
+            AnnualWorkerTrainingStat::withTrashed()->where('umkm_id', $umkm->id)->restore();
+        });
     }
 
     /**
@@ -115,7 +166,7 @@ class UmkmService
             [
                 'label' => 'Digital Payment',
                 'value' => (string) VillageUmkm::query()
-                    ->where(fn ($query) => $query->where('has_qris', true)->orWhere('has_edc', true)->orWhere('has_credit_card', true))
+                    ->where(fn (Builder $query) => $query->where('has_qris', true)->orWhere('has_edc', true)->orWhere('has_credit_card', true))
                     ->count(),
                 'description' => 'Memiliki QRIS, EDC, atau kartu',
                 'icon' => 'credit-card',
@@ -188,9 +239,12 @@ class UmkmService
             'documents_count' => $umkm->documents_count,
             'survey_answers_count' => $umkm->survey_answers_count,
             'updated_at' => $this->formatDate($umkm->updated_at),
-            'detail_url' => $umkm->village?->surveyAssignment
-                ? route('survey-assignments.umkm.show', [$umkm->village->surveyAssignment, $umkm])
-                : null,
+            'is_trashed' => $umkm->trashed(),
+            'detail_url' => $umkm->trashed()
+                ? null
+                : ($umkm->village?->surveyAssignment
+                    ? route('survey-assignments.umkm.show', [$umkm->village->surveyAssignment, $umkm])
+                    : null),
         ];
     }
 
@@ -203,15 +257,6 @@ class UmkmService
         ])->filter();
 
         return $payments->isNotEmpty() ? $payments->join(', ') : '-';
-    }
-
-    private function formatCurrency(mixed $value): string
-    {
-        if ($value === null || $value === '') {
-            return '-';
-        }
-
-        return 'Rp '.number_format((float) $value, 0, ',', '.');
     }
 
     private function formatDate(?CarbonInterface $date): string

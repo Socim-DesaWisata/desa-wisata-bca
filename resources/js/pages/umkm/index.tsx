@@ -4,15 +4,21 @@ import {
     Download,
     Eye,
     MoreHorizontal,
+    RotateCcw,
     Search,
     Send,
     Store,
     Tag,
+    Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { index as umkmIndex } from '@/actions/App/Http/Controllers/UmkmController';
+import {
+    destroy as destroyUmkm,
+    index as umkmIndex,
+    restore as restoreUmkm,
+} from '@/actions/App/Http/Controllers/UmkmController';
 
 import {
     DropdownMenu,
@@ -57,6 +63,7 @@ type UmkmRow = {
     documents_count: number;
     survey_answers_count: number;
     updated_at: string;
+    is_trashed: boolean;
     detail_url: string | null;
 };
 
@@ -83,6 +90,7 @@ type UmkmFilters = {
     search: string;
     product_category: string | null;
     has_exported: string | null;
+    view?: 'active' | 'trash' | null;
     per_page: number;
 };
 
@@ -141,6 +149,7 @@ export default function UmkmIndex({
     const [search, setSearch] = useState(filters.search ?? '');
     const [category, setCategory] = useState(filters.product_category ?? '');
     const [hasExported, setHasExported] = useState(filters.has_exported ?? '');
+    const [view, setView] = useState(filters.view ?? 'active');
     const [perPage, setPerPage] = useState(String(filters.per_page ?? 10));
 
     function visitWithFilters(overrides: Partial<UmkmFilters> = {}) {
@@ -152,6 +161,7 @@ export default function UmkmIndex({
                         (overrides.product_category ?? category) || undefined,
                     has_exported:
                         (overrides.has_exported ?? hasExported) || undefined,
+                    view: overrides.view ?? view,
                     per_page: overrides.per_page ?? Number(perPage),
                 },
             }),
@@ -169,8 +179,30 @@ export default function UmkmIndex({
         setSearch('');
         setCategory('');
         setHasExported('');
+        setView('active');
         setPerPage('10');
         router.get(umkmIndex.url(), {}, { preserveState: true });
+    }
+
+    function changeView(nextView: 'active' | 'trash') {
+        setView(nextView);
+        visitWithFilters({ view: nextView });
+    }
+
+    function handleDelete(umkmId: number) {
+        if (!window.confirm('Pindahkan data UMKM ini ke trash?')) {
+            return;
+        }
+
+        router.delete(destroyUmkm.url(umkmId), { preserveScroll: true });
+    }
+
+    function handleRestore(umkmId: number) {
+        if (!window.confirm('Pulihkan data UMKM ini dari trash?')) {
+            return;
+        }
+
+        router.patch(restoreUmkm.url(umkmId), {}, { preserveScroll: true });
     }
 
     return (
@@ -197,13 +229,31 @@ export default function UmkmIndex({
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                        >
-                            <Download className="size-4" />
-                            Export Data
-                        </button>
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('active')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
+                                >
+                                    Data Aktif
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('trash')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
+                                >
+                                    Trash
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                            >
+                                <Download className="size-4" />
+                                Export Data
+                            </button>
+                        </div>
                     </header>
 
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -496,6 +546,29 @@ export default function UmkmIndex({
                                                                     Lihat Detail
                                                                 </DropdownMenuItem>
                                                             )}
+                                                            {umkm.is_trashed ? (
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                    onSelect={(event) => {
+                                                                        event.preventDefault();
+                                                                        handleRestore(umkm.id);
+                                                                    }}
+                                                                >
+                                                                    <RotateCcw className="size-4 text-[#00893D]" />
+                                                                    Pulihkan
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                    onSelect={(event) => {
+                                                                        event.preventDefault();
+                                                                        handleDelete(umkm.id);
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                    Hapus
+                                                                </DropdownMenuItem>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>
@@ -570,3 +643,10 @@ UmkmIndex.layout = {
         { title: 'UMKM', href: umkmRoute() },
     ],
 };
+
+
+
+
+
+
+

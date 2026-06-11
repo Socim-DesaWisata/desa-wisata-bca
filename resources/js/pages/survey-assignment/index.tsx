@@ -29,6 +29,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    destroy as destroySurveyAssignment,
+    restore as restoreSurveyAssignment,
+} from '@/actions/App/Http/Controllers/VillageSurveyAssignmentController';
 import { dashboard, surveyAssignments } from '@/routes';
 import {
     show as showSurveyAssignment,
@@ -68,6 +72,7 @@ type AssignmentRow = {
     reviewed_at: string;
     created_at: string;
     updated_at: string;
+    is_trashed: boolean;
     total_score: number;
     answers_count: number;
     documents_count: number;
@@ -97,6 +102,7 @@ type AssignmentFilters = {
     search: string;
     status: string | null;
     template_id: number | null;
+    view?: 'active' | 'trash' | null;
     per_page: number;
 };
 
@@ -208,6 +214,7 @@ export default function SurveyAssignmentIndex({
         search: filters.search ?? '',
         status: filters.status ?? '',
         template_id: filters.template_id ? String(filters.template_id) : '',
+        view: filters.view ?? 'active',
         per_page: String(filters.per_page ?? 10),
     });
     const { data, setData, post, processing, errors, reset, clearErrors } =
@@ -222,6 +229,7 @@ export default function SurveyAssignmentIndex({
                 search: filterForm.search || undefined,
                 status: filterForm.status || undefined,
                 template_id: filterForm.template_id || undefined,
+                view: filterForm.view || undefined,
                 per_page: filterForm.per_page || undefined,
             },
             {
@@ -236,10 +244,53 @@ export default function SurveyAssignmentIndex({
             search: '',
             status: '',
             template_id: '',
+            view: 'active',
             per_page: '10',
         });
 
         router.get(surveyAssignments.url(), {}, { preserveScroll: true });
+    }
+
+    function changeView(view: 'active' | 'trash') {
+        setFilterForm((current) => ({
+            ...current,
+            view,
+        }));
+
+        router.get(
+            surveyAssignments.url(),
+            {
+                search: filterForm.search || undefined,
+                status: filterForm.status || undefined,
+                template_id: filterForm.template_id || undefined,
+                view,
+                per_page: filterForm.per_page || undefined,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    }
+
+    function handleDelete(assignment: AssignmentRow) {
+        if (!assignment.code || !window.confirm('Pindahkan survey assignment ini ke trash?')) {
+            return;
+        }
+
+        router.delete(destroySurveyAssignment.url(assignment.code), {
+            preserveScroll: true,
+        });
+    }
+
+    function handleRestore(assignment: AssignmentRow) {
+        if (!assignment.code || !window.confirm('Pulihkan survey assignment ini dari trash?')) {
+            return;
+        }
+
+        router.patch(restoreSurveyAssignment.url(assignment.code), {}, {
+            preserveScroll: true,
+        });
     }
 
     function openCreateModal() {
@@ -273,6 +324,7 @@ export default function SurveyAssignmentIndex({
                 search: filterForm.search || undefined,
                 status: filterForm.status || undefined,
                 template_id: filterForm.template_id || undefined,
+                view: filterForm.view || undefined,
                 per_page: perPage,
             },
             {
@@ -370,8 +422,24 @@ export default function SurveyAssignmentIndex({
                             </p>
                         </div>
 
-                        {!isEnumerator && (
-                            <div className="flex flex-col gap-3 sm:flex-row">
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('active')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
+                                >
+                                    Data Aktif
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => changeView('trash')}
+                                    className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
+                                >
+                                    Trash
+                                </button>
+                            </div>
+                            {!isEnumerator && filterForm.view !== 'trash' && (
                                 <button
                                     type="button"
                                     onClick={openCreateModal}
@@ -380,8 +448,8 @@ export default function SurveyAssignmentIndex({
                                     <Plus className="size-4" />
                                     Tambah Assignment
                                 </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </header>
 
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -634,11 +702,29 @@ export default function SurveyAssignmentIndex({
                                                         {!isEnumerator && (
                                                             <>
                                                                 <DropdownMenuSeparator />
-                                                                <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]">
-                                                                    <Trash2 className="size-4 text-[#D81313]" />
-                                                                    Hapus
-                                                                    Assignment
-                                                                </DropdownMenuItem>
+                                                                {assignment.is_trashed ? (
+                                                                    <DropdownMenuItem
+                                                                        className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                        onSelect={(event) => {
+                                                                            event.preventDefault();
+                                                                            handleRestore(assignment);
+                                                                        }}
+                                                                    >
+                                                                        <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                        Pulihkan Assignment
+                                                                    </DropdownMenuItem>
+                                                                ) : (
+                                                                    <DropdownMenuItem
+                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                        onSelect={(event) => {
+                                                                            event.preventDefault();
+                                                                            handleDelete(assignment);
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="size-4 text-[#D81313]" />
+                                                                        Hapus Assignment
+                                                                    </DropdownMenuItem>
+                                                                )}
                                                             </>
                                                         )}
                                                     </DropdownMenuContent>
@@ -907,3 +993,10 @@ SurveyAssignmentIndex.layout = {
         { title: 'Survey Assignment', href: surveyAssignments() },
     ],
 };
+
+
+
+
+
+
+

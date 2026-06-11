@@ -42,10 +42,11 @@ class VillageSurveyAssignmentService
             'search' => trim((string) Arr::get($filters, 'search', '')),
             'status' => Arr::get($filters, 'status'),
             'template_id' => Arr::get($filters, 'template_id'),
+            'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => (int) Arr::get($filters, 'per_page', 10),
         ];
 
-        $paginator = VillageSurveyAssignment::query()
+        $query = VillageSurveyAssignment::query()
             ->select([
                 'id',
                 'code',
@@ -62,6 +63,7 @@ class VillageSurveyAssignmentService
                 'reviewed_at',
                 'created_at',
                 'updated_at',
+                'deleted_at',
             ])
             ->with([
                 'village:id,code,name,city,province',
@@ -71,7 +73,13 @@ class VillageSurveyAssignmentService
                 'reviewedBy:id,name,email',
             ])
             ->withAvg('answers as average_score', 'score')
-            ->withCount(['answers', 'documents'])
+            ->withCount(['answers', 'documents']);
+
+        if ($normalizedFilters['view'] === 'trash') {
+            $query->onlyTrashed();
+        }
+
+        $paginator = $query
             ->when($normalizedFilters['search'] !== '', function ($query) use ($normalizedFilters): void {
                 $search = $normalizedFilters['search'];
 
@@ -177,6 +185,53 @@ class VillageSurveyAssignmentService
             ]);
 
             return $assignment;
+        });
+    }
+
+    public function delete(VillageSurveyAssignment $assignment): void
+    {
+        DB::transaction(function () use ($assignment): void {
+            $answerIds = $assignment->answers()->pluck('id');
+
+            SurveyAnswerDocument::query()
+                ->whereIn('survey_answer_id', $answerIds)
+                ->delete();
+
+            $assignment->answerHistories()->delete();
+            $assignment->logs()->delete();
+            $assignment->answers()->delete();
+            $assignment->delete();
+        });
+    }
+
+    public function restore(string $assignmentCode): void
+    {
+        $assignment = VillageSurveyAssignment::withTrashed()
+            ->where('code', $assignmentCode)
+            ->firstOrFail();
+
+        if (! $assignment->trashed()) {
+            throw ValidationException::withMessages([
+                'assignment' => 'Survey assignment tidak berada di trash.',
+            ]);
+        }
+
+        DB::transaction(function () use ($assignment): void {
+            $assignment->restore();
+            SurveyAnswer::withTrashed()
+                ->where('village_survey_assignment_id', $assignment->id)
+                ->restore();
+
+            $answerIds = SurveyAnswer::withTrashed()
+                ->where('village_survey_assignment_id', $assignment->id)
+                ->pluck('id');
+
+            SurveyAnswerDocument::withTrashed()
+                ->whereIn('survey_answer_id', $answerIds)
+                ->restore();
+
+            $assignment->answerHistories()->withTrashed()->restore();
+            $assignment->logs()->withTrashed()->restore();
         });
     }
 
@@ -1125,6 +1180,7 @@ class VillageSurveyAssignmentService
             'reviewed_at' => $this->formatDate($assignment->reviewed_at),
             'created_at' => $this->formatDate($assignment->created_at),
             'updated_at' => $this->formatDate($assignment->updated_at),
+            'is_trashed' => $assignment->trashed(),
             'total_score' => round(((float) ($assignment->average_score ?? 0)) * 20, 1),
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
@@ -1974,5 +2030,9 @@ class VillageSurveyAssignmentService
         return $date?->format('Y-m-d\TH:i') ?? '';
     }
 }
+
+
+
+
 
 
