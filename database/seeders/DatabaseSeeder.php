@@ -36,9 +36,10 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            TemplateQuestionSeeder::class,
-            UMKMSurveySeeder::class,
-            PariwisataSurveySeeder::class,
+            SQLSurveyQuestionSeeder::class
+            // TemplateQuestionSeeder::class,
+            // UMKMSurveySeeder::class,
+            // PariwisataSurveySeeder::class,
         ]);
     }
 }

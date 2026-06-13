@@ -538,15 +538,40 @@ class SurveyQuestionService
      */
     private function syncOptions(SurveyQuestion $question, array $options): void
     {
-        $question->options()->withTrashed()->forceDelete();
+        $keptIds = [];
 
         foreach (array_values($options) as $index => $label) {
-            $question->options()->create([
-                'score' => $index + 1,
+            $score = $index + 1;
+            $option = SurveyQuestionOption::withTrashed()
+                ->where('survey_question_id', $question->id)
+                ->where('score', $score)
+                ->first();
+
+            if (! $option) {
+                $option = new SurveyQuestionOption([
+                    'survey_question_id' => $question->id,
+                    'score' => $score,
+                ]);
+            }
+
+            if ($option->trashed()) {
+                $option->restore();
+            }
+
+            $option->fill([
+                'survey_question_id' => $question->id,
+                'score' => $score,
                 'label' => $label,
-                'sort_order' => $index + 1,
-            ]);
+                'sort_order' => $score,
+            ])->save();
+
+            $keptIds[] = $option->id;
         }
+
+        SurveyQuestionOption::query()
+            ->where('survey_question_id', $question->id)
+            ->whereNotIn('id', $keptIds)
+            ->delete();
     }
 
     /**

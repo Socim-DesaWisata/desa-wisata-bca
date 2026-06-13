@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SurveyQuestionController from '@/actions/App/Http/Controllers/SurveyQuestionController';
 import { dashboard, questions as questionsRoute } from '@/routes';
-import { exportQuestions as exportQuestionTemplate, show as showQuestionTemplate } from '@/routes/questions';
+import { exportMethod as exportQuestionTemplate, show as showQuestionTemplate } from '@/routes/questions';
 
 type TemplateSummary = {
     id: number;
@@ -2062,6 +2062,7 @@ QuestionsIndex.layout = {
         { title: 'Detail Template', href: '#' },
     ],
 };
+
 
 
 
