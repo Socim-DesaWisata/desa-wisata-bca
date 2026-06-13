@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -39,9 +40,16 @@ class PariwisataVillage extends Model
         return $this->hasMany(PariwisataVillageCategory::class, 'pariwisata_village_id');
     }
 
-    public function surveyAnswers(): HasMany
+    public function surveyAnswers(): HasManyThrough
     {
-        return $this->hasMany(PariwisataSurveyAnswer::class, 'pariwisata_village_id');
+        return $this->hasManyThrough(
+            PariwisataSurveyAnswer::class,
+            VillageSurveyAssignment::class,
+            'village_id',
+            'village_survey_assignment_id',
+            'village_id',
+            'id',
+        );
     }
 
     public function annualTurnovers(): HasMany

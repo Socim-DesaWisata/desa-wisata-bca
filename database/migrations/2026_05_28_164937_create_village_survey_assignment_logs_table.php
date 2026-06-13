@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamp('created_at')->nullable();
+            $table->softDeletes();
 
             $table->foreign('village_survey_assignment_id', 'vsal_assignment_fk')
                 ->references('id')->on('village_survey_assignments')->cascadeOnDelete();

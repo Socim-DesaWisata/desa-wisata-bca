@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('village_survey_assignments', function (Blueprint $table) {
             $table->id();
+            $table->string('code', 20)->unique();
             $table->foreignId('village_id')->unique()->constrained('tourism_villages')->cascadeOnDelete();
             $table->foreignId('survey_template_id')->constrained('survey_templates');
             $table->string('status')->default('assigned');

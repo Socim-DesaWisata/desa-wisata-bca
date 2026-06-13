@@ -19,9 +19,10 @@ return new class extends Migration
             $table->foreignId('new_survey_question_option_id')->nullable();
             $table->decimal('old_score', 6, 2)->nullable();
             $table->decimal('new_score', 6, 2)->nullable();
-            $table->string('old_option_label')->nullable();
-            $table->string('new_option_label')->nullable();
+            $table->text('old_option_label')->nullable();
+            $table->text('new_option_label')->nullable();
             $table->timestamp('created_at')->nullable();
+            $table->softDeletes();
 
             $table->foreign('survey_answer_id', 'sah_answer_fk')
                 ->references('id')->on('survey_answers')->cascadeOnDelete();

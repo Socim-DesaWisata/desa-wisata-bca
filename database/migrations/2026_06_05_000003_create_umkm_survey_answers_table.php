@@ -25,6 +25,7 @@ return new class extends Migration
             $table->timestamp('answered_at')->nullable();
             $table->timestamp('last_edited_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('umkm_assessment_question_id', 'umkm_a_question_fk')->references('id')->on('umkm_survey_questions');
             $table->index('umkm_id');

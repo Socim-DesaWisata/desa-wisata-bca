@@ -28,7 +28,7 @@ class StoreVillageSurveyAssignmentRequest extends FormRequest
     {
         return [
             'code' => [
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 'regex:/^[A-Z0-9-]+$/',

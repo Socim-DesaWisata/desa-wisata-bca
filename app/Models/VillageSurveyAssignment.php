@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable([
     'village_id', 'survey_template_id', 'code', 'status', 'assigned_by', 'submitted_by',
@@ -17,6 +18,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class VillageSurveyAssignment extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $assignment): void {
+            if (filled($assignment->code)) {
+                return;
+            }
+
+            $nextId = ((int) DB::table($assignment->getTable())->max('id')) + 1;
+            $assignment->code = sprintf('ASG-%03d', $nextId);
+        });
+    }
 
     public function getRouteKeyName(): string
     {
@@ -62,6 +75,11 @@ class VillageSurveyAssignment extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(SurveyAnswer::class, 'village_survey_assignment_id');
+    }
+
+    public function pariwisataSurveyAnswers(): HasMany
+    {
+        return $this->hasMany(PariwisataSurveyAnswer::class, 'village_survey_assignment_id');
     }
 
     public function documents(): HasManyThrough

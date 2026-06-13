@@ -22,6 +22,7 @@ return new class extends Migration
             $table->timestamp('answered_at')->nullable();
             $table->timestamp('last_edited_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('village_survey_assignment_id', 'sa_assignment_fk')
                 ->references('id')->on('village_survey_assignments')->cascadeOnDelete();

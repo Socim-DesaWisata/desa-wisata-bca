@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('village_umkm_id')->constrained('village_umkms')->cascadeOnDelete();
             $table->string('category', 100);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique(['village_umkm_id', 'category'], 'village_umkm_categories_unique');
         });

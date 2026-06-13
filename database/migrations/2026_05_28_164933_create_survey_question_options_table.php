@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('survey_question_id')->constrained('survey_questions')->cascadeOnDelete();
             $table->decimal('score', 6, 2);
-            $table->string('label');
+            $table->text('label');
             $table->integer('sort_order')->default(0);
             $table->timestamps();
             $table->softDeletes();

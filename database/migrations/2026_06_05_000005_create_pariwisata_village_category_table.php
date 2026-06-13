@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('pariwisata_village_id');
             $table->string('category')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('pariwisata_village_id', 'pv_category_village_fk')->references('id')->on('pariwisata_village_table')->cascadeOnDelete();
         });
