@@ -162,10 +162,15 @@ test('pariwisata index score uses total answer score divided by active template 
         'status' => 'published',
     ]);
     $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-SCORE-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
     $pariwisata = PariwisataVillage::query()->create([
         'village_id' => $village->id,
         'name' => 'Wisata Skor',
-        'created_by' => $user->id,
         'is_active' => true,
     ]);
 
@@ -228,7 +233,7 @@ test('pariwisata index score uses total answer score divided by active template 
     ]);
 
     PariwisataSurveyAnswer::query()->create([
-        'pariwisata_village_id' => $pariwisata->id,
+        'village_survey_assignment_id' => $assignment->id,
         'pariwisata_survey_question_id' => $firstQuestion->id,
         'pariwisata_suvey_option_id' => $firstOption->id,
         'score' => 3,
@@ -236,7 +241,7 @@ test('pariwisata index score uses total answer score divided by active template 
         'last_edited_by' => $user->id,
     ]);
     PariwisataSurveyAnswer::query()->create([
-        'pariwisata_village_id' => $pariwisata->id,
+        'village_survey_assignment_id' => $assignment->id,
         'pariwisata_survey_question_id' => $secondQuestion->id,
         'pariwisata_suvey_option_id' => $secondOption->id,
         'score' => 1,

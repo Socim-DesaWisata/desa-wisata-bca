@@ -125,12 +125,14 @@ class VillageSurveyAssignmentService
      */
     public function create(array $data, User $user): VillageSurveyAssignment
     {
-        $template = SurveyTemplate::query()
-            ->select(['id'])
-            ->where('status', 'published')
-            ->latest('published_at')
-            ->latest('id')
-            ->first();
+        $template = isset($data['survey_template_id'])
+            ? SurveyTemplate::query()->select(['id'])->find($data['survey_template_id'])
+            : SurveyTemplate::query()
+                ->select(['id'])
+                ->where('status', 'published')
+                ->latest('published_at')
+                ->latest('id')
+                ->first();
 
         if (! $template) {
             throw ValidationException::withMessages([
@@ -138,15 +140,20 @@ class VillageSurveyAssignmentService
             ]);
         }
 
-        return DB::transaction(function () use ($data, $user): VillageSurveyAssignment {
+        return DB::transaction(function () use ($data, $user, $template): VillageSurveyAssignment {
             $assignment = VillageSurveyAssignment::query()->create([
                 'village_id' => $data['village_id'],
-                'survey_template_id' => 1,
-                'code' => $data['code'],
-                'status' => 'assigned',
-                'assigned_by' => $user->id,
-                'assigned_at' => now(),
+                'survey_template_id' => $data['survey_template_id'] ?? $template->id,
+                'code' => $data['code'] ?? null,
+                'status' => $data['status'] ?? 'assigned',
+                'assigned_by' => $data['assigned_by'] ?? $user->id,
+                'submitted_by' => $data['submitted_by'] ?? null,
+                'reviewed_by' => $data['reviewed_by'] ?? null,
+                'assigned_at' => $data['assigned_at'] ?? now(),
                 'started_at' => $data['started_at'] ?? null,
+                'last_saved_at' => $data['last_saved_at'] ?? null,
+                'submitted_at' => $data['submitted_at'] ?? null,
+                'reviewed_at' => $data['reviewed_at'] ?? null,
             ]);
 
             return $assignment->refresh();
@@ -195,14 +202,19 @@ class VillageSurveyAssignmentService
     {
         DB::transaction(function () use ($assignment): void {
             $answerIds = $assignment->answers()->pluck('id');
+            $pariwisataAnswerIds = $assignment->pariwisataSurveyAnswers()->pluck('id');
 
             SurveyAnswerDocument::query()
                 ->whereIn('survey_answer_id', $answerIds)
+                ->delete();
+            PariwisataSurveyAnswerDocument::query()
+                ->whereIn('pariwisata_survey_answer_id', $pariwisataAnswerIds)
                 ->delete();
 
             $assignment->answerHistories()->delete();
             $assignment->logs()->delete();
             $assignment->answers()->delete();
+            $assignment->pariwisataSurveyAnswers()->delete();
             $assignment->delete();
         });
     }
@@ -224,13 +236,22 @@ class VillageSurveyAssignmentService
             SurveyAnswer::withTrashed()
                 ->where('village_survey_assignment_id', $assignment->id)
                 ->restore();
+            PariwisataSurveyAnswer::withTrashed()
+                ->where('village_survey_assignment_id', $assignment->id)
+                ->restore();
 
             $answerIds = SurveyAnswer::withTrashed()
+                ->where('village_survey_assignment_id', $assignment->id)
+                ->pluck('id');
+            $pariwisataAnswerIds = PariwisataSurveyAnswer::withTrashed()
                 ->where('village_survey_assignment_id', $assignment->id)
                 ->pluck('id');
 
             SurveyAnswerDocument::withTrashed()
                 ->whereIn('survey_answer_id', $answerIds)
+                ->restore();
+            PariwisataSurveyAnswerDocument::withTrashed()
+                ->whereIn('pariwisata_survey_answer_id', $pariwisataAnswerIds)
                 ->restore();
 
             $assignment->answerHistories()->withTrashed()->restore();
@@ -347,9 +368,17 @@ class VillageSurveyAssignmentService
             'village.pariwisataVillages' => fn ($query) => $query
                 ->with([
                     'categories:id,pariwisata_village_id,category',
-                    'surveyAnswers:id,pariwisata_village_id,pariwisata_survey_question_id,score,last_edited_at',
                 ])
                 ->latest('updated_at'),
+            'pariwisataSurveyAnswers' => fn ($query) => $query->select([
+                'id',
+                'village_survey_assignment_id',
+                'pariwisata_survey_question_id',
+                'pariwisata_suvey_option_id',
+                'score',
+                'last_edited_at',
+            ]),
+            'pariwisataSurveyAnswers.documents:id,pariwisata_survey_answer_id',
             'template:id,title,description,status,published_at',
             'template.questions' => fn ($query) => $query
                 ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
@@ -466,6 +495,10 @@ class VillageSurveyAssignmentService
                 ->map(fn (PariwisataVillage $pariwisata): array => $this->formatPariwisataForAssignment($assignment, $pariwisata))
                 ->values()
                 ->all() ?? [],
+            'pariwisata_survey_summary' => $this->buildPariwisataSurveySummary(
+                $this->pariwisataQuestionsForSummary(),
+                $assignment->pariwisataSurveyAnswers->keyBy('pariwisata_survey_question_id')
+            ),
             'activities' => $this->formatAssignmentActivities($assignment),
             'edit_options' => [
                 'status_options' => $this->statusOptions(),
@@ -616,63 +649,6 @@ class VillageSurveyAssignmentService
             'annualWorkerTrainingStats:id,pariwisata_id,year,training_name,total_people,notes',
         ]);
 
-        $template = SurveyTemplate::query()
-            ->select(['id', 'title', 'description', 'status', 'published_at'])
-            ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
-            ->with(['pariwisataSurveyQuestions' => fn ($query) => $query
-                ->select([
-                    'id',
-                    'survey_template_id',
-                    'category_code',
-                    'category_name',
-                    'sub_category_code',
-                    'sub_category_name',
-                    'criteria_code',
-                    'criteria_name',
-                    'indicator_code',
-                    'indicator_name',
-                    'indicator_description',
-                    'supporting_evidence',
-                    'document_required',
-                    'document_hint',
-                    'sort_order',
-                ])
-                ->where('is_active', true)
-                ->with(['options' => fn ($query) => $query
-                    ->select(['id', 'pariwisata_survey_question_id', 'score', 'level', 'label', 'description', 'sort_order'])
-                    ->orderBy('sort_order')
-                    ->orderBy('score')])
-                ->orderBy('category_code')
-                ->orderBy('criteria_code')
-                ->orderBy('sort_order')])
-            ->latest('published_at')
-            ->latest('id')
-            ->first();
-
-        $questions = $template?->pariwisataSurveyQuestions ?? collect();
-        $answersByQuestion = $pariwisata->surveyAnswers()
-            ->select([
-                'id',
-                'pariwisata_village_id',
-                'pariwisata_survey_question_id',
-                'pariwisata_suvey_option_id',
-                'score',
-                'notes',
-                'answered_by',
-                'last_edited_by',
-                'answered_at',
-                'last_edited_at',
-            ])
-            ->with([
-                'option:id,score,level,label,description',
-                'answeredBy:id,name,email',
-                'lastEditedBy:id,name,email',
-                'documents:id,pariwisata_survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,caption,created_at',
-                'documents.uploadedBy:id,name,email',
-            ])
-            ->get()
-            ->keyBy('pariwisata_survey_question_id');
-
         return [
             'assignment' => [
                 ...$this->formatAssignment($assignment),
@@ -691,16 +667,6 @@ class VillageSurveyAssignmentService
                 ],
             ],
             'pariwisata' => $this->formatPariwisataForAssignment($assignment, $pariwisata),
-            'survey_template' => $template ? [
-                'id' => $template->id,
-                'title' => $template->title,
-                'description' => $template->description,
-                'status' => $template->status,
-                'published_at' => $this->formatDate($template->published_at),
-                'question_count' => $questions->count(),
-            ] : null,
-            'survey_summary' => $this->buildPariwisataSurveySummary($questions, $answersByQuestion),
-            'survey_groups' => $this->formatPariwisataSurveyGroups($questions, $answersByQuestion),
             'category_options' => $this->pariwisataCategoryOptions(),
             'edit_values' => $this->formatPariwisataEditValues($pariwisata),
         ];
@@ -709,16 +675,12 @@ class VillageSurveyAssignmentService
     /**
      * @return array<string, mixed>
      */
-    public function getTakePariwisataSurveyData(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): array
+    public function getTakePariwisataSurveyData(VillageSurveyAssignment $assignment): array
     {
         $assignment->loadMissing([
             'village:id,code,name,province,city,district,subdistrict',
             'assignedBy:id,name,email',
         ]);
-
-        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
-
-        $pariwisata->loadMissing(['categories:id,pariwisata_village_id,category']);
 
         $template = $this->activePariwisataTemplate([
             'pariwisataSurveyQuestions' => fn ($query) => $query
@@ -752,10 +714,10 @@ class VillageSurveyAssignmentService
         ]);
 
         $questions = $template?->pariwisataSurveyQuestions ?? collect();
-        $answers = $pariwisata->surveyAnswers()
+        $answers = $assignment->pariwisataSurveyAnswers()
             ->select([
                 'id',
-                'pariwisata_village_id',
+                'village_survey_assignment_id',
                 'pariwisata_survey_question_id',
                 'pariwisata_suvey_option_id',
                 'score',
@@ -794,7 +756,6 @@ class VillageSurveyAssignmentService
                 ],
                 'assigned_by' => $this->formatUser($assignment->assignedBy),
             ],
-            'pariwisata' => $this->formatPariwisataForAssignment($assignment, $pariwisata),
             'template' => $template ? [
                 'id' => $template->id,
                 'title' => $template->title,
@@ -815,11 +776,9 @@ class VillageSurveyAssignmentService
     /**
      * @param  array{answers: array<int, array<string, mixed>>}  $data
      */
-    public function savePariwisataSurveyDraft(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata, array $data, User $user): void
+    public function savePariwisataSurveyDraft(VillageSurveyAssignment $assignment, array $data, User $user): void
     {
-        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
-
-        DB::transaction(function () use ($assignment, $pariwisata, $data, $user): void {
+        DB::transaction(function () use ($assignment, $data, $user): void {
             foreach ($data['answers'] as $answerData) {
                 $option = PariwisataSuveyOption::query()
                     ->with('question:id,category_code,category_name,sub_category_code,sub_category_name,criteria_code,criteria_name,criteria_description,indicator_code,indicator_name,indicator_description,supporting_evidence')
@@ -828,7 +787,7 @@ class VillageSurveyAssignmentService
 
                 $answer = PariwisataSurveyAnswer::query()->updateOrCreate(
                     [
-                        'pariwisata_village_id' => $pariwisata->id,
+                        'village_survey_assignment_id' => $assignment->id,
                         'pariwisata_survey_question_id' => $answerData['question_id'],
                     ],
                     [
@@ -860,7 +819,7 @@ class VillageSurveyAssignmentService
                         continue;
                     }
 
-                    $path = $document->storePublicly("pariwisata-survey-answers/{$pariwisata->id}/{$answer->id}", 'public');
+                    $path = $document->storePublicly("pariwisata-survey-answers/{$assignment->id}/{$answer->id}", 'public');
 
                     $answer->documents()->create([
                         'uploaded_by' => $user->id,
@@ -880,12 +839,10 @@ class VillageSurveyAssignmentService
         });
     }
 
-    public function deletePariwisataSurveyDocument(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata, PariwisataSurveyAnswerDocument $document): void
+    public function deletePariwisataSurveyDocument(VillageSurveyAssignment $assignment, PariwisataSurveyAnswerDocument $document): void
     {
-        abort_unless($assignment->village_id === $pariwisata->village_id, 404);
-
-        $document->loadMissing('answer:id,pariwisata_village_id');
-        abort_unless($document->answer?->pariwisata_village_id === $pariwisata->id, 404);
+        $document->loadMissing('answer:id,village_survey_assignment_id');
+        abort_unless($document->answer?->village_survey_assignment_id === $assignment->id, 404);
 
         Storage::disk('public')->delete($document->file_path);
         $document->delete();
@@ -1568,10 +1525,6 @@ class VillageSurveyAssignmentService
      */
     private function formatPariwisataForAssignment(VillageSurveyAssignment $assignment, PariwisataVillage $pariwisata): array
     {
-        $answers = $pariwisata->relationLoaded('surveyAnswers')
-            ? $pariwisata->surveyAnswers->keyBy('pariwisata_survey_question_id')
-            : collect();
-
         return [
             'id' => $pariwisata->id,
             'name' => $pariwisata->name,
@@ -1594,7 +1547,6 @@ class VillageSurveyAssignmentService
                 ])
                 ->values()
                 ->all(),
-            'survey_summary' => $this->buildPariwisataSurveySummary($this->pariwisataQuestionsForSummary(), $answers),
             'created_at' => $this->formatDate($pariwisata->created_at),
             'updated_at' => $this->formatDate($pariwisata->updated_at),
             'detail_url' => route('survey-assignments.pariwisata.show', [$assignment, $pariwisata]),

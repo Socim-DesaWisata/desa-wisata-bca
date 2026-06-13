@@ -62,10 +62,10 @@ class PariwisataService
             ->with([
                 'village:id,code,name,city,province',
                 'village.surveyAssignment:id,code,village_id',
+                'village.surveyAssignment.pariwisataSurveyAnswers:id,village_survey_assignment_id,score',
                 'categories:id,pariwisata_village_id,category',
-                'surveyAnswers:id,pariwisata_village_id,pariwisata_survey_question_id,score',
             ])
-            ->withCount('surveyAnswers');
+            ;
 
         if ($normalizedFilters['view'] === 'trash') {
             $query->onlyTrashed();
@@ -108,14 +108,7 @@ class PariwisataService
     public function delete(PariwisataVillage $pariwisata): void
     {
         DB::transaction(function () use ($pariwisata): void {
-            $answerIds = $pariwisata->surveyAnswers()->pluck('id');
-
-            PariwisataSurveyAnswerDocument::query()
-                ->whereIn('pariwisata_survey_answer_id', $answerIds)
-                ->delete();
-
             $pariwisata->categories()->delete();
-            $pariwisata->surveyAnswers()->delete();
             $pariwisata->annualTurnovers()->delete();
             $pariwisata->annualVisitors()->delete();
             $pariwisata->visitorTypeAnnuals()->delete();
@@ -139,15 +132,6 @@ class PariwisataService
         DB::transaction(function () use ($pariwisata): void {
             $pariwisata->restore();
             PariwisataVillageCategory::withTrashed()->where('pariwisata_village_id', $pariwisata->id)->restore();
-            PariwisataSurveyAnswer::withTrashed()->where('pariwisata_village_id', $pariwisata->id)->restore();
-
-            $answerIds = PariwisataSurveyAnswer::withTrashed()
-                ->where('pariwisata_village_id', $pariwisata->id)
-                ->pluck('id');
-
-            PariwisataSurveyAnswerDocument::withTrashed()
-                ->whereIn('pariwisata_survey_answer_id', $answerIds)
-                ->restore();
 
             AnnualTurnover::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
             PariwisataAnnualVisitor::withTrashed()->where('pariwisata_id', $pariwisata->id)->restore();
@@ -184,7 +168,7 @@ class PariwisataService
             ],
             [
                 'label' => 'Jawaban Assessment',
-                'value' => (string) PariwisataVillage::query()->withCount('surveyAnswers')->get()->sum('survey_answers_count'),
+                'value' => (string) PariwisataSurveyAnswer::query()->count(),
                 'description' => 'Total jawaban survey pariwisata',
                 'icon' => 'clipboard',
             ],
@@ -243,7 +227,7 @@ class PariwisataService
             'village_name' => $pariwisata->village?->name ?? '-',
             'village_code' => $pariwisata->village?->code ?? '-',
             'village_location' => collect([$pariwisata->village?->city, $pariwisata->village?->province])->filter()->implode(', ') ?: '-',
-            'survey_answers_count' => $pariwisata->survey_answers_count,
+            'survey_answers_count' => $pariwisata->village?->surveyAssignment?->pariwisataSurveyAnswers?->count() ?? 0,
             'updated_at' => $this->formatDate($pariwisata->updated_at),
             'is_trashed' => $pariwisata->trashed(),
             'detail_url' => $pariwisata->trashed()
@@ -257,7 +241,7 @@ class PariwisataService
     private function pariwisataFinalScore(PariwisataVillage $pariwisata): float
     {
         $questions = $this->pariwisataQuestionsForSummary();
-        $totalScore = $pariwisata->surveyAnswers->sum(fn (PariwisataSurveyAnswer $answer): int => (int) $answer->score);
+        $totalScore = $pariwisata->village?->surveyAssignment?->pariwisataSurveyAnswers?->sum(fn (PariwisataSurveyAnswer $answer): int => (int) $answer->score) ?? 0;
         $maxScore = $questions->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
 
         return $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0;

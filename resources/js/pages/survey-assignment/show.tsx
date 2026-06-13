@@ -182,6 +182,16 @@ type SurveyAssignmentShowProps = {
     aspects: SurveyAspect[];
     umkms: UmkmData[];
     pariwisata: PariwisataData[];
+    pariwisata_survey_summary: {
+        total_questions: number;
+        answered_questions: number;
+        unanswered_questions: number;
+        total_documents: number;
+        total_score: number;
+        max_score: number;
+        final_score: number;
+        last_answered_at: string;
+    };
     activities: Array<{
         date: string;
         title: string;
@@ -314,16 +324,6 @@ type PariwisataData = {
     is_active: boolean;
     status_label: string;
     categories: Array<{ id: number; value: string; label: string }>;
-    survey_summary: {
-        total_questions: number;
-        answered_questions: number;
-        unanswered_questions: number;
-        total_documents: number;
-        total_score: number;
-        max_score: number;
-        final_score: number;
-        last_answered_at: string;
-    };
     created_at: string;
     updated_at: string;
     detail_url: string;
@@ -1279,29 +1279,13 @@ function UmkmCard({
 function PariwisataTab({
     pariwisata,
     assignmentCode,
+    surveySummary,
 }: {
     pariwisata: PariwisataData[];
     assignmentCode: string;
+    surveySummary: SurveyAssignmentShowProps['pariwisata_survey_summary'];
 }) {
     const activeCount = pariwisata.filter((item) => item.is_active).length;
-    const totalAnswered = pariwisata.reduce(
-        (total, item) => total + item.survey_summary.answered_questions,
-        0,
-    );
-    const totalQuestions = pariwisata.reduce(
-        (total, item) => total + item.survey_summary.total_questions,
-        0,
-    );
-    const averageScore = pariwisata.length
-        ? Math.round(
-              (pariwisata.reduce(
-                  (total, item) => total + item.survey_summary.final_score,
-                  0,
-              ) /
-                  pariwisata.length) *
-                  10,
-          ) / 10
-        : 0;
 
     return (
         <div className="space-y-4">
@@ -1311,16 +1295,28 @@ function PariwisataTab({
                         Data Master ISTC
                     </h2>
                     <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
-                        Tab ini menampilkan master ISTC, ringkasan score, dan
-                        akses pengisian survey.
+                        Satu assignment memiliki satu survey pariwisata. Kartu
+                        di bawah hanya menampilkan master data destinasi.
                     </p>
                 </div>
-                <Link href={createPariwisata.url(assignmentCode)}>
-                    <Button variant="primary">
-                        <MapPin size={16} />
-                        Tambah ISTC
-                    </Button>
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href={takePariwisataSurvey.url({
+                            assignment: assignmentCode,
+                        })}
+                    >
+                        <Button variant="primary">
+                            <ClipboardList size={16} />
+                            Isi Survey Pariwisata
+                        </Button>
+                    </Link>
+                    <Link href={createPariwisata.url(assignmentCode)}>
+                        <Button>
+                            <MapPin size={16} />
+                            Tambah ISTC
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -1338,17 +1334,17 @@ function PariwisataTab({
                     tone="green"
                 />
                 <MetricCard
-                    label="Rata-rata Skor"
-                    value={String(averageScore)}
-                    helper="Final score"
+                    label="Nilai Survey"
+                    value={String(surveySummary.final_score)}
+                    helper={`Skor ${surveySummary.total_score}/${surveySummary.max_score}`}
                     icon={<Star size={22} />}
                 />
                 <MetricCard
                     label="Jawaban Survey"
-                    value={`${totalAnswered}/${totalQuestions}`}
-                    helper="Terisi"
+                    value={`${surveySummary.answered_questions}/${surveySummary.total_questions}`}
+                    helper={`Dokumen ${surveySummary.total_documents} file`}
                     icon={<ClipboardCheck size={22} />}
-                    tone={totalAnswered > 0 ? 'green' : 'orange'}
+                    tone={surveySummary.answered_questions > 0 ? 'green' : 'orange'}
                 />
             </div>
 
@@ -1418,20 +1414,23 @@ function PariwisataCard({
                     </div>
                     <div className="shrink-0 rounded-2xl bg-[#F8FBFE] px-4 py-3 text-right ring-1 ring-[#E4EAF0]">
                         <p className="text-[10px] font-black tracking-[0.06em] text-[#7C7C7C] uppercase">
-                            Skor
+                            Status
                         </p>
-                        <p className="mt-1 text-2xl leading-6 font-bold text-[#093967]">
-                            {item.survey_summary.final_score}
+                        <p className="mt-1 text-lg leading-6 font-bold text-[#093967]">
+                            {item.status_label}
                         </p>
                     </div>
                 </div>
 
                 <div className="grid gap-2 text-xs sm:grid-cols-2 xl:grid-cols-4">
                     <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
-                        <p className="font-semibold text-[#7C7C7C]">Jawaban</p>
+                        <p className="font-semibold text-[#7C7C7C]">Kategori</p>
                         <p className="mt-0.5 truncate font-bold text-[#303030]">
-                            {item.survey_summary.answered_questions}/
-                            {item.survey_summary.total_questions} jawaban
+                            {item.categories.length > 0
+                                ? item.categories
+                                      .map((category) => category.label)
+                                      .join(', ')
+                                : '-'}
                         </p>
                     </div>
                     <div className="min-w-0 rounded-lg bg-[#F7F7F7] px-3 py-2">
@@ -1454,18 +1453,7 @@ function PariwisataCard({
                     </div>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                    <Link
-                        href={takePariwisataSurvey.url({
-                            assignment: assignmentCode,
-                            pariwisata: item.id,
-                        })}
-                    >
-                        <Button variant="primary" className="w-full">
-                            <ClipboardList size={16} />
-                            Isi Survey
-                        </Button>
-                    </Link>
+                <div className="grid gap-2 sm:grid-cols-1">
                     <Link
                         href={showPariwisata.url({
                             assignment: assignmentCode,
@@ -1659,6 +1647,7 @@ export default function SurveyAssignmentShow({
     aspects,
     umkms,
     pariwisata,
+    pariwisata_survey_summary,
     activities,
     edit_options,
     edit_values,
@@ -2421,6 +2410,7 @@ export default function SurveyAssignmentShow({
                             <PariwisataTab
                                 pariwisata={pariwisata}
                                 assignmentCode={assignment.code}
+                                surveySummary={pariwisata_survey_summary}
                             />
                         </div>
                     )}

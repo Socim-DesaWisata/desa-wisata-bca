@@ -4,7 +4,6 @@ namespace App\Http\Requests\VillageSurveyAssignments;
 
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataSuveyOption;
-use App\Models\PariwisataVillage;
 use App\Models\SurveyTemplate;
 use App\Models\VillageSurveyAssignment;
 use Illuminate\Foundation\Http\FormRequest;
@@ -38,16 +37,8 @@ class StorePariwisataSurveyDraftRequest extends FormRequest
             function (Validator $validator): void {
                 /** @var VillageSurveyAssignment|null $assignment */
                 $assignment = $this->route('assignment');
-                /** @var PariwisataVillage|null $pariwisata */
-                $pariwisata = $this->route('pariwisata');
 
-                if (! $assignment || ! $pariwisata) {
-                    return;
-                }
-
-                if ($assignment->village_id !== $pariwisata->village_id) {
-                    $validator->errors()->add('pariwisata', 'Data pariwisata tidak sesuai dengan assignment.');
-
+                if (! $assignment) {
                     return;
                 }
 

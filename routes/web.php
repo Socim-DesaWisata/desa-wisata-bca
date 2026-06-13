@@ -22,7 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/questions', SurveyQuestionController::class)->name('questions');
         Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])
             ->name('questions.templates.update');
-        Route::post('/questions', [SurveyQuestionController::class, 'store'])->name('questions.store');
+                Route::get('/questions/{template}/export', [SurveyQuestionController::class, 'export'])->name('questions.export');
         Route::get('/questions/{template}', [SurveyQuestionController::class, 'show'])->name('questions.show');
         Route::patch('/questions/umkm/{question}', [SurveyQuestionController::class, 'updateUmkm'])
             ->name('questions.umkm.update');
@@ -59,11 +59,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.create-pariwisata');
     Route::post('/survey-assignments/{assignment}/create/pariwisata', [VillageSurveyAssignmentController::class, 'storePariwisata'])
         ->name('survey-assignments.create-pariwisata.store');
-    Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}/take-survey', [VillageSurveyAssignmentController::class, 'takePariwisataSurvey'])
+    Route::get('/survey-assignments/{assignment}/pariwisata/take-survey', [VillageSurveyAssignmentController::class, 'takePariwisataSurvey'])
         ->name('survey-assignments.pariwisata.take-survey');
-    Route::post('/survey-assignments/{assignment}/pariwisata/{pariwisata}/take-survey', [VillageSurveyAssignmentController::class, 'storePariwisataSurveyDraft'])
+    Route::post('/survey-assignments/{assignment}/pariwisata/take-survey', [VillageSurveyAssignmentController::class, 'storePariwisataSurveyDraft'])
         ->name('survey-assignments.pariwisata.take-survey.store');
-    Route::delete('/survey-assignments/{assignment}/pariwisata/{pariwisata}/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyPariwisataSurveyDocument'])
+    Route::delete('/survey-assignments/{assignment}/pariwisata/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyPariwisataSurveyDocument'])
         ->name('survey-assignments.pariwisata.take-survey.documents.destroy');
     Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}', [VillageSurveyAssignmentController::class, 'showPariwisata'])
         ->name('survey-assignments.pariwisata.show');
@@ -105,3 +105,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 require __DIR__.'/settings.php';
+
+
