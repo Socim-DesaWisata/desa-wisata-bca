@@ -1,45 +1,31 @@
 import { Head } from '@inertiajs/react';
 import {
-    Bath,
+    ArrowRight,
     BedDouble,
-    Building2,
-    Bus,
-    Camera,
+    ChevronDown,
     ChevronRight,
-    CircleParking,
     Clock3,
-    Coffee,
-    Compass,
     Facebook,
-    Gift,
-    Headphones,
-    Home,
-    Image as ImageIcon,
+    HeartHandshake,
     Instagram,
-    Landmark,
+    Leaf,
     Mail,
-    Map,
     MapPin,
     Menu,
-    MessageCircle,
-    Navigation,
+    Mountain,
     Phone,
-    Play,
-    Route,
+    PlayCircle,
+    ScrollText,
     Search,
     ShieldCheck,
-    Sparkles,
     Star,
-    Store,
-    Sun,
-    Twitter,
-    Umbrella,
-    UsersRound,
-    Utensils,
-    Wifi,
-    Youtube,
+    TreePine,
+    Users,
+    UtensilsCrossed,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 
 type MediaItem = {
     id: number;
@@ -75,84 +61,164 @@ type VillageShowProps = {
     };
 };
 
-const images = {
-    hero: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=2200&q=88',
-    rice: 'https://images.unsplash.com/photo-1555400038-63f5ba517a47?auto=format&fit=crop&w=1400&q=88',
-    waterfall:
-        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=86',
-    lake: 'https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?auto=format&fit=crop&w=1000&q=86',
-    sunset: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=1000&q=86',
-    beach: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1000&q=86',
-    village:
-        'https://images.unsplash.com/photo-1518002054494-3a6f94352e9d?auto=format&fit=crop&w=1000&q=86',
-    homestay:
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1000&q=86',
-    homestay2:
-        'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1000&q=86',
-    homestay3:
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=86',
-    woven: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=700&q=86',
-    coffee: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=700&q=86',
-    honey: 'https://images.unsplash.com/photo-1594631661960-34762327295d?auto=format&fit=crop&w=700&q=86',
-    textile:
-        'https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=700&q=86',
-    culture:
-        'https://images.unsplash.com/photo-1555400082-8dd4f02229f6?auto=format&fit=crop&w=900&q=86',
-    food: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=86',
-    rafting:
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=86',
+type IconCardItem = {
+    icon: LucideIcon;
+    title: string;
+    description: string;
 };
+
+type PackageItem = {
+    title: string;
+    image: string;
+    duration: string;
+    price: string;
+    rating: string;
+};
+
+type AttractionItem = {
+    title: string;
+    image: string;
+};
+
+type TestimonialItem = {
+    name: string;
+    role: string;
+    avatar: string;
+};
+
+type ArticleItem = {
+    title: string;
+    image: string;
+    date: string;
+};
+
+
+const images = {
+    hero: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1800&q=80',
+    about: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+    packageVillage: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=900&q=80',
+    packageCulture: 'https://images.unsplash.com/photo-1523906630133-f6934a1ab2b9?auto=format&fit=crop&w=900&q=80',
+    packageAdventure: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=900&q=80',
+    packageStay: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=900&q=80',
+    attraction1: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=700&q=80',
+    attraction2: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=700&q=80',
+    attraction3: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=700&q=80',
+    attraction4: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=700&q=80',
+    attraction5: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=700&q=80',
+    attraction6: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=700&q=80',
+    gallery1: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=900&q=80',
+    gallery2: 'https://images.unsplash.com/photo-1466721591366-2d5fba72006d?auto=format&fit=crop&w=700&q=80',
+    gallery3: 'https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=700&q=80',
+    gallery4: 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=700&q=80',
+    gallery5: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=700&q=80',
+    article1: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=700&q=80',
+    article2: 'https://images.unsplash.com/photo-1459666644539-a9755287d6b0?auto=format&fit=crop&w=700&q=80',
+    article3: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=700&q=80',
+    avatar1: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80',
+    avatar2: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=180&q=80',
+    cta: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=80',
+};
+
+const stats = [
+    { icon: MapPin, value: '28+', label: 'Paket Wisata' },
+    { icon: TreePine, value: '15+', label: 'Atraksi Lokal' },
+    { icon: Users, value: '10.000+', label: 'Pengunjung' },
+    { icon: HeartHandshake, value: '100%', label: 'Berbasis Masyarakat' },
+];
+
+const aboutHighlights: IconCardItem[] = [
+    { icon: Leaf, title: 'Alami Cepat', description: 'Menyatu dengan suasana hijau dan pengalaman yang menenangkan.' },
+    { icon: ScrollText, title: 'Pengalaman Edukasi', description: 'Cocok untuk sekolah, komunitas, sekaligus wisata keluarga.' },
+    { icon: ShieldCheck, title: 'Kegiatan & Keluarga', description: 'Ramah untuk rombongan, keluarga, dan semua usia.' },
+];
+
+const whyChooseUs: IconCardItem[] = [
+    { icon: Users, title: 'Berbasis Masyarakat', description: 'Dikelola warga lokal agar manfaat wisata tersebar berkelanjutan.' },
+    { icon: Mountain, title: 'Otentik & Bermakna', description: 'Pengalaman asri yang mendalam dan penuh nilai kehidupan desa.' },
+    { icon: Leaf, title: 'Ramah Lingkungan', description: 'Mendukung wisata hijau, kebersihan, dan harmoni alam.' },
+    { icon: BedDouble, title: 'Akomodasi Nyaman', description: 'Homestay hangat, bersih, dan dekat aktivitas utama.' },
+    { icon: UtensilsCrossed, title: 'Kuliner Lokal', description: 'Cita rasa khas desa yang hangat, lezat, dan tradisional.' },
+];
+
+const packages: PackageItem[] = [
+    { title: 'Paket Jelajah Desa', image: images.packageVillage, duration: '1 Hari', price: 'Rp150.000', rating: '4.8' },
+    { title: 'Paket Edukasi & Budaya', image: images.packageCulture, duration: '1 Hari', price: 'Rp350.000', rating: '4.9' },
+    { title: 'Paket Alam & Petualangan', image: images.packageAdventure, duration: '2 Hari 1 Malam', price: 'Rp375.000', rating: '4.8' },
+    { title: 'Paket Homestay', image: images.packageStay, duration: '1 Malam', price: 'Rp200.000', rating: '4.9' },
+];
+
+const attractions: AttractionItem[] = [
+    { title: 'Persawahan & Pemandangan Merapi', image: images.attraction1 },
+    { title: 'Upacara & Kesenian Tradisional', image: images.attraction2 },
+    { title: 'Belajar Membatik & Kerajinan', image: images.attraction3 },
+    { title: 'Agrowisata & Kebun Organik', image: images.attraction4 },
+    { title: 'Jelajah Sungai & Susur Alam', image: images.attraction5 },
+    { title: 'Pasar & Produk UMKM', image: images.attraction6 },
+];
+const testimonials: TestimonialItem[] = [
+    {
+        name: 'Rina K.',
+        role: 'Pengalaman luar biasa! Masyarakatnya ramah, alamnya indah, dan kegiatannya seru.',
+        avatar: images.avatar1,
+    },
+    {
+        name: 'Budi S.',
+        role: 'Anak-anak belajar banyak tentang budaya dan alam. Homestay-nya nyaman dan makanannya lezat.',
+        avatar: images.avatar2,
+    },
+];
+
+const faqs = [
+    'Bagaimana cara menuju Desa Wisata Pentingsari?',
+    'Apakah ada fasilitas homestay?',
+    'Apakah cocok untuk anak-anak dan lansia?',
+    'Apakah bisa rombongan sekolah atau komunitas?',
+];
+
+const articles: ArticleItem[] = [
+    { title: 'Mengenal Tradisi Welcoming Desa Pentingsari', image: images.article1, date: '10 Mei 2024' },
+    { title: 'Manfaat Bertani Organik untuk Masa Depan', image: images.article2, date: '15 Mei 2024' },
+    { title: 'UMKM Desa Pentingsari: Karya Lokal, Bangga Lokal', image: images.article3, date: '20 Mei 2024' },
+];
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
 }
 
-function getItems(profileItems: ProfileGroup[], category: string) {
+function SectionHeading({ title, action }: { title: string; action?: string }) {
     return (
-        profileItems.find((group) =>
-            group.category.toLowerCase().includes(category.toLowerCase()),
-        )?.items ?? []
+        <div className="mb-5 flex items-end justify-between gap-4">
+            <h2 className="text-[30px] leading-[1.12] font-bold text-[#26311f] md:text-[36px]">
+                {title}
+            </h2>
+            {action ? (
+                <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0066AE] transition hover:text-[#093967]">
+                    {action}
+                    <ArrowRight className="size-4" />
+                </button>
+            ) : null}
+        </div>
     );
 }
 
-function SectionHeader({
-    eyebrow,
-    title,
-    description,
-    align = 'left',
-}: {
-    eyebrow?: string;
-    title: string;
-    description?: string;
-    align?: 'left' | 'center';
-}) {
+function NavLink({ children, active }: { children: ReactNode; active?: boolean }) {
     return (
-        <div
+        <a
+            href="#"
             className={classNames(
-                'mb-9',
-                align === 'center' && 'mx-auto max-w-2xl text-center',
+                'relative text-[13px] font-semibold text-[#26311f] transition hover:text-[#0066AE]',
+                active && 'text-[#0066AE]',
             )}
         >
-            {eyebrow && (
-                <p className="mb-3 text-xs font-extrabold tracking-[0.18em] text-[#0066AE] uppercase">
-                    {eyebrow}
-                </p>
-            )}
-            <h2 className="text-3xl leading-tight font-black tracking-[-0.01em] text-[#1E293B] md:text-4xl">
-                {title}
-            </h2>
-            {description && (
-                <p className="mt-3 text-base leading-7 font-medium text-[#64748B]">
-                    {description}
-                </p>
-            )}
-        </div>
+            {children}
+            {active ? <span className="absolute -bottom-2 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#0066AE]" /> : null}
+        </a>
     );
 }
 
 function PrimaryButton({ children }: { children: ReactNode }) {
     return (
-        <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#0066AE] px-6 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(0,102,174,0.28)] transition hover:bg-[#093967] active:scale-[0.98]">
+        <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#0066AE] px-5 text-[13px] font-bold text-white shadow-[0_12px_24px_rgba(0,102,174,0.22)] transition hover:bg-[#093967]">
             {children}
         </button>
     );
@@ -160,700 +226,370 @@ function PrimaryButton({ children }: { children: ReactNode }) {
 
 function SecondaryButton({ children }: { children: ReactNode }) {
     return (
-        <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#D7E4F1] bg-white px-6 text-sm font-extrabold text-[#093967] transition hover:bg-[#F4F8FC] active:scale-[0.98]">
+        <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#d0c2ac] bg-white px-5 text-[13px] font-bold text-[#26311f] transition hover:bg-[#faf8f3]">
             {children}
         </button>
     );
 }
 
-function StatTile({ value, label }: { value: string; label: string }) {
+function StatCard({ icon: Icon, value, label }: { icon: LucideIcon; value: string; label: string }) {
     return (
-        <div className="rounded-2xl border border-white/20 bg-white/16 p-5 text-white shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-md">
-            <p className="text-3xl font-black">{value}</p>
-            <p className="mt-1 text-sm font-bold text-white/82">{label}</p>
+        <div className="flex items-center gap-3 rounded-[16px] border border-[#DCE3EA] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(0,102,174,0.07)]">
+            <div className="flex size-11 items-center justify-center rounded-[12px] bg-[#F1F5F8] text-[#0066AE]">
+                <Icon className="size-5" />
+            </div>
+            <div>
+                <p className="text-[24px] leading-none font-extrabold text-[#0066AE]">{value}</p>
+                <p className="mt-1 text-[12px] font-medium text-[#8a8577]">{label}</p>
+            </div>
         </div>
     );
 }
 
-function InfoCard({
-    icon,
-    title,
-    body,
-}: {
-    icon: ReactNode;
-    title: string;
-    body: string;
-}) {
+function AboutHighlight({ icon: Icon, title, description }: IconCardItem) {
     return (
-        <article className="rounded-3xl border border-[#EAF0F6] bg-white p-6 shadow-[0_18px_50px_rgba(9,57,103,0.07)]">
-            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-[#F4F8FC] text-[#0066AE]">
-                {icon}
+        <div className="rounded-[16px] border border-[#DCE3EA] bg-white p-4 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
+            <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                <Icon className="size-4.5" />
             </div>
-            <h3 className="text-base font-black text-[#1E293B]">{title}</h3>
-            <p className="mt-2 text-sm leading-6 font-medium text-[#64748B]">
-                {body}
-            </p>
-        </article>
+            <h3 className="text-[14px] font-bold text-[#26311f]">{title}</h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-[#59564c]">{description}</p>
+        </div>
     );
 }
 
-function FacilityCard({
-    icon,
-    title,
-    body,
-}: {
-    icon: ReactNode;
-    title: string;
-    body: string;
-}) {
+function PackageCard({ item }: { item: PackageItem }) {
     return (
-        <article className="rounded-2xl border border-[#E2EAF3] bg-white p-5 transition hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(9,57,103,0.10)]">
-            <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-[#EAF6FF] text-[#0066AE]">
-                {icon}
+        <article className="overflow-hidden rounded-[16px] border border-[#DCE3EA] bg-white shadow-[0_12px_30px_rgba(0,102,174,0.05)]">
+            <div className="aspect-[4/3] overflow-hidden">
+                <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
             </div>
-            <h3 className="text-sm font-black text-[#1E293B]">{title}</h3>
-            <p className="mt-2 text-xs leading-5 font-medium text-[#64748B]">
-                {body}
-            </p>
-        </article>
-    );
-}
-
-function DestinationCard({
-    image,
-    title,
-    tag,
-    body,
-}: {
-    image: string;
-    title: string;
-    tag: string;
-    body: string;
-}) {
-    return (
-        <article className="overflow-hidden rounded-3xl border border-[#EAF0F6] bg-white shadow-[0_18px_50px_rgba(9,57,103,0.08)]">
-            <div className="relative h-56 overflow-hidden">
-                <img
-                    src={image}
-                    alt={title}
-                    className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                />
-                <div className="absolute top-4 left-4 rounded-full bg-white/92 px-3 py-1 text-xs font-black text-[#0066AE] backdrop-blur">
-                    {tag}
+            <div className="p-4">
+                <h3 className="text-[14px] font-bold text-[#26311f]">{item.title}</h3>
+                <div className="mt-2 flex items-center gap-3 text-[11px] text-[#8a8577]">
+                    <span className="inline-flex items-center gap-1"><Clock3 className="size-3.5" />{item.duration}</span>
                 </div>
-                <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-white/92 px-3 py-1 text-xs font-black text-[#1E293B]">
-                    <Star className="size-3.5 fill-[#FBBF24] text-[#FBBF24]" />
-                    4.8
-                </div>
-            </div>
-            <div className="p-6">
-                <h3 className="text-xl font-black text-[#1E293B]">{title}</h3>
-                <p className="mt-2 min-h-12 text-sm leading-6 font-medium text-[#64748B]">
-                    {body}
-                </p>
-                <button className="mt-5 inline-flex h-10 items-center gap-2 rounded-full bg-[#F4F8FC] px-4 text-sm font-black text-[#0066AE]">
-                    Lihat Detail
-                    <ChevronRight className="size-4" />
-                </button>
-            </div>
-        </article>
-    );
-}
-
-function GalleryTile({
-    image,
-    label,
-    large,
-}: {
-    image: string;
-    label: string;
-    large?: boolean;
-}) {
-    return (
-        <article
-            className={classNames(
-                'group relative overflow-hidden rounded-3xl bg-[#093967]',
-                large ? 'md:col-span-2 md:row-span-2' : '',
-            )}
-        >
-            <img
-                src={image}
-                alt={label}
-                className="h-full min-h-[220px] w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#061D36]/72 via-transparent to-transparent opacity-90" />
-            <div className="absolute right-5 bottom-5 left-5">
-                <span className="inline-flex rounded-full bg-white/92 px-3 py-1 text-xs font-black text-[#093967]">
-                    {label}
-                </span>
-            </div>
-        </article>
-    );
-}
-
-function ProductCard({
-    image,
-    name,
-    body,
-    price,
-}: {
-    image: string;
-    name: string;
-    body: string;
-    price: string;
-}) {
-    return (
-        <article className="rounded-3xl border border-[#EAF0F6] bg-white p-4 shadow-[0_18px_50px_rgba(9,57,103,0.07)]">
-            <div className="h-52 overflow-hidden rounded-2xl bg-[#F4F8FC]">
-                <img
-                    src={image}
-                    alt={name}
-                    className="h-full w-full object-cover"
-                />
-            </div>
-            <div className="p-2 pt-5">
-                <h3 className="text-lg font-black text-[#1E293B]">{name}</h3>
-                <p className="mt-2 min-h-10 text-sm leading-5 font-medium text-[#64748B]">
-                    {body}
-                </p>
-                <div className="mt-5 flex items-center justify-between gap-3">
-                    <p className="font-black text-[#0066AE]">{price}</p>
-                    <button className="rounded-full bg-[#EAF6FF] px-4 py-2 text-xs font-black text-[#0066AE]">
-                        Lihat Produk
-                    </button>
-                </div>
-            </div>
-        </article>
-    );
-}
-
-function HomestayCard({
-    image,
-    name,
-    price,
-    capacity,
-}: {
-    image: string;
-    name: string;
-    price: string;
-    capacity: string;
-}) {
-    return (
-        <article className="overflow-hidden rounded-3xl border border-[#EAF0F6] bg-white shadow-[0_18px_50px_rgba(9,57,103,0.08)]">
-            <div className="relative h-64">
-                <img
-                    src={image}
-                    alt={name}
-                    className="h-full w-full object-cover"
-                />
-                <span className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-white/92 px-3 py-1 text-xs font-black text-[#1E293B]">
-                    <Star className="size-3.5 fill-[#FBBF24] text-[#FBBF24]" />
-                    4.9
-                </span>
-            </div>
-            <div className="p-6">
-                <h3 className="text-xl font-black text-[#1E293B]">{name}</h3>
-                <p className="mt-2 text-sm font-bold text-[#64748B]">
-                    {capacity} tamu · Wi-Fi · Sarapan · Kamar mandi
-                </p>
-                <div className="mt-5 flex items-end justify-between gap-4">
+                <div className="mt-3 flex items-center justify-between gap-3">
                     <div>
-                        <p className="text-xs font-bold text-[#64748B]">
-                            Mulai dari
-                        </p>
-                        <p className="text-lg font-black text-[#0066AE]">
-                            {price}
-                        </p>
+                        <p className="text-[11px] text-[#8a8577]">Mulai dari</p>
+                        <p className="text-[16px] font-bold text-[#0066AE]">{item.price}</p>
                     </div>
-                    <button className="rounded-full bg-[#0066AE] px-5 py-2.5 text-sm font-black text-white">
-                        Booking
-                    </button>
+                    <div className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#093967]">
+                        <Star className="size-3.5 fill-[#f4b44f] text-[#f4b44f]" />
+                        {item.rating}
+                    </div>
                 </div>
+            </div>
+        </article>
+    );
+}
+function WhyItem({ icon: Icon, title, description }: IconCardItem) {
+    return (
+        <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#2FA6FC]">
+                <Icon className="size-4.5" />
+            </div>
+            <div>
+                <h3 className="text-[14px] font-bold text-[#26311f]">{title}</h3>
+                <p className="mt-1 text-[12px] leading-5 text-[#59564c]">{description}</p>
+            </div>
+        </div>
+    );
+}
+
+function AttractionCard({ item }: { item: AttractionItem }) {
+    return (
+        <article className="overflow-hidden rounded-[14px] border border-[#DCE3EA] bg-white shadow-[0_8px_22px_rgba(0,102,174,0.04)]">
+            <div className="aspect-[4/3] overflow-hidden">
+                <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+            </div>
+            <div className="p-3.5">
+                <h3 className="text-[13px] leading-5 font-semibold text-[#26311f]">{item.title}</h3>
+            </div>
+        </article>
+    );
+}
+
+function TestimonialCard({ item }: { item: TestimonialItem }) {
+    return (
+        <article className="rounded-[16px] border border-[#DCE3EA] bg-white p-4 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
+            <div className="flex items-start gap-3">
+                <img src={item.avatar} alt={item.name} className="size-11 rounded-full object-cover" />
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                        <div>
+                            <p className="text-[14px] font-bold text-[#26311f]">{item.name}</p>
+                            <p className="mt-1 text-[12px] leading-5 text-[#59564c]">{item.role}</p>
+                        </div>
+                        <ChevronRight className="mt-0.5 size-4 shrink-0 text-[#8a8577]" />
+                    </div>
+                    <div className="mt-2 flex items-center gap-0.5 text-[#f4b44f]">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                            <Star key={index} className="size-3.5 fill-current" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </article>
+    );
+}
+
+function FaqItem({ question, open, onClick }: { question: string; open: boolean; onClick: () => void }) {
+    return (
+        <div className="overflow-hidden rounded-[12px] border border-[#DCE3EA] bg-white">
+            <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left">
+                <span className="text-[13px] font-semibold text-[#26311f]">{question}</span>
+                <ChevronDown className={classNames('size-4 shrink-0 text-[#8a8577] transition', open && 'rotate-180')} />
+            </button>
+            {open ? (
+                <div className="border-t border-[#DCE3EA] px-4 py-3 text-[12px] leading-6 text-[#59564c]">
+                    Wisatawan dapat menghubungi pengelola untuk reservasi, jadwal kegiatan, homestay, dan kebutuhan rombongan sebelum kunjungan.
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+function ArticleCard({ item }: { item: ArticleItem }) {
+    return (
+        <article className="overflow-hidden rounded-[14px] border border-[#DCE3EA] bg-white shadow-[0_8px_22px_rgba(0,102,174,0.04)]">
+            <div className="aspect-[4/3] overflow-hidden">
+                <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+            </div>
+            <div className="p-3.5">
+                <p className="text-[11px] text-[#8a8577]">{item.date}</p>
+                <h3 className="mt-2 text-[13px] leading-5 font-semibold text-[#26311f]">{item.title}</h3>
             </div>
         </article>
     );
 }
 
 export default function VillageShow({ village }: VillageShowProps) {
-    const cover = village.cover?.url ?? village.media[0]?.url ?? images.hero;
-    const attractions = getItems(village.profile_items, 'atraksi');
-    const souvenirs = getItems(village.profile_items, 'suvenir');
-    const homestays = getItems(village.profile_items, 'homestay');
-
-    const destinationCards = [
-        {
-            image: images.sunset,
-            title: attractions[0]?.name || 'Bukit Panorama',
-            tag: 'Alam',
-            body: 'Titik terbaik untuk melihat hamparan desa, sawah bertingkat, dan matahari terbenam.',
-        },
-        {
-            image: images.waterfall,
-            title: attractions[1]?.name || 'Air Terjun Desa',
-            tag: 'Petualangan',
-            body: 'Jalur pendek menuju air terjun jernih dengan area istirahat dan pemandu lokal.',
-        },
-        {
-            image: images.beach,
-            title: attractions[2]?.name || 'Pantai Tersembunyi',
-            tag: 'Bahari',
-            body: 'Pantai tenang untuk keluarga, foto perjalanan, dan piknik sore bersama warga.',
-        },
-        {
-            image: images.culture,
-            title: attractions[3]?.name || 'Kampung Budaya',
-            tag: 'Budaya',
-            body: 'Ruang belajar tradisi, tarian, musik, dan cerita lokal dari pelaku budaya desa.',
-        },
-    ];
-
-    const productCards = [
-        {
-            image: images.textile,
-            name: souvenirs[0]?.name || 'Kain Tenun',
-            body: 'Motif lokal dengan pewarna alam dan pengerjaan tangan.',
-            price: souvenirs[0]?.price_text || 'Rp250.000',
-        },
-        {
-            image: images.woven,
-            name: souvenirs[1]?.name || 'Kerajinan Anyaman',
-            body: 'Tas dan dekorasi rumah dari bambu pilihan warga desa.',
-            price: souvenirs[1]?.price_text || 'Rp150.000',
-        },
-        {
-            image: images.coffee,
-            name: souvenirs[2]?.name || 'Kopi Lokal',
-            body: 'Biji kopi pilihan dari kebun sekitar desa wisata.',
-            price: souvenirs[2]?.price_text || 'Rp65.000',
-        },
-        {
-            image: images.food,
-            name: souvenirs[3]?.name || 'Makanan Tradisional',
-            body: 'Camilan khas desa yang cocok untuk buah tangan.',
-            price: souvenirs[3]?.price_text || 'Rp45.000',
-        },
-    ];
-
-    const homestayCards = [
-        {
-            image: homestays[0]?.media[0]?.url || images.homestay,
-            name: homestays[0]?.name || 'Homestay Padi Asri',
-            price: homestays[0]?.price_text || 'Rp350.000/malam',
-            capacity: '2-3',
-        },
-        {
-            image: homestays[1]?.media[0]?.url || images.homestay2,
-            name: homestays[1]?.name || 'Rumah Kayu Lestari',
-            price: homestays[1]?.price_text || 'Rp450.000/malam',
-            capacity: '4',
-        },
-        {
-            image: homestays[2]?.media[0]?.url || images.homestay3,
-            name: homestays[2]?.name || 'Villa Bukit Indah',
-            price: homestays[2]?.price_text || 'Rp850.000/malam',
-            capacity: '6',
-        },
-    ];
+    const [openFaq, setOpenFaq] = useState<number>(0);
 
     return (
         <>
-            <Head title={`${village.name} - Desa Wisata BCA`} />
+            <Head title={`${village.name || 'Desa Wisata Pentingsari'} - Desa Wisata BCA`} />
 
-            <main className="min-h-screen bg-[#F7FBFF] font-sans text-[#172033]">
-                <section className="relative min-h-[720px] overflow-hidden bg-[#F7FBFF]">
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_48%,rgba(47,166,252,0.14),transparent_22%),radial-gradient(circle_at_72%_12%,rgba(0,102,174,0.12),transparent_20%)]" />
-                    <div className="pointer-events-none absolute top-28 right-0 h-80 w-80 rounded-full border border-[#AAD2F8]/35 [mask-image:radial-gradient(circle,black_45%,transparent_67%)] opacity-70" />
-                    <div className="pointer-events-none absolute bottom-0 left-0 h-52 w-80 bg-[radial-gradient(ellipse_at_bottom_left,rgba(0,102,174,0.12),transparent_62%)]" />
+                <section className="">
+                    <div className="mx-auto overflow-hidden rounded-[28px] border border-[#DCE3EA] bg-white shadow-[0_16px_40px_rgba(0,102,174,0.06)]">
+                        <header className="border-b border-[#DCE3EA] bg-[#F8FBFE]">
+                            <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-4 py-4 md:px-6 lg:px-8">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <div className="flex size-11 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                                        <Mountain className="size-5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="truncate text-[15px] font-bold text-[#0066AE]">Desa Wisata</p>
+                                        <p className="truncate text-[11px] text-[#8a8577]">Pentingsari</p>
+                                    </div>
+                                </div>
+                                <nav className="hidden flex-1 items-center justify-center gap-7 lg:flex">
+                                    <NavLink active>Beranda</NavLink>
+                                    <NavLink>Tentang Desa</NavLink>
+                                    <NavLink>Paket Wisata</NavLink>
+                                    <NavLink>Atraksi</NavLink>
+                                    <NavLink>Galeri</NavLink>
+                                    <NavLink>Artikel</NavLink>
+                                    <NavLink>Kontak</NavLink>
+                                </nav>
+                                <div className="ml-auto flex items-center gap-2.5">
+                                    <button className="hidden size-10 items-center justify-center rounded-full border border-[#DCE3EA] bg-white text-[#093967] md:inline-flex"><Search className="size-4" /></button>
+                                    <PrimaryButton>Reservasi</PrimaryButton>
+                                    <button className="inline-flex size-10 items-center justify-center rounded-full border border-[#DCE3EA] bg-white text-[#26311f] lg:hidden"><Menu className="size-4.5" /></button>
+                                </div>
+                            </div>
+                        </header>
+                        <section className="relative isolate overflow-hidden bg-[#F8FBFE] px-4 pt-6 pb-0 md:px-6 md:pt-8 lg:px-8 lg:pt-10">
+                            <div className="mx-auto grid max-w-[1180px] gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+                                <div className="relative z-10 max-w-[480px] pb-8 lg:pb-24">
+                                    <p className="text-[11px] font-semibold tracking-[0.12em] text-[#2FA6FC] uppercase">Desa Wisata Pentingsari</p>
+                                    <h1 className="mt-4 text-[38px] leading-[1.05] font-bold text-[#26311f] sm:text-[46px] lg:text-[54px]">
+                                        Rasakan Pengalaman Wisata Desa yang Otentik, Asri, dan Berkesan
+                                    </h1>
+                                    <p className="mt-4 max-w-[440px] text-[14px] leading-7 text-[#59564c]">
+                                        Nikmati keindahan alam pedesaan, kehidupan budaya lokal, dan keramahan masyarakat di Desa Wisata Pentingsari. Liburan terbaik menyatu bersama alam untuk pengalaman yang bermakna dan berkelanjutan.
+                                    </p>
+                                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                                        <PrimaryButton><PlayCircle className="size-4" />Jelajahi Wisata</PrimaryButton>
+                                        <SecondaryButton><Phone className="size-4" />Hubungi Kami</SecondaryButton>
+                                    </div>
+                                </div>
+                                <div className="relative min-h-[320px] self-stretch overflow-hidden rounded-[24px] lg:min-h-[430px]">
+                                    <img src={images.hero} alt="Desa wisata" className="h-full w-full object-cover" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[#0066AE]/20 via-transparent to-[#093967]/18" />
+                                </div>
+                            </div>
+                            <div className="relative z-20 mx-auto max-w-[1180px] translate-y-8 pb-8">
+                                <div className="grid gap-3 p-3 md:grid-cols-2 lg:grid-cols-4 lg:p-4">
+                                    {stats.map((item) => <StatCard key={item.label} {...item} />)}
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
 
-                    <header className="relative z-30">
-                        <div className="mx-auto flex h-22 max-w-[1400px] items-center gap-7 px-8 2xl:px-12">
-                            <a className="flex min-w-fit items-center gap-3">
-                                <span className="relative flex size-14 items-center justify-center rounded-full border-2 border-[#0066AE] text-[#0066AE]">
-                                    <Home
-                                        className="size-6"
-                                        strokeWidth={1.8}
-                                    />
-                                    <span className="absolute top-5 -right-1 size-3 rounded-full bg-[#2FA6FC]" />
-                                </span>
-                                <span>
-                                    <span className="block text-[24px] leading-7 font-bold tracking-[-0.03em] text-[#093967]">
-                                        Desa Wisata
-                                    </span>
-                                    <span className="mt-0.5 block text-[12px] font-medium tracking-[0.32em] text-[#2FA6FC]">
-                                        Indonesia
-                                    </span>
-                                </span>
-                            </a>
+                <section className="px-4 pt-14 pb-6 md:px-6 lg:px-8 lg:pt-18">
+                    <div className="mx-auto grid max-w-[1180px] gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+                        <div className="overflow-hidden rounded-[24px] border border-[#DCE3EA] bg-white shadow-[0_12px_30px_rgba(0,102,174,0.05)]">
+                            <img src={images.about} alt="Tentang desa" className="h-full min-h-[300px] w-full object-cover" />
+                        </div>
+                        <div>
+                            <SectionHeading title="Tentang Desa Wisata" />
+                            <p className="max-w-[520px] text-[14px] leading-7 text-[#59564c]">
+                                Desa Wisata Pentingsari terletak di lereng Merapi, Sleman, Yogyakarta. Dikelilingi alam yang asri, udara sejuk, dan kehidupan desa yang harmonis, kami menghadirkan pengalaman wisata yang otentik melalui kegiatan budaya, edukasi, kuliner, dan keramahan masyarakat lokal.
+                            </p>
+                            <div className="mt-6 grid gap-4 md:grid-cols-3">
+                                {aboutHighlights.map((item) => <AboutHighlight key={item.title} {...item} />)}
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                            <nav className="hidden flex-1 items-center justify-center gap-7 text-[14px] font-semibold text-[#172033] xl:flex">
-                                {[
-                                    'Beranda',
-                                    'Tentang Desa',
-                                    'Destinasi',
-                                    'Aktivitas',
-                                    'Produk UMKM',
-                                    'Galeri',
-                                    'Blog',
-                                ].map((item, index) => (
-                                    <a
-                                        key={item}
-                                        className={classNames(
-                                            'relative transition hover:text-[#0066AE]',
-                                            index === 0 && 'text-[#0066AE]',
-                                        )}
-                                    >
-                                        {item}
-                                        {index === 0 && (
-                                            <span className="absolute top-8 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#0066AE]" />
-                                        )}
-                                    </a>
+                <section className="px-4 py-6 md:px-6 lg:px-8">
+                    <div className="mx-auto max-w-[1180px]">
+                        <SectionHeading title="Paket Wisata Unggulan" action="Lihat Semua Paket" />
+                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                            {packages.map((item) => <PackageCard key={item.title} item={item} />)}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="px-4 py-6 md:px-6 lg:px-8">
+                    <div className="mx-auto max-w-[1180px]">
+                        <SectionHeading title="Mengapa Memilih Desa Wisata Kami" />
+                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+                            {whyChooseUs.map((item) => <WhyItem key={item.title} {...item} />)}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="px-4 py-6 md:px-6 lg:px-8">
+                    <div className="mx-auto max-w-[1180px]">
+                        <SectionHeading title="Atraksi Wisata" action="Lihat Semua Atraksi" />
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                            {attractions.map((item) => <AttractionCard key={item.title} item={item} />)}
+                        </div>
+                    </div>
+                </section>
+                <section className="px-4 py-6 md:px-6 lg:px-8">
+                    <div className="mx-auto grid max-w-[1180px] gap-7 lg:grid-cols-[1.04fr_0.96fr]">
+                        <div>
+                            <SectionHeading title="Galeri" action="Lihat Semua Galeri" />
+                            <div className="grid grid-cols-3 gap-3 rounded-[20px] border border-[#DCE3EA] bg-white p-3 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
+                                <div className="col-span-2 row-span-2 overflow-hidden rounded-[16px]"><img src={images.gallery1} alt="Galeri desa" className="h-full min-h-[290px] w-full object-cover" /></div>
+                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery2} alt="Galeri desa" className="h-full w-full object-cover" /></div>
+                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery3} alt="Galeri desa" className="h-full w-full object-cover" /></div>
+                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery4} alt="Galeri desa" className="h-full w-full object-cover" /></div>
+                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery5} alt="Galeri desa" className="h-full w-full object-cover" /></div>
+                            </div>
+                        </div>
+                        <div>
+                            <SectionHeading title="Pengalaman Pengunjung" />
+                            <div className="space-y-4">
+                                {testimonials.map((item) => <TestimonialCard key={item.name} item={item} />)}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="px-4 py-6 md:px-6 lg:px-8">
+                    <div className="mx-auto grid max-w-[1180px] gap-7 lg:grid-cols-[0.95fr_1.05fr]">
+                        <div>
+                            <SectionHeading title="FAQ" />
+                            <div className="space-y-3">
+                                {faqs.map((question, index) => (
+                                    <FaqItem key={question} question={question} open={openFaq === index} onClick={() => setOpenFaq(openFaq === index ? -1 : index)} />
                                 ))}
-                            </nav>
-
-                            <div className="ml-auto hidden items-center gap-6 xl:flex">
-                                <button className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#172033]">
-                                    <Map className="size-5" strokeWidth={1.8} />
-                                    ID
-                                    <ChevronRight className="size-3 rotate-90" />
-                                </button>
-                                <span className="h-7 w-px bg-[#C8DEF0]" />
-                                <button className="inline-flex h-11 items-center justify-center gap-3 rounded-full bg-[#0066AE] px-6 text-sm font-bold text-white shadow-[0_12px_30px_rgba(0,102,174,0.24)] transition hover:bg-[#093967] active:scale-[0.98]">
-                                    Rencanakan Kunjungan
-                                    <Navigation
-                                        className="size-4"
-                                        strokeWidth={1.9}
-                                    />
-                                </button>
-                            </div>
-
-                            <button className="ml-auto flex size-11 items-center justify-center rounded-full border border-[#C8DEF0] bg-white/70 text-[#0066AE] xl:hidden">
-                                <Menu className="size-5" />
-                            </button>
-                        </div>
-                    </header>
-
-                    <div className="relative z-10 mx-auto grid min-h-[600px] max-w-[1400px] grid-cols-1 items-center gap-10 px-8 pt-4 pb-14 lg:grid-cols-[0.84fr_1.16fr] 2xl:px-12">
-                        <div className="relative max-w-[540px]">
-                            <div className="mb-6 flex items-center gap-3 text-[14px] font-semibold text-[#2FA6FC]">
-                                <span className="h-px w-10 bg-[#2FA6FC]" />
-                                <Sparkles
-                                    className="size-4.5"
-                                    strokeWidth={1.5}
-                                />
-                                <span>Alam. Budaya. Kearifan Lokal.</span>
-                            </div>
-
-                            <h1 className="text-[54px] leading-[0.98] font-extrabold tracking-[-0.04em] text-[#172033] md:text-[66px] xl:text-[72px]">
-                                Discover the
-                                <br />
-                                Beauty of
-                                <br />
-                                <span className="text-[#0066AE]">
-                                    Desa Wisata
-                                </span>
-                            </h1>
-
-                            <p className="mt-6 max-w-[500px] text-[16px] leading-7 font-medium text-[#45566A]">
-                                Jelajahi keindahan alam, budaya yang hidup, dan
-                                keramahan warga. Nikmati pengalaman wisata desa
-                                yang autentik, dukung UMKM lokal, dan ciptakan
-                                kenangan tak terlupakan.
-                            </p>
-
-                            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                                <button className="inline-flex h-13 items-center justify-center gap-7 rounded-full bg-[#0066AE] px-7 text-sm font-bold text-white shadow-[0_16px_32px_rgba(0,102,174,0.22)] transition hover:bg-[#093967] active:scale-[0.98]">
-                                    Explore Village
-                                    <ChevronRight className="size-4.5" />
-                                </button>
-                                <button className="inline-flex h-13 items-center justify-center gap-7 rounded-full border border-[#AAD2F8] bg-white/62 px-7 text-sm font-bold text-[#0066AE] transition hover:bg-white active:scale-[0.98]">
-                                    Learn More
-                                    <ChevronRight className="size-4.5" />
-                                </button>
-                            </div>
-
-                            <svg
-                                className="pointer-events-none absolute -bottom-16 left-40 hidden h-20 w-[300px] text-[#2FA6FC] lg:block"
-                                viewBox="0 0 360 96"
-                                fill="none"
-                            >
-                                <path
-                                    d="M4 16C78 84 171 86 178 48C183 20 132 23 149 57C170 100 289 84 350 24"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeDasharray="8 9"
-                                    strokeLinecap="round"
-                                />
-                                <path
-                                    d="M330 10C342 20 346 34 336 48C323 36 318 24 330 10Z"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                />
-                            </svg>
-                        </div>
-
-                        <div className="relative min-h-[500px] lg:min-h-[560px]">
-                            <img
-                                src={cover}
-                                alt={village.name}
-                                className="absolute top-4 left-[8%] h-[430px] w-[58%] rounded-[28px] border border-white/70 object-cover shadow-[0_22px_48px_rgba(0,102,174,0.14)] ring-2 ring-[#D7EAFB]/80"
-                            />
-                            <img
-                                src={images.homestay}
-                                alt="Rumah tradisional desa wisata"
-                                className="absolute top-18 right-[3%] h-[210px] w-[43%] rounded-[24px] border border-white/75 object-cover shadow-[0_18px_42px_rgba(0,102,174,0.13)] ring-2 ring-[#D7EAFB]/80"
-                            />
-                            <img
-                                src={images.culture}
-                                alt="Aktivitas budaya desa"
-                                className="absolute right-0 bottom-3 h-[260px] w-[42%] rounded-[24px] border border-white/75 object-cover shadow-[0_18px_42px_rgba(0,102,174,0.13)] ring-2 ring-[#D7EAFB]/80"
-                            />
-                            <img
-                                src={images.food}
-                                alt="Kuliner lokal desa wisata"
-                                className="absolute bottom-8 left-0 h-[155px] w-[31%] rounded-[20px] border border-white/75 object-cover shadow-[0_16px_34px_rgba(0,102,174,0.12)] ring-2 ring-[#D7EAFB]/80"
-                            />
-                            <div className="absolute right-[36%] bottom-[140px] flex size-24 items-center justify-center rounded-full border border-white/80 bg-[#EAF3FF] text-center shadow-[0_14px_28px_rgba(0,102,174,0.12)] ring-2 ring-[#D7EAFB]/80">
-                                <div className="rounded-full border border-[#AAD2F8] p-3">
-                                    <Sparkles className="mx-auto size-5 text-[#0066AE]" />
-                                    <p className="mt-1.5 text-[8px] font-bold tracking-[0.28em] text-[#093967]">
-                                        WISATA DESA
-                                    </p>
-                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-
-                <section className="bg-[#F4F8FC] py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            align="center"
-                            eyebrow="Galeri"
-                            title="Galeri Desa"
-                            description="Cuplikan suasana desa, aktivitas wisata, produk lokal, dan momen budaya yang bisa dinikmati pengunjung."
-                        />
-                        <div className="grid auto-rows-[220px] gap-5 md:grid-cols-4">
-                            <GalleryTile
-                                image={cover}
-                                label="Pemandangan desa"
-                                large
-                            />
-                            <GalleryTile
-                                image={images.culture}
-                                label="Budaya lokal"
-                            />
-                            <GalleryTile image={images.food} label="Kuliner" />
-                            <GalleryTile
-                                image={images.homestay}
-                                label="Homestay"
-                            />
-                            <GalleryTile
-                                image={images.rafting}
-                                label="Aktivitas wisata"
-                            />
-                            <GalleryTile
-                                image={images.woven}
-                                label="Produk suvenir"
-                            />
-                            <GalleryTile
-                                image={images.rice}
-                                label="Sawah terasering"
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                <section className="bg-white py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            eyebrow="UMKM desa"
-                            title="Suvenir Khas Desa"
-                            description="Produk lokal dipilih untuk menjadi buah tangan berkualitas sekaligus mendukung usaha warga."
-                        />
-                        <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-4">
-                            {productCards.map((product) => (
-                                <ProductCard key={product.name} {...product} />
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="bg-[#F4F8FC] py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            eyebrow="Menginap"
-                            title="Pilihan Homestay"
-                            description="Homestay warga dengan suasana hangat, fasilitas nyaman, dan akses dekat ke titik wisata."
-                        />
-                        <div className="grid gap-7 lg:grid-cols-3">
-                            {homestayCards.map((homestay) => (
-                                <HomestayCard
-                                    key={homestay.name}
-                                    {...homestay}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="bg-white py-24">
-                    <div className="mx-auto max-w-[1180px] px-6">
-                        <SectionHeader
-                            eyebrow="Lokasi"
-                            title="Lokasi & Kontak"
-                            description="Gunakan informasi berikut untuk merencanakan rute, reservasi, dan kebutuhan kunjungan."
-                        />
-                        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-                            <div className="relative min-h-[420px] overflow-hidden rounded-[32px] border border-[#EAF0F6] bg-[#EAF6FF] shadow-[0_18px_50px_rgba(9,57,103,0.08)]">
-                                <iframe
-                                    title="Lokasi desa"
-                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(village.location || village.name)}&t=&z=11&ie=UTF8&iwloc=&output=embed`}
-                                    className="h-full min-h-[420px] w-full border-0"
-                                    loading="lazy"
-                                />
-                                <div className="absolute top-6 left-6 rounded-2xl bg-white p-4 shadow-[0_16px_36px_rgba(9,57,103,0.12)]">
-                                    <p className="text-sm font-black text-[#093967]">
-                                        Desa Wisata BCA
-                                    </p>
-                                    <p className="mt-1 max-w-[220px] text-xs font-semibold text-[#64748B]">
-                                        {village.location}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="rounded-[32px] border border-[#EAF0F6] bg-white p-8 shadow-[0_18px_50px_rgba(9,57,103,0.08)]">
-                                <div className="space-y-6">
-                                    {[
-                                        [
-                                            MapPin,
-                                            'Alamat lengkap',
-                                            `${village.address}, ${village.location}`,
-                                        ],
-                                        [
-                                            Phone,
-                                            'Nomor WhatsApp',
-                                            village.manager_phone,
-                                        ],
-                                        [Mail, 'Email', village.manager_email],
-                                        [
-                                            Clock3,
-                                            'Jam operasional',
-                                            'Setiap hari, 08.00 - 20.00 WIB',
-                                        ],
-                                    ].map(([Icon, title, value]) => (
-                                        <div
-                                            key={title as string}
-                                            className="flex gap-4"
-                                        >
-                                            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#F4F8FC] text-[#0066AE]">
-                                                <Icon className="size-5" />
-                                            </span>
-                                            <div>
-                                                <p className="text-sm font-black text-[#1E293B]">
-                                                    {title as string}
-                                                </p>
-                                                <p className="mt-1 text-sm leading-6 font-medium text-[#64748B]">
-                                                    {value as string}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="mt-8 flex flex-wrap gap-3">
-                                    <PrimaryButton>
-                                        <Navigation className="size-4" />
-                                        Buka Maps
-                                    </PrimaryButton>
-                                    <SecondaryButton>
-                                        <MessageCircle className="size-4" />
-                                        Hubungi Kami
-                                    </SecondaryButton>
-                                </div>
-                                <div className="mt-8 flex gap-3">
-                                    {[
-                                        Instagram,
-                                        Facebook,
-                                        Youtube,
-                                        Twitter,
-                                    ].map((Icon, index) => (
-                                        <span
-                                            key={index}
-                                            className={classNames(
-                                                'flex size-11 items-center justify-center rounded-full text-white',
-                                                index === 0 && 'bg-[#E8487A]',
-                                                index === 1 && 'bg-[#1877F2]',
-                                                index === 2 && 'bg-[#FF0033]',
-                                                index === 3 && 'bg-[#111827]',
-                                            )}
-                                        >
-                                            <Icon className="size-5" />
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <footer className="bg-[#093967] py-16 text-white">
-                    <div className="mx-auto grid max-w-[1180px] gap-10 px-6 md:grid-cols-[1.4fr_0.8fr_0.8fr_1fr]">
                         <div>
-                            <div className="flex items-center gap-3">
-                                <span className="flex size-11 items-center justify-center rounded-2xl bg-white text-[#0066AE]">
-                                    <Home className="size-5" />
-                                </span>
-                                <p className="text-xl font-black">
-                                    Desa Wisata BCA
+                            <SectionHeading title="Artikel & Cerita Desa" action="Lihat Semua Artikel" />
+                            <div className="grid gap-4 md:grid-cols-3">
+                                {articles.map((item) => <ArticleCard key={item.title} item={item} />)}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="px-4 py-8 md:px-6 lg:px-8">
+                    <div className="mx-auto max-w-[1180px] overflow-hidden rounded-[24px] border border-[#BFD6EA]">
+                        <div className="relative isolate overflow-hidden px-6 py-10 md:px-8 lg:px-10 lg:py-12">
+                            <img src={images.cta} alt="CTA desa wisata" className="absolute inset-0 h-full w-full object-cover" />
+                            <div className="absolute inset-0 bg-[#093967]/76" />
+                            <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="max-w-[620px] text-white">
+                                    <h2 className="text-[30px] leading-[1.12] font-bold md:text-[36px]">Siap Menjelajahi Keindahan dan Keaslian Desa?</h2>
+                                    <p className="mt-3 text-[14px] leading-7 text-white/88">
+                                        Rencanakan perjalanan Anda sekarang dan rasakan pengalaman tak terlupakan di Desa Wisata Pentingsari.
+                                    </p>
+                                </div>
+                                <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0066AE] px-5 text-[13px] font-bold text-white shadow-[0_12px_22px_rgba(196,122,44,0.24)] transition hover:bg-[#093967]">
+                                    Pesan Sekarang
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <footer className="mt-2 border-t border-[#DCE3EA] bg-[#DCE3EA] px-4 py-10 md:px-6 lg:px-8">
+                    <div className="mx-auto max-w-[1180px]">
+                        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.7fr_0.8fr_1fr]">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-11 items-center justify-center rounded-full bg-[#0066AE] text-white"><Mountain className="size-5" /></div>
+                                    <div>
+                                        <p className="text-[18px] font-bold text-[#0066AE]">Desa Wisata</p>
+                                        <p className="text-[12px] text-[#8a8577]">Pentingsari</p>
+                                    </div>
+                                </div>
+                                <p className="mt-4 max-w-[280px] text-[12px] leading-6 text-[#59564c]">
+                                    Desa wisata berbasis masyarakat di lereng Merapi yang menggabungkan alam, budaya, edukasi, dan hospitality lokal.
                                 </p>
+                                <div className="mt-4 flex items-center gap-2.5 text-[#0066AE]">
+                                    <span className="flex size-9 items-center justify-center rounded-full border border-[#BFD6EA] bg-white"><Instagram className="size-4" /></span>
+                                    <span className="flex size-9 items-center justify-center rounded-full border border-[#BFD6EA] bg-white"><Facebook className="size-4" /></span>
+                                </div>
                             </div>
-                            <p className="mt-5 max-w-sm text-sm leading-7 font-medium text-white/72">
-                                Profil desa wisata modern untuk memperkenalkan
-                                destinasi, fasilitas, homestay, dan produk lokal
-                                kepada pengunjung.
-                            </p>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-black">Quick links</h3>
-                            <div className="mt-5 space-y-3 text-sm font-medium text-white/72">
-                                <p>Destinasi</p>
-                                <p>Fasilitas</p>
-                                <p>Galeri</p>
-                                <p>Homestay</p>
+                            <div>
+                                <h3 className="text-[13px] font-bold text-[#26311f]">Tautan Cepat</h3>
+                                <div className="mt-4 space-y-2.5 text-[12px] text-[#59564c]">
+                                    <p>Beranda</p>
+                                    <p>Tentang Desa</p>
+                                    <p>Paket Wisata</p>
+                                    <p>Galeri</p>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-black">Informasi</h3>
-                            <div className="mt-5 space-y-3 text-sm font-medium text-white/72">
-                                <p>Lokasi</p>
-                                <p>Kontak</p>
-                                <p>Produk lokal</p>
-                                <p>Agenda wisata</p>
+                            <div>
+                                <h3 className="text-[13px] font-bold text-[#26311f]">Informasi</h3>
+                                <div className="mt-4 space-y-3 text-[12px] text-[#59564c]">
+                                    <div className="flex gap-2"><MapPin className="mt-0.5 size-3.5 shrink-0 text-[#093967]" /><span>Pentingsari, Umbulharjo, Cangkringan, Sleman</span></div>
+                                    <div className="flex gap-2"><Phone className="mt-0.5 size-3.5 shrink-0 text-[#093967]" /><span>(0274) 555 1234</span></div>
+                                    <div className="flex gap-2"><Mail className="mt-0.5 size-3.5 shrink-0 text-[#093967]" /><span>info@pentingsari.com</span></div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-black">Kontak</h3>
-                            <div className="mt-5 space-y-3 text-sm font-medium text-white/72">
-                                <p>{village.manager_phone}</p>
-                                <p>{village.manager_email}</p>
-                                <p>{village.location}</p>
+                            <div>
+                                <h3 className="text-[13px] font-bold text-[#26311f]">Newsletter</h3>
+                                <p className="mt-4 text-[12px] leading-6 text-[#59564c]">Dapatkan informasi dan promo terbaru dari Desa Wisata Pentingsari.</p>
+                                <div className="mt-4 flex gap-2">
+                                    <input type="email" placeholder="Masukkan email Anda" className="min-h-11 flex-1 rounded-full border border-[#BFD6EA] bg-white px-4 text-[12px] text-[#26311f] outline-none placeholder:text-[#8a8577]" />
+                                    <button className="min-h-11 rounded-full bg-[#0066AE] px-4 text-[12px] font-semibold text-white">Langganan</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="mx-auto mt-12 flex max-w-[1180px] items-center justify-between border-t border-white/12 px-6 pt-6 text-sm font-medium text-white/58">
-                        <p>Copyright 2026 Desa Wisata BCA</p>
-                        <div className="flex gap-4">
-                            <ImageIcon className="size-4" />
-                            <Store className="size-4" />
-                            <Gift className="size-4" />
-                            <Coffee className="size-4" />
-                            <BedDouble className="size-4" />
-                            <Sun className="size-4" />
+                        <div className="mt-8 flex flex-col gap-3 border-t border-[#DCE3EA] pt-5 text-[11px] text-[#8a8577] md:flex-row md:items-center md:justify-between">
+                            <p>© 2024 Desa Wisata Pentingsari. Semua Hak Dilindungi.</p>
+                            <div className="flex items-center gap-4">
+                                <span>Kebijakan Privasi</span>
+                                <span>Syarat & Ketentuan</span>
+                            </div>
                         </div>
                     </div>
                 </footer>
-            </main>
         </>
     );
 }
 
 VillageShow.layout = null;
+
+
+

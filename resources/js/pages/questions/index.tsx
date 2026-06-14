@@ -610,7 +610,7 @@ export default function QuestionsIndex({
             return;
         }
 
-        questionForm.post(SurveyQuestionController.store.url(), options);
+        questionForm.post(SurveyQuestionController.url(), options);
     }
 
     const questionErrors = questionForm.errors as Partial<
@@ -2062,6 +2062,7 @@ QuestionsIndex.layout = {
         { title: 'Detail Template', href: '#' },
     ],
 };
+
 
 
 
