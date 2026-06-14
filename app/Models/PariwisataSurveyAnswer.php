@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'pariwisata_village_id', 'pariwisata_survey_question_id', 'pariwisata_suvey_option_id',
+    'village_survey_assignment_id', 'pariwisata_survey_question_id', 'pariwisata_suvey_option_id',
     'score', 'notes', 'category_code_snapshot', 'category_name_snapshot',
     'sub_category_code_snapshot', 'sub_category_name_snapshot', 'criteria_code_snapshot',
     'criteria_name_snapshot', 'criteria_description_snapshot', 'indicator_code_snapshot',
@@ -31,14 +31,14 @@ class PariwisataSurveyAnswer extends Model
         ];
     }
 
+    public function assignment(): BelongsTo
+    {
+        return $this->belongsTo(VillageSurveyAssignment::class, 'village_survey_assignment_id');
+    }
+
     public function question(): BelongsTo
     {
         return $this->belongsTo(PariwisataSurveyQuestion::class, 'pariwisata_survey_question_id');
-    }
-
-    public function pariwisataVillage(): BelongsTo
-    {
-        return $this->belongsTo(PariwisataVillage::class, 'pariwisata_village_id');
     }
 
     public function option(): BelongsTo

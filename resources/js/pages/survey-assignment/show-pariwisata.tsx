@@ -59,9 +59,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { dashboard, surveyAssignments } from '@/routes';
 import { show as showAssignment } from '@/routes/survey-assignments';
 import {
-    takeSurvey as takePariwisataSurvey,
     update as updatePariwisata,
-    exportMethod as exportPariwisataSurvey,
 } from '@/routes/survey-assignments/pariwisata';
 
 type Assignment = {
@@ -182,17 +180,6 @@ type ShowPariwisataProps = {
     pariwisata: Pariwisata;
     category_options: CategoryOption[];
     edit_values: PariwisataEditValues;
-    survey_template: SurveyTemplate | null;
-    survey_summary: {
-        total_questions: number;
-        answered_questions: number;
-        unanswered_questions: number;
-        total_documents: number;
-        total_score: number;
-        max_score: number;
-        final_score: number;
-    };
-    survey_groups: SurveyGroup[];
 };
 
 type CategoryOption = {
@@ -2640,15 +2627,7 @@ export default function ShowPariwisata({
     pariwisata,
     category_options,
     edit_values,
-    survey_template,
-    survey_summary,
-    survey_groups,
 }: ShowPariwisataProps) {
-    const [search, setSearch] = useState('');
-    const [groupFilter, setGroupFilter] = useState('all');
-    const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(
-        null,
-    );
     const [isEditOpen, setIsEditOpen] = useState(false);
     const editForm = useForm<PariwisataEditForm>(initialEditForm(edit_values));
 
@@ -2672,63 +2651,17 @@ export default function ShowPariwisata({
         );
     }
 
-    const filteredGroups = useMemo(
-        () =>
-            survey_groups
-                .filter(
-                    (group) =>
-                        groupFilter === 'all' ||
-                        group.category_name === groupFilter,
-                )
-                .map((group) => ({
-                    ...group,
-                    questions: group.questions.filter((question) => {
-                        const keyword = search.toLowerCase();
-
-                        return (
-                            keyword === '' ||
-                            group.category_name
-                                .toLowerCase()
-                                .includes(keyword) ||
-                            question.indicator_code
-                                .toLowerCase()
-                                .includes(keyword) ||
-                            question.indicator_name
-                                .toLowerCase()
-                                .includes(keyword) ||
-                            (question.criteria_name ?? '')
-                                .toLowerCase()
-                                .includes(keyword) ||
-                            (question.answer?.score_label ?? '')
-                                .toLowerCase()
-                                .includes(keyword)
-                        );
-                    }),
-                }))
-                .filter((group) => group.questions.length > 0),
-        [groupFilter, search, survey_groups],
-    );
-
-    const questionStartNumbers = useMemo(
-        () =>
-            filteredGroups.reduce<{
-                positions: Record<string, number>;
-                total: number;
-            }>(
-                (state, group) => ({
-                    positions: {
-                        ...state.positions,
-                        [group.category_name]: state.total,
-                    },
-                    total: state.total + group.questions.length,
-                }),
-                {
-                    positions: {},
-                    total: 0,
-                },
-            ).positions,
-        [filteredGroups],
-    );
+    const activePackageCount = edit_values.packages.filter(
+        (item) => item.is_active,
+    ).length;
+    const latestTurnoverYear = edit_values.annual_turnovers
+        .map((item) => Number(item.year))
+        .filter((year) => Number.isFinite(year))
+        .sort((left, right) => right - left)[0];
+    const latestVisitorYear = edit_values.annual_visitors
+        .map((item) => Number(item.year))
+        .filter((year) => Number.isFinite(year))
+        .sort((left, right) => right - left)[0];
 
     return (
         <>
@@ -2768,8 +2701,9 @@ export default function ShowPariwisata({
                                 Detail Pariwisata
                             </h1>
                             <p className="mt-1 max-w-3xl text-sm leading-6 font-semibold text-[#7C7C7C]">
-                                Master pariwisata desa dan struktur pertanyaan
-                                survey pariwisata.
+                                Halaman ini hanya menampilkan master data
+                                pariwisata. Survey pariwisata dikerjakan dari
+                                detail assignment.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -2787,28 +2721,6 @@ export default function ShowPariwisata({
                                 <Pencil size={16} />
                                 Edit Data
                             </button>
-                            <a
-                                href={exportPariwisataSurvey.url({
-                                    assignment: assignment.code,
-                                    pariwisata: pariwisata.id,
-                                })}
-                            >
-                                <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
-                                    <Download size={16} />
-                                    Export Excel
-                                </span>
-                            </a>
-                            <Link
-                                href={takePariwisataSurvey.url({
-                                    assignment: assignment.code,
-                                    pariwisata: pariwisata.id,
-                                })}
-                            >
-                                <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]">
-                                    <ClipboardList size={16} />
-                                    Isi Survey
-                                </span>
-                            </Link>
                         </div>
                     </div>
 
@@ -2848,10 +2760,10 @@ export default function ShowPariwisata({
                                 </div>
                                 <div className="rounded-xl bg-white px-4 py-3 text-right shadow-[0_8px_20px_rgba(9,57,103,0.08)]">
                                     <p className="text-[11px] font-black tracking-[0.06em] text-[#0066AE] uppercase">
-                                        Pertanyaan Survey
+                                        Assignment
                                     </p>
-                                    <p className="text-2xl font-bold text-[#093967]">
-                                        {survey_template?.question_count ?? 0}
+                                    <p className="text-lg font-bold text-[#093967]">
+                                        {assignment.code}
                                     </p>
                                 </div>
                             </div>
@@ -2893,18 +2805,19 @@ export default function ShowPariwisata({
 
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {[
+                            ['Kategori', String(pariwisata.categories.length)],
+                            ['Paket Aktif', String(activePackageCount)],
                             [
-                                'Total Skor',
-                                `${survey_summary.total_score} / ${survey_summary.max_score}`,
+                                'Tahun Omset Terbaru',
+                                latestTurnoverYear
+                                    ? String(latestTurnoverYear)
+                                    : '-',
                             ],
-                            ['Nilai Akhir', String(survey_summary.final_score)],
                             [
-                                'Terjawab',
-                                `${survey_summary.answered_questions} / ${survey_summary.total_questions}`,
-                            ],
-                            [
-                                'Dokumen',
-                                `${survey_summary.total_documents} file`,
+                                'Tahun Pengunjung Terbaru',
+                                latestVisitorYear
+                                    ? String(latestVisitorYear)
+                                    : '-',
                             ],
                         ].map(([label, value]) => (
                             <Card key={label} className="p-4">
@@ -2920,113 +2833,98 @@ export default function ShowPariwisata({
 
                     <PariwisataTrendCharts values={edit_values} />
 
-                    <SurveyStatistics groups={survey_groups} />
-
                     <Card className="overflow-hidden">
                         <div className="border-b border-[#EFEFEF] p-4">
-                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                                <label className="relative flex-1">
-                                    <Search
-                                        size={16}
-                                        className="absolute top-1/2 left-3 -translate-y-1/2 text-[#7C7C7C]"
-                                    />
-                                    <input
-                                        value={search}
-                                        onChange={(event) =>
-                                            setSearch(event.target.value)
-                                        }
-                                        className="h-10 w-full rounded-lg border border-[#DDE4EC] bg-white pr-3 pl-9 text-sm outline-none focus:border-[#0066AE]"
-                                        placeholder="Cari indikator, kategori, kriteria, atau jawaban..."
-                                    />
-                                </label>
-                                <select
-                                    value={groupFilter}
-                                    onChange={(event) =>
-                                        setGroupFilter(event.target.value)
-                                    }
-                                    className="h-10 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
-                                >
-                                    <option value="all">Semua Kategori</option>
-                                    {survey_groups.map((group) => (
-                                        <option
-                                            key={group.category_name}
-                                            value={group.category_name}
-                                        >
-                                            {group.category_name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSearch('');
-                                        setGroupFilter('all');
-                                    }}
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
-                                >
-                                    <RefreshCcw size={16} />
-                                    Reset
-                                </button>
-                            </div>
+                            <h2 className="text-base font-bold text-[#303030]">
+                                Ringkasan Master Data
+                            </h2>
+                            <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
+                                Paket, data pekerja, dan kontak utama destinasi.
+                            </p>
                         </div>
 
-                        {filteredGroups.map((group) => (
-                            <div key={group.category_name}>
-                                <div className="flex w-full flex-col gap-3 border-b border-[#DDE9F6] bg-[#EAF3FF] px-4 py-3 text-left sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="min-w-0">
-                                        <h3 className="text-sm font-bold text-[#303030]">
-                                            {group.category_name}
-                                        </h3>
-                                        <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                            {group.question_count} indikator ·{' '}
-                                            {group.answered_count} terjawab ·{' '}
-                                            {group.documents_count} dokumen
+                        <div className="grid gap-4 p-4 lg:grid-cols-2">
+                            <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FBFE] p-4">
+                                <h3 className="text-sm font-bold text-[#303030]">
+                                    Paket Wisata
+                                </h3>
+                                <div className="mt-3 space-y-3">
+                                    {edit_values.packages.length === 0 && (
+                                        <p className="text-sm font-semibold text-[#7C7C7C]">
+                                            Belum ada paket wisata.
+                                        </p>
+                                    )}
+                                    {edit_values.packages.map((pkg, index) => (
+                                        <div
+                                            key={`${pkg.name}-${index}`}
+                                            className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-[#303030]">
+                                                        {pkg.name || '-'}
+                                                    </p>
+                                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                                        {pkg.package_type || 'Tanpa tipe'} · {pkg.duration || 'Durasi belum diisi'}
+                                                    </p>
+                                                </div>
+                                                <span
+                                                    className={classNames(
+                                                        'rounded-full px-2.5 py-1 text-[11px] font-bold',
+                                                        pkg.is_active
+                                                            ? 'bg-[#EAF8F0] text-[#00893D]'
+                                                            : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                                                    )}
+                                                >
+                                                    {pkg.is_active ? 'Aktif' : 'Nonaktif'}
+                                                </span>
+                                            </div>
+                                            <p className="mt-2 text-sm font-semibold text-[#344256]">
+                                                {pkg.description || 'Deskripsi belum diisi'}
+                                            </p>
+                                            <p className="mt-2 text-xs font-bold text-[#0066AE]">
+                                                Harga: {pkg.price ? `Rp ${formatThousands(pkg.price)}` : '-'}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FBFE] p-4">
+                                <h3 className="text-sm font-bold text-[#303030]">
+                                    Data Pekerja & Pelatihan
+                                </h3>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]">
+                                        <p className="text-xs font-semibold text-[#7C7C7C]">
+                                            Statistik pekerja
+                                        </p>
+                                        <p className="mt-1 text-2xl font-bold text-[#303030]">
+                                            {edit_values.annual_worker_stats.length}
                                         </p>
                                     </div>
-                                    <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#0066AE]">
-                                        {group.answered_count}/
-                                        {group.question_count}
-                                    </span>
+                                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]">
+                                        <p className="text-xs font-semibold text-[#7C7C7C]">
+                                            Statistik pelatihan
+                                        </p>
+                                        <p className="mt-1 text-2xl font-bold text-[#303030]">
+                                            {edit_values.annual_worker_training_stats.length}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0] sm:col-span-2">
+                                        <p className="text-xs font-semibold text-[#7C7C7C]">
+                                            Alamat PIC
+                                        </p>
+                                        <p className="mt-1 text-sm font-bold text-[#303030]">
+                                            {pariwisata.person_in_charge_address ?? '-'}
+                                        </p>
+                                    </div>
                                 </div>
-                                {group.questions.map((question, index) => (
-                                    <QuestionRow
-                                        key={question.id}
-                                        question={question}
-                                        number={
-                                            (questionStartNumbers[
-                                                group.category_name
-                                            ] ?? 0) +
-                                            index +
-                                            1
-                                        }
-                                        onViewDetail={setDetailQuestion}
-                                    />
-                                ))}
                             </div>
-                        ))}
-
-                        {filteredGroups.length === 0 && (
-                            <div className="px-4 py-12 text-center">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    Data tidak ditemukan
-                                </p>
-                                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                    Ubah pencarian atau filter kategori.
-                                </p>
-                            </div>
-                        )}
+                        </div>
                     </Card>
                 </div>
             </main>
-            <AnswerDetailModal
-                question={detailQuestion}
-                open={Boolean(detailQuestion)}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setDetailQuestion(null);
-                    }
-                }}
-            />
             <PariwisataEditSidebar
                 open={isEditOpen}
                 onClose={closeEditSidebar}
@@ -3038,7 +2936,4 @@ export default function ShowPariwisata({
         </>
     );
 }
-
-
-
 

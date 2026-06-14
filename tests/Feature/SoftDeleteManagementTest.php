@@ -191,6 +191,12 @@ test('pariwisata can be soft deleted and restored from trash index', function ()
     $village = TourismVillage::factory()->create([
         'created_by' => $user->id,
     ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-DEL-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
 
     $pariwisata = PariwisataVillage::query()->create([
         'village_id' => $village->id,
@@ -225,7 +231,7 @@ test('pariwisata can be soft deleted and restored from trash index', function ()
     ]);
 
     $answer = PariwisataSurveyAnswer::query()->create([
-        'pariwisata_village_id' => $pariwisata->id,
+        'village_survey_assignment_id' => $assignment->id,
         'pariwisata_survey_question_id' => $question->id,
         'pariwisata_suvey_option_id' => $option->id,
         'score' => 5,
@@ -245,8 +251,8 @@ test('pariwisata can be soft deleted and restored from trash index', function ()
 
     $this->assertSoftDeleted('pariwisata_village_table', ['id' => $pariwisata->id]);
     $this->assertSoftDeleted('pariwisata_village_category', ['id' => $category->id]);
-    $this->assertSoftDeleted('pariwisata_survey_answers', ['id' => $answer->id]);
     $this->assertSoftDeleted('pariwisata_annual_visitors', ['id' => $visitor->id]);
+    expect($answer->fresh()->trashed())->toBeFalse();
 
     $this->actingAs($user)
         ->get(route('pariwisata', ['view' => 'trash']))

@@ -1,0 +1,41 @@
+*** Begin Patch
+*** Update File: routes/web.php
+@@
+         Route::get('/questions', SurveyQuestionController::class)->name('questions');
+         Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])
+             ->name('questions.templates.update');
+         Route::post('/questions', [SurveyQuestionController::class, 'store'])->name('questions.store');
++        Route::get('/questions/{template}/export', [SurveyQuestionController::class, 'export'])->name('questions.export');
+         Route::get('/questions/{template}', [SurveyQuestionController::class, 'show'])->name('questions.show');
+         Route::patch('/questions/umkm/{question}', [SurveyQuestionController::class, 'updateUmkm'])
+             ->name('questions.umkm.update');
+*** Update File: app/Http/Controllers/SurveyQuestionController.php
+@@
+ namespace App\Http\Controllers;
+ 
++use App\Exports\SurveyQuestionTemplateExport;
+ use App\Http\Requests\SurveyQuestions\IndexSurveyQuestionRequest;
+@@
+ use App\Services\SurveyQuestionService;
+ use Illuminate\Http\RedirectResponse;
+ use Inertia\Inertia;
+ use Inertia\Response;
++use Symfony\Component\HttpFoundation\BinaryFileResponse;
+@@
+     public function show(
+         IndexSurveyQuestionRequest ,
+         SurveyTemplate ,
+         SurveyQuestionService 
+     ): Response {
+         return Inertia::render('questions/index', ->getIndexData(, ->validated()));
+     }
++
++    public function export(
++        SurveyTemplate ,
++        SurveyQuestionTemplateExport ,
++    ): BinaryFileResponse {
++         = ->export();
++
++        return response()->download(['path'], ['filename'])->deleteFileAfterSend(true);
++    }
+*** End Patch

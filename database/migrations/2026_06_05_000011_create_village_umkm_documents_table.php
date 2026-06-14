@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('mime_type')->nullable();
             $table->unsignedBigInteger('file_size')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('village_umkm_id');
             $table->index('uploaded_by');

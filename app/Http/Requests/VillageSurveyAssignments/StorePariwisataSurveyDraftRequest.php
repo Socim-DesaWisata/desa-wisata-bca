@@ -4,9 +4,8 @@ namespace App\Http\Requests\VillageSurveyAssignments;
 
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataSuveyOption;
-use App\Models\PariwisataVillage;
-use App\Models\SurveyTemplate;
 use App\Models\VillageSurveyAssignment;
+use App\Services\ActiveSurveyTemplateResolver;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -38,26 +37,12 @@ class StorePariwisataSurveyDraftRequest extends FormRequest
             function (Validator $validator): void {
                 /** @var VillageSurveyAssignment|null $assignment */
                 $assignment = $this->route('assignment');
-                /** @var PariwisataVillage|null $pariwisata */
-                $pariwisata = $this->route('pariwisata');
 
-                if (! $assignment || ! $pariwisata) {
+                if (! $assignment) {
                     return;
                 }
 
-                if ($assignment->village_id !== $pariwisata->village_id) {
-                    $validator->errors()->add('pariwisata', 'Data pariwisata tidak sesuai dengan assignment.');
-
-                    return;
-                }
-
-                $template = SurveyTemplate::query()
-                    ->select(['id'])
-                    ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
-                    ->where('status', 'published')
-                    ->latest('published_at')
-                    ->latest('id')
-                    ->first();
+                $template = app(ActiveSurveyTemplateResolver::class)->resolve('pariwisata', ['pariwisataSurveyQuestions:id,survey_template_id']);
 
                 if (! $template) {
                     $validator->errors()->add('answers', 'Template survey pariwisata aktif belum tersedia.');

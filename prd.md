@@ -1,12 +1,12 @@
 # PRD — SocialImpact: Aggregator Desa Wisata BCA
 
-**Versi:** 3.0  
-**Tanggal:** 7 Juni 2026  
+**Versi:** 3.1  
+**Tanggal:** 13 Juni 2026  
 **Produk:** SocialImpact  
 **Jenis Produk:** Website CSR / Aggregator Desa Wisata  
 **Target Pengguna:** Admin CSR dan Enumerator Lapangan  
 **Tech Stack:** Laravel, Inertia.js, React, TypeScript, shadcn/ui, Tailwind CSS, MySQL, Redis  
-**Acuan:** PRD versi 2.0 dan ERD terbaru yang mencakup modul Desa, UMKM, Pariwisata, Survey Desa, Survey UMKM, Survey Pariwisata, serta data tahunan sosial-ekonomi dan impact data.
+**Acuan:** PRD versi 3.0 dan database final yang digunakan saat ini. Revisi utama pada versi ini adalah `pariwisata_survey_answers` berelasi langsung ke `village_survey_assignments` melalui `village_survey_assignment_id`, dengan unique index `(village_survey_assignment_id, pariwisata_survey_question_id)`.
 
 ---
 
@@ -33,9 +33,10 @@ Platform ini digunakan untuk:
 15. Membuat dan mengelola template survey desa.
 16. Membuat dan mengelola assessment UMKM berbasis kriteria, bobot, dan nilai.
 17. Membuat dan mengelola matrix survey pariwisata berbasis kategori, sub kategori, kriteria, indikator, bukti pendukung, dan harkat/peringkat.
-18. Mendukung pengisian survey oleh enumerator lapangan.
-19. Mendukung upload dokumen pendukung survey.
-20. Melihat dashboard monitoring desa, UMKM, pariwisata, survey, data tahunan, dan impact data.
+18. Mengisi survey pariwisata berdasarkan `village_survey_assignments`, bukan berdasarkan setiap destinasi pariwisata yang dibuat.
+19. Mendukung pengisian survey oleh enumerator lapangan.
+20. Mendukung upload dokumen pendukung survey.
+21. Melihat dashboard monitoring desa, UMKM, pariwisata, survey, data tahunan, dan impact data.
 
 ---
 
@@ -55,7 +56,9 @@ PRD versi 2.0 sudah mencakup manajemen desa, UMKM, destinasi pariwisata, survey 
 8. Data kelompok rentan desa per tahun.
 9. Data kelompok aktif masyarakat dan kemitraan desa per tahun.
 
-SocialImpact versi 3.0 menjadi sistem terpusat untuk mengelola data operasional desa wisata sekaligus data sosial-ekonomi tahunan untuk kebutuhan monitoring dampak program CSR.
+SocialImpact versi 3.1 tetap mempertahankan ruang lingkup versi 3.0, tetapi memperjelas desain survey pariwisata. Survey pariwisata dilakukan dalam konteks `village_survey_assignments`. Artinya, saat enumerator membuat data destinasi pada `pariwisata_village_table`, sistem tidak otomatis membuat survey pariwisata baru. Semua jawaban survey pariwisata disimpan di `pariwisata_survey_answers` dan mengacu ke assignment melalui `village_survey_assignment_id`.
+
+SocialImpact versi 3.1 menjadi sistem terpusat untuk mengelola data operasional desa wisata sekaligus data sosial-ekonomi tahunan untuk kebutuhan monitoring dampak program CSR.
 
 ---
 
@@ -73,7 +76,8 @@ Tujuan utama SocialImpact adalah:
 8. Memudahkan admin membuat template survey desa.
 9. Memudahkan admin membuat master pertanyaan assessment UMKM berbasis kriteria dan bobot.
 10. Memudahkan admin membuat master matrix survey pariwisata berbasis kategori, kriteria, indikator, dan opsi harkat/peringkat.
-11. Menyediakan workflow pengisian, submit, review, dan return survey desa.
+11. Memastikan survey pariwisata melekat ke `village_survey_assignments`, bukan ke data destinasi pariwisata.
+12. Menyediakan workflow pengisian, submit, review, dan return survey desa.
 12. Menyediakan sistem scoring untuk survey desa, assessment UMKM, dan survey pariwisata.
 13. Menyediakan audit trail untuk aktivitas survey dan perubahan jawaban.
 14. Menyediakan dashboard monitoring status desa, data UMKM, destinasi wisata, data tahunan, progress survey, dan hasil skor.
@@ -89,6 +93,7 @@ Tujuan utama SocialImpact adalah:
 | Data Pariwisata | Destinasi, kategori, dan survey pariwisata | Ditambah omset tahunan, pengunjung tahunan, jenis pengunjung tahunan, paket wisata, data pekerja tahunan, dan data pelatihan pekerja |
 | Data Desa | Data utama desa dan profil desa | Ditambah data masyarakat tahunan, kelompok rentan, kelompok aktif masyarakat, dan kemitraan |
 | Dashboard | Fokus data desa, UMKM, pariwisata, dan skor survey | Ditambah tren omset, tren pengunjung, tenaga kerja, pelatihan, statistik masyarakat, kelompok rentan, dan kemitraan |
+| Survey Pariwisata | Belum tegas relasi assignment | `pariwisata_survey_answers` berelasi ke `village_survey_assignments` melalui `village_survey_assignment_id`; satu pertanyaan pariwisata unik per assignment |
 | Data Model | Belum memuat semua data tahunan | Ditambah `annual_turnovers`, `pariwisata_annual_visitors`, `pariwisata_visitor_type_annuals`, `pariwisata_packages`, `annual_worker_stats`, `annual_worker_training_stats`, `village_annual_population_stats`, `village_vulnerable_group_categories`, `village_vulnerable_group_annuals`, `village_active_group_categories`, dan `village_active_group_annuals` |
 | Halaman Admin | Manajemen desa, UMKM, pariwisata, dan survey | Ditambah halaman annual data dan impact data |
 | Halaman Enumerator | Input data desa, UMKM, pariwisata, dan survey | Ditambah input data tahunan untuk UMKM, pariwisata, pekerja, masyarakat, kelompok rentan, kelompok aktif, dan kemitraan |
@@ -140,8 +145,9 @@ MVP mencakup:
 37. Manajemen jumlah pekerja pariwisata yang mengikuti pelatihan per tahun.
 38. Manajemen matrix survey pariwisata.
 39. Manajemen opsi harkat/peringkat pariwisata.
-40. Pengisian survey pariwisata.
-41. Upload dokumen bukti pendukung survey pariwisata.
+40. Pengisian survey pariwisata berdasarkan `village_survey_assignments`.
+41. Penyimpanan jawaban survey pariwisata ke `pariwisata_survey_answers` dengan unique index `(village_survey_assignment_id, pariwisata_survey_question_id)`.
+42. Upload dokumen bukti pendukung survey pariwisata.
 42. Manajemen data masyarakat desa per tahun berdasarkan jenis kelamin, pendidikan, keterampilan, dan mata pencaharian.
 43. Manajemen master kategori kelompok rentan.
 44. Manajemen jumlah kelompok rentan desa per tahun.
@@ -216,7 +222,7 @@ Admin dapat:
 30. Menugaskan template survey ke desa.
 31. Melihat progress pengisian survey.
 32. Melihat hasil assessment UMKM.
-33. Melihat hasil survey pariwisata.
+33. Melihat hasil survey pariwisata per survey assignment.
 34. Mereview survey desa yang sudah disubmit.
 35. Mengembalikan survey desa untuk diperbaiki.
 36. Melihat log aktivitas survey.
@@ -249,7 +255,7 @@ Enumerator dapat:
 18. Mengisi data masyarakat desa tahunan.
 19. Mengisi jumlah kelompok rentan desa tahunan.
 20. Mengisi jumlah kelompok aktif masyarakat dan kemitraan desa tahunan.
-21. Mengisi survey pariwisata.
+21. Mengisi survey pariwisata pada `village_survey_assignments` desa yang ditugaskan.
 22. Mengupload dokumen pendukung survey pariwisata.
 23. Mengisi survey desa yang ditugaskan.
 24. Memilih opsi skor untuk setiap pertanyaan survey desa.
@@ -598,7 +604,22 @@ Struktur assessment UMKM:
 
 ## 7.16 Survey Pariwisata
 
-Survey pariwisata mengikuti matrix penilaian sertifikasi desa wisata.
+Survey pariwisata mengikuti matrix penilaian sertifikasi desa wisata. Survey ini **tidak dibuat per destinasi pariwisata** dan **tidak berelasi langsung ke `pariwisata_village_table`**. Survey pariwisata diisi dalam konteks `village_survey_assignments`.
+
+Konsep relasi final:
+
+```text
+Tourism Village
+  -> Village Survey Assignment
+      -> Survey Desa Answers
+      -> Pariwisata Survey Answers
+
+Tourism Village
+  -> Banyak Destinasi Pariwisata
+      -> Kategori
+      -> Paket Wisata
+      -> Annual Data Pariwisata
+```
 
 Survey pariwisata menggunakan:
 
@@ -615,8 +636,56 @@ Struktur matrix pariwisata:
 4. `indicator_code`, `indicator_name`, dan `indicator_description` untuk indikator.
 5. `supporting_evidence` untuk bukti pendukung yang perlu diperiksa atau diupload.
 6. `pariwisata_suvey_options` untuk pilihan harkat/peringkat 4, 3, 2, dan 1.
-7. `pariwisata_survey_answers` untuk jawaban, score, catatan, dan snapshot.
+7. `pariwisata_survey_answers` untuk jawaban, score, catatan, snapshot, dan relasi assignment.
 8. `pariwisata_survey_answer_documents` untuk file bukti pendukung.
+
+Table `pariwisata_survey_answers` mengikuti struktur berikut:
+
+```dbml
+Table pariwisata_survey_answers {
+  id integer [pk, increment, not null]
+  village_survey_assignment_id integer [ref: > village_survey_assignments.id] // delete: cascade, update: no action
+  pariwisata_survey_question_id integer [not null, ref: > pariwisata_survey_questions.id] // delete: no action, update: no action
+  pariwisata_suvey_option_id integer [not null, ref: > pariwisata_suvey_options.id] // delete: no action, update: no action
+  score integer [not null]
+  notes text
+  category_code_snapshot varchar
+  category_name_snapshot varchar
+  sub_category_code_snapshot varchar
+  sub_category_name_snapshot varchar
+  criteria_code_snapshot varchar
+  criteria_name_snapshot varchar
+  criteria_description_snapshot text
+  indicator_code_snapshot varchar
+  indicator_name_snapshot varchar
+  indicator_description_snapshot text
+  supporting_evidence_snapshot text
+  option_label_snapshot text
+  option_description_snapshot text
+  answered_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  last_edited_by integer [ref: > users.id] // delete: set null, update: no action
+  answered_at datetime
+  last_edited_at datetime
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (village_survey_assignment_id, pariwisata_survey_question_id) [unique, name: 'ps_answer_village_question_unique']
+    answered_by [name: 'pariwisata_survey_answers_answered_by_index']
+    pariwisata_suvey_option_id [name: 'ps_answer_option_idx']
+    pariwisata_survey_question_id [name: 'ps_answer_question_idx']
+    village_survey_assignment_id [name: 'ps_answer_pariwisata_idx']
+  }
+}
+```
+
+Catatan implementasi:
+
+1. `village_survey_assignment_id` harus selalu diisi oleh aplikasi saat menyimpan jawaban survey pariwisata.
+2. Unique index `(village_survey_assignment_id, pariwisata_survey_question_id)` memastikan satu indikator hanya memiliki satu jawaban dalam satu assignment.
+3. Jika data destinasi wisata baru dibuat di `pariwisata_village_table`, sistem tidak membuat record baru di `pariwisata_survey_answers`.
+4. Progress survey pariwisata dihitung dari jumlah jawaban dalam satu `village_survey_assignment_id` dibanding total pertanyaan aktif pada template pariwisata.
 
 ---
 
@@ -671,7 +740,7 @@ Struktur matrix pariwisata:
 | `pariwisata_packages` | Paket wisata pada destinasi pariwisata |
 | `pariwisata_survey_questions` | Master matrix survey pariwisata |
 | `pariwisata_suvey_options` | Opsi harkat/peringkat untuk survey pariwisata |
-| `pariwisata_survey_answers` | Jawaban survey pariwisata |
+| `pariwisata_survey_answers` | Jawaban survey pariwisata per `village_survey_assignments`; unik per assignment dan pertanyaan |
 | `pariwisata_survey_answer_documents` | Dokumen bukti pendukung jawaban survey pariwisata |
 
 ## 8.6 Tabel Annual Data UMKM dan Pariwisata
@@ -877,13 +946,15 @@ Fitur admin:
 
 Fitur enumerator:
 
-1. Membuka survey pariwisata.
+1. Membuka survey pariwisata dari `village_survey_assignments` desa yang ditugaskan.
 2. Melihat matrix pertanyaan berdasarkan kategori, sub kategori, dan kriteria.
 3. Melihat indikator dan bukti pendukung.
 4. Memilih salah satu opsi harkat/peringkat.
 5. Mengisi catatan pada `notes`.
 6. Mengupload dokumen bukti pendukung.
-7. Sistem menyimpan snapshot kategori, sub kategori, kriteria, indikator, bukti pendukung, label opsi, dan deskripsi opsi.
+7. Sistem menyimpan jawaban ke `pariwisata_survey_answers` dengan `village_survey_assignment_id`.
+8. Sistem menyimpan snapshot kategori, sub kategori, kriteria, indikator, bukti pendukung, label opsi, dan deskripsi opsi.
+9. Sistem mencegah duplikasi jawaban pada kombinasi `village_survey_assignment_id` dan `pariwisata_survey_question_id`.
 
 ## 9.12 Village Annual Impact Data
 
@@ -1044,14 +1115,19 @@ Fitur admin dan enumerator:
 
 ## 10.14 Workflow Enumerator Mengisi Survey Pariwisata
 
-1. Enumerator membuka menu Survey Pariwisata.
-2. Sistem menampilkan daftar indikator dari `pariwisata_survey_questions`.
-3. Enumerator membaca kriteria, indikator, dan bukti pendukung.
-4. Enumerator memilih opsi harkat/peringkat dari `pariwisata_suvey_options`.
-5. Sistem menyimpan score ke `pariwisata_survey_answers`.
-6. Enumerator mengisi catatan pada `notes` jika diperlukan.
-7. Enumerator mengupload dokumen bukti pendukung ke `pariwisata_survey_answer_documents`.
-8. Sistem menyimpan snapshot pertanyaan dan opsi.
+1. Enumerator membuka daftar desa yang ditugaskan.
+2. Enumerator membuka detail `village_survey_assignments` pada desa terkait.
+3. Enumerator membuka tab Survey Pariwisata.
+4. Sistem menampilkan daftar indikator dari `pariwisata_survey_questions` sesuai template pariwisata yang aktif/dipakai.
+5. Enumerator membaca kategori, sub kategori, kriteria, indikator, dan bukti pendukung.
+6. Enumerator memilih opsi harkat/peringkat dari `pariwisata_suvey_options`.
+7. Sistem menyimpan jawaban ke `pariwisata_survey_answers` dengan `village_survey_assignment_id` dari assignment yang sedang dikerjakan.
+8. Sistem menyalin `score` dari opsi yang dipilih.
+9. Sistem menyimpan snapshot kategori, sub kategori, kriteria, indikator, supporting evidence, label opsi, dan deskripsi opsi.
+10. Enumerator mengisi catatan pada `notes` jika diperlukan.
+11. Enumerator mengupload dokumen bukti pendukung ke `pariwisata_survey_answer_documents`.
+12. Sistem mencegah jawaban ganda menggunakan unique index `(village_survey_assignment_id, pariwisata_survey_question_id)`.
+13. Membuat atau mengedit destinasi pada `pariwisata_village_table` tidak membuat survey pariwisata baru.
 
 ## 10.15 Workflow Admin Membuat Template Survey Desa
 
@@ -1070,7 +1146,8 @@ Fitur admin dan enumerator:
 3. Admin membuat survey assignment.
 4. Sistem membuat record di `village_survey_assignments`.
 5. `village_id` bersifat unique agar satu desa hanya memiliki satu survey assignment utama.
-6. Sistem menyimpan `assigned_by` dan `assigned_at`.
+6. Assignment ini menjadi konteks untuk pengisian `survey_answers` dan `pariwisata_survey_answers`.
+7. Sistem menyimpan `assigned_by` dan `assigned_at`.
 
 ## 10.17 Workflow Enumerator Mengisi Survey Desa Draft
 
@@ -1247,10 +1324,18 @@ Fitur admin dan enumerator:
 2. Setiap indikator dapat memiliki bukti pendukung.
 3. Opsi harkat/peringkat wajib memiliki score, level, label, dan description.
 4. Score pilihan biasanya 4, 3, 2, dan 1.
-5. Jawaban survey pariwisata harus memilih salah satu opsi.
-6. Sistem wajib menyimpan snapshot pertanyaan dan opsi.
-7. Jika `document_required` true, enumerator wajib mengupload dokumen pendukung.
-8. Berdasarkan ERD saat ini, unique index pada `pariwisata_survey_answers` adalah `(pariwisata_survey_question_id)`, sehingga satu pertanyaan pariwisata hanya memiliki satu jawaban final secara global. Jika di masa depan survey perlu per destinasi atau per assignment, ERD perlu diperluas dengan foreign key ke assignment atau destinasi.
+5. Jawaban survey pariwisata harus memilih salah satu opsi dari `pariwisata_suvey_options`.
+6. Jawaban survey pariwisata wajib disimpan pada `pariwisata_survey_answers`.
+7. `pariwisata_survey_answers.village_survey_assignment_id` harus mengacu ke `village_survey_assignments.id`.
+8. Dalam satu `village_survey_assignments`, satu `pariwisata_survey_question_id` hanya boleh memiliki satu jawaban final.
+9. Unique index yang digunakan adalah `(village_survey_assignment_id, pariwisata_survey_question_id)` dengan nama `ps_answer_village_question_unique`.
+10. `pariwisata_survey_answers` tidak memiliki relasi langsung ke `pariwisata_village_table`.
+11. Create, edit, atau delete destinasi wisata tidak boleh otomatis membuat atau menghapus jawaban survey pariwisata.
+12. Sistem wajib menyimpan snapshot pertanyaan dan opsi pada saat jawaban dibuat atau diperbarui.
+13. Jika `document_required` pada pertanyaan bernilai true, enumerator wajib mengupload dokumen pendukung.
+14. Dokumen bukti pendukung survey pariwisata disimpan pada `pariwisata_survey_answer_documents`.
+15. Survey pariwisata yang sudah berada pada assignment dengan status `reviewed` tidak boleh diedit oleh enumerator.
+
 
 ## 11.19 Survey Desa
 
@@ -1442,13 +1527,20 @@ Fitur admin dan enumerator:
 
 ## 12.20 Pariwisata Survey Answer
 
-1. Pariwisata survey question required.
-2. Pariwisata survey option required.
-3. Option must belong to the selected question.
-4. Score copied from selected option.
-5. Answered by required.
-6. Notes nullable.
-7. Snapshot fields populated from question and option.
+1. Village survey assignment required.
+2. `village_survey_assignment_id` harus valid dan mengarah ke `village_survey_assignments.id`.
+3. Pariwisata survey question required.
+4. Pariwisata survey option required.
+5. Option must belong to the selected pariwisata survey question.
+6. Score copied from selected option.
+7. Answered by required.
+8. Notes nullable.
+9. Snapshot fields populated from question and option.
+10. User must be assigned to the village related to the selected `village_survey_assignment_id`.
+11. Cannot update if assignment status is `reviewed`.
+12. Combination `village_survey_assignment_id` and `pariwisata_survey_question_id` must be unique.
+13. Jika `document_required` true, minimal satu dokumen wajib diupload pada `pariwisata_survey_answer_documents` sebelum submit/review.
+
 
 ## 12.21 Survey Desa Answer
 
@@ -1545,11 +1637,27 @@ Score pariwisata berasal dari pilihan harkat/peringkat:
 | 2 | Kurang Terpenuhi |
 | 1 | Tidak Terpenuhi |
 
-Nilai akhir pariwisata dapat dihitung sebagai rata-rata atau total, sesuai kebutuhan dashboard.
+Nilai akhir pariwisata dihitung berdasarkan jawaban pada satu `village_survey_assignment_id`.
 
 ```text
 average_pariwisata_score = total_score / answered_questions
 ```
+
+Query konseptual:
+
+```text
+SELECT AVG(score)
+FROM pariwisata_survey_answers
+WHERE village_survey_assignment_id = selected_assignment_id
+```
+
+Progress survey pariwisata:
+
+```text
+progress_percentage = answered_questions / total_active_pariwisata_questions * 100
+```
+
+Satu pertanyaan hanya dihitung satu kali per assignment karena unique index `(village_survey_assignment_id, pariwisata_survey_question_id)`.
 
 ## 13.7 Annual Turnover Trend
 
@@ -1875,6 +1983,8 @@ Menampilkan:
 14. List dokumen.
 15. Activity logs.
 16. Answer histories.
+17. Ringkasan jawaban survey pariwisata berdasarkan assignment.
+18. Dokumen pendukung survey pariwisata.
 
 ---
 
@@ -2020,14 +2130,17 @@ Enumerator dapat:
 
 Fitur:
 
-1. Tampilkan matrix berdasarkan kategori dan sub kategori.
-2. Tampilkan kriteria, indikator, dan bukti pendukung.
-3. Tampilkan opsi 4, 3, 2, dan 1.
-4. Pilih opsi harkat/peringkat.
-5. Isi catatan penilaian.
-6. Upload dokumen bukti pendukung.
-7. Tampilkan progress pertanyaan terjawab.
-8. Tampilkan score rata-rata.
+1. Dibuka dari detail `village_survey_assignments` atau dari desa yang memiliki assignment aktif.
+2. Tampilkan matrix berdasarkan kategori dan sub kategori.
+3. Tampilkan kriteria, indikator, dan bukti pendukung.
+4. Tampilkan opsi 4, 3, 2, dan 1.
+5. Pilih opsi harkat/peringkat.
+6. Isi catatan penilaian.
+7. Simpan jawaban ke `pariwisata_survey_answers` dengan `village_survey_assignment_id`.
+8. Upload dokumen bukti pendukung.
+9. Tampilkan progress pertanyaan terjawab berdasarkan assignment.
+10. Tampilkan score rata-rata berdasarkan assignment.
+11. Lock form jika `village_survey_assignments.status = reviewed`.
 
 ## 16.12 Form Survey Desa
 
@@ -2170,6 +2283,8 @@ Karakteristik database:
 7. Menggunakan table khusus UMKM dan pariwisata sesuai ERD.
 8. Menggunakan table annual/time-series untuk omset, pengunjung, pekerja, pelatihan, dan impact data.
 9. Menggunakan `entity_key` untuk table generic yang dapat mengarah ke UMKM atau pariwisata.
+10. `pariwisata_survey_answers` wajib menggunakan `village_survey_assignment_id` sebagai konteks jawaban survey pariwisata.
+11. Unique index `(village_survey_assignment_id, pariwisata_survey_question_id)` digunakan untuk mencegah jawaban ganda pada satu assignment.
 
 ## 18.4 Redis
 
@@ -2311,10 +2426,11 @@ Bertanggung jawab untuk:
 Bertanggung jawab untuk:
 
 1. Menghitung total pertanyaan matrix pariwisata.
-2. Menghitung jumlah pertanyaan terjawab.
-3. Menghitung average score pariwisata.
-4. Menghitung score per kategori.
-5. Menghitung score per kriteria.
+2. Menghitung jumlah pertanyaan terjawab berdasarkan `village_survey_assignment_id`.
+3. Menghitung average score pariwisata per assignment.
+4. Menghitung score per kategori per assignment.
+5. Menghitung score per kriteria per assignment.
+6. Memastikan satu assignment hanya memiliki satu jawaban untuk satu indikator.
 
 ### AnnualDataService
 
@@ -2525,6 +2641,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('pariwisata-survey-questions/{question}/options', [AdminPariwisataSurveyOptionController::class, 'store'])->name('pariwisata-survey-questions.options.store');
 
         Route::resource('survey-assignments', AdminSurveyAssignmentController::class)->only(['index', 'show', 'store']);
+        Route::get('survey-assignments/{assignment}/pariwisata-survey', [AdminPariwisataSurveyReviewController::class, 'show'])->name('survey-assignments.pariwisata-survey.show');
         Route::post('survey-assignments/{assignment}/review', [AdminSurveyReviewController::class, 'review'])->name('survey-assignments.review');
         Route::post('survey-assignments/{assignment}/return', [AdminSurveyReviewController::class, 'return'])->name('survey-assignments.return');
     });
@@ -2562,8 +2679,9 @@ Route::middleware(['auth', 'role:enumerator'])
         Route::resource('annual-worker-stats', EnumeratorAnnualWorkerStatController::class);
         Route::resource('annual-worker-training-stats', EnumeratorAnnualWorkerTrainingStatController::class);
 
-        Route::get('pariwisata-survey', [EnumeratorPariwisataSurveyController::class, 'index'])->name('pariwisata-survey.index');
-        Route::post('pariwisata-survey/answers', [EnumeratorPariwisataSurveyAnswerController::class, 'store'])->name('pariwisata-survey.answers.store');
+        Route::get('/surveys/{assignment}/pariwisata-survey', [EnumeratorPariwisataSurveyController::class, 'fill'])->name('surveys.pariwisata-survey.fill');
+        Route::post('/surveys/{assignment}/pariwisata-survey/answers', [EnumeratorPariwisataSurveyAnswerController::class, 'store'])->name('surveys.pariwisata-survey.answers.store');
+        Route::put('/surveys/{assignment}/pariwisata-survey/answers/{answer}', [EnumeratorPariwisataSurveyAnswerController::class, 'update'])->name('surveys.pariwisata-survey.answers.update');
         Route::post('pariwisata-survey/answers/{answer}/documents', [EnumeratorPariwisataSurveyDocumentController::class, 'store'])->name('pariwisata-survey.documents.store');
 
         Route::get('/surveys', [EnumeratorSurveyController::class, 'index'])->name('surveys.index');
@@ -2647,6 +2765,7 @@ Route::middleware(['auth', 'role:enumerator'])
 6. Enumerator hanya dapat mengisi annual data UMKM/pariwisata pada desa yang ditugaskan.
 7. Enumerator hanya dapat mengisi impact data desa pada desa yang ditugaskan.
 8. Enumerator hanya dapat mengisi survey desa yang ditugaskan.
+9. Enumerator hanya dapat mengisi survey pariwisata pada `village_survey_assignments` dari desa yang ditugaskan.
 9. Admin dapat melihat seluruh data.
 10. Dokumen survey tidak boleh diakses publik tanpa otorisasi.
 11. File upload wajib divalidasi.
@@ -2698,6 +2817,8 @@ Sistem harus menangani error berikut:
 14. Assignment survey untuk desa sudah ada.
 15. Data sudah dihapus atau tidak aktif.
 16. Dokumen wajib survey pariwisata belum diupload.
+17. Jawaban survey pariwisata sudah ada untuk kombinasi `village_survey_assignment_id` dan `pariwisata_survey_question_id`.
+18. `village_survey_assignment_id` tidak valid atau tidak sesuai dengan desa yang ditugaskan.
 17. Kategori destinasi tidak valid.
 18. Annual data duplicate pada tahun dan kategori yang sama.
 19. Entity key tidak sesuai dengan entity type.
@@ -2797,11 +2918,15 @@ Sistem harus menangani error berikut:
 
 - Admin dapat membuat matrix survey pariwisata.
 - Admin dapat membuat opsi harkat/peringkat untuk setiap indikator.
+- Enumerator dapat membuka survey pariwisata dari `village_survey_assignments`.
 - Enumerator dapat memilih opsi 4, 3, 2, atau 1.
+- Sistem menyimpan jawaban ke `pariwisata_survey_answers` dengan `village_survey_assignment_id`.
 - Sistem menyimpan score dari opsi.
 - Enumerator dapat mengisi notes.
 - Enumerator dapat upload dokumen bukti pendukung.
 - Sistem menyimpan snapshot pertanyaan dan opsi.
+- Sistem mencegah duplikasi jawaban dengan unique index `(village_survey_assignment_id, pariwisata_survey_question_id)`.
+- Create destinasi pariwisata tidak membuat survey pariwisata baru.
 
 ## 26.12 Survey Template Desa
 
@@ -3012,7 +3137,7 @@ Sistem harus menangani error berikut:
 3. Pastikan `village_survey_assignments.village_id` unique agar satu desa hanya memiliki satu survey utama.
 4. Pastikan `survey_answers` memiliki unique index pada `village_survey_assignment_id` dan `survey_question_id`.
 5. Pastikan `umkm_survey_answers` memiliki unique index pada `umkm_id` dan `umkm_assessment_question_id`.
-6. Pastikan `pariwisata_survey_answers` mengikuti unique index sesuai ERD saat ini.
+6. Pastikan `pariwisata_survey_answers` menggunakan `village_survey_assignment_id` dan unique index `(village_survey_assignment_id, pariwisata_survey_question_id)`.
 7. Pastikan `annual_turnovers` menggunakan `entity_key` yang dibuat di server, bukan dipercaya langsung dari input client.
 8. Pastikan validasi `entity_type`, `umkm_id`, `pariwisata_id`, dan `entity_key` konsisten.
 9. Pastikan semua data tahunan memiliki validasi duplicate sesuai unique index.
@@ -3023,7 +3148,8 @@ Sistem harus menangani error berikut:
 14. Gunakan transaction saat submit survey desa.
 15. Gunakan service khusus untuk scoring survey desa, scoring UMKM, scoring pariwisata, annual data, dan impact data.
 16. Gunakan Redis cache untuk dashboard jika query mulai berat.
-17. Untuk survey pariwisata, perhatikan bahwa ERD saat ini belum memiliki assignment atau relasi langsung ke destinasi pada table jawaban. Jika kebutuhan berubah menjadi survey per destinasi/periode, struktur database perlu diperluas.
-18. Nama table `pariwisata_suvey_options` mengikuti ERD saat ini. Jika memungkinkan sebelum migrasi production, pertimbangkan koreksi typo menjadi `pariwisata_survey_options` agar konsisten.
+17. Untuk survey pariwisata, jangan menghubungkan `pariwisata_survey_answers` ke `pariwisata_village_table`; relasi finalnya adalah ke `village_survey_assignments`.
+18. Walaupun DBML table `pariwisata_survey_answers` tidak menandai `village_survey_assignment_id` sebagai `[not null]`, aplikasi harus memperlakukannya sebagai required.
+19. Nama table `pariwisata_suvey_options` mengikuti ERD saat ini. Jika memungkinkan sebelum migrasi production, pertimbangkan koreksi typo menjadi `pariwisata_survey_options` agar konsisten.
 19. Hindari table legacy `turnover_umkm_annuals`, `turnover_pariwisata_annuals`, dan `visitor_pariwisata_annuals` jika sudah menggunakan rancangan baru `annual_turnovers` dan `pariwisata_annual_visitors`.
 20. Untuk kategori custom seperti skill, livelihood, kelompok aktif, dan kemitraan, sediakan autocomplete agar data tidak terlalu bervariasi akibat typo.

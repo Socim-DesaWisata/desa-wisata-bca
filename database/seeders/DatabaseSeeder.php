@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
+            // SQLSurveyQuestionSeeder::class
             TemplateQuestionSeeder::class,
             UMKMSurveySeeder::class,
             PariwisataSurveySeeder::class,

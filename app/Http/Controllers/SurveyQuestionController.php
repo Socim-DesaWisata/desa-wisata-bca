@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SurveyQuestionTemplateExport;
 use App\Http\Requests\SurveyQuestions\IndexSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\StoreSurveyQuestionRequest;
 use App\Http\Requests\SurveyQuestions\UpdatePariwisataSurveyQuestionRequest;
@@ -16,6 +17,7 @@ use App\Services\SurveyQuestionService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SurveyQuestionController extends Controller
 {
@@ -30,6 +32,15 @@ class SurveyQuestionController extends Controller
         SurveyQuestionService $service
     ): Response {
         return Inertia::render('questions/index', $service->getIndexData($template, $request->validated()));
+    }
+
+    public function export(
+        SurveyTemplate $template,
+        SurveyQuestionTemplateExport $export,
+    ): BinaryFileResponse {
+        $file = $export->export($template);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
 
     public function updateTemplate(

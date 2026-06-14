@@ -23,7 +23,6 @@ import {
 } from 'react';
 
 import { show as showAssignment } from '@/routes/survey-assignments';
-import { show as showPariwisata } from '@/routes/survey-assignments/pariwisata';
 import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
 import { destroy as destroyPariwisataSurveyDocument } from '@/routes/survey-assignments/pariwisata/take-survey/documents';
 
@@ -101,13 +100,6 @@ type TakePariwisataSurveyProps = {
             name: string;
             email: string | null;
         };
-    };
-    pariwisata: {
-        id: number;
-        name: string;
-        status_label: string;
-        address: string | null;
-        categories: Array<{ id: number; value: string; label: string }>;
     };
     template: {
         id: number;
@@ -567,7 +559,6 @@ function QuestionCard({
 
 export default function TakeSurveyPariwisata({
     assignment,
-    pariwisata,
     template,
     sub_categories,
     summary,
@@ -588,7 +579,6 @@ export default function TakeSurveyPariwisata({
         >
             <TakeSurveyPariwisataContent
                 assignment={assignment}
-                pariwisata={pariwisata}
                 template={template}
                 sub_categories={sub_categories}
                 summary={summary}
@@ -599,7 +589,6 @@ export default function TakeSurveyPariwisata({
 
 function TakeSurveyPariwisataContent({
     assignment,
-    pariwisata,
     template,
     sub_categories,
     summary,
@@ -681,7 +670,6 @@ function TakeSurveyPariwisataContent({
         router.delete(
             destroyPariwisataSurveyDocument.url({
                 assignment: assignment.code,
-                pariwisata: pariwisata.id,
                 document: document.id,
             }),
             { preserveScroll: true },
@@ -724,7 +712,6 @@ function TakeSurveyPariwisataContent({
         router.post(
             storePariwisataSurveyDraft.url({
                 assignment: assignment.code,
-                pariwisata: pariwisata.id,
             }),
             formData,
             {
@@ -741,17 +728,14 @@ function TakeSurveyPariwisataContent({
 
     return (
         <>
-            <Head title={`Survey Pariwisata - ${pariwisata.name}`} />
+            <Head title={`Survey Pariwisata - ${assignment.village.name}`} />
 
             <div className="min-h-[100dvh] bg-[#F7F7F7] font-sans text-[#303030]">
                 <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EFEFEF] bg-white/95 shadow-[0_8px_24px_rgba(9,57,103,0.08)] backdrop-blur-md lg:left-[232px]">
                     <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4 sm:px-6">
                         <div className="flex min-w-0 items-center gap-3">
                             <Link
-                                href={showPariwisata.url({
-                                    assignment: assignment.code,
-                                    pariwisata: pariwisata.id,
-                                })}
+                                href={showAssignment.url(assignment.code)}
                                 aria-label="Kembali"
                                 className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#F1F5F8] active:scale-95"
                             >
@@ -820,7 +804,7 @@ function TakeSurveyPariwisataContent({
                                 </span>
                                 <div className="min-w-0">
                                     <h2 className="truncate text-lg leading-tight font-bold text-[#303030] sm:text-xl">
-                                        {pariwisata.name}
+                                        Survey Pariwisata Desa
                                     </h2>
                                     <p className="mt-1 text-sm font-medium text-[#7C7C7C]">
                                         {assignment.village.name} ·{' '}
@@ -859,10 +843,7 @@ function TakeSurveyPariwisataContent({
                             <InfoRow
                                 icon={<MapPin size={20} strokeWidth={2.1} />}
                                 label="Lokasi"
-                                value={
-                                    pariwisata.address ??
-                                    assignment.village.location
-                                }
+                                value={assignment.village.location}
                             />
                         </div>
                     </section>

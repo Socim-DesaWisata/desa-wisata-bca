@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\VillageSurveyAssignments;
 
-use App\Models\SurveyTemplate;
+use App\Services\ActiveSurveyTemplateResolver;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -113,16 +113,12 @@ class StoreUmkmSurveyAssignmentRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                $template = SurveyTemplate::query()
-                    ->where('title', 'Assessment Pelaku UMKM')
-                    ->where('status', 'published')
-                    ->with(['umkmSurveyQuestions' => fn ($query) => $query
+                $template = app(ActiveSurveyTemplateResolver::class)->resolve('umkm', [
+                    'umkmSurveyQuestions' => fn ($query) => $query
                         ->select(['id', 'survey_template_id'])
                         ->where('is_active', true)
-                        ->orderBy('sort_order')])
-                    ->latest('published_at')
-                    ->latest('id')
-                    ->first();
+                        ->orderBy('sort_order'),
+                ]);
 
                 if (! $template || $template->umkmSurveyQuestions->isEmpty()) {
                     $validator->errors()->add('answers', 'Template assessment UMKM aktif belum tersedia.');

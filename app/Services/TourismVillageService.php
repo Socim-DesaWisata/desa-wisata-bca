@@ -7,8 +7,6 @@ use App\Models\AnnualWorkerStat;
 use App\Models\AnnualWorkerTrainingStat;
 use App\Models\PariwisataAnnualVisitor;
 use App\Models\PariwisataPackage;
-use App\Models\PariwisataSurveyAnswer;
-use App\Models\PariwisataSurveyAnswerDocument;
 use App\Models\PariwisataVillage;
 use App\Models\PariwisataVillageCategory;
 use App\Models\PariwisataVisitorTypeAnnual;
@@ -309,15 +307,7 @@ class TourismVillageService
     private function deleteVillagePariwisataTree(int $villageId): void
     {
         $pariwisataIds = PariwisataVillage::query()->where('village_id', $villageId)->pluck('id');
-        $pariwisataAnswerIds = PariwisataSurveyAnswer::query()
-            ->whereIn('pariwisata_village_id', $pariwisataIds)
-            ->pluck('id');
-
-        PariwisataSurveyAnswerDocument::query()
-            ->whereIn('pariwisata_survey_answer_id', $pariwisataAnswerIds)
-            ->delete();
         PariwisataVillageCategory::query()->whereIn('pariwisata_village_id', $pariwisataIds)->delete();
-        PariwisataSurveyAnswer::query()->whereIn('pariwisata_village_id', $pariwisataIds)->delete();
         AnnualTurnover::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
         PariwisataAnnualVisitor::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
         PariwisataVisitorTypeAnnual::query()->whereIn('pariwisata_id', $pariwisataIds)->delete();
@@ -371,15 +361,6 @@ class TourismVillageService
 
         PariwisataVillage::withTrashed()->whereIn('id', $pariwisataIds)->restore();
         PariwisataVillageCategory::withTrashed()->whereIn('pariwisata_village_id', $pariwisataIds)->restore();
-        PariwisataSurveyAnswer::withTrashed()->whereIn('pariwisata_village_id', $pariwisataIds)->restore();
-
-        $pariwisataAnswerIds = PariwisataSurveyAnswer::withTrashed()
-            ->whereIn('pariwisata_village_id', $pariwisataIds)
-            ->pluck('id');
-
-        PariwisataSurveyAnswerDocument::withTrashed()
-            ->whereIn('pariwisata_survey_answer_id', $pariwisataAnswerIds)
-            ->restore();
         AnnualTurnover::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
         PariwisataAnnualVisitor::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
         PariwisataVisitorTypeAnnual::withTrashed()->whereIn('pariwisata_id', $pariwisataIds)->restore();
@@ -931,4 +912,3 @@ class TourismVillageService
         return $date?->translatedFormat('d M Y') ?? '-';
     }
 }
-

@@ -1,1597 +1,810 @@
-// ======================================================
-// ENUMS - USER & MASTER DATA
-// ======================================================
+// DBML generated from uploaded Laravel/SQLite schema markdown
+// Relationships are written inline beside FK columns for dbdiagram.io
+// Import this file at https://dbdiagram.io
 
-Enum user_role {
-  admin
-  enumerator
+Table annual_turnovers {
+  id integer [pk, increment, not null]
+  entity_type varchar [not null]
+  umkm_id integer [ref: > village_umkms.id] // delete: set null, update: no action
+  pariwisata_id integer [ref: > pariwisata_village_table.id] // delete: set null, update: no action
+  entity_key varchar [not null]
+  year integer [not null]
+  value numeric [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (entity_key, year) [unique, name: 'annual_turnovers_entity_year_unique']
+    year [name: 'annual_turnovers_year_index']
+    pariwisata_id [name: 'annual_turnovers_pariwisata_id_index']
+    umkm_id [name: 'annual_turnovers_umkm_id_index']
+    entity_key [name: 'annual_turnovers_entity_key_index']
+    entity_type [name: 'annual_turnovers_entity_type_index']
+  }
 }
 
-Enum user_status {
-  active
-  inactive
+Table annual_worker_stats {
+  id integer [pk, increment, not null]
+  entity_type varchar [not null]
+  umkm_id integer [ref: > village_umkms.id] // delete: set null, update: no action
+  pariwisata_id integer [ref: > pariwisata_village_table.id] // delete: set null, update: no action
+  entity_key varchar [not null]
+  year integer [not null]
+  dimension varchar [not null]
+  category_value varchar [not null]
+  total_people integer [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (entity_key, year, dimension, category_value) [unique, name: 'annual_worker_stats_unique']
+    category_value [name: 'annual_worker_stats_category_value_index']
+    dimension [name: 'annual_worker_stats_dimension_index']
+    year [name: 'annual_worker_stats_year_index']
+    pariwisata_id [name: 'annual_worker_stats_pariwisata_id_index']
+    umkm_id [name: 'annual_worker_stats_umkm_id_index']
+    entity_key [name: 'annual_worker_stats_entity_key_index']
+    entity_type [name: 'annual_worker_stats_entity_type_index']
+  }
 }
 
-Enum program_status {
-  active
-  inactive
-  archived
+Table annual_worker_training_stats {
+  id integer [pk, increment, not null]
+  entity_type varchar [not null]
+  umkm_id integer [ref: > village_umkms.id] // delete: set null, update: no action
+  pariwisata_id integer [ref: > pariwisata_village_table.id] // delete: set null, update: no action
+  entity_key varchar [not null]
+  year integer [not null]
+  training_name varchar
+  total_people integer [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    training_name [name: 'annual_worker_training_stats_training_name_index']
+    year [name: 'annual_worker_training_stats_year_index']
+    pariwisata_id [name: 'annual_worker_training_stats_pariwisata_id_index']
+    umkm_id [name: 'annual_worker_training_stats_umkm_id_index']
+    entity_key [name: 'annual_worker_training_stats_entity_key_index']
+    entity_type [name: 'annual_worker_training_stats_entity_type_index']
+  }
 }
 
-Enum village_status {
-  draft
-  in_progress
-  completed
-  archived
-}
-
-Enum media_type {
-  image
-  video
-  document
-}
-
-
-// ======================================================
-// ENUMS - SURVEY
-// ======================================================
-
-Enum survey_template_status {
-  draft
-  published
-  archived
-}
-
-Enum survey_assignment_status {
-  assigned
-  in_progress
-  submitted
-  reviewed
-  returned
-}
-
-Enum survey_assignment_log_action {
-  assigned
-  started
-  saved_draft
-  submitted
-  reviewed
-  returned
-  status_changed
-}
-
-Enum survey_answer_log_action {
-  created
-  updated
-  document_uploaded
-  document_deleted
-}
-
-Enum survey_question_type {
-  desa
-  wisata
-}
-
-
-// ======================================================
-// ENUMS - PARIWISATA
-// ======================================================
-
-Enum pariwisata_category_type {
-  wisata_alam
-  wisata_buatan
-  wisata_religi
-  wisata_budaya
-  wisata_kuliner
-  wisata_edukasi
-}
-
-Enum pariwisata_survey_input_type {
-  single_choice
-  multiple_choice
-  text
-  textarea
-  number
-  file
-}
-
-Enum pariwisata_survey_score_level {
-  terpenuhi_sepenuhnya
-  sebagian_terpenuhi
-  kurang_terpenuhi
-  tidak_terpenuhi
-}
-
-
-// ======================================================
-// USERS
-// ======================================================
-// Menyimpan akun admin dan enumerator.
-
-Table users {
-  id bigint [pk, increment]
-
-  name varchar(150) [not null]
-  email varchar(150) [not null, unique]
-  password varchar(255) [not null]
-
-  role user_role [not null]
-  status user_status [not null, default: 'active']
-
-  phone varchar(30)
-  avatar_path varchar(255)
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-}
-
-
-// ======================================================
-// CSR PROGRAMS
-// ======================================================
-// Menyimpan program CSR, misalnya program Desa Wisata BCA per tahun.
 
 Table csr_programs {
-  id bigint [pk, increment]
-
-  name varchar(150) [not null]
-  sponsor_name varchar(150) [not null, default: 'BCA']
+  id integer [pk, increment, not null]
+  name varchar [not null]
+  sponsor_name varchar [not null, default: 'BCA']
   description text
-  year int
-
-  status program_status [not null, default: 'active']
-  created_by bigint [not null]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
+  year integer
+  status varchar [not null, default: 'active']
+  created_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 }
 
-// Relasi banyak-ke-banyak antara program CSR dan desa wisata.
-// Satu program dapat memiliki banyak desa.
-// Satu desa dapat ikut lebih dari satu program/tahun.
+Table pariwisata_annual_visitors {
+  id integer [pk, increment, not null]
+  pariwisata_id integer [not null, ref: > pariwisata_village_table.id] // delete: cascade, update: no action
+  year integer [not null]
+  value integer [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (pariwisata_id, year) [unique, name: 'pariwisata_visitors_year_unique']
+    year [name: 'pariwisata_annual_visitors_year_index']
+    pariwisata_id [name: 'pariwisata_annual_visitors_pariwisata_id_index']
+  }
+}
+
+Table pariwisata_packages {
+  id integer [pk, increment, not null]
+  pariwisata_id integer [not null, ref: > pariwisata_village_table.id] // delete: cascade, update: no action
+  name varchar [not null]
+  package_type varchar
+  duration varchar
+  facilities text
+  description text
+  price numeric
+  is_active boolean [not null, default: true]
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    is_active [name: 'pariwisata_packages_is_active_index']
+    package_type [name: 'pariwisata_packages_package_type_index']
+    name [name: 'pariwisata_packages_name_index']
+    pariwisata_id [name: 'pariwisata_packages_pariwisata_id_index']
+  }
+}
+
+Table pariwisata_survey_answer_documents {
+  id integer [pk, increment, not null]
+  pariwisata_survey_answer_id integer [not null, ref: > pariwisata_survey_answers.id] // delete: cascade, update: no action
+  uploaded_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  file_name varchar [not null]
+  file_path varchar [not null]
+  mime_type varchar
+  file_size integer
+  caption text
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    uploaded_by [name: 'pariwisata_survey_answer_documents_uploaded_by_index']
+    pariwisata_survey_answer_id [name: 'ps_doc_answer_idx']
+  }
+}
+
+Table pariwisata_survey_answers {
+  id integer [pk, increment, not null]
+  village_survey_assignment_id integer [ref: > village_survey_assignments.id] // delete: cascade, update: no action
+  pariwisata_survey_question_id integer [not null, ref: > pariwisata_survey_questions.id] // delete: no action, update: no action
+  pariwisata_suvey_option_id integer [not null, ref: > pariwisata_suvey_options.id] // delete: no action, update: no action
+  score integer [not null]
+  notes text
+  category_code_snapshot varchar
+  category_name_snapshot varchar
+  sub_category_code_snapshot varchar
+  sub_category_name_snapshot varchar
+  criteria_code_snapshot varchar
+  criteria_name_snapshot varchar
+  criteria_description_snapshot text
+  indicator_code_snapshot varchar
+  indicator_name_snapshot varchar
+  indicator_description_snapshot text
+  supporting_evidence_snapshot text
+  option_label_snapshot text
+  option_description_snapshot text
+  answered_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  last_edited_by integer [ref: > users.id] // delete: set null, update: no action
+  answered_at datetime
+  last_edited_at datetime
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (village_survey_assignment_id, pariwisata_survey_question_id) [unique, name: 'ps_answer_village_question_unique']
+    answered_by [name: 'pariwisata_survey_answers_answered_by_index']
+    pariwisata_suvey_option_id [name: 'ps_answer_option_idx']
+    pariwisata_survey_question_id [name: 'ps_answer_question_idx']
+    village_survey_assignment_id [name: 'ps_answer_pariwisata_idx']
+  }
+}
+
+Table pariwisata_survey_questions {
+  id integer [pk, increment, not null]
+  survey_template_id integer [not null, ref: > survey_templates.id] // delete: cascade, update: no action
+  category_code varchar
+  category_name varchar
+  sub_category_code varchar
+  sub_category_name varchar
+  criteria_code varchar
+  criteria_name varchar
+  criteria_description text
+  indicator_code varchar [not null]
+  indicator_name varchar [not null]
+  indicator_description text
+  supporting_evidence text
+  input_type varchar [not null, default: 'single_choice']
+  document_required boolean [not null, default: false]
+  document_hint text
+  sort_order integer [not null, default: 0]
+  is_active boolean [not null, default: true]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (survey_template_id, indicator_code) [unique, name: 'pariwisata_q_template_indicator_unique']
+    indicator_code [name: 'pariwisata_survey_questions_indicator_code_index']
+    criteria_code [name: 'pariwisata_survey_questions_criteria_code_index']
+    sub_category_code [name: 'pariwisata_survey_questions_sub_category_code_index']
+    category_code [name: 'pariwisata_survey_questions_category_code_index']
+    survey_template_id [name: 'pariwisata_survey_questions_survey_template_id_index']
+  }
+}
+
+Table pariwisata_suvey_options {
+  id integer [pk, increment, not null]
+  pariwisata_survey_question_id integer [not null, ref: > pariwisata_survey_questions.id] // delete: cascade, update: no action
+  score integer [not null]
+  level varchar [not null]
+  label varchar [not null]
+  description text [not null]
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (pariwisata_survey_question_id, score) [unique, name: 'ps_option_question_score_unique']
+    pariwisata_survey_question_id [name: 'ps_option_question_idx']
+  }
+}
+
+Table pariwisata_village_category {
+  id integer [pk, increment, not null]
+  pariwisata_village_id integer [not null, ref: > pariwisata_village_table.id] // delete: cascade, update: no action
+  category varchar
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+}
+
+Table pariwisata_village_table {
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  name varchar [not null]
+  operational_days varchar
+  operational_hours varchar
+  operational_schedule text
+  entrance_ticket_price numeric
+  entrance_ticket_description varchar
+  address text
+  person_in_charge_name varchar
+  person_in_charge_phone varchar
+  person_in_charge_address text
+  is_active boolean [not null, default: true]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    is_active [name: 'pariwisata_village_table_is_active_index']
+    name [name: 'pariwisata_village_table_name_index']
+    village_id [name: 'pariwisata_village_table_village_id_index']
+  }
+}
+
+Table pariwisata_visitor_type_annuals {
+  id integer [pk, increment, not null]
+  pariwisata_id integer [not null, ref: > pariwisata_village_table.id] // delete: cascade, update: no action
+  year integer [not null]
+  visitor_type varchar [not null]
+  value integer [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (pariwisata_id, year, visitor_type) [unique, name: 'pariwisata_visitor_type_unique']
+    visitor_type [name: 'pariwisata_visitor_type_annuals_visitor_type_index']
+    year [name: 'pariwisata_visitor_type_annuals_year_index']
+    pariwisata_id [name: 'pariwisata_visitor_type_annuals_pariwisata_id_index']
+  }
+}
+
 
 Table program_villages {
-  id bigint [pk, increment]
-
-  program_id bigint [not null]
-  village_id bigint [not null]
-
+  id integer [pk, increment, not null]
+  program_id integer [not null, ref: > csr_programs.id] // delete: cascade, update: no action
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
   joined_at date
-  status program_status [not null, default: 'active']
+  status varchar [not null, default: 'active']
+  created_at datetime
+  updated_at datetime
 
-  created_at timestamp
-  updated_at timestamp
-
-  Indexes {
-    (program_id, village_id) [unique]
+  indexes {
+    (program_id, village_id) [unique, name: 'program_villages_program_id_village_id_unique']
   }
 }
 
 
-// ======================================================
-// TOURISM VILLAGES
-// ======================================================
-// Master data desa wisata.
+Table survey_answer_documents {
+  id integer [pk, increment, not null]
+  survey_answer_id integer [not null, ref: > survey_answers.id] // delete: cascade, update: no action
+  uploaded_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  file_name varchar [not null]
+  file_path varchar [not null]
+  mime_type varchar
+  file_size integer
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+}
+
+Table survey_answer_histories {
+  id integer [pk, increment, not null]
+  survey_answer_id integer [not null, ref: > survey_answers.id] // delete: cascade, update: no action
+  village_survey_assignment_id integer [not null, ref: > village_survey_assignments.id] // delete: cascade, update: no action
+  survey_question_id integer [not null, ref: > survey_questions.id] // delete: no action, update: no action
+  actor_id integer [not null, ref: > users.id] // delete: no action, update: no action
+  action varchar [not null]
+  old_survey_question_option_id integer [ref: > survey_question_options.id] // delete: set null, update: no action
+  new_survey_question_option_id integer [ref: > survey_question_options.id] // delete: set null, update: no action
+  old_score numeric
+  new_score numeric
+  old_option_label text
+  new_option_label text
+  created_at datetime
+  deleted_at datetime
+
+  indexes {
+    actor_id [name: 'sah_actor_index']
+    survey_question_id [name: 'sah_question_index']
+    village_survey_assignment_id [name: 'sah_assignment_index']
+    survey_answer_id [name: 'sah_answer_index']
+  }
+}
+
+Table survey_answers {
+  id integer [pk, increment, not null]
+  village_survey_assignment_id integer [not null, ref: > village_survey_assignments.id] // delete: cascade, update: no action
+  survey_question_id integer [not null, ref: > survey_questions.id] // delete: no action, update: no action
+  survey_question_option_id integer [not null, ref: > survey_question_options.id] // delete: no action, update: no action
+  score integer [not null]
+  aspect_snapshot text
+  question_text_snapshot text
+  option_label_snapshot text
+  answered_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  last_edited_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  answered_at datetime
+  last_edited_at datetime
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    last_edited_by [name: 'sa_last_edited_by_index']
+    answered_by [name: 'sa_answered_by_index']
+    (village_survey_assignment_id, survey_question_id) [unique, name: 'sa_assignment_question_unique']
+  }
+}
+
+Table survey_question_options {
+  id integer [pk, increment, not null]
+  survey_question_id integer [not null, ref: > survey_questions.id] // delete: cascade, update: no action
+  score numeric [not null]
+  label text [not null]
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (survey_question_id, score) [unique, name: 'survey_question_options_survey_question_id_score_unique']
+  }
+}
+
+Table survey_questions {
+  id integer [pk, increment, not null]
+  survey_template_id integer [not null, ref: > survey_templates.id] // delete: cascade, update: no action
+  aspect varchar [not null]
+  code varchar
+  question_text text [not null]
+  document_hint text
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (survey_template_id, code) [name: 'survey_questions_survey_template_id_code_index']
+    (survey_template_id, aspect) [name: 'survey_questions_survey_template_id_aspect_index']
+  }
+}
+
+Table survey_templates {
+  id integer [pk, increment, not null]
+  title varchar [not null]
+  type varchar
+  description text
+  status varchar [not null, default: 'draft']
+  created_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  published_at datetime
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+}
 
 Table tourism_villages {
-  id bigint [pk, increment]
-
-  code varchar(50) [not null, unique]
-  name varchar(150) [not null]
-  slug varchar(180) [not null, unique]
+  id integer [pk, increment, not null]
+  code varchar [not null]
+  name varchar [not null]
+  slug varchar [not null]
   description text
-
-  province varchar(100)
-  city varchar(100)
-  district varchar(100)
-  subdistrict varchar(100)
+  province varchar
+  city varchar
+  district varchar
+  subdistrict varchar
   address text
-  postal_code varchar(20)
-
-  latitude decimal(10,7)
-  longitude decimal(10,7)
+  postal_code varchar
+  latitude numeric
+  longitude numeric
   maps_url text
+  manager_name varchar
+  manager_phone varchar
+  manager_email varchar
+  status varchar [not null, default: 'draft']
+  created_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 
-  manager_name varchar(150)
-  manager_phone varchar(30)
-  manager_email varchar(150)
-
-  status village_status [not null, default: 'draft']
-  created_by bigint [not null]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-}
-
-// Menyimpan assignment enumerator ke desa.
-// Enumerator yang ditugaskan ke desa dapat melakukan input profil,
-// survey desa, UMKM, dan pariwisata sesuai akses aplikasi.
-
-Table village_enumerator_assignments {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-  enumerator_id bigint [not null]
-  assigned_by bigint [not null]
-
-  is_active boolean [not null, default: true]
-  assigned_at timestamp
-
-  created_at timestamp
-  updated_at timestamp
-
-  Indexes {
-    (village_id, enumerator_id) [unique]
+  indexes {
+    slug [unique, name: 'tourism_villages_slug_unique']
+    code [unique, name: 'tourism_villages_code_unique']
   }
 }
 
-// Media umum untuk desa wisata.
-// Digunakan untuk foto cover, galeri, video, atau dokumen desa.
+Table umkm_survey_answers {
+  id integer [pk, increment, not null]
+  umkm_id integer [not null, ref: > village_umkms.id] // delete: cascade, update: no action
+  umkm_assessment_question_id integer [not null, ref: > umkm_survey_questions.id] // delete: no action, update: no action
+  answered_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  score numeric [not null]
+  criteria_code_snapshot varchar
+  criteria_name_snapshot varchar
+  criteria_weight_percent_snapshot numeric
+  question_text_snapshot text
+  question_weight_percent_snapshot numeric
+  max_score_snapshot numeric
+  normalized_score numeric
+  weighted_score numeric
+  answered_at datetime
+  last_edited_at datetime
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (umkm_id, umkm_assessment_question_id) [unique, name: 'umkm_a_umkm_question_unique']
+    answered_by [name: 'umkm_survey_answers_answered_by_index']
+    umkm_assessment_question_id [name: 'umkm_a_question_idx']
+    umkm_id [name: 'umkm_survey_answers_umkm_id_index']
+  }
+}
+
+Table umkm_survey_questions {
+  id integer [pk, increment, not null]
+  survey_template_id integer [not null, ref: > survey_templates.id] // delete: cascade, update: no action
+  criteria_code varchar [not null]
+  criteria_name varchar [not null]
+  criteria_weight_percent numeric [not null]
+  question_number integer [not null]
+  question_text text [not null]
+  question_weight_percent numeric [not null]
+  max_score numeric [not null, default: 4]
+  help_text text
+  sort_order integer [not null, default: 0]
+  is_active boolean [not null, default: true]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (survey_template_id, criteria_code, question_number) [unique, name: 'umkm_q_template_criteria_number_unique']
+    (criteria_code, question_number) [name: 'umkm_q_criteria_number_idx']
+    criteria_code [name: 'umkm_survey_questions_criteria_code_index']
+    survey_template_id [name: 'umkm_survey_questions_survey_template_id_index']
+  }
+}
+
+Table users {
+  id integer [pk, increment, not null]
+  name varchar [not null]
+  email varchar [not null]
+  email_verified_at datetime
+  password varchar [not null]
+  role varchar [not null, default: 'enumerator']
+  status varchar [not null, default: 'active']
+  phone varchar
+  avatar_path varchar
+  remember_token varchar
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+  two_factor_secret text
+  two_factor_recovery_codes text
+  two_factor_confirmed_at datetime
+
+  indexes {
+    email [unique, name: 'users_email_unique']
+  }
+}
+
+Table village_active_group_annuals {
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  active_category varchar
+  year integer [not null]
+  value integer [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (village_id, year) [unique, name: 'village_active_year_unique']
+    year [name: 'village_active_group_annuals_year_index']
+    village_id [name: 'village_active_group_annuals_village_id_index']
+  }
+}
+
+Table village_annual_population_stats {
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  year integer [not null]
+  category_value varchar [not null]
+  total_people integer [not null]
+  notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    (village_id, year, category_value) [unique, name: 'village_population_unique']
+    category_value [name: 'village_annual_population_stats_category_value_index']
+    year [name: 'village_annual_population_stats_year_index']
+    village_id [name: 'village_annual_population_stats_village_id_index']
+  }
+}
+
+Table village_enumerator_assignments {
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  enumerator_id integer [not null, ref: > users.id] // delete: cascade, update: no action
+  assigned_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  is_active boolean [not null, default: true]
+  assigned_at datetime
+  created_at datetime
+  updated_at datetime
+
+  indexes {
+    (village_id, enumerator_id) [unique, name: 'village_enumerator_assignments_village_id_enumerator_id_unique']
+  }
+}
 
 Table village_media {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-  uploaded_by bigint [not null]
-
-  type media_type [not null]
-  title varchar(150)
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  uploaded_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  type varchar [not null]
+  title varchar
   caption text
-
-  file_path varchar(255)
+  file_path varchar
   external_url text
-  mime_type varchar(100)
-  file_size bigint
-
+  mime_type varchar
+  file_size integer
   is_cover boolean [not null, default: false]
-  sort_order int [not null, default: 0]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 }
-
-
-// ======================================================
-// VILLAGE PROFILE ITEMS
-// ======================================================
-// Modul profil tambahan desa wisata.
-// Dapat digunakan untuk amenitas, atraksi, fasilitas, produk unggulan,
-// budaya, kuliner, homestay, atau item profil lain.
 
 Table village_profile_item_categories {
-  id bigint [pk, increment]
-
-  name varchar(100) [not null]
-  slug varchar(100) [not null, unique]
+  id integer [pk, increment, not null]
+  name varchar [not null]
+  slug varchar [not null]
   description text
-
   is_active boolean [not null, default: true]
-  sort_order int [not null, default: 0]
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
 
-  created_at timestamp
-  updated_at timestamp
-}
-
-Table village_profile_items {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-  category_id bigint [not null]
-  created_by bigint [not null]
-
-  name varchar(150) [not null]
-  description text
-
-  address text
-  latitude decimal(10,7)
-  longitude decimal(10,7)
-  maps_url text
-
-  price_min decimal(12,2)
-  price_max decimal(12,2)
-  price_text varchar(100)
-
-  opening_hours varchar(150)
-  contact_name varchar(150)
-  contact_phone varchar(30)
-
-  metadata json
-
-  is_active boolean [not null, default: true]
-  sort_order int [not null, default: 0]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (village_id, category_id)
+  indexes {
+    slug [unique, name: 'village_profile_item_categories_slug_unique']
   }
 }
 
 Table village_profile_item_media {
-  id bigint [pk, increment]
-
-  village_profile_item_id bigint [not null]
-  uploaded_by bigint [not null]
-
-  type media_type [not null]
-  title varchar(150)
+  id integer [pk, increment, not null]
+  village_profile_item_id integer [not null, ref: > village_profile_items.id] // delete: cascade, update: no action
+  uploaded_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  type varchar [not null]
+  title varchar
   caption text
-
-  file_path varchar(255)
+  file_path varchar
   external_url text
-  mime_type varchar(100)
-  file_size bigint
-
+  mime_type varchar
+  file_size integer
   is_cover boolean [not null, default: false]
-  sort_order int [not null, default: 0]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 }
 
-
-// ======================================================
-// SURVEY DESA - TEMPLATE & QUESTIONS
-// ======================================================
-// Master template survey.
-// Dalam sistem Anda, template dapat digunakan untuk:
-// 1. Survey Desa
-// 2. Survey UMKM
-// 3. Survey Pariwisata
-
-Table survey_templates {
-  id bigint [pk, increment]
-
-  title varchar(150) [not null]
+Table village_profile_items {
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  category_id integer [not null, ref: > village_profile_item_categories.id] // delete: no action, update: no action
+  created_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  name varchar [not null]
   description text
+  address text
+  latitude numeric
+  longitude numeric
+  maps_url text
+  price_min numeric
+  price_max numeric
+  price_text varchar
+  opening_hours varchar
+  contact_name varchar
+  contact_phone varchar
+  metadata text
+  is_active boolean [not null, default: true]
+  sort_order integer [not null, default: 0]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 
-  status survey_template_status [not null, default: 'draft']
-  created_by bigint [not null]
-  published_at timestamp
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-}
-
-// Pertanyaan survey desa.
-// Table ini lebih sederhana dibandingkan survey UMKM dan pariwisata.
-// Cocok untuk survey desa yang berbasis aspek dan pilihan jawaban score.
-
-Table survey_questions {
-  id bigint [pk, increment]
-
-  survey_template_id bigint [not null]
-
-  aspect varchar(150) [not null]
-  code varchar(50)
-  question_text text [not null]
-  document_hint text
-
-  sort_order int [not null, default: 0]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (survey_template_id, aspect)
-    (survey_template_id, code)
+  indexes {
+    (village_id, category_id) [name: 'village_profile_items_village_id_category_id_index']
   }
 }
-
-// Opsi jawaban untuk survey desa.
-// Contoh: Tidak Ada = 0, Ada Sebagian = 1, Ada Lengkap = 2.
-
-Table survey_question_options {
-  id bigint [pk, increment]
-
-  survey_question_id bigint [not null]
-
-  score decimal(6,2) [not null]
-  label varchar(255) [not null]
-
-  sort_order int [not null, default: 0]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (survey_question_id, score) [unique]
-  }
-}
-
-
-// ======================================================
-// SURVEY DESA - ASSIGNMENTS & ANSWERS
-// ======================================================
-// Assignment survey desa.
-// Karena village_id dibuat unique, maka 1 desa hanya memiliki 1 survey desa.
-
-Table village_survey_assignments {
-  id bigint [pk, increment]
-
-  village_id bigint [not null, unique]
-  survey_template_id bigint [not null]
-
-  status survey_assignment_status [not null, default: 'assigned']
-
-  assigned_by bigint [not null]
-  submitted_by bigint
-  reviewed_by bigint
-
-  assigned_at timestamp
-  started_at timestamp
-  last_saved_at timestamp
-  submitted_at timestamp
-  reviewed_at timestamp
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (survey_template_id)
-    (status)
-  }
-}
-
-// Jawaban survey desa.
-// Snapshot digunakan agar data lama tetap aman jika master pertanyaan berubah.
-
-Table survey_answers {
-  id bigint [pk, increment]
-
-  village_survey_assignment_id bigint [not null]
-  survey_question_id bigint [not null]
-  survey_question_option_id bigint [not null]
-
-  score int [not null]
-
-  aspect_snapshot varchar(150)
-  question_text_snapshot text
-  option_label_snapshot varchar(255)
-
-  answered_by bigint [not null]
-  last_edited_by bigint [not null]
-
-  answered_at timestamp
-  last_edited_at timestamp
-
-  created_at timestamp
-  updated_at timestamp
-
-  Indexes {
-    (village_survey_assignment_id, survey_question_id) [unique]
-    (answered_by)
-    (last_edited_by)
-  }
-}
-
-// Dokumen pendukung jawaban survey desa.
-
-Table survey_answer_documents {
-  id bigint [pk, increment]
-
-  survey_answer_id bigint [not null]
-  uploaded_by bigint [not null]
-
-  file_name varchar(255) [not null]
-  file_path varchar(255) [not null]
-  mime_type varchar(100)
-  file_size bigint
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-}
-
-// Log perubahan status assignment survey desa.
-// Contoh: assigned, started, submitted, reviewed, returned.
 
 Table village_survey_assignment_logs {
-  id bigint [pk, increment]
-
-  village_survey_assignment_id bigint [not null]
-  actor_id bigint [not null]
-
-  action survey_assignment_log_action [not null]
-  from_status survey_assignment_status
-  to_status survey_assignment_status
-
+  id integer [pk, increment, not null]
+  village_survey_assignment_id integer [not null, ref: > village_survey_assignments.id] // delete: cascade, update: no action
+  actor_id integer [not null, ref: > users.id] // delete: no action, update: no action
+  action varchar [not null]
+  from_status varchar
+  to_status varchar
   description text
-  metadata json
+  metadata text
+  created_at datetime
+  deleted_at datetime
 
-  created_at timestamp
-
-  Indexes {
-    (village_survey_assignment_id)
-    (actor_id)
-    (action)
+  indexes {
+    action [name: 'vsal_action_index']
+    actor_id [name: 'vsal_actor_index']
+    village_survey_assignment_id [name: 'vsal_assignment_index']
   }
 }
 
-// Riwayat perubahan jawaban survey desa.
+Table village_survey_assignments {
+  id integer [pk, increment, not null]
+  code varchar [not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  survey_template_id integer [not null, ref: > survey_templates.id] // delete: no action, update: no action
+  status varchar [not null, default: 'assigned']
+  assigned_by integer [not null, ref: > users.id] // delete: no action, update: no action
+  submitted_by integer [ref: > users.id] // delete: set null, update: no action
+  reviewed_by integer [ref: > users.id] // delete: set null, update: no action
+  assigned_at datetime
+  started_at datetime
+  last_saved_at datetime
+  submitted_at datetime
+  reviewed_at datetime
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 
-Table survey_answer_histories {
-  id bigint [pk, increment]
-
-  survey_answer_id bigint [not null]
-  village_survey_assignment_id bigint [not null]
-  survey_question_id bigint [not null]
-  actor_id bigint [not null]
-
-  action survey_answer_log_action [not null]
-
-  old_survey_question_option_id bigint
-  new_survey_question_option_id bigint
-
-  old_score decimal(6,2)
-  new_score decimal(6,2)
-
-  old_option_label varchar(255)
-  new_option_label varchar(255)
-
-  created_at timestamp
-
-  Indexes {
-    (survey_answer_id)
-    (village_survey_assignment_id)
-    (survey_question_id)
-    (actor_id)
+  indexes {
+    village_id [unique, name: 'village_survey_assignments_village_id_unique']
+    code [unique, name: 'village_survey_assignments_code_unique']
+    status [name: 'village_survey_assignments_status_index']
+    survey_template_id [name: 'village_survey_assignments_survey_template_id_index']
   }
 }
 
+Table village_umkm_categories {
+  id integer [pk, increment, not null]
+  village_umkm_id integer [not null, ref: > village_umkms.id] // delete: cascade, update: no action
+  category varchar [not null]
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 
-// ======================================================
-// UMKM - PROFILE
-// ======================================================
-// Master data UMKM di desa.
-// Satu desa dapat memiliki banyak UMKM.
-// Isi table ini mengikuti bagian Profiling Pelaku UMKM,
-// kurasi UMKM, pemasaran, sustainability, solusi perbankan,
-// ekspor, dan foto produk.
+  indexes {
+    (village_umkm_id, category) [unique, name: 'village_umkm_categories_unique']
+  }
+}
+
+Table village_umkm_documents {
+  id integer [pk, increment, not null]
+  village_umkm_id integer [not null, ref: > village_umkms.id] // delete: cascade, update: no action
+  uploaded_by integer [ref: > users.id] // delete: set null, update: no action
+  document_name varchar [not null]
+  file_path varchar [not null]
+  mime_type varchar
+  file_size integer
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+
+  indexes {
+    document_name [name: 'village_umkm_documents_document_name_index']
+    uploaded_by [name: 'village_umkm_documents_uploaded_by_index']
+    village_umkm_id [name: 'village_umkm_documents_village_umkm_id_index']
+  }
+}
 
 Table village_umkms {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-  created_by bigint
-  data_collector_id bigint
-
-  // Identitas survey/profiling
-  business_owner_name varchar(150)
-  village_name varchar(150)
-  collector_name varchar(150)
-
-  // Data UMKM
-  name varchar(150) [not null]
-  legal_business_name varchar(180)
-  established_year int
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  data_collector_id integer [ref: > users.id] // delete: set null, update: no action
+  business_owner_name varchar
+  village_name varchar
+  collector_name varchar
+  name varchar [not null]
+  legal_business_name varchar
+  established_year integer
   company_website_url text
   production_address text
-  product_category varchar(150)
-  brand_name varchar(150)
-  annual_revenue decimal(18,2)
-  monthly_production_capacity varchar(150)
+  product_category varchar
+  brand_name varchar
+  annual_revenue numeric
+  monthly_production_capacity varchar
   current_obstacles text
   certifications text
-
-  // Kriteria Penilaian Kurasi UMKM
-  has_business_legality_and_certification string
-  is_umkm_participant string
-  is_production_capacity_participant string
-  annual_production_capacity string
+  has_business_legality_and_certification varchar
+  is_umkm_participant varchar
+  is_production_capacity_participant varchar
+  annual_production_capacity varchar
   factory_location_feasibility text
-
-  // Pemasaran dan Penjualan
   instagram_url text
   facebook_url text
   twitter_url text
   marketing_website_url text
   ecommerce_profile_url text
   marketing_notes text
-
-  // Keberlanjutan / Sustainability
   sustainability_notes text
-
-  // Solusi Perbankan
-  bank_name varchar(150)
-  bank_account_number varchar(100)
+  bank_name varchar
+  bank_account_number varchar
   has_qris boolean
-  qris_provider varchar(150)
+  qris_provider varchar
   has_edc boolean
-  edc_provider varchar(150)
+  edc_provider varchar
   has_credit_card boolean
   banking_notes text
-
-  // Ekspor
   has_exported boolean
   export_destination_countries text
+  product_photo_path varchar
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 
-  // Foto Produk
-  product_photo_path varchar(255)
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (village_id)
-    (name)
-    (business_owner_name)
-    (product_category)
-    (has_exported)
+  indexes {
+    has_exported [name: 'village_umkms_has_exported_index']
+    product_category [name: 'village_umkms_product_category_index']
+    business_owner_name [name: 'village_umkms_business_owner_name_index']
+    name [name: 'village_umkms_name_index']
+    village_id [name: 'village_umkms_village_id_index']
   }
 }
-
-
-// ======================================================
-// UMKM - SURVEY
-// ======================================================
-// Table ini menyimpan master pertanyaan assessment UMKM.
-// Acuan form UMKM:
-// - Kelompok kriteria: A, B, C, dst.
-// - Contoh A = Kualitas Produk.
-// - Setiap kelompok memiliki bobot total, contoh Kualitas Produk = 25%.
-// - Setiap pertanyaan memiliki bobot sendiri, contoh 10%, 8%, 3%, 4%.
-
-Table umkm_survey_questions {
-  id bigint [pk, increment]
-
-  survey_template_id bigint [not null]
-
-  // Kode kelompok kriteria.
-  // Contoh: A, B, C.
-  criteria_code varchar(10) [not null]
-
-  // Nama kelompok kriteria.
-  // Contoh: Kualitas Produk, Kapasitas Produksi.
-  criteria_name varchar(150) [not null]
-
-  // Bobot total kelompok kriteria.
-  // Contoh: Kualitas Produk = 25.
-  criteria_weight_percent decimal(6,2) [not null]
-
-  // Nomor pertanyaan di dalam kriteria.
-  // Contoh: 1, 2, 3, 4.
-  question_number int [not null]
-
-  // Teks pertanyaan assessment UMKM.
-  question_text text [not null]
-
-  // Bobot pertanyaan.
-  // Contoh: Standar kualitas = 10, Konsistensi = 8.
-  question_weight_percent decimal(6,2) [not null]
-
-  // Nilai maksimal.
-  // Jika skala 1-4, maka max_score = 4.
-  max_score decimal(6,2) [not null, default: 4.00]
-
-  // Panduan penilaian untuk enumerator.
-  help_text text
-
-  // Urutan tampil pertanyaan.
-  sort_order int [not null, default: 0]
-
-  // Status aktif pertanyaan.
-  is_active boolean [not null, default: true]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (survey_template_id)
-    (criteria_code)
-    (criteria_code, question_number)
-    (survey_template_id, criteria_code, question_number) [unique]
-  }
-}
-
-// Table ini menyimpan jawaban/nilai assessment UMKM.
-// Kolom score berasal dari nilai yang diisi enumerator.
-// normalized_score dan weighted_score digunakan untuk perhitungan nilai akhir.
-
-Table umkm_survey_answers {
-  id bigint [pk, increment]
-
-  // UMKM yang dinilai.
-  umkm_id bigint [not null]
-
-  // Pertanyaan UMKM yang dijawab.
-  // Relasi ke umkm_survey_questions.id.
-  umkm_assessment_question_id bigint [not null]
-
-  // Enumerator yang mengisi.
-  answered_by bigint [not null]
-
-  // Nilai yang diisi enumerator.
-  score decimal(6,2) [not null]
-
-  // Snapshot kriteria saat jawaban dibuat.
-  criteria_code_snapshot varchar(10)
-  criteria_name_snapshot varchar(150)
-  criteria_weight_percent_snapshot decimal(6,2)
-
-  // Snapshot pertanyaan dan bobot saat jawaban dibuat.
-  question_text_snapshot text
-  question_weight_percent_snapshot decimal(6,2)
-  max_score_snapshot decimal(6,2)
-
-  // Hasil perhitungan.
-  // Rekomendasi formula:
-  // normalized_score = score / max_score_snapshot
-  // weighted_score = normalized_score * question_weight_percent_snapshot
-  normalized_score decimal(8,4)
-  weighted_score decimal(8,4)
-
-  answered_at timestamp
-  last_edited_at timestamp
-
-  created_at timestamp
-  updated_at timestamp
-
-  Indexes {
-    (umkm_id)
-    (umkm_assessment_question_id)
-    (answered_by)
-    (umkm_id, umkm_assessment_question_id) [unique]
-  }
-}
-
-
-// ======================================================
-// PARIWISATA - DESTINASI
-// ======================================================
-// Master data destinasi wisata di dalam desa.
-// Satu desa dapat memiliki banyak destinasi wisata.
-
-Table pariwisata_village_table {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-
-  // Nama Destinasi Wisata.
-  name varchar(150) [not null]
-
-  // Waktu operasional.
-  operational_days varchar(150)
-  operational_hours varchar(150)
-  operational_schedule json
-
-  // Tiket masuk.
-  entrance_ticket_price decimal(12,2)
-  entrance_ticket_description varchar(150)
-
-  // Alamat destinasi wisata.
-  address text
-
-  // Penanggung jawab destinasi.
-  person_in_charge_name varchar(150)
-  person_in_charge_phone varchar(30)
-  person_in_charge_address text
-
-  is_active boolean [not null, default: true]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (village_id)
-    (name)
-    (is_active)
-  }
-}
-
-// Kategori destinasi wisata.
-// Karena satu destinasi bisa memiliki lebih dari satu kategori,
-// table ini menjadi pivot kategori.
-
-Table pariwisata_village_category {
-  id bigint [pk, increment]
-
-  pariwisata_village_id bigint [not null]
-  category pariwisata_category_type
-
-  created_at timestamp
-  updated_at timestamp
-}
-
-
-// ======================================================
-// PARIWISATA - SURVEY QUESTIONS
-// ======================================================
-// Table ini menyimpan matrix penilaian sertifikasi desa wisata.
-// Mapping dari matrix:
-// - KATEGORI A. PENGELOLAAN BERKELANJUTAN -> category_code, category_name
-// - A.a Struktur dan kerangka Pengelolaan -> sub_category_code, sub_category_name
-// - A.1 Tanggungjawab pengelolaan desa wisata -> criteria_code, criteria_name
-// - Kolom KRITERIA panjang -> criteria_description
-// - A.1.a Struktur dan tanggungjawab kelompok -> indicator_code, indicator_name
-// - Kolom INDIKATOR -> indicator_description
-// - Kolom BUKTI PENDUKUNG -> supporting_evidence
-
-Table pariwisata_survey_questions {
-  id bigint [pk, increment]
-
-  survey_template_id bigint [not null]
-
-  // Kategori besar.
-  // Contoh: A.
-  category_code varchar(20)
-
-  // Nama kategori besar.
-  // Contoh: Kategori A. Pengelolaan Berkelanjutan.
-  category_name varchar(255)
-
-  // Kode sub kategori.
-  // Contoh: A.a.
-  sub_category_code varchar(20)
-
-  // Nama sub kategori.
-  // Contoh: Struktur dan kerangka Pengelolaan.
-  sub_category_name varchar(255)
-
-  // Kode kriteria.
-  // Contoh: A.1.
-  criteria_code varchar(20)
-
-  // Nama kriteria.
-  // Contoh: Tanggungjawab pengelolaan desa wisata.
-  criteria_name varchar(255)
-
-  // Deskripsi panjang kriteria.
-  criteria_description text
-
-  // Kode indikator.
-  // Contoh: A.1.a.
-  indicator_code varchar(20) [not null]
-
-  // Nama indikator.
-  // Contoh: Struktur dan tanggungjawab kelompok.
-  indicator_name varchar(255) [not null]
-
-  // Deskripsi indikator.
-  indicator_description text
-
-  // Bukti pendukung yang harus diperiksa/dilampirkan.
-  // Contoh: SK pengangkatan, forum organisasi, dokumen rencana kerja.
-  supporting_evidence text
-
-  // Tipe input.
-  // Untuk matrix harkat/peringkat, default-nya single_choice.
-  input_type pariwisata_survey_input_type [not null, default: 'single_choice']
-
-  // Apakah jawaban wajib melampirkan dokumen.
-  document_required boolean [not null, default: false]
-
-  // Petunjuk dokumen yang harus diupload.
-  document_hint text
-
-  sort_order int [not null, default: 0]
-  is_active boolean [not null, default: true]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (survey_template_id)
-    (category_code)
-    (sub_category_code)
-    (criteria_code)
-    (indicator_code)
-    (survey_template_id, indicator_code) [unique]
-  }
-}
-
-// Table opsi jawaban pariwisata.
-// Catatan: nama table tetap "pariwisata_suvey_options" sesuai rancangan Anda.
-// Mapping dari matrix HARKAT & PERINGKAT:
-// 4 = Terpenuhi Sepenuhnya
-// 3 = Sebagian Terpenuhi
-// 2 = Kurang Terpenuhi
-// 1 = Tidak Terpenuhi
-
-Table pariwisata_suvey_options {
-  id bigint [pk, increment]
-
-  pariwisata_survey_question_id bigint [not null]
-
-  // Nilai harkat/peringkat.
-  score int [not null]
-
-  // Level enum dari score.
-  level pariwisata_survey_score_level [not null]
-
-  // Label tampilan.
-  label varchar(100) [not null]
-
-  // Deskripsi detail dari kondisi penilaian.
-  description text [not null]
-
-  sort_order int [not null, default: 0]
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (pariwisata_survey_question_id)
-    (pariwisata_survey_question_id, score) [unique]
-  }
-}
-
-// Table jawaban survey pariwisata.
-// Enumerator memilih salah satu opsi harkat/peringkat.
-// Kolom notes mewakili kolom "Keterangan & Nilai" pada matrix.
-
-Table pariwisata_survey_answers {
-  id bigint [pk, increment]
-
-  pariwisata_survey_question_id bigint [not null]
-  pariwisata_suvey_option_id bigint [not null]
-
-  // Nilai akhir dari opsi yang dipilih.
-  score int [not null]
-
-  // Catatan/keterangan penilaian.
-  notes text
-
-  // Snapshot kategori.
-  category_code_snapshot varchar(20)
-  category_name_snapshot varchar(255)
-
-  // Snapshot sub kategori.
-  sub_category_code_snapshot varchar(20)
-  sub_category_name_snapshot varchar(255)
-
-  // Snapshot kriteria.
-  criteria_code_snapshot varchar(20)
-  criteria_name_snapshot varchar(255)
-  criteria_description_snapshot text
-
-  // Snapshot indikator.
-  indicator_code_snapshot varchar(20)
-  indicator_name_snapshot varchar(255)
-  indicator_description_snapshot text
-
-  // Snapshot bukti pendukung.
-  supporting_evidence_snapshot text
-
-  // Snapshot opsi yang dipilih.
-  option_label_snapshot varchar(100)
-  option_description_snapshot text
-
-  // User/enumerator yang menjawab.
-  answered_by bigint [not null]
-
-  // User terakhir yang mengedit.
-  last_edited_by bigint
-
-  answered_at timestamp
-  last_edited_at timestamp
-
-  created_at timestamp
-  updated_at timestamp
-
-  Indexes {
-    (pariwisata_survey_question_id)
-    (pariwisata_suvey_option_id)
-    (answered_by)
-    (pariwisata_survey_question_id) [unique]
-  }
-}
-
-// Dokumen bukti pendukung jawaban survey pariwisata.
-// Contoh: SK, foto kegiatan, dokumen struktur organisasi,
-// rencana kerja, bukti forum, dan dokumen lain sesuai supporting_evidence.
-
-Table pariwisata_survey_answer_documents {
-  id bigint [pk, increment]
-
-  pariwisata_survey_answer_id bigint [not null]
-  uploaded_by bigint [not null]
-
-  file_name varchar(255) [not null]
-  file_path varchar(255) [not null]
-  mime_type varchar(100)
-  file_size bigint
-
-  caption text
-
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (pariwisata_survey_answer_id)
-    (uploaded_by)
-  }
-}
-
-
-Table turnover_umkm_annuals{ 
-  id int  
-  umkm_id bigint
-  year int  
-  value int 
-  created_at timestamp
-  updated_at timestamp
-
-}
-
-// ======================================================
-// ENUMS - ANNUAL DATA & IMPACT DATA
-// ======================================================
-
-Enum annual_turnover_entity_type {
-  umkm
-  pariwisata
-}
-
-Enum annual_worker_entity_type {
-  umkm
-  pariwisata
-}
-
-Enum worker_stat_dimension {
-  age
-  gender
-  education
-}
-
-Enum pariwisata_visitor_type {
-  lokal
-  domestik
-  mancanegara
-  pelajar
-  komunitas
-}
-
-Enum village_population_dimension {
-  gender
-  education
-  skill
-  livelihood
-}
-
-Enum active_group_category_type {
-  community_group
-  partnership
-}
-
-
-// ======================================================
-// ANNUAL TURNOVER - UMKM & PARIWISATA
-// ======================================================
-// Table ini menyimpan omset tahunan untuk UMKM dan Pariwisata.
-// Dipakai untuk menggantikan table terpisah:
-// - turnover_umkm_annuals
-// - turnover_pariwisata_annuals
-//
-// Contoh:
-// entity_type = umkm, entity_key = "umkm:1", year = 2022, value = 120000000
-// entity_type = pariwisata, entity_key = "pariwisata:5", year = 2022, value = 350000000
-
-Table annual_turnovers {
-  id bigint [pk, increment]
-
-  entity_type annual_turnover_entity_type [not null]
-
-  // Isi salah satu sesuai entity_type.
-  // Jika entity_type = umkm, maka umkm_id wajib diisi.
-  // Jika entity_type = pariwisata, maka pariwisata_id wajib diisi.
-  umkm_id bigint
-  pariwisata_id bigint
-
-  // Key unik untuk memudahkan validasi unique di MySQL.
-  // Contoh:
-  // umkm:1
-  // pariwisata:5
-  entity_key varchar(100) [not null]
-
-  year int [not null]
-  value decimal(18,2) [not null] // Omset dalam Rupiah
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (entity_type)
-    (entity_key)
-    (umkm_id)
-    (pariwisata_id)
-    (year)
-    (entity_key, year) [unique]
-  }
-}
-
-
-// ======================================================
-// PARIWISATA - ANNUAL VISITORS
-// ======================================================
-// Table ini menyimpan total pengunjung tahunan untuk satu destinasi pariwisata.
-// Contoh:
-// pariwisata_id = 5, year = 2022, value = 25000
-
-Table pariwisata_annual_visitors {
-  id bigint [pk, increment]
-
-  pariwisata_id bigint [not null]
-
-  year int [not null]
-  value int [not null] // Total pengunjung dalam satu tahun
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (pariwisata_id)
-    (year)
-    (pariwisata_id, year) [unique]
-  }
-}
-
-
-// ======================================================
-// PARIWISATA - ANNUAL VISITOR TYPES
-// ======================================================
-// Table ini menyimpan jumlah pengunjung tahunan berdasarkan jenis pengunjung.
-// Contoh:
-// 2022, lokal, 1000
-// 2022, domestik, 500
-// 2022, mancanegara, 120
-// 2022, pelajar, 300
-// 2022, komunitas, 50
-
-Table pariwisata_visitor_type_annuals {
-  id bigint [pk, increment]
-
-  pariwisata_id bigint [not null]
-
-  year int [not null]
-  visitor_type pariwisata_visitor_type [not null]
-  value int [not null] // Jumlah pengunjung berdasarkan jenis
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (pariwisata_id)
-    (year)
-    (visitor_type)
-    (pariwisata_id, year, visitor_type) [unique]
-  }
-}
-
-
-// ======================================================
-// PARIWISATA - PACKAGES
-// ======================================================
-// Table ini menyimpan paket wisata yang dimiliki oleh destinasi pariwisata.
-// Contoh:
-// Nama Paket: Paket Edukasi Membatik
-// Jenis Paket: Edukasi
-// Durasi: 3 jam
-// Fasilitas: Mentor, alat batik, snack, dokumentasi
-
-Table pariwisata_packages {
-  id bigint [pk, increment]
-
-  pariwisata_id bigint [not null]
-
-  name varchar(150) [not null] // Nama paket wisata
-  package_type varchar(100) // Jenis paket
-  duration varchar(100) // Durasi paket
-  facilities text // Fasilitas yang didapat
-
-  description text
-  price decimal(12,2)
-
-  is_active boolean [not null, default: true]
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (pariwisata_id)
-    (name)
-    (package_type)
-    (is_active)
-  }
-}
-
-
-// ======================================================
-// ANNUAL WORKER STATS - UMKM & PARIWISATA
-// ======================================================
-// Table ini menyimpan data pekerja tahunan untuk UMKM dan Pariwisata.
-// Dimensi yang didukung:
-// - age
-// - gender
-// - education
-//
-// Contoh input:
-// 2022, 22 tahun, 100 orang
-// 2022, lelaki, 80 orang
-// 2022, S1, 25 orang
-
-Table annual_worker_stats {
-  id bigint [pk, increment]
-
-  entity_type annual_worker_entity_type [not null]
-
-  // Isi salah satu sesuai entity_type.
-  umkm_id bigint
-  pariwisata_id bigint
-
-  // Key unik untuk memudahkan validasi unique di MySQL.
-  // Contoh:
-  // umkm:1
-  // pariwisata:5
-  entity_key varchar(100) [not null]
-
-  year int [not null]
-
-  // age / gender / education
-  dimension worker_stat_dimension [not null]
-
-  // Contoh:
-  // Jika dimension = age, category_value = "22 tahun"
-  // Jika dimension = gender, category_value = "lelaki"
-  // Jika dimension = education, category_value = "S1"
-  category_value varchar(150) [not null]
-
-  total_people int [not null]
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (entity_type)
-    (entity_key)
-    (umkm_id)
-    (pariwisata_id)
-    (year)
-    (dimension)
-    (category_value)
-    (entity_key, year, dimension, category_value) [unique]
-  }
-}
-
-
-// ======================================================
-// ANNUAL WORKER TRAINING STATS - UMKM & PARIWISATA
-// ======================================================
-// Table ini menyimpan jumlah pekerja yang ikut pelatihan per tahun.
-// Contoh:
-// 2022, 35 orang
-// 2023, 50 orang
-
-Table annual_worker_training_stats {
-  id bigint [pk, increment]
-
-  entity_type annual_worker_entity_type [not null]
-
-  // Isi salah satu sesuai entity_type.
-  umkm_id bigint
-  pariwisata_id bigint
-
-  // Contoh:
-  // umkm:1
-  // pariwisata:5
-  entity_key varchar(100) [not null]
-
-  year int [not null]
-
-  // Optional jika nanti ingin mencatat nama pelatihan.
-  training_name varchar(150)
-
-  total_people int [not null]
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (entity_type)
-    (entity_key)
-    (umkm_id)
-    (pariwisata_id)
-    (year)
-    (training_name)
-  }
-}
-
-
-// ======================================================
-// VILLAGE - ANNUAL POPULATION STATS
-// ======================================================
-// Table ini menyimpan data masyarakat desa per tahun.
-// Dimensi yang didukung:
-// - gender
-// - education
-// - skill
-// - livelihood
-//
-// Contoh:
-// 2022, gender, pria, 50
-// 2022, education, S2, 20
-// 2022, skill, pemandu wisata, 15
-// 2022, livelihood, petani, 200
-
-Table village_annual_population_stats {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-
-  year int [not null]
-
-  // gender / education / skill / livelihood
-  dimension village_population_dimension [not null]
-
-  // Untuk skill dan livelihood, value bisa custom.
-  // Contoh:
-  // pria, wanita, SD, SMP, SMA, S1, S2,
-  // pemandu wisata, membatik, digital marketing,
-  // petani, nelayan, pedagang, pengrajin
-  category_value varchar(150) [not null]
-
-  total_people int [not null]
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (village_id)
-    (year)
-    (dimension)
-    (category_value)
-    (village_id, year, dimension, category_value) [unique]
-  }
-}
-
-
 
 Table village_vulnerable_group_annuals {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-  vulnerable_category string
-
-  year int [not null]
-  total_people int [not null]
-
+  id integer [pk, increment, not null]
+  village_id integer [not null, ref: > tourism_villages.id] // delete: cascade, update: no action
+  vulnerable_category varchar
+  year integer [not null]
+  total_people integer [not null]
   notes text
+  created_by integer [ref: > users.id] // delete: set null, update: no action
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
 
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (village_id)
-    (year)
-    (village_id, year) [unique]
+  indexes {
+    (village_id, year) [unique, name: 'village_vulnerable_year_unique']
+    year [name: 'village_vulnerable_group_annuals_year_index']
+    village_id [name: 'village_vulnerable_group_annuals_village_id_index']
   }
 }
-
-
-
-
-Table village_active_group_annuals {
-  id bigint [pk, increment]
-
-  village_id bigint [not null]
-  active_category string 
-
-  year int [not null]
-  value int [not null]
-
-  notes text
-
-  created_by bigint
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  Indexes {
-    (village_id)
-    (year)
-    (village_id, year) [unique]
-  }
-}
-
-
-// ======================================================
-// REFS - ANNUAL TURNOVER
-// ======================================================
-
-Ref: annual_turnovers.umkm_id > village_umkms.id
-Ref: annual_turnovers.pariwisata_id > pariwisata_village_table.id
-Ref: annual_turnovers.created_by > users.id
-
-
-// ======================================================
-// REFS - PARIWISATA ANNUAL DATA
-// ======================================================
-
-Ref: pariwisata_annual_visitors.pariwisata_id > pariwisata_village_table.id
-Ref: pariwisata_annual_visitors.created_by > users.id
-
-Ref: pariwisata_visitor_type_annuals.pariwisata_id > pariwisata_village_table.id
-Ref: pariwisata_visitor_type_annuals.created_by > users.id
-
-Ref: pariwisata_packages.pariwisata_id > pariwisata_village_table.id
-Ref: pariwisata_packages.created_by > users.id
-
-
-// ======================================================
-// REFS - WORKER STATS
-// ======================================================
-
-Ref: annual_worker_stats.umkm_id > village_umkms.id
-Ref: annual_worker_stats.pariwisata_id > pariwisata_village_table.id
-Ref: annual_worker_stats.created_by > users.id
-
-Ref: annual_worker_training_stats.umkm_id > village_umkms.id
-Ref: annual_worker_training_stats.pariwisata_id > pariwisata_village_table.id
-Ref: annual_worker_training_stats.created_by > users.id
-
-
-// ======================================================
-// REFS - VILLAGE ANNUAL DATA
-// ======================================================
-
-Ref: village_annual_population_stats.village_id > tourism_villages.id
-Ref: village_annual_population_stats.created_by > users.id
-
-Ref: village_vulnerable_group_annuals.village_id > tourism_villages.id
-Ref: village_vulnerable_group_annuals.created_by > users.id
-
-Ref: village_active_group_annuals.village_id > tourism_villages.id
-Ref: village_active_group_annuals.created_by > users.id
-
-
-// ======================================================
-// REFS - USERS & PROGRAMS
-// ======================================================
-
-Ref: csr_programs.created_by > users.id
-
-Ref: program_villages.program_id > csr_programs.id
-Ref: program_villages.village_id > tourism_villages.id
-
-
-// ======================================================
-// REFS - TOURISM VILLAGES
-// ======================================================
-
-Ref: tourism_villages.created_by > users.id
-
-Ref: village_enumerator_assignments.village_id > tourism_villages.id
-Ref: village_enumerator_assignments.enumerator_id > users.id
-Ref: village_enumerator_assignments.assigned_by > users.id
-
-Ref: village_media.village_id > tourism_villages.id
-Ref: village_media.uploaded_by > users.id
-
-
-// ======================================================
-// REFS - VILLAGE PROFILE ITEMS
-// ======================================================
-
-Ref: village_profile_items.village_id > tourism_villages.id
-Ref: village_profile_items.category_id > village_profile_item_categories.id
-Ref: village_profile_items.created_by > users.id
-
-Ref: village_profile_item_media.village_profile_item_id > village_profile_items.id
-Ref: village_profile_item_media.uploaded_by > users.id
-
-
-// ======================================================
-// REFS - SURVEY DESA
-// ======================================================
-
-Ref: survey_templates.created_by > users.id
-
-Ref: survey_questions.survey_template_id > survey_templates.id
-
-Ref: survey_question_options.survey_question_id > survey_questions.id
-
-Ref: village_survey_assignments.village_id > tourism_villages.id
-Ref: village_survey_assignments.survey_template_id > survey_templates.id
-Ref: village_survey_assignments.assigned_by > users.id
-Ref: village_survey_assignments.submitted_by > users.id
-Ref: village_survey_assignments.reviewed_by > users.id
-
-Ref: survey_answers.village_survey_assignment_id > village_survey_assignments.id
-Ref: survey_answers.survey_question_id > survey_questions.id
-Ref: survey_answers.survey_question_option_id > survey_question_options.id
-Ref: survey_answers.answered_by > users.id
-Ref: survey_answers.last_edited_by > users.id
-
-Ref: survey_answer_documents.survey_answer_id > survey_answers.id
-Ref: survey_answer_documents.uploaded_by > users.id
-
-Ref: village_survey_assignment_logs.village_survey_assignment_id > village_survey_assignments.id
-Ref: village_survey_assignment_logs.actor_id > users.id
-
-Ref: survey_answer_histories.survey_answer_id > survey_answers.id
-Ref: survey_answer_histories.village_survey_assignment_id > village_survey_assignments.id
-Ref: survey_answer_histories.survey_question_id > survey_questions.id
-Ref: survey_answer_histories.actor_id > users.id
-Ref: survey_answer_histories.old_survey_question_option_id > survey_question_options.id
-Ref: survey_answer_histories.new_survey_question_option_id > survey_question_options.id
-
-
-// ======================================================
-// REFS - UMKM
-// ======================================================
-
-Ref: village_umkms.village_id > tourism_villages.id
-Ref: village_umkms.created_by > users.id
-Ref: village_umkms.data_collector_id > users.id
-
-Ref: umkm_survey_questions.survey_template_id > survey_templates.id
-
-Ref: umkm_survey_answers.umkm_id > village_umkms.id
-Ref: umkm_survey_answers.umkm_assessment_question_id > umkm_survey_questions.id
-Ref: umkm_survey_answers.answered_by > users.id
-
-
-// ======================================================
-// REFS - PARIWISATA
-// ======================================================
-
-Ref: pariwisata_village_table.village_id > tourism_villages.id
-
-Ref: pariwisata_village_category.pariwisata_village_id > pariwisata_village_table.id
-
-Ref: pariwisata_survey_questions.survey_template_id > survey_templates.id
-
-Ref: pariwisata_suvey_options.pariwisata_survey_question_id > pariwisata_survey_questions.id
-
-Ref: pariwisata_survey_answers.pariwisata_survey_question_id > pariwisata_survey_questions.id
-Ref: pariwisata_survey_answers.pariwisata_suvey_option_id > pariwisata_suvey_options.id
-Ref: pariwisata_survey_answers.answered_by > users.id
-Ref: pariwisata_survey_answers.last_edited_by > users.id
-
-Ref: pariwisata_survey_answer_documents.pariwisata_survey_answer_id > pariwisata_survey_answers.id
-Ref: pariwisata_survey_answer_documents.uploaded_by > users.id

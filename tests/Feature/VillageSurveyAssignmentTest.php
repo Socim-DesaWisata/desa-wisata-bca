@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\PariwisataSurveyAnswer;
+use App\Models\PariwisataSurveyAnswerDocument;
+use App\Models\PariwisataSurveyQuestion;
+use App\Models\PariwisataSuveyOption;
+use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswerDocument;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
@@ -234,69 +239,135 @@ test('authenticated users can view survey assignment detail from database', func
         );
 });
 
-test('authenticated users can save survey answers with multiple documents', function () {
-    Storage::fake('public');
-
+test('survey assignment show includes pariwisata survey analytics summary', function () {
     $user = User::factory()->create();
-    $template = SurveyTemplate::factory()->create([
+    $assignmentTemplate = SurveyTemplate::factory()->create([
+        'title' => 'Template Detail Desa',
         'created_by' => $user->id,
     ]);
+    $pariwisataTemplate = SurveyTemplate::factory()->create([
+        'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
+        'created_by' => $user->id,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
     $village = TourismVillage::factory()->create([
+        'name' => 'Desa Pariwisata Testing',
         'created_by' => $user->id,
     ]);
     $assignment = VillageSurveyAssignment::factory()->create([
         'village_id' => $village->id,
-        'survey_template_id' => $template->id,
+        'survey_template_id' => $assignmentTemplate->id,
         'assigned_by' => $user->id,
-        'status' => 'assigned',
+        'status' => 'in_progress',
     ]);
-    $question = SurveyQuestion::query()->create([
-        'survey_template_id' => $template->id,
-        'aspect' => 'Amenitas',
-        'code' => 'AM-001',
-        'question_text' => 'Bagaimana kondisi fasilitas umum?',
-        'document_hint' => 'Unggah dokumen pendukung.',
+
+    PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'ISTC Utama',
+        'is_active' => true,
+    ]);
+
+    $amenitasQuestion = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $pariwisataTemplate->id,
+        'category_code' => 'A',
+        'category_name' => 'Amenitas',
+        'criteria_code' => 'A.1',
+        'criteria_name' => 'Kriteria A1',
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Indikator Amenitas',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $amenitasQuestion->id,
+        'score' => 2,
+        'level' => 'B',
+        'label' => 'Baik',
+        'description' => 'Baik',
         'sort_order' => 1,
     ]);
-    $option = SurveyQuestionOption::query()->create([
-        'survey_question_id' => $question->id,
+    $amenitasOption = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $amenitasQuestion->id,
         'score' => 4,
-        'label' => str_repeat('Label jawaban panjang. ', 20),
-        'sort_order' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 2,
     ]);
 
-    $this->actingAs($user)
-        ->post(route('survey-assignments.take-survey.store', $assignment), [
-            'answers' => [
-                [
-                    'question_id' => $question->id,
-                    'survey_question_option_id' => $option->id,
-                    'documents' => [
-                        UploadedFile::fake()->image('toilet.jpg'),
-                        UploadedFile::fake()->create('lampiran.pdf', 256, 'application/pdf'),
-                    ],
-                ],
-            ],
-        ])
-        ->assertRedirect();
+    $aksesibilitasQuestion = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $pariwisataTemplate->id,
+        'category_code' => 'B',
+        'category_name' => 'Aksesibilitas',
+        'criteria_code' => 'B.1',
+        'criteria_name' => 'Kriteria B1',
+        'indicator_code' => 'B.1.1',
+        'indicator_name' => 'Indikator Aksesibilitas',
+        'input_type' => 'single_choice',
+        'sort_order' => 2,
+        'is_active' => true,
+    ]);
+    $aksesibilitasOption = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $aksesibilitasQuestion->id,
+        'score' => 2,
+        'level' => 'C',
+        'label' => 'Cukup',
+        'description' => 'Cukup',
+        'sort_order' => 1,
+    ]);
+    PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $aksesibilitasQuestion->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 2,
+    ]);
 
-    $this->assertDatabaseHas('survey_answers', [
+    PariwisataSurveyAnswer::query()->create([
         'village_survey_assignment_id' => $assignment->id,
-        'survey_question_id' => $question->id,
-        'survey_question_option_id' => $option->id,
-        'option_label_snapshot' => $option->label,
+        'pariwisata_survey_question_id' => $amenitasQuestion->id,
+        'pariwisata_suvey_option_id' => $amenitasOption->id,
         'score' => 4,
         'answered_by' => $user->id,
         'last_edited_by' => $user->id,
+        'last_edited_at' => now(),
     ]);
-    $this->assertDatabaseCount('survey_answer_documents', 2);
+    PariwisataSurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $aksesibilitasQuestion->id,
+        'pariwisata_suvey_option_id' => $aksesibilitasOption->id,
+        'score' => 2,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+        'last_edited_at' => now(),
+    ]);
 
-    SurveyAnswerDocument::query()
-        ->pluck('file_path')
-        ->each(fn (string $path) => Storage::disk('public')->assertExists($path));
-    expect($assignment->fresh()->status)->toBe('in_progress');
+    $this->actingAs($user)
+        ->get(route('survey-assignments.show', $assignment))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show')
+            ->where('pariwisata_survey_summary.total_score', 6)
+            ->where('pariwisata_survey_summary.max_score', 8)
+            ->where('pariwisata_survey_summary.final_score', 75)
+            ->where('pariwisata_survey_summary.highest_aspect.name', 'Amenitas')
+            ->where('pariwisata_survey_summary.lowest_aspect.name', 'Aksesibilitas')
+            ->where('pariwisata_survey_summary.aspects.0.name', 'Amenitas')
+            ->where('pariwisata_survey_summary.aspects.0.score_percent', 100)
+            ->where('pariwisata_survey_summary.aspects.1.name', 'Aksesibilitas')
+            ->where('pariwisata_survey_summary.aspects.1.score_percent', 50)
+            ->where('pariwisata_survey_summary.distribution.0.score', 1)
+            ->where('pariwisata_survey_summary.distribution.0.count', 0)
+            ->where('pariwisata_survey_summary.distribution.1.score', 2)
+            ->where('pariwisata_survey_summary.distribution.1.count', 1)
+            ->where('pariwisata_survey_summary.distribution.3.score', 4)
+            ->where('pariwisata_survey_summary.distribution.3.count', 1)
+        );
 });
-
 test('authenticated users can delete survey answer documents', function () {
     Storage::fake('public');
 
@@ -349,4 +420,185 @@ test('authenticated users can delete survey answer documents', function () {
     $this->assertSoftDeleted('survey_answer_documents', [
         'id' => $document->id,
     ]);
+});
+
+test('authenticated users can save pariwisata survey answers scoped by assignment', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
+        'created_by' => $user->id,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+        'status' => 'assigned',
+    ]);
+    PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'Wisata A',
+        'is_active' => true,
+    ]);
+
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'category_code' => 'A',
+        'category_name' => 'Kategori A',
+        'sub_category_code' => 'A1',
+        'sub_category_name' => 'Sub A1',
+        'criteria_code' => 'A.1',
+        'criteria_name' => 'Kriteria A1',
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Indikator A1',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Deskripsi jawaban',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('survey-assignments.pariwisata.take-survey.store', $assignment), [
+            'answers' => [
+                [
+                    'question_id' => $question->id,
+                    'pariwisata_suvey_option_id' => $option->id,
+                    'notes' => 'Catatan assignment-level',
+                    'documents' => [
+                        UploadedFile::fake()->image('bukti.jpg'),
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('pariwisata_survey_answers', [
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $question->id,
+        'pariwisata_suvey_option_id' => $option->id,
+        'score' => 4,
+        'notes' => 'Catatan assignment-level',
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+    ]);
+    $this->assertDatabaseCount('pariwisata_survey_answer_documents', 1);
+
+    PariwisataSurveyAnswerDocument::query()
+        ->pluck('file_path')
+        ->each(fn (string $path) => Storage::disk('public')->assertExists($path));
+
+    expect($assignment->fresh()->status)->toBe('in_progress');
+});
+
+test('authenticated users can delete pariwisata survey documents scoped by assignment', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
+        'created_by' => $user->id,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-002',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Indikator A1',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 3,
+        'level' => 'B',
+        'label' => 'Baik',
+        'description' => 'Deskripsi',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('survey-assignments.pariwisata.take-survey.store', $assignment), [
+            'answers' => [
+                [
+                    'question_id' => $question->id,
+                    'pariwisata_suvey_option_id' => $option->id,
+                    'documents' => [
+                        UploadedFile::fake()->create('bukti.pdf', 128, 'application/pdf'),
+                    ],
+                ],
+            ],
+        ]);
+
+    $document = PariwisataSurveyAnswerDocument::query()->firstOrFail();
+    Storage::disk('public')->assertExists($document->file_path);
+
+    $this->actingAs($user)
+        ->delete(route('survey-assignments.pariwisata.take-survey.documents.destroy', [$assignment, $document]))
+        ->assertRedirect();
+
+    Storage::disk('public')->assertMissing($document->file_path);
+    $this->assertSoftDeleted('pariwisata_survey_answer_documents', [
+        'id' => $document->id,
+    ]);
+});
+
+test('show pariwisata page no longer exposes survey payload', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-003',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $pariwisata = PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'Wisata Detail',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.pariwisata.show', [$assignment, $pariwisata]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show-pariwisata')
+            ->where('assignment.id', $assignment->id)
+            ->where('pariwisata.id', $pariwisata->id)
+            ->missing('survey_template')
+            ->missing('survey_summary')
+            ->missing('survey_groups')
+        );
 });

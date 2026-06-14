@@ -218,30 +218,27 @@ class VillageSurveyAssignmentController extends Controller
 
     public function takePariwisataSurvey(
         VillageSurveyAssignment $assignment,
-        PariwisataVillage $pariwisata,
         VillageSurveyAssignmentService $service
     ): Response {
-        return Inertia::render('survey-assignment/take-survey-pariwisata', $service->getTakePariwisataSurveyData($assignment, $pariwisata));
+        return Inertia::render('survey-assignment/take-survey-pariwisata', $service->getTakePariwisataSurveyData($assignment));
     }
 
     public function storePariwisataSurveyDraft(
         StorePariwisataSurveyDraftRequest $request,
         VillageSurveyAssignment $assignment,
-        PariwisataVillage $pariwisata,
         VillageSurveyAssignmentService $service
     ): RedirectResponse {
-        $service->savePariwisataSurveyDraft($assignment, $pariwisata, $request->validated(), $request->user());
+        $service->savePariwisataSurveyDraft($assignment, $request->validated(), $request->user());
 
         return back()->with('success', 'Draft survey pariwisata berhasil disimpan.');
     }
 
     public function destroyPariwisataSurveyDocument(
         VillageSurveyAssignment $assignment,
-        PariwisataVillage $pariwisata,
         PariwisataSurveyAnswerDocument $document,
         VillageSurveyAssignmentService $service
     ): RedirectResponse {
-        $service->deletePariwisataSurveyDocument($assignment, $pariwisata, $document);
+        $service->deletePariwisataSurveyDocument($assignment, $document);
 
         return back()->with('success', 'Dokumen survey pariwisata berhasil dihapus.');
     }

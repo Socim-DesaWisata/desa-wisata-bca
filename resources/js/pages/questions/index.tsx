@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import {
     ClipboardList,
+    Download,
     Edit3,
     Eye,
     MoreVertical,
@@ -27,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SurveyQuestionController from '@/actions/App/Http/Controllers/SurveyQuestionController';
 import { dashboard, questions as questionsRoute } from '@/routes';
-import { show as showQuestionTemplate } from '@/routes/questions';
+import { exportMethod as exportQuestionTemplate, show as showQuestionTemplate } from '@/routes/questions';
 
 type TemplateSummary = {
     id: number;
@@ -405,6 +406,10 @@ export default function QuestionsIndex({
         });
     }
 
+    function exportExcel() {
+        window.location.href = exportQuestionTemplate.url(template.id);
+    }
+
     function openTemplateModal() {
         templateForm.setData({
             title: template.title,
@@ -662,6 +667,14 @@ export default function QuestionsIndex({
                             >
                                 Kembali
                             </Link>
+                            <button
+                                type="button"
+                                onClick={exportExcel}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#AAD2F8] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                            >
+                                <Download className="size-4" />
+                                Export Excel
+                            </button>
                             {isVillageTemplate && (
                                 <button
                                     type="button"
@@ -938,7 +951,7 @@ export default function QuestionsIndex({
                                                             <Edit3 className="size-4 text-[#0066AE]" />
                                                             Edit Pertanyaan
                                                         </DropdownMenuItem>
-                                                        {isVillageTemplate && (
+{isVillageTemplate && (
                                                             <>
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
@@ -2049,3 +2062,7 @@ QuestionsIndex.layout = {
         { title: 'Detail Template', href: '#' },
     ],
 };
+
+
+
+

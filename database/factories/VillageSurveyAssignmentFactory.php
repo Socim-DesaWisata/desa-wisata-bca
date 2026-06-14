@@ -23,6 +23,7 @@ class VillageSurveyAssignmentFactory extends Factory
         $assignedAt = fake()->dateTimeBetween('-1 month', '-1 week');
 
         return [
+            'code' => 'ASG-'.strtoupper(fake()->unique()->bothify('???-###')),
             'village_id' => TourismVillage::factory(),
             'survey_template_id' => SurveyTemplate::factory(),
             'status' => fake()->randomElement(['assigned', 'in_progress', 'submitted', 'approved', 'need_revision', 'rejected']),
