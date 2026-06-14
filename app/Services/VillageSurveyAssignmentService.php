@@ -71,7 +71,7 @@ class VillageSurveyAssignmentService
                 'village:id,code,name,city,province',
                 'template:id,title,status',
                 'template.questions' => fn ($query) => $query
-                    ->select(['id', 'survey_template_id', 'category_name', 'sort_order'])
+                    ->select(['id', 'survey_template_id'])
                     ->with(['options:id,survey_question_id,score']),
                 'assignedBy:id,name,email',
                 'submittedBy:id,name,email',
