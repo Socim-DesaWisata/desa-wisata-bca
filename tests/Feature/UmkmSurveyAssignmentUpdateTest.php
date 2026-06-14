@@ -20,6 +20,7 @@ test('umkm update can replace product photo without duplicating existing categor
         'created_by' => $user->id,
         'status' => 'published',
         'title' => 'Assessment Pelaku UMKM',
+        'type' => 'umkm',
     ]);
     $village = TourismVillage::factory()->create([
         'created_by' => $user->id,

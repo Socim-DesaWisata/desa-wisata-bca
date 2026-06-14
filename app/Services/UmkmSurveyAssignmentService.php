@@ -33,6 +33,8 @@ class UmkmSurveyAssignmentService
         ['value' => 'produk_digital_dan_kreatif', 'label' => 'Produk Digital dan Kreatif'],
     ];
 
+    public function __construct(private ActiveSurveyTemplateResolver $templateResolver) {}
+
     /**
      * @return array<string, mixed>
      */
@@ -333,17 +335,13 @@ class UmkmSurveyAssignmentService
 
     private function activeTemplate(): ?SurveyTemplate
     {
-        return SurveyTemplate::query()
-            ->where('title', 'Assessment Pelaku UMKM')
-            ->where('status', 'published')
-            ->with(['umkmSurveyQuestions' => fn ($query) => $query
+        return $this->templateResolver->resolve('umkm', [
+            'umkmSurveyQuestions' => fn ($query) => $query
                 ->where('is_active', true)
                 ->orderBy('criteria_code')
                 ->orderBy('question_number')
-                ->orderBy('sort_order')])
-            ->latest('published_at')
-            ->latest('id')
-            ->first();
+                ->orderBy('sort_order'),
+        ]);
     }
 
     /**
@@ -563,6 +561,15 @@ class UmkmSurveyAssignmentService
         return "umkm:{$umkm->id}";
     }
 
+    private function nullableBoolean(mixed $value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    }
+
     private function ensureUmkmBelongsToAssignment(VillageSurveyAssignment $assignment, VillageUmkm $umkm): void
     {
         if ($assignment->village_id !== $umkm->village_id) {
@@ -575,19 +582,8 @@ class UmkmSurveyAssignmentService
         VillageUmkm $umkm,
         VillageUmkmDocument $document
     ): void {
-        $this->ensureUmkmBelongsToAssignment($assignment, $umkm);
-
-        if ($document->village_umkm_id !== $umkm->id) {
+        if ($assignment->village_id !== $umkm->village_id || $document->village_umkm_id !== $umkm->id) {
             abort(404);
         }
-    }
-
-    private function nullableBoolean(mixed $value): ?bool
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     }
 }

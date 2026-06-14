@@ -127,6 +127,16 @@ type SurveyAspect = {
     questions: SurveyQuestion[];
 };
 
+type ScoreAspectSummary = {
+    name: string;
+    score_percent: number;
+};
+
+type ScoreDistributionSummary = {
+    score: number;
+    count: number;
+};
+
 type SurveyAssignmentShowProps = {
     assignment: {
         id: number;
@@ -191,6 +201,18 @@ type SurveyAssignmentShowProps = {
         max_score: number;
         final_score: number;
         last_answered_at: string;
+        highest_aspect: { name: string; score_percent: number } | null;
+        lowest_aspect: { name: string; score_percent: number } | null;
+        aspects: Array<{
+            name: string;
+            question_count: number;
+            answered_count: number;
+            documents_count: number;
+            score: number;
+            max_score: number;
+            score_percent: number;
+        }>;
+        distribution: ScoreDistributionSummary[];
     };
     activities: Array<{
         date: string;
@@ -636,7 +658,7 @@ function formatStatScore(value: number) {
     });
 }
 
-function ScoreBar({ aspect }: { aspect: SurveyAspect }) {
+function ScoreBar({ aspect }: { aspect: ScoreAspectSummary }) {
     const bucket = scoreBucketFor(aspect.score_percent);
 
     return (
@@ -682,6 +704,43 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
         };
     });
 
+    return (
+        <StatisticsChartCard
+            aspects={aspects.map((aspect) => ({
+                name: aspect.name,
+                score_percent: aspect.score_percent,
+            }))}
+            distribution={distribution.map((bucket) => ({
+                ...bucket,
+                score: bucket.min,
+            }))}
+        />
+    );
+}
+
+function StatisticsChartCard({
+    aspects,
+    distribution,
+}: {
+    aspects: ScoreAspectSummary[];
+    distribution: Array<ScoreDistributionSummary & {
+        key: string;
+        label: string;
+        color: string;
+        textColor: string;
+        percentage?: number;
+    }>;
+}) {
+    const totalAnswers = distribution.reduce(
+        (total, bucket) => total + bucket.count,
+        0,
+    );
+    const normalizedDistribution = distribution.map((bucket) => ({
+        ...bucket,
+        percentage:
+            bucket.percentage ??
+            (totalAnswers > 0 ? (bucket.count / totalAnswers) * 100 : 0),
+    }));
     const radius = 58;
     const circumference = 2 * Math.PI * radius;
     let currentOffset = 0;
@@ -758,9 +817,9 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
                                     strokeWidth="22"
                                 />
                                 {totalAnswers > 0 &&
-                                    distribution.map((bucket) => {
+                                    normalizedDistribution.map((bucket) => {
                                         const length =
-                                            (bucket.percentage / 100) *
+                                            ((bucket.percentage ?? 0) / 100) *
                                             circumference;
                                         const dashOffset = -currentOffset;
                                         currentOffset += length;
@@ -795,7 +854,7 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
                         </div>
 
                         <div className="space-y-3">
-                            {distribution.map((bucket) => (
+                            {normalizedDistribution.map((bucket) => (
                                 <div
                                     key={bucket.key}
                                     className="flex items-center justify-between gap-3 rounded-lg bg-[#F8FBFE] px-3 py-2"
@@ -816,7 +875,10 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
                                         )}
                                     >
                                         {bucket.count} (
-                                        {formatStatScore(bucket.percentage)}%)
+                                        {formatStatScore(
+                                            bucket.percentage ?? 0,
+                                        )}
+                                        %)
                                     </span>
                                 </div>
                             ))}
@@ -1286,6 +1348,17 @@ function PariwisataTab({
     surveySummary: SurveyAssignmentShowProps['pariwisata_survey_summary'];
 }) {
     const activeCount = pariwisata.filter((item) => item.is_active).length;
+    const distribution = answerScoreBuckets.map((bucket) => {
+        const summary = surveySummary.distribution.find(
+            (item) => item.score === bucket.min,
+        );
+
+        return {
+            ...bucket,
+            score: bucket.min,
+            count: summary?.count ?? 0,
+        };
+    });
 
     return (
         <div className="space-y-4">
@@ -1321,32 +1394,58 @@ function PariwisataTab({
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard
+                    label="Total Skor"
+                    value={`${surveySummary.total_score} / ${surveySummary.max_score}`}
+                    helper="Skor kumulatif survey ISTC"
+                    icon={<BarChart3 size={22} />}
+                />
+                <MetricCard
+                    label="Nilai Akhir"
+                    value={String(surveySummary.final_score)}
+                    helper={`${surveySummary.answered_questions} dari ${surveySummary.total_questions} terjawab`}
+                    icon={<Star size={22} />}
+                />
+                <MetricCard
+                    label="Aspek Tertinggi"
+                    value={surveySummary.highest_aspect?.name ?? '-'}
+                    helper={
+                        surveySummary.highest_aspect
+                            ? String(surveySummary.highest_aspect.score_percent)
+                            : '-'
+                    }
+                    icon={<Trophy size={22} />}
+                    tone="green"
+                />
+                <MetricCard
+                    label="Perlu Perhatian"
+                    value={surveySummary.lowest_aspect?.name ?? '-'}
+                    helper={
+                        surveySummary.lowest_aspect
+                            ? String(surveySummary.lowest_aspect.score_percent)
+                            : '-'
+                    }
+                    icon={<AlertTriangle size={22} />}
+                    tone="orange"
+                />
+                <MetricCard
                     label="Total ISTC"
                     value={String(pariwisata.length)}
                     helper="Master pariwisata"
                     icon={<Folder size={22} />}
                 />
                 <MetricCard
-                    label="Aktif"
+                    label="ISTC Aktif"
                     value={String(activeCount)}
-                    helper="Data aktif"
+                    helper={`Dokumen ${surveySummary.total_documents} file`}
                     icon={<CheckCircle2 size={22} />}
                     tone="green"
                 />
-                <MetricCard
-                    label="Nilai Survey"
-                    value={String(surveySummary.final_score)}
-                    helper={`Skor ${surveySummary.total_score}/${surveySummary.max_score}`}
-                    icon={<Star size={22} />}
-                />
-                <MetricCard
-                    label="Jawaban Survey"
-                    value={`${surveySummary.answered_questions}/${surveySummary.total_questions}`}
-                    helper={`Dokumen ${surveySummary.total_documents} file`}
-                    icon={<ClipboardCheck size={22} />}
-                    tone={surveySummary.answered_questions > 0 ? 'green' : 'orange'}
-                />
             </div>
+
+            <StatisticsChartCard
+                aspects={surveySummary.aspects}
+                distribution={distribution}
+            />
 
             {pariwisata.length === 0 ? (
                 <EmptyState
@@ -3288,3 +3387,6 @@ SurveyAssignmentShow.layout = {
         { title: 'Detail', href: '#' },
     ],
 };
+
+
+

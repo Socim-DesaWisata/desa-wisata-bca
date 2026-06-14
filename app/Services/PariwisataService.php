@@ -8,12 +8,10 @@ use App\Models\AnnualWorkerTrainingStat;
 use App\Models\PariwisataAnnualVisitor;
 use App\Models\PariwisataPackage;
 use App\Models\PariwisataSurveyAnswer;
-use App\Models\PariwisataSurveyAnswerDocument;
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataVillage;
 use App\Models\PariwisataVillageCategory;
 use App\Models\PariwisataVisitorTypeAnnual;
-use App\Models\SurveyTemplate;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
@@ -23,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 
 class PariwisataService
 {
+    public function __construct(private ActiveSurveyTemplateResolver $templateResolver) {}
+
     /**
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
@@ -64,8 +64,7 @@ class PariwisataService
                 'village.surveyAssignment:id,code,village_id',
                 'village.surveyAssignment.pariwisataSurveyAnswers:id,village_survey_assignment_id,score',
                 'categories:id,pariwisata_village_id,category',
-            ])
-            ;
+            ]);
 
         if ($normalizedFilters['view'] === 'trash') {
             $query->onlyTrashed();
@@ -252,22 +251,15 @@ class PariwisataService
      */
     private function pariwisataQuestionsForSummary(): Collection
     {
-        return once(fn (): Collection => SurveyTemplate::query()
-            ->select(['id', 'title', 'description', 'status', 'published_at'])
-            ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
-            ->where('status', 'published')
-            ->with([
-                'pariwisataSurveyQuestions' => fn ($query) => $query
-                    ->select(['id', 'survey_template_id'])
-                    ->where('is_active', true)
-                    ->orderBy('sort_order'),
-                'pariwisataSurveyQuestions.options' => fn ($query) => $query
-                    ->select(['id', 'pariwisata_survey_question_id', 'score'])
-                    ->orderBy('sort_order'),
-            ])
-            ->latest('published_at')
-            ->latest('id')
-            ->first()?->pariwisataSurveyQuestions ?? collect());
+        return once(fn (): Collection => $this->templateResolver->resolve('pariwisata', [
+            'pariwisataSurveyQuestions' => fn ($query) => $query
+                ->select(['id', 'survey_template_id'])
+                ->where('is_active', true)
+                ->orderBy('sort_order'),
+            'pariwisataSurveyQuestions.options' => fn ($query) => $query
+                ->select(['id', 'pariwisata_survey_question_id', 'score'])
+                ->orderBy('sort_order'),
+        ])?->pariwisataSurveyQuestions ?? collect());
     }
 
     private function formatCurrency(mixed $value): string

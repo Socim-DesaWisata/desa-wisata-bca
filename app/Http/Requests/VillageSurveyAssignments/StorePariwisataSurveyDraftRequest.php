@@ -4,8 +4,8 @@ namespace App\Http\Requests\VillageSurveyAssignments;
 
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataSuveyOption;
-use App\Models\SurveyTemplate;
 use App\Models\VillageSurveyAssignment;
+use App\Services\ActiveSurveyTemplateResolver;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -42,13 +42,7 @@ class StorePariwisataSurveyDraftRequest extends FormRequest
                     return;
                 }
 
-                $template = SurveyTemplate::query()
-                    ->select(['id'])
-                    ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
-                    ->where('status', 'published')
-                    ->latest('published_at')
-                    ->latest('id')
-                    ->first();
+                $template = app(ActiveSurveyTemplateResolver::class)->resolve('pariwisata', ['pariwisataSurveyQuestions:id,survey_template_id']);
 
                 if (! $template) {
                     $validator->errors()->add('answers', 'Template survey pariwisata aktif belum tersedia.');

@@ -32,6 +32,8 @@ use Illuminate\Validation\ValidationException;
 
 class VillageSurveyAssignmentService
 {
+    public function __construct(private ActiveSurveyTemplateResolver $templateResolver) {}
+
     /**
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
@@ -69,7 +71,7 @@ class VillageSurveyAssignmentService
                 'village:id,code,name,city,province',
                 'template:id,title,status',
                 'template.questions' => fn ($query) => $query
-                    ->select(['id', 'survey_template_id'])
+                    ->select(['id', 'survey_template_id', 'category_name', 'sort_order'])
                     ->with(['options:id,survey_question_id,score']),
                 'assignedBy:id,name,email',
                 'submittedBy:id,name,email',
@@ -130,7 +132,7 @@ class VillageSurveyAssignmentService
             : SurveyTemplate::query()
                 ->select(['id'])
                 ->where('status', 'published')
-                ->latest('published_at')
+                ->where('type', 'village')
                 ->latest('id')
                 ->first();
 
@@ -440,9 +442,14 @@ class VillageSurveyAssignmentService
         $assignment->loadCount(['answers', 'documents']);
 
         $questions = $assignment->template?->questions ?? collect();
+        $questions = $assignment->template?->questions ?? collect();
         $answersByQuestion = $assignment->answers->keyBy('survey_question_id');
         $aspects = $this->formatAssignmentDetailAspects($questions, $answersByQuestion);
         $summary = $this->buildAssignmentSummary($questions, $answersByQuestion, $aspects);
+        $pariwisataQuestions = $this->pariwisataQuestionsForSummary();
+        $pariwisataAnswersByQuestion = $assignment->pariwisataSurveyAnswers->keyBy('pariwisata_survey_question_id');
+        $pariwisataSurveyGroups = $this->formatPariwisataSurveyGroups($pariwisataQuestions, $pariwisataAnswersByQuestion);
+        $pariwisataSurveySummary = $this->buildPariwisataSurveySummary($pariwisataQuestions, $pariwisataAnswersByQuestion, $pariwisataSurveyGroups);
         $cover = $assignment->village?->media->first();
 
         return [
@@ -495,10 +502,7 @@ class VillageSurveyAssignmentService
                 ->map(fn (PariwisataVillage $pariwisata): array => $this->formatPariwisataForAssignment($assignment, $pariwisata))
                 ->values()
                 ->all() ?? [],
-            'pariwisata_survey_summary' => $this->buildPariwisataSurveySummary(
-                $this->pariwisataQuestionsForSummary(),
-                $assignment->pariwisataSurveyAnswers->keyBy('pariwisata_survey_question_id')
-            ),
+            'pariwisata_survey_summary' => $pariwisataSurveySummary,
             'activities' => $this->formatAssignmentActivities($assignment),
             'edit_options' => [
                 'status_options' => $this->statusOptions(),
@@ -1634,12 +1638,18 @@ class VillageSurveyAssignmentService
     /**
      * @param  Collection<int, PariwisataSurveyQuestion>  $questions
      * @param  Collection<int, PariwisataSurveyAnswer>  $answersByQuestion
+     * @param  array<int, array<string, mixed>>  $groups
      * @return array<string, mixed>
      */
-    private function buildPariwisataSurveySummary(Collection $questions, Collection $answersByQuestion): array
+    private function buildPariwisataSurveySummary(Collection $questions, Collection $answersByQuestion, array $groups): array
     {
         $totalScore = $answersByQuestion->sum(fn (PariwisataSurveyAnswer $answer): int => (int) $answer->score);
         $maxScore = $questions->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
+        $finalScore = $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0;
+        $aspects = $this->formatPariwisataSummaryAspects($groups);
+        $rankedAspects = collect($aspects)->filter(fn (array $aspect): bool => (int) $aspect['max_score'] > 0);
+        $highestAspect = $rankedAspects->sortByDesc('score_percent')->first();
+        $lowestAspect = $rankedAspects->sortBy('score_percent')->first();
 
         return [
             'total_questions' => $questions->count(),
@@ -1648,9 +1658,54 @@ class VillageSurveyAssignmentService
             'total_documents' => $answersByQuestion->sum(fn (PariwisataSurveyAnswer $answer): int => $answer->relationLoaded('documents') ? $answer->documents->count() : 0),
             'total_score' => $totalScore,
             'max_score' => $maxScore,
-            'final_score' => $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0,
+            'final_score' => $finalScore,
             'last_answered_at' => $this->formatDate($answersByQuestion->max('last_edited_at')),
+
+            'highest_aspect' => $highestAspect ? [
+                'name' => $highestAspect['name'],
+                'score_percent' => $highestAspect['score_percent'],
+            ] : null,
+            'lowest_aspect' => $lowestAspect ? [
+                'name' => $lowestAspect['name'],
+                'score_percent' => $lowestAspect['score_percent'],
+            ] : null,
+            'aspects' => $aspects,
+            'distribution' => $this->formatPariwisataScoreDistribution($answersByQuestion),
         ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $groups
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatPariwisataSummaryAspects(array $groups): array
+    {
+        return collect($groups)
+            ->map(fn (array $group): array => [
+                'name' => $group['category_name'],
+                'question_count' => $group['question_count'],
+                'answered_count' => $group['answered_count'],
+                'documents_count' => $group['documents_count'],
+                'score' => $group['score'],
+                'max_score' => $group['max_score'],
+                'score_percent' => (int) $group['max_score'] > 0 ? round(((float) $group['score'] / (float) $group['max_score']) * 100, 1) : 0.0,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, PariwisataSurveyAnswer>  $answersByQuestion
+     * @return array<int, array<string, int>>
+     */
+    private function formatPariwisataScoreDistribution(Collection $answersByQuestion): array
+    {
+        return collect(range(1, 4))
+            ->map(fn (int $score): array => [
+                'score' => $score,
+                'count' => $answersByQuestion->filter(fn (PariwisataSurveyAnswer $answer): bool => (int) $answer->score === $score)->count(),
+            ])
+            ->all();
     }
 
     /**
@@ -1660,7 +1715,7 @@ class VillageSurveyAssignmentService
     {
         return once(fn (): Collection => $this->activePariwisataTemplate([
             'pariwisataSurveyQuestions' => fn ($query) => $query
-                ->select(['id', 'survey_template_id'])
+                ->select(['id', 'survey_template_id', 'category_name', 'sort_order'])
                 ->where('is_active', true)
                 ->orderBy('sort_order'),
             'pariwisataSurveyQuestions.options' => fn ($query) => $query
@@ -1674,14 +1729,7 @@ class VillageSurveyAssignmentService
      */
     private function activePariwisataTemplate(array $with = []): ?SurveyTemplate
     {
-        return SurveyTemplate::query()
-            ->select(['id', 'title', 'description', 'status', 'published_at'])
-            ->where('title', 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata')
-            ->where('status', 'published')
-            ->with($with)
-            ->latest('published_at')
-            ->latest('id')
-            ->first();
+        return $this->templateResolver->resolve('pariwisata', $with);
     }
 
     /**

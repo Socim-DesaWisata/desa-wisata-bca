@@ -158,6 +158,7 @@ test('pariwisata index score uses total answer score divided by active template 
     $user = User::factory()->create();
     $template = SurveyTemplate::factory()->create([
         'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
         'created_by' => $user->id,
         'status' => 'published',
     ]);
