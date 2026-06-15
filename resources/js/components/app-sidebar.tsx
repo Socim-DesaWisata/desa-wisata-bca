@@ -202,15 +202,15 @@ export function AdminSidebarContent({
                 </svg>
             </div>
 
-            <div className="relative">
+            <div className="relative pb-3">
                 <Link
                     href={dashboard()}
                     prefetch
                     onClick={onNavigate}
-                    className="flex items-center justify-center pt-1 pr-5 pb-5"
+                    className="flex min-h-[112px] items-end justify-center px-2 pt-1 pb-0"
                     aria-label="BCA"
                 >
-                    <SidebarLogo className="h-auto max-h-none w-[100px]" />
+                    <SidebarLogo className="h-[96px] w-[210px] max-w-none scale-[1.04] object-contain object-bottom" />
                 </Link>
                 <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.24),transparent)]" />
             </div>
