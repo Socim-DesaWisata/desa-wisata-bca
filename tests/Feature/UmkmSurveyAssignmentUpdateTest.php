@@ -73,3 +73,41 @@ test('umkm update can replace product photo without duplicating existing categor
     expect($umkm->fresh()->product_photo_path)->not->toBe('umkms/1/products/old-photo.jpg');
     Storage::disk('public')->assertExists($umkm->fresh()->product_photo_path);
 });
+
+
+test('umkm show edit values annual revenue is normalized without decimal suffix', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+        'title' => 'Assessment Pelaku UMKM',
+        'type' => 'umkm',
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::query()->create([
+        'code' => 'ASG-UMKM-002',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'status' => 'in_progress',
+        'assigned_by' => $user->id,
+        'assigned_at' => now(),
+    ]);
+    $umkm = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'data_collector_id' => $user->id,
+        'business_owner_name' => 'Pemilik Omset',
+        'name' => 'UMKM Omset',
+        'annual_revenue' => 15000000,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.umkm.show', [$assignment, $umkm]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show-umkm')
+            ->where('edit_values.annual_revenue', '15000000')
+        );
+});

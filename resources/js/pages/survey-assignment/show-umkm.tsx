@@ -266,7 +266,10 @@ const booleanOptions: Option[] = [
 ];
 
 function digitsOnly(value: string) {
-    return value.replace(/\D/g, '');
+    const normalized = value.replace(',', '.').trim();
+    const integerPart = normalized.split('.')[0] ?? '';
+
+    return integerPart.replace(/\D/g, '');
 }
 
 function formatThousands(value: string) {
