@@ -29,7 +29,7 @@ const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
-const SIDEBAR_LOGO_SRC = "/logo/logo-bca-white.svg"
+const SIDEBAR_LOGO_SRC = "/logo/logo-desa-bakti.png"
 
 type SidebarContext = {
   state: "expanded" | "collapsed"
@@ -346,7 +346,10 @@ function SidebarLogo({
     <img
       src={SIDEBAR_LOGO_SRC}
       alt={alt}
-      className={cn("block h-auto w-full shrink-0 object-contain", className)}
+      className={cn(
+        "block h-auto w-full max-w-[168px] shrink-0 object-contain brightness-0 invert mix-blend-screen",
+        className
+      )}
       {...props}
     />
   )
