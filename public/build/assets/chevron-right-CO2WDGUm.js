@@ -1,0 +1,1 @@
+import{$ as e}from"./app-DKp-uY0Y.js";var t=e(`ChevronRight`,[[`path`,{d:`m9 18 6-6-6-6`,key:`mthhwq`}]]);export{t};
