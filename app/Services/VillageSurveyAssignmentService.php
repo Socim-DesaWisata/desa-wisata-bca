@@ -1463,7 +1463,9 @@ class VillageSurveyAssignmentService
             'product_category' => (string) ($umkm->product_category ?? ''),
             'categories' => $umkm->categories->pluck('category')->values()->all(),
             'brand_name' => (string) ($umkm->brand_name ?? ''),
-            'annual_revenue' => $umkm->annual_revenue ? (string) $umkm->annual_revenue : '',
+            'annual_revenue' => $umkm->annual_revenue !== null
+                ? (string) (int) round((float) $umkm->annual_revenue)
+                : '',
             'monthly_production_capacity' => (string) ($umkm->monthly_production_capacity ?? ''),
             'current_obstacles' => (string) ($umkm->current_obstacles ?? ''),
             'certifications' => (string) ($umkm->certifications ?? ''),
