@@ -192,6 +192,7 @@ type SurveyAssignmentShowProps = {
     aspects: SurveyAspect[];
     umkms: UmkmData[];
     pariwisata: PariwisataData[];
+    pariwisata_survey_groups: PariwisataSurveyGroup[];
     pariwisata_survey_summary: {
         total_questions: number;
         answered_questions: number;
@@ -349,6 +350,58 @@ type PariwisataData = {
     created_at: string;
     updated_at: string;
     detail_url: string;
+};
+
+
+type PariwisataSurveyOption = {
+    id: number;
+    score: number;
+    level: string | null;
+    label: string;
+    description: string | null;
+    sort_order: number;
+};
+
+type PariwisataSurveyQuestion = {
+    id: number;
+    category_code: string | null;
+    category_name: string;
+    sub_category_code: string | null;
+    sub_category_name: string | null;
+    criteria_code: string | null;
+    criteria_name: string | null;
+    indicator_code: string | null;
+    indicator_name: string | null;
+    indicator_description: string | null;
+    supporting_evidence: string | null;
+    document_required: boolean;
+    document_hint: string | null;
+    max_score: number;
+    answer: {
+        id: number;
+        pariwisata_suvey_option_id: number;
+        score: number;
+        score_label: string;
+        option_description: string | null;
+        notes: string | null;
+        answered_at: string;
+        last_edited_at: string;
+        answered_by: UserSummary;
+        last_edited_by: UserSummary;
+        documents: SurveyDocument[];
+    } | null;
+    options: PariwisataSurveyOption[];
+};
+
+type PariwisataSurveyGroup = {
+    category_name: string;
+    min_sort_order: number;
+    question_count: number;
+    answered_count: number;
+    documents_count: number;
+    score: number;
+    max_score: number;
+    questions: PariwisataSurveyQuestion[];
 };
 
 function classNames(...classes: Array<string | false | null | undefined>) {
@@ -1055,6 +1108,241 @@ function QuestionRow({
     );
 }
 
+
+function PariwisataQuestionRow({
+    question,
+    number,
+    onViewDetail,
+}: {
+    question: PariwisataSurveyQuestion;
+    number: number;
+    onViewDetail: (question: PariwisataSurveyQuestion) => void;
+}) {
+    const answered = Boolean(question.answer);
+    const title = question.indicator_name ?? question.criteria_name ?? '-';
+    const meta = [
+        question.criteria_code ? `${question.criteria_code}  ${question.criteria_name ?? '-'}` : null,
+        question.indicator_code ? `${question.indicator_code}` : null,
+    ].filter(Boolean);
+
+    return (
+        <div className="grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0 xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]">
+            <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
+                {String(number).padStart(2, '0')}
+            </div>
+
+            <div className="min-w-0">
+                <p className="text-sm leading-5 font-semibold text-[#303030]">
+                    {title}
+                </p>
+                {meta.length > 0 && (
+                    <p className="mt-1 text-xs font-semibold text-[#0066AE]">
+                        {meta.join('  ')}
+                    </p>
+                )}
+                {(question.indicator_description || question.document_hint) && (
+                    <p className="mt-2 text-xs font-semibold text-[#7C7C7C]">
+                        {question.indicator_description ?? question.document_hint}
+                    </p>
+                )}
+            </div>
+
+            <div className="flex items-center">
+                <div
+                    className={classNames(
+                        'w-full rounded-lg px-4 py-3 text-center shadow-[0_6px_12px_rgba(0,102,174,0.10)]',
+                        answered
+                            ? 'bg-[#0066AE] text-white'
+                            : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                    )}
+                >
+                    <p className="text-sm font-bold">
+                        Skor {question.answer?.score ?? '-'} / {question.max_score || '-'}
+                    </p>
+                    <p className="line-clamp-2 text-[11px] font-semibold opacity-80">
+                        {question.answer?.score_label ?? 'Belum dijawab'}
+                    </p>
+                </div>
+            </div>
+
+            <div className="min-w-0">
+                <p className="mb-2 text-xs font-bold text-[#303030]">
+                    Dokumen Pendukung ({question.answer?.documents.length ?? 0})
+                </p>
+                <div className="space-y-2">
+                    {question.answer?.documents.map((document) => (
+                        <DocumentBadge key={document.id} document={document} />
+                    ))}
+                    {(question.answer?.documents.length ?? 0) === 0 && (
+                        <p className="rounded-lg bg-[#F7F7F7] px-3 py-2 text-xs font-semibold text-[#7C7C7C]">
+                            Tidak ada dokumen
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            <div className="min-w-0 text-xs">
+                <p className="flex items-center gap-2 font-semibold text-[#7C7C7C]">
+                    <UserRound size={14} className="text-[#0066AE]" />
+                    Dijawab oleh
+                </p>
+                <p className="mt-1 font-bold text-[#303030]">
+                    {question.answer?.answered_by.name ?? '-'}
+                </p>
+            </div>
+
+            <div className="min-w-0 text-xs">
+                <p className="flex items-center gap-2 font-semibold text-[#7C7C7C]">
+                    <Clock3 size={14} className="text-[#0066AE]" />
+                    Terakhir diedit
+                </p>
+                <p className="mt-1 font-bold text-[#303030]">
+                    {question.answer?.last_edited_at ?? '-'}
+                </p>
+            </div>
+
+            <div className="flex items-center">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                        >
+                            Action
+                            <ChevronDown size={14} />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        align="end"
+                        className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
+                    >
+                        <DropdownMenuItem
+                            className="gap-2 text-xs"
+                            onClick={() => onViewDetail(question)}
+                        >
+                            <Eye className="size-4 text-[#303030]" />
+                            Lihat Detail
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </div>
+    );
+}
+
+function PariwisataAnswerDetailModal({
+    question,
+    open,
+    onOpenChange,
+}: {
+    question: PariwisataSurveyQuestion | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    if (!question) {
+        return null;
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle className="text-[#303030]">
+                        Detail Jawaban Survey ISTC
+                    </DialogTitle>
+                    <DialogDescription>
+                        Pertanyaan, opsi jawaban, skor terpilih, catatan, dan file pendukung.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-5">
+                    <section className="rounded-xl bg-[#F8FBFF] p-4">
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#0066AE]">
+                            {question.criteria_code && <span>{question.criteria_code}</span>}
+                            {question.indicator_code && <span> {question.indicator_code}</span>}
+                        </div>
+                        <h3 className="mt-2 text-base leading-6 font-bold text-[#303030]">
+                            {question.indicator_name ?? question.criteria_name ?? '-'}
+                        </h3>
+                        {question.indicator_description && (
+                            <p className="mt-2 text-sm font-semibold text-[#7C7C7C]">
+                                {question.indicator_description}
+                            </p>
+                        )}
+                        {question.document_hint && (
+                            <p className="mt-2 text-sm font-semibold text-[#7C7C7C]">
+                                {question.document_hint}
+                            </p>
+                        )}
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Opsi Jawaban
+                        </h4>
+                        <div className="mt-2 divide-y divide-[#EFEFEF] rounded-xl border border-[#EFEFEF]">
+                            {question.options.map((option) => {
+                                const selected =
+                                    option.id ===
+                                    question.answer?.pariwisata_suvey_option_id;
+
+                                return (
+                                    <div
+                                        key={option.id}
+                                        className={classNames(
+                                            'grid gap-3 px-4 py-3 text-sm sm:grid-cols-[72px_1fr]',
+                                            selected && 'bg-[#EAF3FF]',
+                                        )}
+                                    >
+                                        <span className="font-bold text-[#0066AE]">
+                                            Skor {option.score}
+                                        </span>
+                                        <div>
+                                            <span className="font-semibold text-[#303030]">
+                                                {option.label}
+                                            </span>
+                                            {option.description && (
+                                                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                                    {option.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Catatan Jawaban
+                        </h4>
+                        <div className="mt-2 rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#303030]">
+                            {question.answer?.notes || 'Tidak ada catatan.'}
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            File Pendukung
+                        </h4>
+                        <div className="mt-2 space-y-2">
+                            {question.answer?.documents.map((document) => (
+                                <DocumentBadge key={document.id} document={document} />
+                            ))}
+                            {(question.answer?.documents.length ?? 0) === 0 && (
+                                <p className="rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#7C7C7C]">
+                                    Belum ada file pendukung.
+                                </p>
+                            )}
+                        </div>
+                    </section>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function SidebarCard({
     title,
     icon,
@@ -1342,11 +1630,60 @@ function PariwisataTab({
     pariwisata,
     assignmentCode,
     surveySummary,
+    surveyGroups,
 }: {
     pariwisata: PariwisataData[];
     assignmentCode: string;
     surveySummary: SurveyAssignmentShowProps['pariwisata_survey_summary'];
+    surveyGroups: SurveyAssignmentShowProps['pariwisata_survey_groups'];
 }) {
+    const [search, setSearch] = useState('');
+    const [aspectFilter, setAspectFilter] = useState('all');
+    const [detailQuestion, setDetailQuestion] =
+        useState<PariwisataSurveyQuestion | null>(null);
+    const [closedAspects, setClosedAspects] = useState<Record<string, boolean>>(
+        {},
+    );
+    const filteredGroups = useMemo(
+        () =>
+            surveyGroups
+                .filter(
+                    (group) =>
+                        aspectFilter === 'all' ||
+                        group.category_name === aspectFilter,
+                )
+                .map((group) => ({
+                    ...group,
+                    questions: group.questions.filter((question) => {
+                        const value = search.toLowerCase();
+                        const haystacks = [
+                            group.category_name,
+                            question.criteria_code,
+                            question.criteria_name,
+                            question.indicator_code,
+                            question.indicator_name,
+                            question.indicator_description,
+                            question.answer?.score_label,
+                        ]
+                            .filter(Boolean)
+                            .map((item) => String(item).toLowerCase());
+
+                        return (
+                            value === '' ||
+                            haystacks.some((item) => item.includes(value))
+                        );
+                    }),
+                }))
+                .filter((group) => group.questions.length > 0),
+        [aspectFilter, search, surveyGroups],
+    );
+
+    function toggleAspect(aspectName: string) {
+        setClosedAspects((current) => ({
+            ...current,
+            [aspectName]: !current[aspectName],
+        }));
+    }
     const activeCount = pariwisata.filter((item) => item.is_active).length;
     const distribution = answerScoreBuckets.map((bucket) => {
         const summary = surveySummary.distribution.find(
@@ -1463,6 +1800,135 @@ function PariwisataTab({
                     ))}
                 </div>
             )}
+
+            <Card className="overflow-hidden">
+                <div className="border-b border-[#EFEFEF] p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                        <label className="relative flex-1">
+                            <Search
+                                size={16}
+                                className="absolute top-1/2 left-3 -translate-y-1/2 text-[#7C7C7C]"
+                            />
+                            <input
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                className="h-10 w-full rounded-lg border border-[#DDE4EC] bg-white pr-3 pl-9 text-sm outline-none focus:border-[#0066AE]"
+                                placeholder="Cari pertanyaan, aspek, atau kode..."
+                            />
+                        </label>
+                        <select
+                            value={aspectFilter}
+                            onChange={(event) => setAspectFilter(event.target.value)}
+                            className="h-10 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
+                        >
+                            <option value="all">Semua Aspek</option>
+                            {surveyGroups.map((group) => (
+                                <option key={group.category_name} value={group.category_name}>
+                                    {group.category_name}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSearch('');
+                                setAspectFilter('all');
+                            }}
+                        >
+                            <Button>
+                                <RefreshCcw size={16} />
+                                Reset
+                            </Button>
+                        </button>
+                    </div>
+                </div>
+
+                {filteredGroups.map((group) => {
+                    const scorePercent =
+                        group.max_score > 0
+                            ? Math.round((group.score / group.max_score) * 1000) / 10
+                            : 0;
+
+                    return (
+                        <div key={group.category_name}>
+                            <button
+                                type="button"
+                                onClick={() => toggleAspect(group.category_name)}
+                                className="flex w-full flex-col gap-3 border-b border-[#DDE9F6] bg-[#EAF3FF] px-4 py-3 text-left transition hover:bg-[#DDEFFF] sm:flex-row sm:items-center sm:justify-between"
+                                aria-expanded={!closedAspects[group.category_name]}
+                            >
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#0066AE]">
+                                        <ShieldCheck size={18} strokeWidth={2.1} />
+                                    </span>
+                                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+                                        <h3 className="text-sm font-bold text-[#303030]">
+                                            {group.category_name}
+                                        </h3>
+                                        <span className="text-xs font-semibold text-[#303030]">
+                                            {group.question_count} pertanyaan
+                                        </span>
+                                        <span className="text-xs font-semibold text-[#303030]">
+                                            {group.answered_count} terjawab
+                                        </span>
+                                        <span className="text-xs font-semibold text-[#303030]">
+                                            {group.documents_count} dokumen
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="grid min-w-[180px] grid-cols-[1fr_58px_20px] items-center gap-3">
+                                    <div className="h-2 overflow-hidden rounded-full bg-white">
+                                        <div
+                                            className="h-full rounded-full bg-[#0066AE]"
+                                            style={{ width: `${Math.min(scorePercent, 100)}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-right text-xs font-bold text-[#0066AE]">
+                                        {scorePercent}
+                                    </span>
+                                    <ChevronDown
+                                        size={18}
+                                        className={classNames(
+                                            'text-[#0066AE] transition-transform',
+                                            closedAspects[group.category_name] && '-rotate-90',
+                                        )}
+                                    />
+                                </div>
+                            </button>
+                            {!closedAspects[group.category_name] &&
+                                group.questions.map((question, index) => (
+                                    <PariwisataQuestionRow
+                                        key={question.id}
+                                        question={question}
+                                        number={index + 1}
+                                        onViewDetail={setDetailQuestion}
+                                    />
+                                ))}
+                        </div>
+                    );
+                })}
+
+                {filteredGroups.length === 0 && (
+                    <div className="px-4 py-12 text-center">
+                        <p className="text-sm font-bold text-[#303030]">
+                            Data tidak ditemukan
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                            Ubah pencarian atau filter aspek.
+                        </p>
+                    </div>
+                )}
+            </Card>
+
+            <PariwisataAnswerDetailModal
+                question={detailQuestion}
+                open={Boolean(detailQuestion)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDetailQuestion(null);
+                    }
+                }}
+            />
         </div>
     );
 }
@@ -1746,6 +2212,7 @@ export default function SurveyAssignmentShow({
     aspects,
     umkms,
     pariwisata,
+    pariwisata_survey_groups,
     pariwisata_survey_summary,
     activities,
     edit_options,
@@ -2510,6 +2977,7 @@ export default function SurveyAssignmentShow({
                                 pariwisata={pariwisata}
                                 assignmentCode={assignment.code}
                                 surveySummary={pariwisata_survey_summary}
+                                surveyGroups={pariwisata_survey_groups}
                             />
                         </div>
                     )}

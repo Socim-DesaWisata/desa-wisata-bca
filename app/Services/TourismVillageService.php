@@ -152,6 +152,9 @@ class TourismVillageService
             'profileItems' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('name'),
             'profileItems.category:id,name,slug',
             'profileItems.media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
+            'umkms' => fn ($query) => $query->orderBy('name')->orderBy('id'),
+            'umkms.categories:id,village_umkm_id,category',
+            'umkms.dataCollector:id,name,email',
             'surveyAssignment.template:id,title,status',
             'surveyAssignment.assignedBy:id,name',
             'surveyAssignment.submittedBy:id,name',
@@ -531,6 +534,12 @@ class TourismVillageService
                     'items' => $items->map(fn (VillageProfileItem $item): array => $this->formatProfileItem($item))->values(),
                 ])
                 ->values(),
+            'umkms' => $village->umkms
+                ->map(fn (VillageUmkm $umkm): array => $this->formatVillageUmkm($umkm))
+                ->values(),
+            'pariwisata' => $village->pariwisataVillages
+                ->map(fn (PariwisataVillage $pariwisata): array => $this->formatPariwisataVillage($pariwisata))
+                ->values(),
             'survey_assignment' => $village->surveyAssignment
                 ? $this->formatSurveyAssignment($village->surveyAssignment)
                 : null,
@@ -878,7 +887,11 @@ class TourismVillageService
             'operational_days' => $pariwisata->operational_days,
             'operational_hours' => $pariwisata->operational_hours,
             'entrance_ticket_price' => $pariwisata->entrance_ticket_price !== null ? $this->formatCurrency((float) $pariwisata->entrance_ticket_price) : null,
+            'entrance_ticket_description' => $pariwisata->entrance_ticket_description,
             'address' => $pariwisata->address,
+            'person_in_charge_name' => $pariwisata->person_in_charge_name,
+            'person_in_charge_phone' => $pariwisata->person_in_charge_phone,
+            'person_in_charge_address' => $pariwisata->person_in_charge_address,
             'status_label' => $pariwisata->is_active ? 'Aktif' : 'Nonaktif',
             'categories' => $pariwisata->categories
                 ->map(fn ($category): array => [
@@ -900,6 +913,38 @@ class TourismVillageService
             'keluarga' => 'Family',
             default => Str::headline((string) $value),
         };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatVillageUmkm(VillageUmkm $umkm): array
+    {
+        return [
+            'id' => $umkm->id,
+            'name' => $umkm->name,
+            'brand_name' => $umkm->brand_name,
+            'product_category' => $umkm->product_category,
+            'business_owner_name' => $umkm->business_owner_name,
+            'production_address' => $umkm->production_address,
+            'annual_revenue' => $umkm->annual_revenue !== null
+                ? $this->formatCurrency((float) $umkm->annual_revenue)
+                : null,
+            'current_obstacles' => $umkm->current_obstacles,
+            'certifications' => $umkm->certifications,
+            'has_exported' => $umkm->has_exported,
+            'export_destination_countries' => $umkm->export_destination_countries,
+            'collector_name' => $umkm->dataCollector?->name ?? $umkm->collector_name,
+            'collector_email' => $umkm->dataCollector?->email,
+            'product_photo_url' => $this->mediaUrl($umkm->product_photo_path, null),
+            'categories' => $umkm->categories
+                ->map(fn ($category): array => [
+                    'id' => $category->id,
+                    'value' => $category->category,
+                    'label' => Str::headline((string) $category->category),
+                ])
+                ->values(),
+        ];
     }
 
     private function formatCurrency(float $value): string

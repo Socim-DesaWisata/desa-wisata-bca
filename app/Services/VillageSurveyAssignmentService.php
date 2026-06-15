@@ -503,6 +503,7 @@ class VillageSurveyAssignmentService
                 ->values()
                 ->all() ?? [],
             'pariwisata_survey_summary' => $pariwisataSurveySummary,
+            'pariwisata_survey_groups' => $pariwisataSurveyGroups,
             'activities' => $this->formatAssignmentActivities($assignment),
             'edit_options' => [
                 'status_options' => $this->statusOptions(),
@@ -1715,11 +1716,11 @@ class VillageSurveyAssignmentService
     {
         return once(fn (): Collection => $this->activePariwisataTemplate([
             'pariwisataSurveyQuestions' => fn ($query) => $query
-                ->select(['id', 'survey_template_id', 'category_name', 'sort_order'])
+                ->select(['id', 'survey_template_id', 'category_code', 'category_name', 'sub_category_code', 'sub_category_name', 'criteria_code', 'criteria_name', 'indicator_code', 'indicator_name', 'indicator_description', 'supporting_evidence', 'document_required', 'document_hint', 'sort_order'])
                 ->where('is_active', true)
                 ->orderBy('sort_order'),
             'pariwisataSurveyQuestions.options' => fn ($query) => $query
-                ->select(['id', 'pariwisata_survey_question_id', 'score'])
+                ->select(['id', 'pariwisata_survey_question_id', 'score', 'level', 'label', 'description', 'sort_order'])
                 ->orderBy('sort_order'),
         ])?->pariwisataSurveyQuestions ?? collect());
     }
