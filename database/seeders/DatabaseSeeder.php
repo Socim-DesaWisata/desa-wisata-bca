@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,7 +20,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin',
-                'password' => 'admin123',
+                'password' => Hash::make('admin123'),
                 'role' => 'admin',
                 'status' => 'active',
             ],
@@ -29,7 +30,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'enum@gmail.com'],
             [
                 'name' => 'Enum SOCIM',
-                'password' => 'enum12345',
+                'password' => Hash::make('enum12345'),
                 'role' => 'enumerator',
                 'status' => 'active',
             ],

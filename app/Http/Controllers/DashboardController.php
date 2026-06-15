@@ -16,9 +16,11 @@ class DashboardController extends Controller
             ]);
         }
 
+        $filters = request()->only(['general_report_filter', 'activity_filter', 'status_filter']);
+
         return Inertia::render('dashboard', [
             'dashboard_mode' => 'admin',
-            ...$service->getData(),
+            ...$service->getData($filters),
         ]);
     }
 }

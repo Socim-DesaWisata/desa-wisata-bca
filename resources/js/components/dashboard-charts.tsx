@@ -14,7 +14,7 @@ import {
     Cell,
 } from 'recharts';
 import { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,27 +29,7 @@ import {
     ChevronDown,
 } from 'lucide-react';
 
-const areaData = [
-    { name: 'Jan', score: 65 },
-    { name: 'Feb', score: 68 },
-    { name: 'Mar', score: 72 },
-    { name: 'Apr', score: 70 },
-    { name: 'May', score: 78.4 },
-];
-
-const barData = [
-    { name: '24 Apr', selesai: 10, proses: 5, belum: 3 },
-    { name: '1 Mei', selesai: 12, proses: 8, belum: 2 },
-    { name: '8 Mei', selesai: 8, proses: 12, belum: 4 },
-    { name: '15 Mei', selesai: 15, proses: 10, belum: 1 },
-    { name: '22 Mei', selesai: 18, proses: 5, belum: 2 },
-];
-
-const pieData = [
-    { name: 'Selesai', value: 2, color: '#0066AE' },
-    { name: 'Dalam Proses', value: 2, color: '#2FA6FC' },
-    { name: 'Belum Dimulai', value: 1, color: '#DCE3EA' },
-];
+// Data is now fetched dynamically from backend
 
 function Panel({
     children,
@@ -68,8 +48,40 @@ function Panel({
 }
 
 export function DashboardCharts() {
-    const [generalReportFilter, setGeneralReportFilter] = useState('Bulan Ini');
-    const [activityFilter, setActivityFilter] = useState('30 Hari Terakhir');
+    const { props } = usePage();
+    const generalReport = (props as any).general_report || {};
+    const aktivitasSurvey = (props as any).aktivitas_survey || {};
+    const statusSurvey = (props as any).status_survey || {};
+    const filters = (props as any).filters || {};
+
+    const [generalReportFilter, setGeneralReportFilter] = useState(filters.general_report_filter || 'Bulan Ini');
+    const [activityFilter, setActivityFilter] = useState(filters.activity_filter || '30 Hari Terakhir');
+    const [statusFilter, setStatusFilter] = useState(filters.status_filter || 'Tahun Ini');
+
+    const updateFilter = (key: string, value: string) => {
+        if (key === 'general_report_filter') updateFilter('general_report_filter', value);
+        if (key === 'activity_filter') updateFilter('activity_filter', value);
+        if (key === 'status_filter') updateFilter('status_filter', value);
+
+        router.get(
+            // @ts-ignore
+            route('dashboard'),
+            {
+                general_report_filter: key === 'general_report_filter' ? value : generalReportFilter,
+                activity_filter: key === 'activity_filter' ? value : activityFilter,
+                status_filter: key === 'status_filter' ? value : statusFilter,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['general_report', 'aktivitas_survey', 'status_survey', 'filters'],
+            }
+        );
+    };
+
+    const areaData = generalReport.area_data || [];
+    const barData = aktivitasSurvey.bar_data || [];
+    const pieData = statusSurvey.pie_data || [];
 
     return (
         <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -85,9 +97,11 @@ export function DashboardCharts() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[130px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => setGeneralReportFilter('Hari Ini')}>Hari Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => setGeneralReportFilter('Bulan Ini')}>Bulan Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => setGeneralReportFilter('Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', 'Hari Ini')}>Hari Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', '2025')}>2025</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', '2024')}>2024</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -101,9 +115,7 @@ export function DashboardCharts() {
                                 Rata-rata Total Skor
                             </p>
                             <div className="mt-1 flex items-end gap-2">
-                                <span className="text-3xl leading-none font-bold text-[#303030]">
-                                    78.4
-                                </span>
+                                <span className="text-3xl leading-none font-bold text-[#303030]">{generalReport.average_score ?? 0}</span>
                                 <span className="pb-0.5 text-xs font-semibold text-[#7C7C7C]">
                                     / 100
                                 </span>
@@ -155,7 +167,7 @@ export function DashboardCharts() {
                             </ResponsiveContainer>
                         </div>
                         <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#00893D]">
-                            <ArrowUpRight className="size-3" /> 6.4%{' '}
+                            <ArrowUpRight className="size-3" /> {generalReport.trend ?? '+0%'}{' '}
                             <span className="font-medium text-[#7C7C7C]">
                                 dibanding bulan lalu
                             </span>
@@ -172,7 +184,7 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-[#303030]">
-                                    5
+                                    {generalReport.total_assessment ?? 0}
                                 </p>
                                 <span className="flex items-center text-[10px] font-bold text-[#00893D]">
                                     <ArrowUpRight className="size-2.5" /> 2
@@ -185,10 +197,10 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-[#303030]">
-                                    2
+                                    {generalReport.selesai ?? 0}
                                 </p>
                                 <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    40%
+                                    {generalReport.total_assessment > 0 ? Math.round((generalReport.selesai / generalReport.total_assessment) * 100) : 0}%
                                 </span>
                             </div>
                         </div>
@@ -198,10 +210,10 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-[#303030]">
-                                    2
+                                    {generalReport.dalam_proses ?? 0}
                                 </p>
                                 <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    40%
+                                    {generalReport.total_assessment > 0 ? Math.round((generalReport.dalam_proses / generalReport.total_assessment) * 100) : 0}%
                                 </span>
                             </div>
                         </div>
@@ -211,10 +223,10 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-[#303030]">
-                                    1
+                                    {generalReport.belum_dimulai ?? 0}
                                 </p>
                                 <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    20%
+                                    {generalReport.total_assessment > 0 ? Math.round((generalReport.belum_dimulai / generalReport.total_assessment) * 100) : 0}%
                                 </span>
                             </div>
                         </div>
@@ -224,7 +236,7 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-[#303030]">
-                                    3
+                                    {generalReport.total_program_csr ?? 0}
                                 </p>
                                 <span className="flex items-center text-[10px] font-bold text-[#00893D]">
                                     <ArrowUpRight className="size-2.5" /> 1
@@ -237,7 +249,7 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-xs font-bold text-[#303030]">
-                                    Rp120.000.000
+                                    Rp{(generalReport.total_anggaran ?? 0).toLocaleString('id-ID')}
                                 </p>
                             </div>
                             <span className="mt-0.5 flex items-center text-[10px] font-bold text-[#00893D]">
@@ -260,9 +272,11 @@ export function DashboardCharts() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => setActivityFilter('7 Hari Terakhir')}>7 Hari Terakhir</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => setActivityFilter('30 Hari Terakhir')}>30 Hari Terakhir</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => setActivityFilter('Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '7 Hari Terakhir')}>7 Hari Terakhir</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '30 Hari Terakhir')}>30 Hari Terakhir</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '2025')}>2025</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '2024')}>2024</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -340,10 +354,23 @@ export function DashboardCharts() {
             </Panel>
 
             <Panel className="flex flex-col p-4">
-                <div className="mb-4">
+                <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-sm font-bold text-[#303030]">
                         Status Survey
                     </h2>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] px-2 py-1 text-xs font-semibold text-[#7C7C7C] outline-none hover:bg-gray-50 cursor-pointer">
+                                {statusFilter} <ChevronDown className="size-3" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[140px]">
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', '2025')}>2025</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', '2024')}>2024</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <div className="relative flex flex-1 flex-col items-center justify-center">
                     <div className="relative flex h-[140px] w-[140px] items-center justify-center">
@@ -357,7 +384,7 @@ export function DashboardCharts() {
                                     dataKey="value"
                                     stroke="none"
                                 >
-                                    {pieData.map((entry, index) => (
+                                    {pieData.map((entry: any, index: any) => (
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={entry.color}
@@ -370,14 +397,12 @@ export function DashboardCharts() {
                             <span className="text-[10px] font-semibold text-[#7C7C7C]">
                                 Total
                             </span>
-                            <span className="text-2xl font-bold text-[#303030]">
-                                5
-                            </span>
+                            <span className="text-2xl font-bold text-[#303030]">{statusSurvey.total ?? 0}</span>
                         </div>
                     </div>
                 </div>
                 <div className="mt-6 space-y-3">
-                    {pieData.map((item) => (
+                    {pieData.map((item: any) => (
                         <div
                             key={item.name}
                             className="flex items-center justify-between text-xs"
@@ -394,7 +419,7 @@ export function DashboardCharts() {
                             <div className="font-bold text-[#303030]">
                                 {item.value}{' '}
                                 <span className="font-medium text-[#7C7C7C]">
-                                    ({(item.value / 5) * 100}%)
+                                    ({statusSurvey.total > 0 ? (item.value / statusSurvey.total) * 100 : 0}%)
                                 </span>
                             </div>
                         </div>

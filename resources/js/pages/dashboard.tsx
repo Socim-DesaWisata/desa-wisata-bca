@@ -239,13 +239,16 @@ function CurrentTimeCard() {
 function Panel({
     children,
     className = '',
+    style,
 }: {
     children: React.ReactNode;
     className?: string;
+    style?: React.CSSProperties;
 }) {
     return (
         <section
             className={`rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_14px_rgba(3,17,32,0.06)] ${className}`}
+            style={style}
         >
             {children}
         </section>
@@ -493,7 +496,7 @@ export default function Dashboard({
                     </div>
 
                     <div className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Panel className="flex items-center overflow-hidden border-none bg-[#EAF2FE] p-0">
+                        <Panel className="flex items-center overflow-hidden border-none p-0" style={{ backgroundColor: '#EAF2FE' }}>
                             <div className="flex-[1.5] p-5 pl-6 z-10">
                                 <h3 className="mb-1 text-[17px] font-bold text-[#0039A6]">
                                     Dukung Desa Wisata, Dukung Indonesia
@@ -518,7 +521,7 @@ export default function Dashboard({
                             </div>
                         </Panel>
 
-                        <Panel className="flex items-center overflow-hidden border-none bg-[#E8F5E9] p-0">
+                        <Panel className="flex items-center overflow-hidden border-none p-0" style={{ backgroundColor: '#E8F5E9' }}>
                             <div className="flex-[1.5] p-5 pl-6 z-10">
                                 <h3 className="mb-1 text-[17px] font-bold text-[#1B5E20]">
                                     Buat Assignment Survey Baru
