@@ -473,20 +473,22 @@ export default function VillageShow({ village }: VillageShowProps) {
                     </div>
                 </section>
                 <section className="px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto grid max-w-[1180px] gap-7 lg:grid-cols-[1.04fr_0.96fr]">
-                        <div>
-                            <SectionHeading title="Galeri" action="Lihat Semua Galeri" />
-                            <div className="grid grid-cols-3 gap-3 rounded-[20px] border border-[#DCE3EA] bg-white p-3 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
-                                <div className="col-span-2 row-span-2 overflow-hidden rounded-[16px]"><img src={images.gallery1} alt="Galeri desa" className="h-full min-h-[290px] w-full object-cover" /></div>
-                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery2} alt="Galeri desa" className="h-full w-full object-cover" /></div>
-                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery3} alt="Galeri desa" className="h-full w-full object-cover" /></div>
-                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery4} alt="Galeri desa" className="h-full w-full object-cover" /></div>
-                                <div className="overflow-hidden rounded-[16px]"><img src={images.gallery5} alt="Galeri desa" className="h-full w-full object-cover" /></div>
-                            </div>
+                    <div className="mx-auto max-w-[1180px]">
+                        <SectionHeading title="Galeri" action="Lihat Semua Galeri" />
+                        <div className="grid gap-4 rounded-[20px] border border-[#DCE3EA] bg-white p-4 shadow-[0_10px_24px_rgba(0,102,174,0.04)] sm:grid-cols-2 lg:grid-cols-3">
+                            {[images.gallery1, images.gallery2, images.gallery3, images.gallery4, images.gallery5].map((image, index) => (
+                                <div key={image} className="aspect-[16/10] overflow-hidden rounded-[16px] bg-[#F1F5F8]">
+                                    <img
+                                        src={image}
+                                        alt={`Galeri desa ${index + 1}`}
+                                        className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
+                                    />
+                                </div>
+                            ))}
                         </div>
-                        <div>
+                        <div className="mt-6">
                             <SectionHeading title="Pengalaman Pengunjung" />
-                            <div className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
                                 {testimonials.map((item) => <TestimonialCard key={item.name} item={item} />)}
                             </div>
                         </div>
@@ -590,6 +592,4 @@ export default function VillageShow({ village }: VillageShowProps) {
 }
 
 VillageShow.layout = null;
-
-
 

@@ -366,6 +366,10 @@ test('survey assignment show includes pariwisata survey analytics summary', func
             ->where('pariwisata_survey_summary.distribution.1.count', 1)
             ->where('pariwisata_survey_summary.distribution.3.score', 4)
             ->where('pariwisata_survey_summary.distribution.3.count', 1)
+            ->where('pariwisata_survey_groups.0.category_name', 'Amenitas')
+            ->where('pariwisata_survey_groups.0.questions.0.criteria_code', 'A.1')
+            ->where('pariwisata_survey_groups.0.questions.0.answer.score_label', 'Sangat Baik')
+            ->where('pariwisata_survey_groups.1.category_name', 'Aksesibilitas')
         );
 });
 test('authenticated users can delete survey answer documents', function () {
