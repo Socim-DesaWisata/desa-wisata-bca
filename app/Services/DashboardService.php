@@ -151,7 +151,7 @@ class DashboardService
         return VillageSurveyAssignment::query()
             ->select(['id', 'code', 'village_id', 'survey_template_id', 'status', 'updated_at'])
             ->whereHas('answers')
-            ->with(['village:id,name,city,province', 'template:id,title'])
+            ->with(['village:id,name,city,province', 'template:id,title', 'answers:id,village_survey_assignment_id,aspect_snapshot,score'])
             ->withCount('answers')
             ->withAvg('answers as average_score', 'score')
             ->orderByDesc('average_score')
@@ -163,6 +163,15 @@ class DashboardService
                     : 0;
                 $score = round(((float) ($assignment->average_score ?? 0)) * 20, 1);
 
+                $aspectScores = collect($assignment->answers)
+                    ->groupBy('aspect_snapshot')
+                    ->map(function ($answers, $aspect) {
+                        return [
+                            'aspect' => $aspect ?: 'Umum',
+                            'score' => round($answers->avg('score') * 20, 1)
+                        ];
+                    })->values()->all();
+
                 return [
                     'id' => $assignment->id,
                     'name' => $assignment->village?->name ?? '-',
@@ -172,6 +181,7 @@ class DashboardService
                     'answers' => $assignment->answers_count.'/'.$totalQuestions,
                     'status' => $this->statusLabel($assignment->status),
                     'url' => route('survey-assignments.show', $assignment),
+                    'aspect_scores' => $aspectScores,
                 ];
             })
             ->all();
@@ -282,6 +292,7 @@ class DashboardService
             ->with([
                 'village:id,name,city,province',
                 'template:id,title',
+                'answers:id,village_survey_assignment_id,aspect_snapshot,score,answered_by',
             ])
             ->withCount(['answers'])
             ->latest('updated_at')
@@ -295,6 +306,15 @@ class DashboardService
                     ? (int) round(($assignment->answers_count / $totalQuestions) * 100)
                     : 0;
 
+                $aspectScores = collect($assignment->answers)
+                    ->groupBy('aspect_snapshot')
+                    ->map(function ($answers, $aspect) {
+                        return [
+                            'aspect' => $aspect ?: 'Umum',
+                            'score' => round($answers->avg('score') * 20, 1)
+                        ];
+                    })->values()->all();
+
                 return [
                     'id' => $assignment->id,
                     'code' => $assignment->code,
@@ -306,10 +326,13 @@ class DashboardService
                     'progress' => min($progress, 100),
                     'status' => $assignment->status,
                     'status_label' => $this->statusLabel($assignment->status),
-                    'enumerators' => $assignment->answers()
-                        ->distinct('answered_by')
-                        ->count('answered_by'),
+                    'enumerators' => collect($assignment->answers)
+                        ->pluck('answered_by')
+                        ->filter()
+                        ->unique()
+                        ->count(),
                     'updated_at' => $assignment->updated_at?->diffForHumans() ?? '-',
+                    'aspect_scores' => $aspectScores,
                 ];
             })
             ->all();

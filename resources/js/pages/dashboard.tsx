@@ -31,7 +31,7 @@ import {
 } from '@/routes';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 import DashboardVillageMap from '@/components/dashboard-village-map';
-import { DashboardCharts } from '@/components/dashboard-charts';
+import { DashboardCharts, AssessmentRadarChart } from '@/components/dashboard-charts';
 import { DashboardOmsetCharts } from '@/components/dashboard-omset-charts';
 
 const colors = {
@@ -67,6 +67,7 @@ type RecentAssignment = {
     status_label: string;
     enumerators: number;
     updated_at: string;
+    aspect_scores?: { aspect: string; score: number }[];
 };
 
 type Priority = {
@@ -98,6 +99,7 @@ type TopSurveyRow = {
     answers: string;
     status: string;
     url: string | null;
+    aspect_scores?: { aspect: string; score: number }[];
 };
 
 type VillageMapPoint = {
@@ -548,6 +550,39 @@ export default function Dashboard({
                         </Panel>
                     </div>
 
+                    {top_village_surveys && top_village_surveys.length > 0 && (
+                        <div className="mb-2">
+                            <div className="mb-3 flex items-center justify-between gap-4">
+                                <h2 className="text-base leading-6 font-bold text-[#303030]">
+                                    Performa Assessment Desa Terbaik
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {top_village_surveys.map((survey) => (
+                                    <Panel key={survey.id} className="p-4 flex flex-col">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="min-w-0 pr-2">
+                                                <h3 className="font-bold text-[#303030] text-sm truncate">{survey.name}</h3>
+                                                <p className="text-xs text-[#7C7C7C] truncate">{survey.meta}</p>
+                                            </div>
+                                            <div className="shrink-0 bg-[#EAF8F0] text-[#00893D] px-2 py-1 rounded text-xs font-bold">
+                                                {survey.score}/100
+                                            </div>
+                                        </div>
+                                        <div className="h-[220px] w-full mt-2 -mx-2">
+                                            <AssessmentRadarChart data={survey.aspect_scores || []} />
+                                        </div>
+                                        {survey.url && (
+                                            <Link href={survey.url} className="mt-4 flex justify-center w-full rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
+                                                Lihat Detail <ChevronRight className="inline size-3 ml-1" />
+                                            </Link>
+                                        )}
+                                    </Panel>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="mb-4 space-y-4">
                         <Panel className="p-3.5 sm:p-4">
                             <div className="mb-3 flex items-center justify-between gap-4">
@@ -651,12 +686,12 @@ export default function Dashboard({
                                                         </div>
                                                         {row.enumerators >
                                                             2 && (
-                                                            <span className="ml-1 text-[10px] font-bold text-[#7C7C7C]">
-                                                                +
-                                                                {row.enumerators -
-                                                                    2}
-                                                            </span>
-                                                        )}
+                                                                <span className="ml-1 text-[10px] font-bold text-[#7C7C7C]">
+                                                                    +
+                                                                    {row.enumerators -
+                                                                        2}
+                                                                </span>
+                                                            )}
                                                     </div>
                                                 </td>
                                                 <td className="px-2 py-2 text-xs whitespace-nowrap text-[#303030]">
@@ -735,361 +770,6 @@ export default function Dashboard({
                                 linkLabel="Lihat Semua Kategori"
                             />
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                        <Panel className="p-4">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-sm font-bold text-[#303030]">
-                                    Schedules
-                                </h2>
-                                <button className="flex items-center gap-1 text-xs font-bold text-[#0066AE]">
-                                    <Plus className="size-3" /> Tambah Jadwal
-                                </button>
-                            </div>
-                            <div className="mb-4">
-                                <div className="mb-2 flex items-center justify-between px-2 text-sm font-bold text-[#303030]">
-                                    <ChevronRight className="size-4 rotate-180 cursor-pointer" />
-                                    Mei 2025
-                                    <ChevronRight className="size-4 cursor-pointer" />
-                                </div>
-                                <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[#7C7C7C]">
-                                    <div>Su</div>
-                                    <div>Mo</div>
-                                    <div>Tu</div>
-                                    <div>We</div>
-                                    <div>Th</div>
-                                    <div>Fr</div>
-                                    <div>Sa</div>
-                                </div>
-                                <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#303030]">
-                                    <div className="text-[#DDE4EC]">27</div>
-                                    <div className="text-[#DDE4EC]">28</div>
-                                    <div className="text-[#DDE4EC]">29</div>
-                                    <div className="text-[#DDE4EC]">30</div>
-                                    <div>1</div>
-                                    <div>2</div>
-                                    <div>3</div>
-                                    <div>4</div>
-                                    <div>5</div>
-                                    <div>6</div>
-                                    <div>7</div>
-                                    <div>8</div>
-                                    <div>9</div>
-                                    <div>10</div>
-                                    <div>11</div>
-                                    <div>12</div>
-                                    <div>13</div>
-                                    <div>14</div>
-                                    <div>15</div>
-                                    <div>16</div>
-                                    <div>17</div>
-                                    <div>18</div>
-                                    <div>19</div>
-                                    <div>20</div>
-                                    <div>21</div>
-                                    <div>22</div>
-                                    <div className="rounded bg-[#0066AE] font-bold text-white">
-                                        23
-                                    </div>
-                                    <div>24</div>
-                                    <div>25</div>
-                                    <div>26</div>
-                                    <div>27</div>
-                                    <div>28</div>
-                                    <div>29</div>
-                                    <div>30</div>
-                                    <div>31</div>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-xs font-semibold text-[#303030]">
-                                    <div className="flex items-center gap-2">
-                                        <span className="size-2 rounded-full bg-[#00893D]"></span>
-                                        Training Enumerator Batch 3
-                                    </div>
-                                    <span>09:00</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs font-semibold text-[#303030]">
-                                    <div className="flex items-center gap-2">
-                                        <span className="size-2 rounded-full bg-[#0066AE]"></span>
-                                        Visitasi Desa Mulyosari
-                                    </div>
-                                    <span>11:00</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs font-semibold text-[#303030]">
-                                    <div className="flex items-center gap-2">
-                                        <span className="size-2 rounded-full bg-[#FF944C]"></span>
-                                        Review Laporan CSR Q2
-                                    </div>
-                                    <span>14:00</span>
-                                </div>
-                            </div>
-                        </Panel>
-
-                        <Panel className="p-4">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-sm font-bold text-[#303030]">
-                                    Recent Activities
-                                </h2>
-                                <Link href={surveyAssignments.url()} className="text-xs font-bold text-[#0066AE]">
-                                    Lihat Semua
-                                </Link>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="relative flex gap-3">
-                                    <div className="absolute top-8 bottom-[-16px] left-[15px] w-[2px] bg-[#EFEFEF]"></div>
-                                    <img
-                                        src="/placeholder-avatar.jpg"
-                                        className="z-10 size-8 rounded-full border-2 border-white object-cover"
-                                        onError={(e) =>
-                                            (e.currentTarget.src =
-                                                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3ciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS11c2VyLXJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjgiIHI9IjUiLz48cGF0aCBkPSJNMjAgMjFhOCA4IDAgMCAwLTE2IDAiLz48L3N2Zz4=')
-                                        }
-                                    />
-                                    <div className="flex-1 text-xs">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <p className="font-bold text-[#303030]">
-                                                    Budi Santoso
-                                                </p>
-                                                <p className="mt-0.5 leading-4 text-[#7C7C7C]">
-                                                    menyelesaikan survey di
-                                                    <br />
-                                                    Desa Lontar
-                                                </p>
-                                            </div>
-                                            <span className="flex size-5 items-center justify-center rounded-full bg-[#00893D] text-white">
-                                                <CheckCircle2 className="size-3" />
-                                            </span>
-                                        </div>
-                                        <p className="mt-1 text-[10px] text-[#A0A0A0]">
-                                            23 Mei 2025, 16:10
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="relative flex gap-3">
-                                    <div className="absolute top-8 bottom-[-16px] left-[15px] w-[2px] bg-[#EFEFEF]"></div>
-                                    <img
-                                        src="/placeholder-avatar.jpg"
-                                        className="z-10 size-8 rounded-full border-2 border-white object-cover"
-                                        onError={(e) =>
-                                            (e.currentTarget.src =
-                                                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3ciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS11c2VyLXJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjgiIHI9IjUiLz48cGF0aCBkPSJNMjAgMjFhOCA4IDAgMCAwLTE2IDAiLz48L3N2Zz4=')
-                                        }
-                                    />
-                                    <div className="flex-1 text-xs">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <p className="font-bold text-[#303030]">
-                                                    Siti Nurhaliza
-                                                </p>
-                                                <p className="mt-0.5 leading-4 text-[#7C7C7C]">
-                                                    mengupdate data UMKM
-                                                    <br />
-                                                    Desa Mulyosari
-                                                </p>
-                                            </div>
-                                            <span className="flex size-5 items-center justify-center rounded-full bg-[#2FA6FC] text-white">
-                                                <span className="size-2 rounded-full border border-current"></span>
-                                            </span>
-                                        </div>
-                                        <p className="mt-1 text-[10px] text-[#A0A0A0]">
-                                            23 Mei 2025, 14:35
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="relative flex gap-3">
-                                    <div className="absolute top-8 bottom-[-16px] left-[15px] w-[2px] bg-[#EFEFEF]"></div>
-                                    <img
-                                        src="/placeholder-avatar.jpg"
-                                        className="z-10 size-8 rounded-full border-2 border-white object-cover"
-                                        onError={(e) =>
-                                            (e.currentTarget.src =
-                                                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3ciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS11c2VyLXJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjgiIHI9IjUiLz48cGF0aCBkPSJNMjAgMjFhOCA4IDAgMCAwLTE2IDAiLz48L3N2Zz4=')
-                                        }
-                                    />
-                                    <div className="flex-1 text-xs">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <p className="font-bold text-[#303030]">
-                                                    Andi Pratama
-                                                </p>
-                                                <p className="mt-0.5 leading-4 text-[#7C7C7C]">
-                                                    menambahkan program CSR
-                                                    <br />
-                                                    Pelatihan Digital UMKM
-                                                </p>
-                                            </div>
-                                            <span className="flex size-5 items-center justify-center rounded-full bg-[#00893D] text-white">
-                                                <Plus className="size-3" />
-                                            </span>
-                                        </div>
-                                        <p className="mt-1 text-[10px] text-[#A0A0A0]">
-                                            23 Mei 2025, 10:20
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="relative flex gap-3">
-                                    <img
-                                        src="/placeholder-avatar.jpg"
-                                        className="z-10 size-8 rounded-full border-2 border-white object-cover"
-                                        onError={(e) =>
-                                            (e.currentTarget.src =
-                                                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3ciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS11c2VyLXJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjgiIHI9IjUiLz48cGF0aCBkPSJNMjAgMjFhOCA4IDAgMCAwLTE2IDAiLz48L3N2Zz4=')
-                                        }
-                                    />
-                                    <div className="flex-1 text-xs">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <p className="font-bold text-[#303030]">
-                                                    Dewi Anggraini
-                                                </p>
-                                                <p className="mt-0.5 leading-4 text-[#7C7C7C]">
-                                                    mengunggah laporan
-                                                    <br />
-                                                    Assessment Desa Asri
-                                                </p>
-                                            </div>
-                                            <span className="flex size-5 items-center justify-center rounded-full bg-[#0066AE] text-white">
-                                                <ArrowUpRight className="size-3" />
-                                            </span>
-                                        </div>
-                                        <p className="mt-1 text-[10px] text-[#A0A0A0]">
-                                            22 Mei 2025, 17:45
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </Panel>
-
-                        <Panel className="p-4">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-sm font-bold text-[#303030]">
-                                    Aktivitas Program
-                                </h2>
-                                <Link href={surveyAssignments.url()} className="text-xs font-bold text-[#0066AE]">
-                                    Lihat Semua
-                                </Link>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F1F5F8] text-[#0066AE]">
-                                            <Store className="size-4" />
-                                        </span>
-                                        <div>
-                                            <p className="text-xs font-bold text-[#303030]">
-                                                Pelatihan Digital UMKM
-                                            </p>
-                                            <p className="text-[11px] text-[#7C7C7C]">
-                                                Desa Mulyosari
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-[#00893D]">
-                                            + Rp30.000.000
-                                        </p>
-                                        <span className="mt-0.5 inline-block rounded bg-[#EAF8F0] px-1.5 py-0.5 text-[9px] font-bold text-[#00893D]">
-                                            Berjalan
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F1F5F8] text-[#0066AE]">
-                                            <Store className="size-4" />
-                                        </span>
-                                        <div>
-                                            <p className="text-xs font-bold text-[#303030]">
-                                                Pengembangan Homestay
-                                            </p>
-                                            <p className="text-[11px] text-[#7C7C7C]">
-                                                Keputih Desa Asri
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-[#00893D]">
-                                            + Rp40.000.000
-                                        </p>
-                                        <span className="mt-0.5 inline-block rounded bg-[#EAF8F0] px-1.5 py-0.5 text-[9px] font-bold text-[#00893D]">
-                                            Berjalan
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F1F5F8] text-[#0066AE]">
-                                            <Ticket className="size-4" />
-                                        </span>
-                                        <div>
-                                            <p className="text-xs font-bold text-[#303030]">
-                                                Festival Kuliner Nusantara
-                                            </p>
-                                            <p className="text-[11px] text-[#7C7C7C]">
-                                                Desa Lontar
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-[#0066AE]">
-                                            - Rp15.000.000
-                                        </p>
-                                        <span className="mt-0.5 inline-block rounded bg-[#EAF3FF] px-1.5 py-0.5 text-[9px] font-bold text-[#0066AE]">
-                                            Selesai
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F1F5F8] text-[#00893D]">
-                                            <Store className="size-4" />
-                                        </span>
-                                        <div>
-                                            <p className="text-xs font-bold text-[#303030]">
-                                                Pengelolaan Sampah Desa
-                                            </p>
-                                            <p className="text-[11px] text-[#7C7C7C]">
-                                                Desa Pakal
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-[#00893D]">
-                                            + Rp25.000.000
-                                        </p>
-                                        <span className="mt-0.5 inline-block rounded bg-[#EAF8F0] px-1.5 py-0.5 text-[9px] font-bold text-[#00893D]">
-                                            Berjalan
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#FDECEC] text-[#D81313]">
-                                            <Store className="size-4" />
-                                        </span>
-                                        <div>
-                                            <p className="text-xs font-bold text-[#303030]">
-                                                Promosi Desa Wisata
-                                            </p>
-                                            <p className="text-[11px] text-[#7C7C7C]">
-                                                Lidah Wetan
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-[#D81313]">
-                                            - Rp10.000.000
-                                        </p>
-                                        <span className="mt-0.5 inline-block rounded bg-[#FDECEC] px-1.5 py-0.5 text-[9px] font-bold text-[#D81313]">
-                                            Dibatalkan
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Panel>
                     </div>
 
                     <div className="mb-4 mt-2">

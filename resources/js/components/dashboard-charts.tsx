@@ -12,6 +12,11 @@ import {
     PieChart,
     Pie,
     Cell,
+    Radar,
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
 } from 'recharts';
 import { useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
@@ -429,6 +434,64 @@ export function DashboardCharts() {
                     Lihat Detail <ChevronRight className="size-4" />
                 </Link>
             </Panel>
+        </div>
+    );
+}
+
+export function AssessmentRadarChart({
+    data,
+    className = '',
+}: {
+    data: { aspect: string; score: number }[];
+    className?: string;
+}) {
+    if (!data || data.length === 0) {
+        return (
+            <div className={`flex items-center justify-center text-xs font-medium text-[#7C7C7C] ${className}`}>
+                Tidak ada data aspek
+            </div>
+        );
+    }
+
+    // Limit aspect labels length for display
+    const chartData = data.map(item => ({
+        ...item,
+        aspectLabel: item.aspect.length > 15 ? item.aspect.substring(0, 15) + '...' : item.aspect,
+    }));
+
+    return (
+        <div className={`relative ${className}`}>
+            <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
+                    <PolarGrid stroke="#EFEFEF" />
+                    <PolarAngleAxis
+                        dataKey="aspectLabel"
+                        tick={{ fill: '#7C7C7C', fontSize: 10, fontWeight: 600 }}
+                    />
+                    <PolarRadiusAxis
+                        angle={30}
+                        domain={[0, 100]}
+                        tick={{ fill: '#7C7C7C', fontSize: 8 }}
+                        tickCount={5}
+                    />
+                    <Radar
+                        name="Skor"
+                        dataKey="score"
+                        stroke="#0066AE"
+                        strokeWidth={2}
+                        fill="#0066AE"
+                        fillOpacity={0.3}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 4px 14px rgba(3,17,32,0.08)',
+                            fontSize: '12px',
+                        }}
+                    />
+                </RadarChart>
+            </ResponsiveContainer>
         </div>
     );
 }
