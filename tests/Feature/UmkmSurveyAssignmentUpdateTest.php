@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
+use App\Models\VillageUmkmDocument;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -110,4 +111,47 @@ test('umkm show edit values annual revenue is normalized without decimal suffix'
             ->component('survey-assignment/show-umkm')
             ->where('edit_values.annual_revenue', '15000000')
         );
+});
+
+test('umkm document upload accepts files larger than five megabytes up to fifty megabytes', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+        'title' => 'Assessment Pelaku UMKM',
+        'type' => 'umkm',
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::query()->create([
+        'code' => 'ASG-UMKM-003',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'status' => 'in_progress',
+        'assigned_by' => $user->id,
+        'assigned_at' => now(),
+    ]);
+    $umkm = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'data_collector_id' => $user->id,
+        'business_owner_name' => 'Pemilik Dokumen',
+        'name' => 'UMKM Dokumen',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('survey-assignments.umkm.documents.store', [$assignment, $umkm]), [
+            'document_name' => 'Dokumen Legalitas',
+            'file' => UploadedFile::fake()->create('legalitas.pdf', 6000, 'application/pdf'),
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $document = VillageUmkmDocument::query()->firstOrFail();
+
+    expect($document->document_name)->toBe('Dokumen Legalitas');
+    Storage::disk('public')->assertExists($document->file_path);
 });

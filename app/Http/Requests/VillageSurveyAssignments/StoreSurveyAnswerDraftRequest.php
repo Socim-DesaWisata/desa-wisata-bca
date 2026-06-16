@@ -25,7 +25,7 @@ class StoreSurveyAnswerDraftRequest extends FormRequest
             'answers.*.question_id' => ['required', 'integer', 'exists:survey_questions,id'],
             'answers.*.survey_question_option_id' => ['required', 'integer', 'exists:survey_question_options,id'],
             'answers.*.documents' => ['nullable', 'array', 'max:10'],
-            'answers.*.documents.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'answers.*.documents.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:51200'],
         ];
     }
 
@@ -38,7 +38,7 @@ class StoreSurveyAnswerDraftRequest extends FormRequest
             'answers.*.documents.max' => 'Maksimal 10 dokumen pendukung per jawaban.',
             'answers.*.documents.*.file' => 'Dokumen pendukung harus berupa file yang valid.',
             'answers.*.documents.*.mimes' => 'Format dokumen pendukung harus JPG, JPEG, PNG, WEBP, atau PDF.',
-            'answers.*.documents.*.max' => 'Ukuran dokumen pendukung maksimal 5 MB per file.',
+            'answers.*.documents.*.max' => 'Ukuran dokumen pendukung maksimal 50 MB per file.',
         ];
     }
 
