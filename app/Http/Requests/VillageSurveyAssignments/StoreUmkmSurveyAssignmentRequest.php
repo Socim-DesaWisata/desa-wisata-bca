@@ -77,10 +77,10 @@ class StoreUmkmSurveyAssignmentRequest extends FormRequest
             'banking_notes' => ['nullable', 'string'],
             'has_exported' => ['nullable', 'boolean'],
             'export_destination_countries' => ['nullable', 'string'],
-            'product_photo' => ['nullable', 'image', 'max:5120'],
+            'product_photo' => ['nullable', 'image', 'max:51200'],
             'documents' => ['nullable', 'array', 'max:20'],
             'documents.*.document_name' => ['nullable', 'string', 'max:180'],
-            'documents.*.file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'documents.*.file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:51200'],
             'answers' => ['required', 'array'],
             'answers.*.question_id' => [
                 'required',

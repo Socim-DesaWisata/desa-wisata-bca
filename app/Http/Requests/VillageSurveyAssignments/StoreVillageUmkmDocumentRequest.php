@@ -18,7 +18,7 @@ class StoreVillageUmkmDocumentRequest extends FormRequest
     {
         return [
             'document_name' => ['required', 'string', 'max:180'],
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:51200'],
         ];
     }
 }

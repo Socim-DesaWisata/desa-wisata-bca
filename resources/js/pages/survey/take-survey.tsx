@@ -532,7 +532,7 @@ function QuestionCard({
                             Unggah foto atau dokumen pendukung
                         </span>
                         <span className="block text-xs font-medium text-[#7C7C7C]">
-                            JPG, PNG, WEBP, atau PDF. Maksimal 5 MB per file.
+                            JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per file.
                         </span>
                     </span>
                     <input
