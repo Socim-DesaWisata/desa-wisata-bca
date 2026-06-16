@@ -16,7 +16,7 @@ class DashboardController extends Controller
             ]);
         }
 
-        $filters = request()->only(['general_report_filter', 'activity_filter', 'status_filter']);
+        $filters = request()->only(['general_report_filter', 'activity_filter', 'status_filter', 'umkm_year', 'wisata_year']);
 
         return Inertia::render('dashboard', [
             'dashboard_mode' => 'admin',

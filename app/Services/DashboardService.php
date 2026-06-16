@@ -32,6 +32,10 @@ class DashboardService
             'general_report' => $this->generalReportData($filters['general_report_filter'] ?? 'Bulan Ini'),
             'aktivitas_survey' => $this->aktivitasSurveyData($filters['activity_filter'] ?? '30 Hari Terakhir'),
             'status_survey' => $this->statusSurveyData($filters['status_filter'] ?? 'Tahun Ini'),
+            'omset_charts' => [
+                'umkm' => $this->omsetChartsDataFor('umkm', $filters['umkm_year'] ?? null),
+                'wisata' => $this->omsetChartsDataFor('pariwisata', $filters['wisata_year'] ?? null),
+            ],
         ];
     }
 
@@ -551,6 +555,53 @@ class DashboardService
                 ['name' => 'Belum Dimulai', 'value' => $belumDimulai, 'color' => '#DCE3EA'],
             ],
             'total' => $selesai + $dalamProses + $belumDimulai,
+        ];
+    }
+
+    private function omsetChartsDataFor(string $type, ?string $filterYear = null): array
+    {
+        $currentYear = $filterYear ? (int) $filterYear : (int) now()->year;
+        $years = [
+            $currentYear - 2,
+            $currentYear - 1,
+            $currentYear,
+            $currentYear + 1,
+        ];
+
+        $column = $type === 'umkm' ? 'umkm_id' : 'pariwisata_id';
+
+        $turnovers = \App\Models\AnnualTurnover::query()
+            ->selectRaw('year, SUM(value) as total_omset')
+            ->whereNotNull($column)
+            ->whereIn('year', $years)
+            ->groupBy('year')
+            ->pluck('total_omset', 'year');
+
+        $data = [];
+        foreach ($years as $year) {
+            $data[] = [
+                'year' => (string) $year,
+                'omset' => (float) ($turnovers[$year] ?? 0),
+            ];
+        }
+
+        $prev = (float) ($turnovers[$currentYear - 1] ?? 0);
+        $curr = (float) ($turnovers[$currentYear] ?? 0);
+
+        if ($prev == 0) {
+            $trend = $curr > 0 ? '+100%' : '+0%';
+        } else {
+            $diff = $curr - $prev;
+            $percent = ($diff / $prev) * 100;
+            $sign = $percent > 0 ? '+' : '';
+            $trend = $sign . round($percent, 1) . '%';
+        }
+
+        return [
+            'data' => $data,
+            'trend' => $trend,
+            'total' => $curr,
+            'current_year' => $currentYear,
         ];
     }
 }

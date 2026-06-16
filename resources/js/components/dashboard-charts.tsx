@@ -92,7 +92,7 @@ export function DashboardCharts() {
                     </h2>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] px-2 py-1 text-xs font-semibold text-[#7C7C7C] outline-none hover:bg-gray-50 cursor-pointer">
+                            <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
                                 {generalReportFilter} <ChevronDown className="size-3" />
                             </button>
                         </DropdownMenuTrigger>
@@ -267,7 +267,7 @@ export function DashboardCharts() {
                     </h2>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] px-2 py-1 text-xs font-semibold text-[#7C7C7C] outline-none hover:bg-gray-50 cursor-pointer">
+                            <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
                                 {activityFilter} <ChevronDown className="size-3" />
                             </button>
                         </DropdownMenuTrigger>
@@ -360,7 +360,7 @@ export function DashboardCharts() {
                     </h2>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] px-2 py-1 text-xs font-semibold text-[#7C7C7C] outline-none hover:bg-gray-50 cursor-pointer">
+                            <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
                                 {statusFilter} <ChevronDown className="size-3" />
                             </button>
                         </DropdownMenuTrigger>

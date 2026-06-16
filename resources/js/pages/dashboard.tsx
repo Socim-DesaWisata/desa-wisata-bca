@@ -32,6 +32,7 @@ import {
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 import DashboardVillageMap from '@/components/dashboard-village-map';
 import { DashboardCharts } from '@/components/dashboard-charts';
+import { DashboardOmsetCharts } from '@/components/dashboard-omset-charts';
 
 const colors = {
     blue100: '#F1F5F8',
@@ -274,7 +275,7 @@ function TopStatisticList({
                 <h2 className="text-sm leading-6 font-bold text-[#303030]">
                     {title}
                 </h2>
-                <select className="h-8 rounded-lg border border-[#EFEFEF] bg-white px-2 text-xs font-semibold text-[#7C7C7C] outline-none">
+                <select className="h-8 cursor-pointer rounded-lg border border-[#0066AE] bg-[#0066AE] px-2 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
                     <option>Minggu Ini</option>
                     <option>Bulan Ini</option>
                 </select>
@@ -1089,6 +1090,10 @@ export default function Dashboard({
                                 </div>
                             </div>
                         </Panel>
+                    </div>
+
+                    <div className="mb-4 mt-2">
+                        <DashboardOmsetCharts />
                     </div>
                 </div>
             </div>
