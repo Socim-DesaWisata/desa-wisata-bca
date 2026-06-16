@@ -939,7 +939,7 @@ export default function CreateUmkmSurveyAssignment({
                                             className="mt-3 block w-full text-sm text-[#64748B] file:mr-3 file:h-9 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:text-sm file:font-bold file:text-white"
                                         />
                                         <p className="mt-2 text-xs text-[#64748B]">
-                                            Format gambar, maksimal 5 MB.
+                                                Format gambar, maksimal 50 MB.
                                         </p>
                                         <FieldError
                                             message={fieldError(
@@ -1007,7 +1007,7 @@ export default function CreateUmkmSurveyAssignment({
                                                 />
                                                 <p className="mt-1 truncate text-xs text-[#64748B]">
                                                     {document.file?.name ??
-                                                        'PDF atau gambar, maksimal 5 MB.'}
+                                                        'PDF atau gambar, maksimal 50 MB.'}
                                                 </p>
                                                 <FieldError
                                                     message={fieldError(

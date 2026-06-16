@@ -1321,7 +1321,7 @@ function DocumentModal({
                             {data.file?.name ??
                                 (isEdit
                                     ? 'Kosongkan jika tidak ingin mengganti file.'
-                                    : 'PDF atau gambar, maksimal 5 MB.')}
+                                                    : 'PDF atau gambar, maksimal 50 MB.')}
                         </p>
                         <FieldError message={fieldError(errors, 'file')} />
                     </label>

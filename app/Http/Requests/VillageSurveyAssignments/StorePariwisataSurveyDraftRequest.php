@@ -27,7 +27,7 @@ class StorePariwisataSurveyDraftRequest extends FormRequest
             'answers.*.pariwisata_suvey_option_id' => ['required', 'integer', 'exists:pariwisata_suvey_options,id'],
             'answers.*.notes' => ['nullable', 'string', 'max:5000'],
             'answers.*.documents' => ['nullable', 'array', 'max:10'],
-            'answers.*.documents.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'answers.*.documents.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:51200'],
         ];
     }
 

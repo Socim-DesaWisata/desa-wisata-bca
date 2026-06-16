@@ -18,7 +18,7 @@ class UpdateVillageUmkmDocumentRequest extends FormRequest
     {
         return [
             'document_name' => ['required', 'string', 'max:180'],
-            'file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:51200'],
         ];
     }
 }
