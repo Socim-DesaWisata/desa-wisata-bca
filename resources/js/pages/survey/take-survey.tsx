@@ -26,7 +26,7 @@ import { show as showAssignment } from '@/routes/survey-assignments';
 import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
 import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
 
-const MAX_UPLOAD_FILE_SIZE_MB = 5;
+const MAX_UPLOAD_FILE_SIZE_MB = 50;
 const MAX_UPLOAD_FILE_SIZE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024;
 
 type SurveyOption = {
@@ -1052,3 +1052,4 @@ function TakeSurveyContent({
 }
 
 TakeSurvey.layout = null;
+

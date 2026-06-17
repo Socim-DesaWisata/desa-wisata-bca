@@ -509,6 +509,7 @@ test('authenticated users can save pariwisata survey answers scoped by assignmen
     expect($assignment->fresh()->status)->toBe('in_progress');
 });
 
+
 test('authenticated users can delete pariwisata survey documents scoped by assignment', function () {
     Storage::fake('public');
 
@@ -606,3 +607,216 @@ test('show pariwisata page no longer exposes survey payload', function () {
             ->missing('survey_groups')
         );
 });
+
+
+
+test('survey assignment draft accepts documents up to 50 mb per file', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Template Batas Upload Desa',
+        'created_by' => $user->id,
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-LIMIT-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Amenitas',
+        'code' => 'AM-050',
+        'question_text' => 'Apakah dokumen 50 MB diterima?',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 4,
+        'label' => 'Ya',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('survey-assignments.take-survey.store', $assignment), [
+            'answers' => [
+                [
+                    'question_id' => $question->id,
+                    'survey_question_option_id' => $option->id,
+                    'documents' => [
+                        UploadedFile::fake()->create('batas-50mb.pdf', 51200, 'application/pdf'),
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('survey_answer_documents', 1);
+});
+
+test('survey assignment draft rejects documents above 50 mb per file', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Template Batas Upload Desa',
+        'created_by' => $user->id,
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-LIMIT-002',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Amenitas',
+        'code' => 'AM-051',
+        'question_text' => 'Apakah dokumen > 50 MB ditolak?',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 4,
+        'label' => 'Ya',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('survey-assignments.take-survey', $assignment))
+        ->post(route('survey-assignments.take-survey.store', $assignment), [
+            'answers' => [
+                [
+                    'question_id' => $question->id,
+                    'survey_question_option_id' => $option->id,
+                    'documents' => [
+                        UploadedFile::fake()->create('lebih-50mb.pdf', 51201, 'application/pdf'),
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('survey-assignments.take-survey', $assignment))
+        ->assertSessionHasErrors(['answers.0.documents.0']);
+
+    $this->assertDatabaseCount('survey_answer_documents', 0);
+});
+
+test('pariwisata survey draft accepts documents up to 50 mb per file', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
+        'created_by' => $user->id,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-LIMIT-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'indicator_code' => 'A.5.0',
+        'indicator_name' => 'Batas upload pariwisata 50 MB',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Ya',
+        'description' => 'Valid',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('survey-assignments.pariwisata.take-survey.store', $assignment), [
+            'answers' => [
+                [
+                    'question_id' => $question->id,
+                    'pariwisata_suvey_option_id' => $option->id,
+                    'documents' => [
+                        UploadedFile::fake()->create('batas-50mb.pdf', 51200, 'application/pdf'),
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('pariwisata_survey_answer_documents', 1);
+});
+
+test('pariwisata survey draft rejects documents above 50 mb per file', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
+        'created_by' => $user->id,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-LIMIT-002',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'indicator_code' => 'A.5.1',
+        'indicator_name' => 'Batas upload pariwisata > 50 MB',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Ya',
+        'description' => 'Invalid',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('survey-assignments.pariwisata.take-survey', $assignment))
+        ->post(route('survey-assignments.pariwisata.take-survey.store', $assignment), [
+            'answers' => [
+                [
+                    'question_id' => $question->id,
+                    'pariwisata_suvey_option_id' => $option->id,
+                    'documents' => [
+                        UploadedFile::fake()->create('lebih-50mb.pdf', 51201, 'application/pdf'),
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('survey-assignments.pariwisata.take-survey', $assignment))
+        ->assertSessionHasErrors(['answers.0.documents.0']);
+
+    $this->assertDatabaseCount('pariwisata_survey_answer_documents', 0);
+});
+
