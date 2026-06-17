@@ -712,13 +712,12 @@ class VillageSurveyAssignmentService
                     ->select(['id', 'pariwisata_survey_question_id', 'score', 'level', 'label', 'description', 'sort_order'])
                     ->orderBy('sort_order')
                     ->orderBy('score')])
-                ->orderBy('category_code')
-                ->orderBy('sub_category_code')
-                ->orderBy('criteria_code')
-                ->orderBy('sort_order'),
+                ->orderBy('sort_order')
+                ->orderBy('id'),
         ]);
 
-        $questions = $template?->pariwisataSurveyQuestions ?? collect();
+        $questions = $this->sortTakePariwisataQuestions($template?->pariwisataSurveyQuestions ?? collect());
+        // dd($questions);
         $answers = $assignment->pariwisataSurveyAnswers()
             ->select([
                 'id',
@@ -1733,6 +1732,116 @@ class VillageSurveyAssignmentService
     private function activePariwisataTemplate(array $with = []): ?SurveyTemplate
     {
         return $this->templateResolver->resolve('pariwisata', $with);
+    }
+
+
+    /**
+     * @param  Collection<int, PariwisataSurveyQuestion>  $questions
+     * @return Collection<int, PariwisataSurveyQuestion>
+     */
+    private function sortTakePariwisataQuestions(Collection $questions): Collection
+    {
+        return $questions
+            ->sort(function (PariwisataSurveyQuestion $left, PariwisataSurveyQuestion $right): int {
+                $comparisons = [
+                    $this->compareHierarchicalCodes($left->category_code, $right->category_code),
+                    $this->compareHierarchicalCodes($left->sub_category_code, $right->sub_category_code),
+                    $this->compareHierarchicalCodes($left->criteria_code, $right->criteria_code),
+                    ((int) $left->sort_order) <=> ((int) $right->sort_order),
+                    $this->compareHierarchicalCodes($left->indicator_code, $right->indicator_code),
+                    $left->id <=> $right->id,
+                ];
+
+                foreach ($comparisons as $comparison) {
+                    if ($comparison !== 0) {
+                        return $comparison;
+                    }
+                }
+
+                return 0;
+            })
+            ->values();
+    }
+
+    private function compareHierarchicalCodes(?string $left, ?string $right): int
+    {
+        $left = trim((string) $left);
+        $right = trim((string) $right);
+
+        if ($left === '' && $right === '') {
+            return 0;
+        }
+
+        if ($left === '') {
+            return 1;
+        }
+
+        if ($right === '') {
+            return -1;
+        }
+
+        $leftSegments = preg_split('/\./', mb_strtolower($left)) ?: [];
+        $rightSegments = preg_split('/\./', mb_strtolower($right)) ?: [];
+        $segmentCount = max(count($leftSegments), count($rightSegments));
+
+        for ($index = 0; $index < $segmentCount; $index++) {
+            $leftSegment = $leftSegments[$index] ?? null;
+            $rightSegment = $rightSegments[$index] ?? null;
+
+            if ($leftSegment === null) {
+                return -1;
+            }
+
+            if ($rightSegment === null) {
+                return 1;
+            }
+
+            $comparison = $this->compareCodeSegments($leftSegment, $rightSegment);
+
+            if ($comparison !== 0) {
+                return $comparison;
+            }
+        }
+
+        return 0;
+    }
+
+    private function compareCodeSegments(string $leftSegment, string $rightSegment): int
+    {
+        preg_match_all('/\d+|\D+/', $leftSegment, $leftParts);
+        preg_match_all('/\d+|\D+/', $rightSegment, $rightParts);
+
+        $leftParts = $leftParts[0] ?? [];
+        $rightParts = $rightParts[0] ?? [];
+        $partsCount = max(count($leftParts), count($rightParts));
+
+        for ($index = 0; $index < $partsCount; $index++) {
+            $leftPart = $leftParts[$index] ?? null;
+            $rightPart = $rightParts[$index] ?? null;
+
+            if ($leftPart === null) {
+                return -1;
+            }
+
+            if ($rightPart === null) {
+                return 1;
+            }
+
+            $leftIsNumeric = ctype_digit($leftPart);
+            $rightIsNumeric = ctype_digit($rightPart);
+
+            if ($leftIsNumeric && $rightIsNumeric) {
+                $comparison = ((int) $leftPart) <=> ((int) $rightPart);
+            } else {
+                $comparison = strcmp($leftPart, $rightPart);
+            }
+
+            if ($comparison !== 0) {
+                return $comparison;
+            }
+        }
+
+        return 0;
     }
 
     /**
