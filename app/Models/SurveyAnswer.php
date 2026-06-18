@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'village_survey_assignment_id', 'survey_question_id', 'survey_question_option_id',
-    'score', 'aspect_snapshot', 'question_text_snapshot', 'option_label_snapshot',
+    'score', 'aspect_snapshot', 'question_text_snapshot', 'option_label_snapshot', 'notes',
     'answered_by', 'last_edited_by', 'answered_at', 'last_edited_at',
 ])]
 class SurveyAnswer extends Model

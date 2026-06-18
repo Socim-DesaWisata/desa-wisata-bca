@@ -8,6 +8,7 @@ use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataSuveyOption;
 use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswer;
+use App\Models\SurveyAnswerHistory;
 use App\Models\SurveyAnswerDocument;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
@@ -959,6 +960,7 @@ class VillageSurveyAssignmentService
                 'survey_question_id',
                 'survey_question_option_id',
                 'score',
+                'notes',
                 'answered_at',
                 'last_edited_at',
             ]),
@@ -1019,27 +1021,65 @@ class VillageSurveyAssignmentService
     {
         DB::transaction(function () use ($assignment, $data, $user): void {
             foreach ($data['answers'] as $answerData) {
+                $questionId = (int) Arr::get($answerData, 'question_id');
+                $optionId = (int) Arr::get($answerData, 'survey_question_option_id');
+
                 $option = SurveyQuestionOption::query()
                     ->with('question:id,aspect,question_text')
-                    ->findOrFail($answerData['survey_question_option_id']);
-
-                $answer = SurveyAnswer::query()->updateOrCreate(
-                    [
+                    ->findOrFail($optionId);
+                $existingAnswer = SurveyAnswer::query()
+                    ->with('option:id,score,label')
+                    ->where([
                         'village_survey_assignment_id' => $assignment->id,
-                        'survey_question_id' => $answerData['question_id'],
-                    ],
-                    [
-                        'survey_question_option_id' => $option->id,
-                        'score' => (int) $option->score,
-                        'aspect_snapshot' => $option->question?->aspect,
-                        'question_text_snapshot' => $option->question?->question_text,
-                        'option_label_snapshot' => $option->label,
-                        'answered_by' => $user->id,
-                        'last_edited_by' => $user->id,
-                        'answered_at' => now(),
-                        'last_edited_at' => now(),
-                    ]
-                );
+                        'survey_question_id' => $questionId,
+                    ])
+                    ->first();
+                $notes = trim((string) Arr::get($answerData, 'notes', ''));
+                $answeredAt = $existingAnswer?->answered_at ?? now();
+                $oldOptionId = $existingAnswer?->survey_question_option_id;
+                $oldScore = $existingAnswer?->score;
+                $oldLabel = $existingAnswer?->option_label_snapshot ?? $existingAnswer?->option?->label;
+
+                $answer = $existingAnswer ?? new SurveyAnswer([
+                    'village_survey_assignment_id' => $assignment->id,
+                    'survey_question_id' => $questionId,
+                    'answered_by' => $user->id,
+                    'answered_at' => $answeredAt,
+                ]);
+
+                $answer->fill([
+                    'survey_question_option_id' => $option->id,
+                    'score' => (int) $option->score,
+                    'aspect_snapshot' => $option->question?->aspect,
+                    'question_text_snapshot' => $option->question?->question_text,
+                    'option_label_snapshot' => $option->label,
+                    'notes' => $notes !== '' ? $notes : null,
+                    'last_edited_by' => $user->id,
+                    'last_edited_at' => now(),
+                ]);
+                $answer->answered_by ??= $user->id;
+                $answer->answered_at ??= $answeredAt;
+                $answer->save();
+
+                if ($existingAnswer && (
+                    (int) $oldOptionId !== (int) $option->id
+                    || (float) $oldScore !== (float) $option->score
+                )) {
+                    SurveyAnswerHistory::query()->create([
+                        'survey_answer_id' => $answer->id,
+                        'village_survey_assignment_id' => $assignment->id,
+                        'survey_question_id' => $answer->survey_question_id,
+                        'actor_id' => $user->id,
+                        'action' => 'updated',
+                        'old_survey_question_option_id' => $oldOptionId,
+                        'new_survey_question_option_id' => $option->id,
+                        'old_score' => $oldScore,
+                        'new_score' => $option->score,
+                        'old_option_label' => $oldLabel,
+                        'new_option_label' => $option->label,
+                        'created_at' => now(),
+                    ]);
+                }
 
                 foreach (Arr::wrap($answerData['documents'] ?? []) as $document) {
                     if (! $document instanceof UploadedFile) {
@@ -1271,6 +1311,7 @@ class VillageSurveyAssignmentService
                                 'id' => $answer->id,
                                 'selected_option_id' => $answer->survey_question_option_id,
                                 'score' => (int) $answer->score,
+                                'notes' => $answer->notes,
                                 'documents' => $answer->documents
                                     ->map(fn ($document): array => [
                                         'id' => $document->id,
@@ -1330,6 +1371,7 @@ class VillageSurveyAssignmentService
                                 'survey_question_option_id' => $answer->survey_question_option_id,
                                 'score' => (int) $answer->score,
                                 'score_label' => $answer->option_label_snapshot ?? $answer->option?->label ?? '-',
+                                'notes' => $answer->notes,
                                 'answered_at' => $this->formatDate($answer->answered_at),
                                 'last_edited_at' => $this->formatDate($answer->last_edited_at),
                                 'answered_by' => $this->formatUser($answer->answeredBy),
@@ -1679,6 +1721,7 @@ class VillageSurveyAssignmentService
                                 'pariwisata_suvey_option_id' => $answer->pariwisata_suvey_option_id,
                                 'score' => (int) $answer->score,
                                 'score_label' => $answer->option_label_snapshot ?? $answer->option?->label ?? '-',
+                                'notes' => $answer->notes,
                                 'option_description' => $answer->option_description_snapshot ?? $answer->option?->description,
                                 'notes' => $answer->notes,
                                 'answered_at' => $this->formatDate($answer->answered_at),
@@ -2021,7 +2064,7 @@ class VillageSurveyAssignmentService
      */
     private function formatAssignmentActivities(VillageSurveyAssignment $assignment): array
     {
-        $logs = $assignment->logs
+        $logs = collect($assignment->logs)
             ->map(fn ($log): array => [
                 'date' => $this->formatDate($log->created_at),
                 'title' => $log->description ?: Str::headline($log->action),
@@ -2029,7 +2072,7 @@ class VillageSurveyAssignmentService
                 'type' => 'assignment',
             ]);
 
-        $histories = $assignment->answerHistories
+        $histories = collect($assignment->answerHistories)
             ->map(fn ($history): array => [
                 'date' => $this->formatDate($history->created_at),
                 'title' => trim(($history->question?->code ? "{$history->question->code} - " : '').Str::headline($history->action)),

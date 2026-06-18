@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -59,6 +59,8 @@ import {
     takeSurvey as takePariwisataSurvey,
 } from '@/routes/survey-assignments/pariwisata';
 import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
+import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
+import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
 import { show as showUmkm } from '@/routes/survey-assignments/umkm';
 
 type UserSummary = {
@@ -109,6 +111,7 @@ type SurveyQuestion = {
         survey_question_option_id: number;
         score: number;
         score_label: string;
+        notes: string | null;
         answered_at: string;
         last_edited_at: string;
         answered_by: UserSummary;
@@ -412,6 +415,15 @@ type PariwisataAnswerEditForm = {
     answers: Array<{
         question_id: number;
         pariwisata_suvey_option_id: string;
+        notes: string;
+        documents: File[];
+    }>;
+};
+
+type SurveyAnswerEditForm = {
+    answers: Array<{
+        question_id: number;
+        survey_question_option_id: string;
         notes: string;
         documents: File[];
     }>;
@@ -1005,11 +1017,13 @@ function QuestionRow({
     number,
     onViewDetail,
     onViewHistory,
+    onEditData,
 }: {
     question: SurveyQuestion;
     number: number;
     onViewDetail: (question: SurveyQuestion) => void;
     onViewHistory: (question: SurveyQuestion) => void;
+    onEditData: (question: SurveyQuestion) => void;
 }) {
     const answered = Boolean(question.answer);
 
@@ -1106,6 +1120,13 @@ function QuestionRow({
                         >
                             <Eye className="size-4 text-[#303030]" />
                             Lihat Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="gap-2 text-xs"
+                            onClick={() => onEditData(question)}
+                        >
+                            <PanelRightOpen className="size-4 text-[#303030]" />
+                            Edit Jawaban
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             className="gap-2 text-xs"
@@ -1356,6 +1377,15 @@ function PariwisataAnswerDetailModal({
                                 <p className="text-xs font-bold text-[#7C7C7C]">Terakhir diedit pada</p>
                                 <p className="mt-1 font-semibold text-[#303030]">{question.answer?.last_edited_at ?? '-'}</p>
                             </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Catatan Jawaban
+                        </h4>
+                        <div className="mt-2 rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#303030]">
+                            {question.answer?.notes || 'Tidak ada catatan.'}
                         </div>
                     </section>
 
@@ -2398,7 +2428,7 @@ function AnswerDetailModal({
                         Detail Jawaban Survey
                     </DialogTitle>
                     <DialogDescription>
-                        Pertanyaan, opsi jawaban, skor terpilih, dan file
+                        Pertanyaan, opsi jawaban, skor terpilih, catatan, dan file
                         pendukung.
                     </DialogDescription>
                 </DialogHeader>
@@ -2447,6 +2477,15 @@ function AnswerDetailModal({
 
                     <section>
                         <h4 className="text-sm font-bold text-[#303030]">
+                            Catatan Jawaban
+                        </h4>
+                        <div className="mt-2 rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#303030]">
+                            {question.answer?.notes || 'Tidak ada catatan.'}
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
                             File Pendukung
                         </h4>
                         <div className="mt-2 space-y-2">
@@ -2464,6 +2503,346 @@ function AnswerDetailModal({
                         </div>
                     </section>
                 </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+function SurveyAnswerEditModal({
+    assignmentCode,
+    question,
+    open,
+    onOpenChange,
+}: {
+    assignmentCode: string;
+    question: SurveyQuestion | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { data, setData, processing, errors, reset, clearErrors } =
+        useForm<SurveyAnswerEditForm>({
+            answers: [
+                {
+                    question_id: question?.id ?? 0,
+                    survey_question_option_id: question?.answer
+                        ? String(question.answer.survey_question_option_id)
+                        : '',
+                    notes: question?.answer?.notes ?? '',
+                    documents: [],
+                },
+            ],
+        });
+
+    useEffect(() => {
+        if (!open || !question) {
+            return;
+        }
+
+        setData({
+            answers: [
+                {
+                    question_id: question.id,
+                    survey_question_option_id: question.answer
+                        ? String(question.answer.survey_question_option_id)
+                        : '',
+                    notes: question.answer?.notes ?? '',
+                    documents: [],
+                },
+            ],
+        });
+        clearErrors();
+    }, [clearErrors, open, question, setData]);
+
+    if (!question) {
+        return null;
+    }
+
+    const currentAnswer = data.answers[0] ?? {
+        question_id: question.id,
+        survey_question_option_id: '',
+        notes: '',
+        documents: [],
+    };
+
+    function updateAnswerField(
+        key: 'question_id' | 'survey_question_option_id' | 'notes' | 'documents',
+        value: number | string | File[],
+    ) {
+        setData('answers', [
+            {
+                ...currentAnswer,
+                [key]: value,
+            },
+        ]);
+    }
+
+    function handleFilesChange(fileList: FileList | null) {
+        if (!fileList) {
+            return;
+        }
+
+        updateAnswerField('documents', [
+            ...currentAnswer.documents,
+            ...Array.from(fileList),
+        ]);
+    }
+
+    function removePendingFile(fileIndex: number) {
+        updateAnswerField(
+            'documents',
+            currentAnswer.documents.filter((_, index) => index !== fileIndex),
+        );
+    }
+
+    function deleteStoredDocument(document: SurveyDocument) {
+        router.delete(
+            destroySurveyDocument.url({
+                assignment: assignmentCode,
+                document: document.id,
+            }),
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append('answers[0][question_id]', String(currentAnswer.question_id));
+        formData.append(
+            'answers[0][survey_question_option_id]',
+            currentAnswer.survey_question_option_id,
+        );
+        formData.append('answers[0][notes]', currentAnswer.notes ?? '');
+
+        currentAnswer.documents.forEach((file) => {
+            formData.append('answers[0][documents][]', file);
+        });
+
+        setIsSubmitting(true);
+
+        router.post(storeSurveyDraft.url({ assignment: assignmentCode }), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => setIsSubmitting(false),
+            onSuccess: () => {
+                reset();
+                onOpenChange(false);
+            },
+        });
+    }
+
+    const errorBag = errors as Record<string, string | undefined>;
+    const selectedOptionError =
+        errorBag['answers.0.survey_question_option_id'] ??
+        errorBag.survey_question_option_id;
+    const notesError = errorBag['answers.0.notes'] ?? errorBag.notes;
+    const documentsError =
+        Object.entries(errorBag).find(([key]) =>
+            key.startsWith('answers.0.documents') || key === 'documents',
+        )?.[1] ?? undefined;
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle className="text-[#303030]">
+                        Edit Jawaban Survey
+                    </DialogTitle>
+                    <DialogDescription>
+                        Ubah opsi jawaban, catatan, dan dokumen pendukung.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    <section className="rounded-xl bg-[#F8FBFF] p-4">
+                        <h3 className="text-base leading-6 font-bold text-[#303030]">
+                            {question.question_text}
+                        </h3>
+                        {question.document_hint && (
+                            <p className="mt-2 text-sm font-semibold text-[#7C7C7C]">
+                                {question.document_hint}
+                            </p>
+                        )}
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Opsi Jawaban
+                        </h4>
+                        <div className="mt-2 divide-y divide-[#EFEFEF] rounded-xl border border-[#EFEFEF]">
+                            {question.options.map((option) => {
+                                const selected =
+                                    String(option.id) ===
+                                    currentAnswer.survey_question_option_id;
+
+                                return (
+                                    <label
+                                        key={option.id}
+                                        className={classNames(
+                                            'flex cursor-pointer items-start gap-3 px-4 py-3 text-sm transition',
+                                            selected && 'bg-[#EAF3FF]',
+                                        )}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name={`survey-answer-${question.id}`}
+                                            value={option.id}
+                                            checked={selected}
+                                            onChange={() =>
+                                                updateAnswerField(
+                                                    'survey_question_option_id',
+                                                    String(option.id),
+                                                )
+                                            }
+                                            className="mt-1"
+                                        />
+                                        <div>
+                                            <span className="font-bold text-[#0066AE]">
+                                                Skor {option.score}
+                                            </span>
+                                            <p className="font-semibold text-[#303030]">
+                                                {option.label}
+                                            </p>
+                                        </div>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <FieldError message={selectedOptionError} />
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Catatan Jawaban
+                        </h4>
+                        <textarea
+                            rows={4}
+                            value={currentAnswer.notes}
+                            onChange={(event) =>
+                                updateAnswerField('notes', event.target.value)
+                            }
+                            className="mt-2 w-full rounded-xl border border-[#DDE4EC] px-4 py-3 text-sm font-semibold outline-none focus:border-[#0066AE]"
+                            placeholder="Catatan opsional"
+                        />
+                        <FieldError message={notesError} />
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Dokumen Existing
+                        </h4>
+                        <div className="mt-2 space-y-2">
+                            {question.answer?.documents.map((document) => (
+                                <div
+                                    key={document.id}
+                                    className="flex items-center gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2 text-sm font-semibold text-[#303030]"
+                                >
+                                    <FileText className="size-5 shrink-0 text-[#0066AE]" />
+                                    <span className="min-w-0 flex-1 truncate">
+                                        {document.file_name}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            window.open(
+                                                document.file_url,
+                                                '_blank',
+                                                'noopener,noreferrer',
+                                            )
+                                        }
+                                        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#EAF3FF]"
+                                    >
+                                        <Eye className="size-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => deleteStoredDocument(document)}
+                                        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            ))}
+                            {(question.answer?.documents.length ?? 0) === 0 && (
+                                <p className="rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#7C7C7C]">
+                                    Belum ada file pendukung.
+                                </p>
+                            )}
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Dokumen Baru
+                        </h4>
+                        <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F1F5F8] px-4 py-4 text-left transition hover:bg-[#EAF3FF]">
+                            <Plus size={20} className="shrink-0 text-[#0066AE]" />
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-bold text-[#0066AE]">
+                                    Tambah dokumen pendukung
+                                </span>
+                                <span className="block text-xs font-medium text-[#7C7C7C]">
+                                    JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per file.
+                                </span>
+                            </span>
+                            <input
+                                type="file"
+                                multiple
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                onChange={(event) => {
+                                    handleFilesChange(event.target.files);
+                                    event.target.value = '';
+                                }}
+                                className="sr-only"
+                            />
+                        </label>
+                        <FieldError message={documentsError} />
+                        {currentAnswer.documents.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                                {currentAnswer.documents.map((file, index) => (
+                                    <div
+                                        key={`${file.name}-${file.lastModified}-${index}`}
+                                        className="flex items-center gap-3 rounded-xl border border-[#AAD2F8] bg-[#F8FBFF] px-3 py-2 text-sm font-semibold text-[#303030]"
+                                    >
+                                        <FileText className="size-5 shrink-0 text-[#0066AE]" />
+                                        <span className="min-w-0 flex-1 truncate">
+                                            {file.name}
+                                        </span>
+                                        <span className="rounded-md bg-[#FFF4EA] px-2 py-1 text-xs font-bold text-[#C9681E]">
+                                            Draft lokal
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removePendingFile(index)}
+                                            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    <div className="flex items-center justify-end gap-2 border-t border-[#EFEFEF] pt-4">
+                        <button type="button" onClick={() => onOpenChange(false)}>
+                            <Button>Batal</Button>
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing || isSubmitting}
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] disabled:opacity-60"
+                        >
+                            <Save size={16} />
+                            {processing || isSubmitting ? 'Menyimpan...' : 'Simpan Jawaban'}
+                        </button>
+                    </div>
+                </form>
             </DialogContent>
         </Dialog>
     );
@@ -2568,6 +2947,8 @@ export default function SurveyAssignmentShow({
         null,
     );
     const [historyQuestion, setHistoryQuestion] =
+        useState<SurveyQuestion | null>(null);
+    const [editingQuestion, setEditingQuestion] =
         useState<SurveyQuestion | null>(null);
     const [closedAspects, setClosedAspects] = useState<Record<string, boolean>>(
         {},
@@ -3088,6 +3469,9 @@ export default function SurveyAssignmentShow({
                                                             }
                                                             onViewHistory={
                                                                 setHistoryQuestion
+                                                            }
+                                                            onEditData={
+                                                                setEditingQuestion
                                                             }
                                                         />
                                                     ),
@@ -4166,6 +4550,16 @@ export default function SurveyAssignmentShow({
                 </form>
             </aside>
 
+            <SurveyAnswerEditModal
+                assignmentCode={assignment.code}
+                question={editingQuestion}
+                open={Boolean(editingQuestion)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditingQuestion(null);
+                    }
+                }}
+            />
             <AnswerDetailModal
                 question={detailQuestion}
                 open={Boolean(detailQuestion)}

@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PariwisataSurveyAssignmentExport;
+use App\Exports\PariwisataSurveyExport;
+use App\Exports\UmkmSurveyExport;
+use App\Exports\VillageSurveyAssignmentExport;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
@@ -121,7 +125,7 @@ class VillageSurveyAssignmentController extends Controller
 
     public function export(
         VillageSurveyAssignment $assignment,
-        \App\Exports\VillageSurveyAssignmentExport $export
+        VillageSurveyAssignmentExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment);
 
@@ -139,7 +143,7 @@ class VillageSurveyAssignmentController extends Controller
     public function exportPariwisata(
         VillageSurveyAssignment $assignment,
         PariwisataVillage $pariwisata,
-        \App\Exports\PariwisataSurveyExport $export
+        PariwisataSurveyExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment, $pariwisata);
 
@@ -148,7 +152,7 @@ class VillageSurveyAssignmentController extends Controller
 
     public function downloadPariwisataSurveyExport(
         VillageSurveyAssignment $assignment,
-        \App\Exports\PariwisataSurveyAssignmentExport $export
+        PariwisataSurveyAssignmentExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment);
 
@@ -172,6 +176,16 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show-umkm', $service->getUmkmShowData($assignment, $umkm));
+    }
+
+    public function exportUmkm(
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        UmkmSurveyExport $export
+    ): BinaryFileResponse {
+        $file = $export->export($assignment, $umkm);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
 
     public function updateUmkm(

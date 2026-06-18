@@ -22,7 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/questions', SurveyQuestionController::class)->name('questions');
         Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])
             ->name('questions.templates.update');
-                Route::get('/questions/{template}/export', [SurveyQuestionController::class, 'export'])->name('questions.export');
+        Route::get('/questions/{template}/export', [SurveyQuestionController::class, 'export'])->name('questions.export');
         Route::get('/questions/{template}', [SurveyQuestionController::class, 'show'])->name('questions.show');
         Route::patch('/questions/umkm/{question}', [SurveyQuestionController::class, 'updateUmkm'])
             ->name('questions.umkm.update');
@@ -73,6 +73,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.pariwisata.export');
     Route::patch('/survey-assignments/{assignment}/pariwisata/{pariwisata}', [VillageSurveyAssignmentController::class, 'updatePariwisata'])
         ->name('survey-assignments.pariwisata.update');
+    Route::get('/survey-assignments/{assignment}/umkm/{umkm}/export', [VillageSurveyAssignmentController::class, 'exportUmkm'])
+        ->name('survey-assignments.umkm.export');
     Route::get('/survey-assignments/{assignment}/umkm/{umkm}', [VillageSurveyAssignmentController::class, 'showUmkm'])
         ->name('survey-assignments.umkm.show');
     Route::patch('/survey-assignments/{assignment}/umkm/{umkm}', [VillageSurveyAssignmentController::class, 'updateUmkm'])
@@ -105,7 +107,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('chatbot');
 });
 
-
 require __DIR__.'/settings.php';
-
-

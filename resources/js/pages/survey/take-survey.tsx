@@ -46,6 +46,7 @@ type SurveyQuestion = {
         id: number;
         selected_option_id: number;
         score: number;
+        notes: string | null;
         documents: SurveyDocument[];
     } | null;
     options: SurveyOption[];
@@ -107,10 +108,12 @@ const colors = {
 type SurveyDraftContextValue = {
     selectedOptions: Record<number, number>;
     documents: Record<number, File[]>;
+    notes: Record<number, string>;
     dirtyQuestionIds: Set<number>;
     hasUnsavedChanges: boolean;
     selectOption: (questionId: number, optionId: number) => void;
     setQuestionFiles: (questionId: number, files: File[]) => void;
+    updateQuestionNotes: (questionId: number, notes: string) => void;
     removeQuestionFile: (questionId: number, file: File) => void;
     clearPendingFiles: () => void;
     clearSavedChanges: () => void;
@@ -144,17 +147,29 @@ function getInitialSelectedOptions(aspects: SurveyAspect[]) {
     ) as Record<number, number>;
 }
 
+function getInitialNotes(aspects: SurveyAspect[]) {
+    return Object.fromEntries(
+        aspects
+            .flatMap((aspect) => aspect.questions)
+            .filter((question) => question.answer?.notes)
+            .map((question) => [question.id, question.answer?.notes ?? '']),
+    ) as Record<number, string>;
+}
+
 function SurveyDraftProvider({
     initialSelectedOptions,
+    initialNotes,
     children,
 }: {
     initialSelectedOptions: Record<number, number>;
+    initialNotes: Record<number, string>;
     children: React.ReactNode;
 }) {
     const [selectedOptions, setSelectedOptions] = useState<
         Record<number, number>
     >(() => ({ ...initialSelectedOptions }));
     const [documents, setDocuments] = useState<Record<number, File[]>>({});
+    const [notes, setNotes] = useState<Record<number, string>>(() => ({ ...initialNotes }));
     const [dirtyQuestionIds, setDirtyQuestionIds] = useState<Set<number>>(
         () => new Set(),
     );
@@ -165,6 +180,14 @@ function SurveyDraftProvider({
         setSelectedOptions((current) => ({
             ...current,
             [questionId]: optionId,
+        }));
+        setDirtyQuestionIds((current) => new Set(current).add(questionId));
+    }, []);
+
+    const updateQuestionNotes = useCallback((questionId: number, value: string) => {
+        setNotes((current) => ({
+            ...current,
+            [questionId]: value,
         }));
         setDirtyQuestionIds((current) => new Set(current).add(questionId));
     }, []);
@@ -212,10 +235,12 @@ function SurveyDraftProvider({
             value={{
                 selectedOptions,
                 documents,
+                notes,
                 dirtyQuestionIds,
                 hasUnsavedChanges,
                 selectOption,
                 setQuestionFiles,
+                updateQuestionNotes,
                 removeQuestionFile,
                 clearPendingFiles,
                 clearSavedChanges,
@@ -300,6 +325,7 @@ function getQuestionDraftStatus(
     question: SurveyQuestion,
     selectedOptionId: number | undefined,
     localFilesCount: number,
+    noteValue: string,
 ): QuestionDraftStatus {
     if (!selectedOptionId && localFilesCount === 0) {
         return {
@@ -321,6 +347,14 @@ function getQuestionDraftStatus(
         return {
             label: 'Diubah lokal',
             description: 'Berbeda dari jawaban database, belum disimpan',
+            className: 'bg-[#FDECEC] text-[#D81313]',
+        };
+    }
+
+    if ((question.answer?.notes ?? '') !== noteValue) {
+        return {
+            label: 'Diubah lokal',
+            description: 'Catatan berbeda dari data database, belum disimpan',
             className: 'bg-[#FDECEC] text-[#D81313]',
         };
     }
@@ -350,6 +384,8 @@ function QuestionCard({
     onPreviewFile,
     onRemoveFile,
     onDeleteDocument,
+    noteValue,
+    onNotesChange,
 }: {
     aspect: string;
     question: SurveyQuestion;
@@ -360,6 +396,8 @@ function QuestionCard({
     onPreviewFile: (file: File) => void;
     onRemoveFile: (file: File) => void;
     onDeleteDocument: (document: SurveyDocument) => void;
+    noteValue: string;
+    onNotesChange: (value: string) => void;
 }) {
     const [fileError, setFileError] = useState('');
     const hasDocuments =
@@ -368,6 +406,7 @@ function QuestionCard({
         question,
         selectedOptionId,
         files.length,
+        noteValue,
     );
 
     function handleFilesChange(fileList: FileList | null) {
@@ -517,6 +556,20 @@ function QuestionCard({
 
             <div className="mt-6 border-t border-[#EFEFEF] pt-5">
                 <SectionTitle
+                    title="Catatan"
+                    subtitle="Tambahkan catatan singkat untuk konteks jawaban bila diperlukan."
+                />
+                <textarea
+                    value={noteValue}
+                    onChange={(event) => onNotesChange(event.target.value)}
+                    rows={4}
+                    placeholder="Tulis catatan jawaban di sini"
+                    className="mt-3 w-full rounded-2xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-medium text-[#303030] outline-none transition placeholder:text-[#A0A0A0] focus:border-[#0066AE]"
+                />
+            </div>
+
+            <div className="mt-6 border-t border-[#EFEFEF] pt-5">
+                <SectionTitle
                     title="Dokumen pendukung"
                     subtitle="Unggah foto atau dokumen pendukung setelah memilih opsi jawaban."
                 />
@@ -637,9 +690,13 @@ export default function TakeSurvey({
         () => getInitialSelectedOptions(aspects),
         [aspects],
     );
+    const initialNotes = useMemo(() => getInitialNotes(aspects), [aspects]);
 
     return (
-        <SurveyDraftProvider initialSelectedOptions={initialSelectedOptions}>
+        <SurveyDraftProvider
+            initialSelectedOptions={initialSelectedOptions}
+            initialNotes={initialNotes}
+        >
             <TakeSurveyContent
                 assignment={assignment}
                 template={template}
@@ -662,10 +719,12 @@ function TakeSurveyContent({
     const {
         selectedOptions,
         documents,
+        notes,
         dirtyQuestionIds,
         hasUnsavedChanges,
         selectOption,
         setQuestionFiles,
+        updateQuestionNotes,
         removeQuestionFile,
         clearSavedChanges,
     } = useSurveyDraft();
@@ -745,6 +804,7 @@ function TakeSurveyContent({
                 `answers[${index}][survey_question_option_id]`,
                 String(selectedOptions[questionId]),
             );
+            formData.append(`answers[${index}][notes]`, notes[questionId] ?? '');
 
             (documents[questionId] ?? []).forEach((file) => {
                 formData.append(`answers[${index}][documents][]`, file);
@@ -948,11 +1008,19 @@ function TakeSurveyContent({
                                 question={question}
                                 selectedOptionId={selectedOptions[question.id]}
                                 files={documents[question.id] ?? []}
+                                noteValue={
+                                    notes[question.id] ??
+                                    question.answer?.notes ??
+                                    ''
+                                }
                                 onSelectOption={(optionId) =>
                                     selectOption(question.id, optionId)
                                 }
                                 onFilesChange={(files) =>
                                     setQuestionFiles(question.id, files)
+                                }
+                                onNotesChange={(value) =>
+                                    updateQuestionNotes(question.id, value)
                                 }
                                 onPreviewFile={previewFile}
                                 onRemoveFile={(file) =>
