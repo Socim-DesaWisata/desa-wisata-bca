@@ -22,7 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/questions', SurveyQuestionController::class)->name('questions');
         Route::patch('/questions/templates/{template}', [SurveyQuestionController::class, 'updateTemplate'])
             ->name('questions.templates.update');
-                Route::get('/questions/{template}/export', [SurveyQuestionController::class, 'export'])->name('questions.export');
+        Route::get('/questions/{template}/export', [SurveyQuestionController::class, 'export'])->name('questions.export');
         Route::get('/questions/{template}', [SurveyQuestionController::class, 'show'])->name('questions.show');
         Route::patch('/questions/umkm/{question}', [SurveyQuestionController::class, 'updateUmkm'])
             ->name('questions.umkm.update');
@@ -65,12 +65,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.pariwisata.take-survey.store');
     Route::delete('/survey-assignments/{assignment}/pariwisata/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyPariwisataSurveyDocument'])
         ->name('survey-assignments.pariwisata.take-survey.documents.destroy');
+    Route::get('/survey-assignments/{assignment}/pariwisata/export-survey', [VillageSurveyAssignmentController::class, 'downloadPariwisataSurveyExport'])
+        ->name('survey-assignments.pariwisata.export-survey');
     Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}', [VillageSurveyAssignmentController::class, 'showPariwisata'])
         ->name('survey-assignments.pariwisata.show');
     Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}/export', [VillageSurveyAssignmentController::class, 'exportPariwisata'])
         ->name('survey-assignments.pariwisata.export');
     Route::patch('/survey-assignments/{assignment}/pariwisata/{pariwisata}', [VillageSurveyAssignmentController::class, 'updatePariwisata'])
         ->name('survey-assignments.pariwisata.update');
+    Route::get('/survey-assignments/{assignment}/umkm/{umkm}/export', [VillageSurveyAssignmentController::class, 'exportUmkm'])
+        ->name('survey-assignments.umkm.export');
     Route::get('/survey-assignments/{assignment}/umkm/{umkm}', [VillageSurveyAssignmentController::class, 'showUmkm'])
         ->name('survey-assignments.umkm.show');
     Route::patch('/survey-assignments/{assignment}/umkm/{umkm}', [VillageSurveyAssignmentController::class, 'updateUmkm'])
@@ -103,7 +107,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('chatbot');
 });
 
-
 require __DIR__.'/settings.php';
-
-
