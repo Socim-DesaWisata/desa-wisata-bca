@@ -228,6 +228,7 @@ test('authenticated users can view survey assignment detail from database', func
                 [
                     'question_id' => $question->id,
                     'survey_question_option_id' => $option->id,
+                    'notes' => 'Catatan detail desa',
                     'documents' => [
                         UploadedFile::fake()->create('lampiran.pdf', 256, 'application/pdf'),
                     ],
@@ -248,6 +249,7 @@ test('authenticated users can view survey assignment detail from database', func
             ->where('summary.total_documents', 1)
             ->where('aspects.0.name', 'Amenitas')
             ->where('aspects.0.questions.0.answer.score_label', 'Baik dan terdokumentasi')
+            ->where('aspects.0.questions.0.answer.notes', 'Catatan detail desa')
             ->where('aspects.0.questions.0.answer.documents.0.file_name', 'lampiran.pdf')
         );
 });

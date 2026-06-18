@@ -8,8 +8,8 @@ use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataSuveyOption;
 use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswer;
-use App\Models\SurveyAnswerHistory;
 use App\Models\SurveyAnswerDocument;
+use App\Models\SurveyAnswerHistory;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
 use App\Models\SurveyTemplate;
@@ -378,6 +378,7 @@ class VillageSurveyAssignmentService
                     'aspect_snapshot',
                     'question_text_snapshot',
                     'option_label_snapshot',
+                    'notes',
                     'answered_by',
                     'last_edited_by',
                     'answered_at',
@@ -1859,7 +1860,6 @@ class VillageSurveyAssignmentService
     {
         return $this->templateResolver->resolve('pariwisata', $with);
     }
-
 
     /**
      * @param  Collection<int, PariwisataSurveyQuestion>  $questions
