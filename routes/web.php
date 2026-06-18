@@ -65,6 +65,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.pariwisata.take-survey.store');
     Route::delete('/survey-assignments/{assignment}/pariwisata/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyPariwisataSurveyDocument'])
         ->name('survey-assignments.pariwisata.take-survey.documents.destroy');
+    Route::get('/survey-assignments/{assignment}/pariwisata/export-survey', [VillageSurveyAssignmentController::class, 'downloadPariwisataSurveyExport'])
+        ->name('survey-assignments.pariwisata.export-survey');
     Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}', [VillageSurveyAssignmentController::class, 'showPariwisata'])
         ->name('survey-assignments.pariwisata.show');
     Route::get('/survey-assignments/{assignment}/pariwisata/{pariwisata}/export', [VillageSurveyAssignmentController::class, 'exportPariwisata'])

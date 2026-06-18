@@ -27,7 +27,7 @@ import {
     UserRound,
     X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -53,9 +53,11 @@ import {
 } from '@/routes/survey-assignments';
 import { update as updateVillageAnnualData } from '@/routes/survey-assignments/village-annual-data';
 import {
+    exportSurvey as exportPariwisataSurvey,
     show as showPariwisata,
     takeSurvey as takePariwisataSurvey,
 } from '@/routes/survey-assignments/pariwisata';
+import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
 import { show as showUmkm } from '@/routes/survey-assignments/umkm';
 
 type UserSummary = {
@@ -402,6 +404,15 @@ type PariwisataSurveyGroup = {
     score: number;
     max_score: number;
     questions: PariwisataSurveyQuestion[];
+};
+
+type PariwisataAnswerEditForm = {
+    answers: Array<{
+        question_id: number;
+        pariwisata_suvey_option_id: string;
+        notes: string;
+        documents: File[];
+    }>;
 };
 
 function classNames(...classes: Array<string | false | null | undefined>) {
@@ -1113,10 +1124,12 @@ function PariwisataQuestionRow({
     question,
     number,
     onViewDetail,
+    onEditData,
 }: {
     question: PariwisataSurveyQuestion;
     number: number;
     onViewDetail: (question: PariwisataSurveyQuestion) => void;
+    onEditData: (question: PariwisataSurveyQuestion) => void;
 }) {
     const answered = Boolean(question.answer);
     const title = question.indicator_name ?? question.criteria_name ?? '-';
@@ -1223,6 +1236,13 @@ function PariwisataQuestionRow({
                             <Eye className="size-4 text-[#303030]" />
                             Lihat Detail
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="gap-2 text-xs"
+                            onClick={() => onEditData(question)}
+                        >
+                            <PanelRightOpen className="size-4 text-[#303030]" />
+                            Edit Data
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -1315,6 +1335,30 @@ function PariwisataAnswerDetailModal({
 
                     <section>
                         <h4 className="text-sm font-bold text-[#303030]">
+                            Metadata Jawaban
+                        </h4>
+                        <div className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
+                            <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
+                                <p className="text-xs font-bold text-[#7C7C7C]">Dijawab oleh</p>
+                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.answered_by.name ?? '-'}</p>
+                            </div>
+                            <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
+                                <p className="text-xs font-bold text-[#7C7C7C]">Dijawab pada</p>
+                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.answered_at ?? '-'}</p>
+                            </div>
+                            <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
+                                <p className="text-xs font-bold text-[#7C7C7C]">Terakhir diedit oleh</p>
+                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.last_edited_by.name ?? '-'}</p>
+                            </div>
+                            <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
+                                <p className="text-xs font-bold text-[#7C7C7C]">Terakhir diedit pada</p>
+                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.last_edited_at ?? '-'}</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
                             Catatan Jawaban
                         </h4>
                         <div className="mt-2 rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#303030]">
@@ -1338,6 +1382,278 @@ function PariwisataAnswerDetailModal({
                         </div>
                     </section>
                 </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+function PariwisataAnswerEditModal({
+    assignmentCode,
+    question,
+    open,
+    onOpenChange,
+}: {
+    assignmentCode: string;
+    question: PariwisataSurveyQuestion | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const { data, setData, post, processing, errors, reset, clearErrors } =
+        useForm<PariwisataAnswerEditForm>({
+            answers: [
+                {
+                    question_id: question?.id ?? 0,
+                    pariwisata_suvey_option_id: question?.answer
+                        ? String(question.answer.pariwisata_suvey_option_id)
+                        : '',
+                    notes: question?.answer?.notes ?? '',
+                    documents: [],
+                },
+            ],
+        });
+
+    useEffect(() => {
+        if (!open || !question) {
+            return;
+        }
+
+        setData({
+            answers: [
+                {
+                    question_id: question.id,
+                    pariwisata_suvey_option_id: question.answer
+                        ? String(question.answer.pariwisata_suvey_option_id)
+                        : '',
+                    notes: question.answer?.notes ?? '',
+                    documents: [],
+                },
+            ],
+        });
+        clearErrors();
+    }, [clearErrors, open, question, setData]);
+
+    if (!question) {
+        return null;
+    }
+
+    const currentAnswer = data.answers[0] ?? {
+        question_id: question.id,
+        pariwisata_suvey_option_id: '',
+        notes: '',
+        documents: [],
+    };
+
+    function updateAnswerField(
+        key: 'question_id' | 'pariwisata_suvey_option_id' | 'notes' | 'documents',
+        value: number | string | File[],
+    ) {
+        setData('answers', [
+            {
+                ...currentAnswer,
+                [key]: value,
+            },
+        ]);
+    }
+
+    const errorBag = errors as Record<string, string | undefined>;
+    const selectedOptionError =
+        errorBag['answers.0.pariwisata_suvey_option_id'] ??
+        errorBag.pariwisata_suvey_option_id;
+    const notesError = errorBag['answers.0.notes'] ?? errorBag.notes;
+    const documentsError =
+        Object.entries(errorBag).find(([key]) =>
+            key.startsWith('answers.0.documents') || key === 'documents',
+        )?.[1] ?? undefined;
+
+    function handleFilesChange(fileList: FileList | null) {
+        if (!fileList) {
+            return;
+        }
+
+        updateAnswerField('documents', [...currentAnswer.documents, ...Array.from(fileList)]);
+    }
+
+    function removePendingFile(fileIndex: number) {
+        updateAnswerField(
+            'documents',
+            currentAnswer.documents.filter((_, index) => index !== fileIndex),
+        );
+    }
+
+    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        post(storePariwisataSurveyDraft.url({ assignment: assignmentCode }), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                onOpenChange(false);
+            },
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle className="text-[#303030]">
+                        Edit Jawaban Survey ISTC
+                    </DialogTitle>
+                    <DialogDescription>
+                        Ubah jawaban, catatan, atau tambahkan dokumen pendukung untuk pertanyaan ini.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    <section className="rounded-xl bg-[#F8FBFF] p-4">
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#0066AE]">
+                            {question.criteria_code && <span>{question.criteria_code}</span>}
+                            {question.indicator_code && <span>{question.indicator_code}</span>}
+                        </div>
+                        <h3 className="mt-2 text-base leading-6 font-bold text-[#303030]">
+                            {question.indicator_name ?? question.criteria_name ?? '-'}
+                        </h3>
+                        {question.indicator_description && (
+                            <p className="mt-2 text-sm font-semibold text-[#7C7C7C]">
+                                {question.indicator_description}
+                            </p>
+                        )}
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Pilih Opsi Jawaban
+                        </h4>
+                        <div className="mt-2 divide-y divide-[#EFEFEF] rounded-xl border border-[#EFEFEF]">
+                            {question.options.map((option) => {
+                                const selected =
+                                    String(option.id) === currentAnswer.pariwisata_suvey_option_id;
+
+                                return (
+                                    <label
+                                        key={option.id}
+                                        className={classNames(
+                                            'flex cursor-pointer gap-3 px-4 py-3 text-sm',
+                                            selected && 'bg-[#EAF3FF]',
+                                        )}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name={`pariwisata-option-${question.id}`}
+                                            value={option.id}
+                                            checked={selected}
+                                            onChange={(event) =>
+                                                updateAnswerField('pariwisata_suvey_option_id', event.target.value)
+                                            }
+                                            className="mt-1"
+                                        />
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-[#0066AE]">
+                                                Skor {option.score} · {option.label}
+                                            </p>
+                                            {option.description && (
+                                                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                                    {option.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <FieldError message={selectedOptionError} />
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Catatan Jawaban
+                        </h4>
+                        <textarea
+                            value={currentAnswer.notes}
+                            onChange={(event) => updateAnswerField('notes', event.target.value)}
+                            rows={4}
+                            className="mt-2 w-full rounded-xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-medium text-[#303030] outline-none transition focus:border-[#0066AE] focus:ring-2 focus:ring-[#0066AE]/10"
+                            placeholder="Tambahkan catatan jawaban bila diperlukan"
+                        />
+                        <FieldError message={notesError} />
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Dokumen Existing
+                        </h4>
+                        <div className="mt-2 space-y-2">
+                            {question.answer?.documents.map((document) => (
+                                <DocumentBadge key={document.id} document={document} />
+                            ))}
+                            {(question.answer?.documents.length ?? 0) === 0 && (
+                                <p className="rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#7C7C7C]">
+                                    Belum ada file pendukung.
+                                </p>
+                            )}
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4 className="text-sm font-bold text-[#303030]">
+                            Tambah Dokumen Baru
+                        </h4>
+                        <div className="mt-2 rounded-xl border border-dashed border-[#D7E8F8] bg-[#F8FBFE] p-4">
+                            <input
+                                type="file"
+                                multiple
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                onChange={(event) => handleFilesChange(event.target.files)}
+                                className="block w-full text-sm font-medium text-[#303030] file:mr-3 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
+                            />
+                            <p className="mt-2 text-xs font-semibold text-[#7C7C7C]">
+                                JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per file.
+                            </p>
+                        </div>
+                        <FieldError message={documentsError} />
+                        {currentAnswer.documents.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                                {currentAnswer.documents.map((file, index) => (
+                                    <div
+                                        key={`${file.name}-${file.lastModified}-${index}`}
+                                        className="flex items-center justify-between gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2"
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-[#303030]">
+                                                {file.name}
+                                            </p>
+                                            <p className="text-xs font-semibold text-[#7C7C7C]">
+                                                {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removePendingFile(index)}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-[#F2D6D6] bg-[#FFF7F7] px-3 py-2 text-xs font-bold text-[#D81313]"
+                                        >
+                                            <Trash2 size={14} />
+                                            Hapus
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => onOpenChange(false)}>
+                            <Button>Batal</Button>
+                        </button>
+                        <button type="submit" disabled={processing}>
+                            <Button variant="primary">
+                                <Save size={16} />
+                                {processing ? 'Menyimpan...' : 'Simpan Jawaban'}
+                            </Button>
+                        </button>
+                    </div>
+                </form>
             </DialogContent>
         </Dialog>
     );
@@ -1641,6 +1957,8 @@ function PariwisataTab({
     const [aspectFilter, setAspectFilter] = useState('all');
     const [detailQuestion, setDetailQuestion] =
         useState<PariwisataSurveyQuestion | null>(null);
+    const [editingQuestion, setEditingQuestion] =
+        useState<PariwisataSurveyQuestion | null>(null);
     const [closedAspects, setClosedAspects] = useState<Record<string, boolean>>(
         {},
     );
@@ -1726,6 +2044,16 @@ function PariwisataTab({
                             Tambah ISTC
                         </Button>
                     </Link>
+                    <a
+                        href={exportPariwisataSurvey.url({
+                            assignment: assignmentCode,
+                        })}
+                    >
+                        <Button>
+                            <Download size={16} />
+                            Export Excel
+                        </Button>
+                    </a>
                 </div>
             </div>
 
@@ -1902,6 +2230,7 @@ function PariwisataTab({
                                         question={question}
                                         number={index + 1}
                                         onViewDetail={setDetailQuestion}
+                                        onEditData={setEditingQuestion}
                                     />
                                 ))}
                         </div>
@@ -1926,6 +2255,16 @@ function PariwisataTab({
                 onOpenChange={(open) => {
                     if (!open) {
                         setDetailQuestion(null);
+                    }
+                }}
+            />
+            <PariwisataAnswerEditModal
+                assignmentCode={assignmentCode}
+                question={editingQuestion}
+                open={Boolean(editingQuestion)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditingQuestion(null);
                     }
                 }}
             />
@@ -3855,6 +4194,9 @@ SurveyAssignmentShow.layout = {
         { title: 'Detail', href: '#' },
     ],
 };
+
+
+
 
 
 

@@ -140,6 +140,15 @@ class VillageSurveyAssignmentController extends Controller
         return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
 
+    public function downloadPariwisataSurveyExport(
+        VillageSurveyAssignment $assignment,
+        \App\Exports\PariwisataSurveyAssignmentExport $export
+    ): BinaryFileResponse {
+        $file = $export->export($assignment);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
+    }
+
     public function updatePariwisata(
         UpdatePariwisataSurveyAssignmentRequest $request,
         VillageSurveyAssignment $assignment,

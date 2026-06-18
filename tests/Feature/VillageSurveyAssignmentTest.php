@@ -369,6 +369,8 @@ test('survey assignment show includes pariwisata survey analytics summary', func
             ->where('pariwisata_survey_groups.0.category_name', 'Amenitas')
             ->where('pariwisata_survey_groups.0.questions.0.criteria_code', 'A.1')
             ->where('pariwisata_survey_groups.0.questions.0.answer.score_label', 'Sangat Baik')
+            ->where('pariwisata_survey_groups.0.questions.0.answer.last_edited_by.name', $user->name)
+            ->where('pariwisata_survey_groups.0.questions.0.answer.last_edited_at', now()->timezone(config('app.timezone'))->format('d M Y H:i'))
             ->where('pariwisata_survey_groups.1.category_name', 'Aksesibilitas')
         );
 });
