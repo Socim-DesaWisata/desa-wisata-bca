@@ -48,6 +48,7 @@ import {
     createPariwisata,
     createUmkm,
     exportMethod as exportSurveyAssignment,
+    show as showSurveyAssignment,
     takeSurvey,
     update as updateSurveyAssignment,
 } from '@/routes/survey-assignments';
@@ -180,6 +181,7 @@ type SurveyAssignmentShowProps = {
         submitted_by_user: UserSummary;
         reviewed_by_user: UserSummary;
     };
+    active_tab: 'desa' | 'umkm' | 'pariwisata';
     summary: {
         total_questions: number;
         answered_questions: number;
@@ -1684,18 +1686,18 @@ function TabButton({
     label,
     count,
     icon,
-    onClick,
+    href,
 }: {
     active: boolean;
     label: string;
     count: number | string;
     icon: React.ReactNode;
-    onClick: () => void;
+    href: string;
 }) {
     return (
-        <button
-            type="button"
-            onClick={onClick}
+        <Link
+            href={href}
+            preserveScroll
             className={classNames(
                 'inline-flex h-11 shrink-0 items-center gap-2 rounded-xl px-4 text-sm font-bold transition',
                 active
@@ -1715,7 +1717,7 @@ function TabButton({
             >
                 {count}
             </span>
-        </button>
+        </Link>
     );
 }
 
@@ -2547,6 +2549,7 @@ function AnswerHistoryModal({
 
 export default function SurveyAssignmentShow({
     assignment,
+    active_tab,
     summary,
     aspects,
     umkms,
@@ -2558,9 +2561,7 @@ export default function SurveyAssignmentShow({
     edit_values,
     village_annual_edit_values,
 }: SurveyAssignmentShowProps) {
-    const [activeTab, setActiveTab] = useState<'desa' | 'umkm' | 'pariwisata'>(
-        'desa',
-    );
+    const activeTab = active_tab;
     const [search, setSearch] = useState('');
     const [aspectFilter, setAspectFilter] = useState('all');
     const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(
@@ -2786,21 +2787,21 @@ export default function SurveyAssignmentShow({
                                 label="Kemenpar"
                                 count={summary.total_questions}
                                 icon={<MapPin size={16} />}
-                                onClick={() => setActiveTab('desa')}
+                                href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'desa' } })}
                             />
                             <TabButton
                                 active={activeTab === 'umkm'}
                                 label="UMKM"
                                 count={umkms.length}
                                 icon={<ClipboardCheck size={16} />}
-                                onClick={() => setActiveTab('umkm')}
+                                href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'umkm' } })}
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
                                 label="ISTC"
                                 count={pariwisata.length}
                                 icon={<Flag size={16} />}
-                                onClick={() => setActiveTab('pariwisata')}
+                                href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'pariwisata' } })}
                             />
                         </div>
                     </div>

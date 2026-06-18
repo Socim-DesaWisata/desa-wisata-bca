@@ -9,6 +9,9 @@ use App\Models\SurveyAnswerDocument;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
 use App\Models\SurveyTemplate;
+use App\Models\UmkmSurveyAnswer;
+use App\Models\UmkmSurveyQuestion;
+use App\Models\VillageUmkm;
 use App\Models\TourismVillage;
 use App\Models\User;
 use App\Models\VillageSurveyAssignment;
@@ -239,6 +242,183 @@ test('authenticated users can view survey assignment detail from database', func
         );
 });
 
+
+test('survey assignment show defaults invalid tab to desa payload', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'title' => 'Template Detail Desa',
+        'created_by' => $user->id,
+    ]);
+    $village = TourismVillage::factory()->create([
+        'name' => 'Desa Tab Testing',
+        'created_by' => $user->id,
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+        'status' => 'in_progress',
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Amenitas',
+        'code' => 'AM-001',
+        'question_text' => 'Pertanyaan desa',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 4,
+        'label' => 'Baik',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('survey-assignments.take-survey.store', $assignment), [
+            'answers' => [[
+                'question_id' => $question->id,
+                'survey_question_option_id' => $option->id,
+            ]],
+        ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.show', $assignment).'?tab=invalid')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show')
+            ->where('active_tab', 'desa')
+            ->where('summary.total_questions', 1)
+            ->where('umkms', [])
+            ->where('pariwisata', [])
+            ->where('pariwisata_survey_groups', [])
+        );
+});
+
+test('survey assignment show umkm tab only sends umkm payload', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create(['created_by' => $user->id]);
+    $umkmTemplate = SurveyTemplate::factory()->create(['created_by' => $user->id, 'type' => 'umkm']);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $umkm = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'data_collector_id' => $user->id,
+        'business_owner_name' => 'Pemilik UMKM',
+        'name' => 'UMKM Tab',
+        'product_category' => 'Kuliner',
+    ]);
+    $question = UmkmSurveyQuestion::query()->create([
+        'survey_template_id' => $umkmTemplate->id,
+        'criteria_code' => 'A',
+        'criteria_name' => 'Kriteria A',
+        'criteria_weight_percent' => 100,
+        'question_number' => 1,
+        'question_text' => 'Pertanyaan UMKM',
+        'question_weight_percent' => 100,
+        'max_score' => 100,
+    ]);
+    UmkmSurveyAnswer::query()->create([
+        'umkm_id' => $umkm->id,
+        'umkm_assessment_question_id' => $question->id,
+        'answered_by' => $user->id,
+        'score' => 80,
+        'criteria_code_snapshot' => 'A',
+        'criteria_name_snapshot' => 'Kriteria A',
+        'criteria_weight_percent_snapshot' => 100,
+        'question_text_snapshot' => 'Pertanyaan UMKM',
+        'question_weight_percent_snapshot' => 100,
+        'max_score_snapshot' => 100,
+        'weighted_score' => 80,
+        'last_edited_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.show', $assignment).'?tab=umkm')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show')
+            ->where('active_tab', 'umkm')
+            ->where('summary.total_questions', 0)
+            ->where('aspects', [])
+            ->where('umkms.0.name', 'UMKM Tab')
+            ->where('pariwisata', [])
+            ->where('pariwisata_survey_groups', [])
+        );
+});
+
+test('survey assignment show pariwisata tab only sends pariwisata payload', function () {
+    $user = User::factory()->create();
+    $assignmentTemplate = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+    ]);
+    $pariwisataTemplate = SurveyTemplate::factory()->create([
+        'title' => 'Matrix Sertifikasi Desa Wisata Berkelanjutan - Pariwisata',
+        'type' => 'pariwisata',
+        'created_by' => $user->id,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $assignmentTemplate->id,
+        'assigned_by' => $user->id,
+    ]);
+    PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'ISTC Tab',
+        'is_active' => true,
+    ]);
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $pariwisataTemplate->id,
+        'category_code' => 'A',
+        'category_name' => 'Amenitas',
+        'criteria_code' => 'A.1',
+        'criteria_name' => 'Kriteria A1',
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Indikator A1',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 1,
+    ]);
+    PariwisataSurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $question->id,
+        'pariwisata_suvey_option_id' => $option->id,
+        'score' => 4,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+        'last_edited_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.show', $assignment).'?tab=pariwisata')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show')
+            ->where('active_tab', 'pariwisata')
+            ->where('summary.total_questions', 0)
+            ->where('aspects', [])
+            ->where('umkms', [])
+            ->where('pariwisata.0.name', 'ISTC Tab')
+            ->where('pariwisata_survey_summary.total_score', 4)
+            ->where('pariwisata_survey_groups.0.category_name', 'Amenitas')
+        );
+});
+
 test('survey assignment show includes pariwisata survey analytics summary', function () {
     $user = User::factory()->create();
     $assignmentTemplate = SurveyTemplate::factory()->create([
@@ -347,10 +527,11 @@ test('survey assignment show includes pariwisata survey analytics summary', func
     ]);
 
     $this->actingAs($user)
-        ->get(route('survey-assignments.show', $assignment))
+        ->get(route('survey-assignments.show', $assignment).'?tab=pariwisata')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('survey-assignment/show')
+            ->where('active_tab', 'pariwisata')
             ->where('pariwisata_survey_summary.total_score', 6)
             ->where('pariwisata_survey_summary.max_score', 8)
             ->where('pariwisata_survey_summary.final_score', 75)

@@ -26,6 +26,7 @@ use App\Services\PariwisataSurveyAssignmentService;
 use App\Services\UmkmSurveyAssignmentService;
 use App\Services\VillageSurveyAssignmentService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -107,10 +108,15 @@ class VillageSurveyAssignmentController extends Controller
     }
 
     public function show(
+        Request $request,
         VillageSurveyAssignment $assignment,
         VillageSurveyAssignmentService $service
     ): Response {
-        return Inertia::render('survey-assignment/show', $service->getShowData($assignment));
+        $tab = in_array($request->query('tab'), ['desa', 'umkm', 'pariwisata'], true)
+            ? (string) $request->query('tab')
+            : 'desa';
+
+        return Inertia::render('survey-assignment/show', $service->getShowData($assignment, $tab));
     }
 
     public function export(
