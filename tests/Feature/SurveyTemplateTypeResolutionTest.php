@@ -129,6 +129,72 @@ test('take pariwisata survey page uses latest published pariwisata template by t
         );
 });
 
+
+test('take pariwisata survey page orders sub categories naturally by code', function () {
+    $user = User::factory()->create();
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-ORDER-001',
+        'village_id' => $village->id,
+        'survey_template_id' => SurveyTemplate::factory()->create([
+            'created_by' => $user->id,
+            'type' => 'village',
+        ])->id,
+        'assigned_by' => $user->id,
+    ]);
+
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'type' => 'pariwisata',
+        'title' => 'Template Pariwisata Urutan Natural',
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+
+    foreach ([
+        ['sub_category_code' => 'A.10.a', 'sub_category_name' => 'Sub A10', 'criteria_code' => 'A.10', 'indicator_code' => 'A.10.a', 'indicator_name' => 'Indikator A10'],
+        ['sub_category_code' => 'A.8.a', 'sub_category_name' => 'Sub A8', 'criteria_code' => 'A.8', 'indicator_code' => 'A.8.a', 'indicator_name' => 'Indikator A8'],
+        ['sub_category_code' => 'A.9.a', 'sub_category_name' => 'Sub A9', 'criteria_code' => 'A.9', 'indicator_code' => 'A.9.a', 'indicator_name' => 'Indikator A9'],
+    ] as $index => $row) {
+        $question = PariwisataSurveyQuestion::query()->create([
+            'survey_template_id' => $template->id,
+            'category_code' => 'A',
+            'category_name' => 'Kategori A',
+            'sub_category_code' => $row['sub_category_code'],
+            'sub_category_name' => $row['sub_category_name'],
+            'criteria_code' => $row['criteria_code'],
+            'criteria_name' => 'Kriteria '.$row['criteria_code'],
+            'indicator_code' => $row['indicator_code'],
+            'indicator_name' => $row['indicator_name'],
+            'input_type' => 'single_choice',
+            'sort_order' => $index + 1,
+            'is_active' => true,
+        ]);
+
+        PariwisataSuveyOption::query()->create([
+            'pariwisata_survey_question_id' => $question->id,
+            'score' => 4,
+            'level' => 'A',
+            'label' => 'Sangat Baik',
+            'description' => 'Desc',
+            'sort_order' => 1,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.pariwisata.take-survey', $assignment))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/take-survey-pariwisata')
+            ->where('sub_categories.0.sub_category_code', 'A.8.a')
+            ->where('sub_categories.1.sub_category_code', 'A.9.a')
+            ->where('sub_categories.2.sub_category_code', 'A.10.a')
+            ->where('sub_categories.0.questions.0.indicator_name', 'Indikator A8')
+            ->where('sub_categories.1.questions.0.indicator_name', 'Indikator A9')
+            ->where('sub_categories.2.questions.0.indicator_name', 'Indikator A10')
+        );
+});
+
 test('store umkm survey request validates against active umkm template by type', function () {
     $user = User::factory()->create();
     $village = TourismVillage::factory()->create(['created_by' => $user->id]);

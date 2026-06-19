@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PariwisataSurveyAssignmentExport;
+use App\Exports\PariwisataSurveyExport;
+use App\Exports\UmkmSurveyExport;
+use App\Exports\VillageSurveyAssignmentExport;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
@@ -26,6 +30,7 @@ use App\Services\PariwisataSurveyAssignmentService;
 use App\Services\UmkmSurveyAssignmentService;
 use App\Services\VillageSurveyAssignmentService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -107,15 +112,20 @@ class VillageSurveyAssignmentController extends Controller
     }
 
     public function show(
+        Request $request,
         VillageSurveyAssignment $assignment,
         VillageSurveyAssignmentService $service
     ): Response {
-        return Inertia::render('survey-assignment/show', $service->getShowData($assignment));
+        $tab = in_array($request->query('tab'), ['desa', 'umkm', 'pariwisata'], true)
+            ? (string) $request->query('tab')
+            : 'desa';
+
+        return Inertia::render('survey-assignment/show', $service->getShowData($assignment, $tab));
     }
 
     public function export(
         VillageSurveyAssignment $assignment,
-        \App\Exports\VillageSurveyAssignmentExport $export
+        VillageSurveyAssignmentExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment);
 
@@ -133,9 +143,18 @@ class VillageSurveyAssignmentController extends Controller
     public function exportPariwisata(
         VillageSurveyAssignment $assignment,
         PariwisataVillage $pariwisata,
-        \App\Exports\PariwisataSurveyExport $export
+        PariwisataSurveyExport $export
     ): BinaryFileResponse {
         $file = $export->export($assignment, $pariwisata);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
+    }
+
+    public function downloadPariwisataSurveyExport(
+        VillageSurveyAssignment $assignment,
+        PariwisataSurveyAssignmentExport $export
+    ): BinaryFileResponse {
+        $file = $export->export($assignment);
 
         return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
@@ -157,6 +176,16 @@ class VillageSurveyAssignmentController extends Controller
         VillageSurveyAssignmentService $service
     ): Response {
         return Inertia::render('survey-assignment/show-umkm', $service->getUmkmShowData($assignment, $umkm));
+    }
+
+    public function exportUmkm(
+        VillageSurveyAssignment $assignment,
+        VillageUmkm $umkm,
+        UmkmSurveyExport $export
+    ): BinaryFileResponse {
+        $file = $export->export($assignment, $umkm);
+
+        return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
     }
 
     public function updateUmkm(

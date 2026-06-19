@@ -9,6 +9,7 @@ use App\Models\PariwisataSuveyOption;
 use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswer;
 use App\Models\SurveyAnswerDocument;
+use App\Models\SurveyAnswerHistory;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyQuestionOption;
 use App\Models\SurveyTemplate;
@@ -321,8 +322,10 @@ class VillageSurveyAssignmentService
     /**
      * @return array<string, mixed>
      */
-    public function getShowData(VillageSurveyAssignment $assignment): array
+    public function getShowData(VillageSurveyAssignment $assignment, string $activeTab = 'desa'): array
     {
+        $activeTab = in_array($activeTab, ['desa', 'umkm', 'pariwisata'], true) ? $activeTab : 'desa';
+
         $assignment->load([
             'village:id,code,name,description,province,city,district,subdistrict,address,postal_code,latitude,longitude,maps_url,manager_name,manager_phone,manager_email,status',
             'village.media' => fn ($query) => $query
@@ -340,93 +343,7 @@ class VillageSurveyAssignmentService
             'village.activeGroupAnnuals' => fn ($query) => $query
                 ->select(['id', 'village_id', 'active_category', 'year', 'value', 'notes'])
                 ->orderByDesc('year'),
-            'village.umkms' => fn ($query) => $query
-                ->with([
-                    'categories:id,village_umkm_id,category',
-                    'dataCollector:id,name,email',
-                    'surveyAnswers' => fn ($query) => $query
-                        ->select([
-                            'id',
-                            'umkm_id',
-                            'umkm_assessment_question_id',
-                            'answered_by',
-                            'score',
-                            'criteria_code_snapshot',
-                            'criteria_name_snapshot',
-                            'criteria_weight_percent_snapshot',
-                            'question_text_snapshot',
-                            'question_weight_percent_snapshot',
-                            'max_score_snapshot',
-                            'normalized_score',
-                            'weighted_score',
-                            'answered_at',
-                            'last_edited_at',
-                        ])
-                        ->with(['question:id,criteria_code,criteria_name,question_number,question_text,question_weight_percent,max_score', 'answeredBy:id,name,email'])
-                        ->orderBy('criteria_code_snapshot')
-                        ->orderBy('umkm_assessment_question_id'),
-                ])
-                ->latest('updated_at'),
-            'village.pariwisataVillages' => fn ($query) => $query
-                ->with([
-                    'categories:id,pariwisata_village_id,category',
-                ])
-                ->latest('updated_at'),
-            'pariwisataSurveyAnswers' => fn ($query) => $query->select([
-                'id',
-                'village_survey_assignment_id',
-                'pariwisata_survey_question_id',
-                'pariwisata_suvey_option_id',
-                'score',
-                'last_edited_at',
-            ]),
-            'pariwisataSurveyAnswers.documents:id,pariwisata_survey_answer_id',
             'template:id,title,description,status,published_at',
-            'template.questions' => fn ($query) => $query
-                ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
-                ->orderBy('aspect')
-                ->orderBy('sort_order')
-                ->orderBy('id'),
-            'template.questions.options' => fn ($query) => $query
-                ->select(['id', 'survey_question_id', 'score', 'label', 'sort_order'])
-                ->orderBy('sort_order')
-                ->orderBy('score')
-                ->orderBy('id'),
-            'answers' => fn ($query) => $query->select([
-                'id',
-                'village_survey_assignment_id',
-                'survey_question_id',
-                'survey_question_option_id',
-                'score',
-                'aspect_snapshot',
-                'question_text_snapshot',
-                'option_label_snapshot',
-                'answered_by',
-                'last_edited_by',
-                'answered_at',
-                'last_edited_at',
-            ]),
-            'answers.answeredBy:id,name,email',
-            'answers.lastEditedBy:id,name,email',
-            'answers.option:id,score,label',
-            'answers.documents:id,survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,created_at',
-            'answers.documents.uploadedBy:id,name,email',
-            'answers.histories' => fn ($query) => $query
-                ->select([
-                    'id',
-                    'survey_answer_id',
-                    'village_survey_assignment_id',
-                    'survey_question_id',
-                    'actor_id',
-                    'action',
-                    'old_score',
-                    'new_score',
-                    'old_option_label',
-                    'new_option_label',
-                    'created_at',
-                ])
-                ->with('actor:id,name,email')
-                ->latest('created_at'),
             'assignedBy:id,name,email',
             'submittedBy:id,name,email',
             'reviewedBy:id,name,email',
@@ -439,20 +356,145 @@ class VillageSurveyAssignmentService
                 ->latest('created_at')
                 ->limit(10),
         ]);
-        $assignment->loadCount(['answers', 'documents']);
 
-        $questions = $assignment->template?->questions ?? collect();
-        $questions = $assignment->template?->questions ?? collect();
-        $answersByQuestion = $assignment->answers->keyBy('survey_question_id');
-        $aspects = $this->formatAssignmentDetailAspects($questions, $answersByQuestion);
-        $summary = $this->buildAssignmentSummary($questions, $answersByQuestion, $aspects);
-        $pariwisataQuestions = $this->pariwisataQuestionsForSummary();
-        $pariwisataAnswersByQuestion = $assignment->pariwisataSurveyAnswers->keyBy('pariwisata_survey_question_id');
-        $pariwisataSurveyGroups = $this->formatPariwisataSurveyGroups($pariwisataQuestions, $pariwisataAnswersByQuestion);
-        $pariwisataSurveySummary = $this->buildPariwisataSurveySummary($pariwisataQuestions, $pariwisataAnswersByQuestion, $pariwisataSurveyGroups);
+        if ($activeTab === 'desa') {
+            $assignment->load([
+                'template.questions' => fn ($query) => $query
+                    ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
+                    ->orderBy('aspect')
+                    ->orderBy('sort_order')
+                    ->orderBy('id'),
+                'template.questions.options' => fn ($query) => $query
+                    ->select(['id', 'survey_question_id', 'score', 'label', 'sort_order'])
+                    ->orderBy('sort_order')
+                    ->orderBy('score')
+                    ->orderBy('id'),
+                'answers' => fn ($query) => $query->select([
+                    'id',
+                    'village_survey_assignment_id',
+                    'survey_question_id',
+                    'survey_question_option_id',
+                    'score',
+                    'aspect_snapshot',
+                    'question_text_snapshot',
+                    'option_label_snapshot',
+                    'notes',
+                    'answered_by',
+                    'last_edited_by',
+                    'answered_at',
+                    'last_edited_at',
+                ]),
+                'answers.answeredBy:id,name,email',
+                'answers.lastEditedBy:id,name,email',
+                'answers.option:id,score,label',
+                'answers.documents:id,survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,created_at',
+                'answers.documents.uploadedBy:id,name,email',
+                'answers.histories' => fn ($query) => $query
+                    ->select([
+                        'id',
+                        'survey_answer_id',
+                        'village_survey_assignment_id',
+                        'survey_question_id',
+                        'actor_id',
+                        'action',
+                        'old_score',
+                        'new_score',
+                        'old_option_label',
+                        'new_option_label',
+                        'created_at',
+                    ])
+                    ->with('actor:id,name,email')
+                    ->latest('created_at'),
+            ]);
+
+            $assignment->loadCount(['answers', 'documents']);
+        }
+
+        if ($activeTab === 'umkm') {
+            $assignment->load([
+                'village.umkms' => fn ($query) => $query
+                    ->with([
+                        'categories:id,village_umkm_id,category',
+                        'dataCollector:id,name,email',
+                        'surveyAnswers' => fn ($query) => $query
+                            ->select([
+                                'id',
+                                'umkm_id',
+                                'umkm_assessment_question_id',
+                                'answered_by',
+                                'score',
+                                'criteria_code_snapshot',
+                                'criteria_name_snapshot',
+                                'criteria_weight_percent_snapshot',
+                                'question_text_snapshot',
+                                'question_weight_percent_snapshot',
+                                'max_score_snapshot',
+                                'normalized_score',
+                                'weighted_score',
+                                'answered_at',
+                                'last_edited_at',
+                            ])
+                            ->with(['question:id,criteria_code,criteria_name,question_number,question_text,question_weight_percent,max_score', 'answeredBy:id,name,email'])
+                            ->orderBy('criteria_code_snapshot')
+                            ->orderBy('umkm_assessment_question_id'),
+                    ])
+                    ->latest('updated_at'),
+            ]);
+        }
+
+        if ($activeTab === 'pariwisata') {
+            $assignment->load([
+                'village.pariwisataVillages' => fn ($query) => $query
+                    ->with([
+                        'categories:id,pariwisata_village_id,category',
+                    ])
+                    ->latest('updated_at'),
+                'pariwisataSurveyAnswers' => fn ($query) => $query->select([
+                    'id',
+                    'village_survey_assignment_id',
+                    'pariwisata_survey_question_id',
+                    'pariwisata_suvey_option_id',
+                    'score',
+                    'notes',
+                    'answered_by',
+                    'last_edited_by',
+                    'answered_at',
+                    'last_edited_at',
+                    'option_label_snapshot',
+                    'option_description_snapshot',
+                ]),
+                'pariwisataSurveyAnswers.answeredBy:id,name,email',
+                'pariwisataSurveyAnswers.lastEditedBy:id,name,email',
+                'pariwisataSurveyAnswers.option:id,score,label,description',
+                'pariwisataSurveyAnswers.documents:id,pariwisata_survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,created_at',
+                'pariwisataSurveyAnswers.documents.uploadedBy:id,name,email',
+            ]);
+        }
+
+        $summary = $this->emptyAssignmentSummary();
+        $aspects = [];
+
+        if ($activeTab === 'desa') {
+            $questions = $assignment->template?->questions ?? collect();
+            $answersByQuestion = $assignment->answers->keyBy('survey_question_id');
+            $aspects = $this->formatAssignmentDetailAspects($questions, $answersByQuestion);
+            $summary = $this->buildAssignmentSummary($questions, $answersByQuestion, $aspects);
+        }
+
+        $pariwisataSurveyGroups = [];
+        $pariwisataSurveySummary = $this->emptyPariwisataSurveySummary();
+
+        if ($activeTab === 'pariwisata') {
+            $pariwisataQuestions = $this->pariwisataQuestionsForSummary();
+            $pariwisataAnswersByQuestion = $assignment->pariwisataSurveyAnswers->keyBy('pariwisata_survey_question_id');
+            $pariwisataSurveyGroups = $this->formatPariwisataSurveyGroups($pariwisataQuestions, $pariwisataAnswersByQuestion);
+            $pariwisataSurveySummary = $this->buildPariwisataSurveySummary($pariwisataQuestions, $pariwisataAnswersByQuestion, $pariwisataSurveyGroups);
+        }
+
         $cover = $assignment->village?->media->first();
 
         return [
+            'active_tab' => $activeTab,
             'assignment' => [
                 ...$this->formatAssignment($assignment),
                 'village' => [
@@ -494,14 +536,18 @@ class VillageSurveyAssignmentService
                 'summary' => $summary,
                 'aspects' => $aspects,
             ],
-            'umkms' => $assignment->village?->umkms
-                ->map(fn (VillageUmkm $umkm): array => $this->formatUmkmForAssignment($umkm))
-                ->values()
-                ->all() ?? [],
-            'pariwisata' => $assignment->village?->pariwisataVillages
-                ->map(fn (PariwisataVillage $pariwisata): array => $this->formatPariwisataForAssignment($assignment, $pariwisata))
-                ->values()
-                ->all() ?? [],
+            'umkms' => $activeTab === 'umkm'
+                ? ($assignment->village?->umkms
+                    ->map(fn (VillageUmkm $umkm): array => $this->formatUmkmForAssignment($umkm))
+                    ->values()
+                    ->all() ?? [])
+                : [],
+            'pariwisata' => $activeTab === 'pariwisata'
+                ? ($assignment->village?->pariwisataVillages
+                    ->map(fn (PariwisataVillage $pariwisata): array => $this->formatPariwisataForAssignment($assignment, $pariwisata))
+                    ->values()
+                    ->all() ?? [])
+                : [],
             'pariwisata_survey_summary' => $pariwisataSurveySummary,
             'pariwisata_survey_groups' => $pariwisataSurveyGroups,
             'activities' => $this->formatAssignmentActivities($assignment),
@@ -525,6 +571,45 @@ class VillageSurveyAssignmentService
                 'reviewed_at' => $this->formatDateTimeLocal($assignment->reviewed_at),
             ],
             'village_annual_edit_values' => $this->formatVillageAnnualEditValues($assignment->village),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyAssignmentSummary(): array
+    {
+        return [
+            'total_questions' => 0,
+            'answered_questions' => 0,
+            'unanswered_questions' => 0,
+            'total_documents' => 0,
+            'total_score' => 0,
+            'max_score' => 0,
+            'final_score' => 0.0,
+            'highest_aspect' => null,
+            'lowest_aspect' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyPariwisataSurveySummary(): array
+    {
+        return [
+            'total_questions' => 0,
+            'answered_questions' => 0,
+            'unanswered_questions' => 0,
+            'total_documents' => 0,
+            'total_score' => 0,
+            'max_score' => 0,
+            'final_score' => 0.0,
+            'last_answered_at' => '-',
+            'highest_aspect' => null,
+            'lowest_aspect' => null,
+            'aspects' => [],
+            'distribution' => [],
         ];
     }
 
@@ -712,13 +797,12 @@ class VillageSurveyAssignmentService
                     ->select(['id', 'pariwisata_survey_question_id', 'score', 'level', 'label', 'description', 'sort_order'])
                     ->orderBy('sort_order')
                     ->orderBy('score')])
-                ->orderBy('category_code')
-                ->orderBy('sub_category_code')
-                ->orderBy('criteria_code')
-                ->orderBy('sort_order'),
+                ->orderBy('sort_order')
+                ->orderBy('id'),
         ]);
 
-        $questions = $template?->pariwisataSurveyQuestions ?? collect();
+        $questions = $this->sortTakePariwisataQuestions($template?->pariwisataSurveyQuestions ?? collect());
+        // dd($questions);
         $answers = $assignment->pariwisataSurveyAnswers()
             ->select([
                 'id',
@@ -877,6 +961,7 @@ class VillageSurveyAssignmentService
                 'survey_question_id',
                 'survey_question_option_id',
                 'score',
+                'notes',
                 'answered_at',
                 'last_edited_at',
             ]),
@@ -937,27 +1022,65 @@ class VillageSurveyAssignmentService
     {
         DB::transaction(function () use ($assignment, $data, $user): void {
             foreach ($data['answers'] as $answerData) {
+                $questionId = (int) Arr::get($answerData, 'question_id');
+                $optionId = (int) Arr::get($answerData, 'survey_question_option_id');
+
                 $option = SurveyQuestionOption::query()
                     ->with('question:id,aspect,question_text')
-                    ->findOrFail($answerData['survey_question_option_id']);
-
-                $answer = SurveyAnswer::query()->updateOrCreate(
-                    [
+                    ->findOrFail($optionId);
+                $existingAnswer = SurveyAnswer::query()
+                    ->with('option:id,score,label')
+                    ->where([
                         'village_survey_assignment_id' => $assignment->id,
-                        'survey_question_id' => $answerData['question_id'],
-                    ],
-                    [
-                        'survey_question_option_id' => $option->id,
-                        'score' => (int) $option->score,
-                        'aspect_snapshot' => $option->question?->aspect,
-                        'question_text_snapshot' => $option->question?->question_text,
-                        'option_label_snapshot' => $option->label,
-                        'answered_by' => $user->id,
-                        'last_edited_by' => $user->id,
-                        'answered_at' => now(),
-                        'last_edited_at' => now(),
-                    ]
-                );
+                        'survey_question_id' => $questionId,
+                    ])
+                    ->first();
+                $notes = trim((string) Arr::get($answerData, 'notes', ''));
+                $answeredAt = $existingAnswer?->answered_at ?? now();
+                $oldOptionId = $existingAnswer?->survey_question_option_id;
+                $oldScore = $existingAnswer?->score;
+                $oldLabel = $existingAnswer?->option_label_snapshot ?? $existingAnswer?->option?->label;
+
+                $answer = $existingAnswer ?? new SurveyAnswer([
+                    'village_survey_assignment_id' => $assignment->id,
+                    'survey_question_id' => $questionId,
+                    'answered_by' => $user->id,
+                    'answered_at' => $answeredAt,
+                ]);
+
+                $answer->fill([
+                    'survey_question_option_id' => $option->id,
+                    'score' => (int) $option->score,
+                    'aspect_snapshot' => $option->question?->aspect,
+                    'question_text_snapshot' => $option->question?->question_text,
+                    'option_label_snapshot' => $option->label,
+                    'notes' => $notes !== '' ? $notes : null,
+                    'last_edited_by' => $user->id,
+                    'last_edited_at' => now(),
+                ]);
+                $answer->answered_by ??= $user->id;
+                $answer->answered_at ??= $answeredAt;
+                $answer->save();
+
+                if ($existingAnswer && (
+                    (int) $oldOptionId !== (int) $option->id
+                    || (float) $oldScore !== (float) $option->score
+                )) {
+                    SurveyAnswerHistory::query()->create([
+                        'survey_answer_id' => $answer->id,
+                        'village_survey_assignment_id' => $assignment->id,
+                        'survey_question_id' => $answer->survey_question_id,
+                        'actor_id' => $user->id,
+                        'action' => 'updated',
+                        'old_survey_question_option_id' => $oldOptionId,
+                        'new_survey_question_option_id' => $option->id,
+                        'old_score' => $oldScore,
+                        'new_score' => $option->score,
+                        'old_option_label' => $oldLabel,
+                        'new_option_label' => $option->label,
+                        'created_at' => now(),
+                    ]);
+                }
 
                 foreach (Arr::wrap($answerData['documents'] ?? []) as $document) {
                     if (! $document instanceof UploadedFile) {
@@ -1189,6 +1312,7 @@ class VillageSurveyAssignmentService
                                 'id' => $answer->id,
                                 'selected_option_id' => $answer->survey_question_option_id,
                                 'score' => (int) $answer->score,
+                                'notes' => $answer->notes,
                                 'documents' => $answer->documents
                                     ->map(fn ($document): array => [
                                         'id' => $document->id,
@@ -1248,6 +1372,7 @@ class VillageSurveyAssignmentService
                                 'survey_question_option_id' => $answer->survey_question_option_id,
                                 'score' => (int) $answer->score,
                                 'score_label' => $answer->option_label_snapshot ?? $answer->option?->label ?? '-',
+                                'notes' => $answer->notes,
                                 'answered_at' => $this->formatDate($answer->answered_at),
                                 'last_edited_at' => $this->formatDate($answer->last_edited_at),
                                 'answered_by' => $this->formatUser($answer->answeredBy),
@@ -1597,6 +1722,7 @@ class VillageSurveyAssignmentService
                                 'pariwisata_suvey_option_id' => $answer->pariwisata_suvey_option_id,
                                 'score' => (int) $answer->score,
                                 'score_label' => $answer->option_label_snapshot ?? $answer->option?->label ?? '-',
+                                'notes' => $answer->notes,
                                 'option_description' => $answer->option_description_snapshot ?? $answer->option?->description,
                                 'notes' => $answer->notes,
                                 'answered_at' => $this->formatDate($answer->answered_at),
@@ -1737,6 +1863,115 @@ class VillageSurveyAssignmentService
 
     /**
      * @param  Collection<int, PariwisataSurveyQuestion>  $questions
+     * @return Collection<int, PariwisataSurveyQuestion>
+     */
+    private function sortTakePariwisataQuestions(Collection $questions): Collection
+    {
+        return $questions
+            ->sort(function (PariwisataSurveyQuestion $left, PariwisataSurveyQuestion $right): int {
+                $comparisons = [
+                    $this->compareHierarchicalCodes($left->category_code, $right->category_code),
+                    $this->compareHierarchicalCodes($left->sub_category_code, $right->sub_category_code),
+                    $this->compareHierarchicalCodes($left->criteria_code, $right->criteria_code),
+                    ((int) $left->sort_order) <=> ((int) $right->sort_order),
+                    $this->compareHierarchicalCodes($left->indicator_code, $right->indicator_code),
+                    $left->id <=> $right->id,
+                ];
+
+                foreach ($comparisons as $comparison) {
+                    if ($comparison !== 0) {
+                        return $comparison;
+                    }
+                }
+
+                return 0;
+            })
+            ->values();
+    }
+
+    private function compareHierarchicalCodes(?string $left, ?string $right): int
+    {
+        $left = trim((string) $left);
+        $right = trim((string) $right);
+
+        if ($left === '' && $right === '') {
+            return 0;
+        }
+
+        if ($left === '') {
+            return 1;
+        }
+
+        if ($right === '') {
+            return -1;
+        }
+
+        $leftSegments = preg_split('/\./', mb_strtolower($left)) ?: [];
+        $rightSegments = preg_split('/\./', mb_strtolower($right)) ?: [];
+        $segmentCount = max(count($leftSegments), count($rightSegments));
+
+        for ($index = 0; $index < $segmentCount; $index++) {
+            $leftSegment = $leftSegments[$index] ?? null;
+            $rightSegment = $rightSegments[$index] ?? null;
+
+            if ($leftSegment === null) {
+                return -1;
+            }
+
+            if ($rightSegment === null) {
+                return 1;
+            }
+
+            $comparison = $this->compareCodeSegments($leftSegment, $rightSegment);
+
+            if ($comparison !== 0) {
+                return $comparison;
+            }
+        }
+
+        return 0;
+    }
+
+    private function compareCodeSegments(string $leftSegment, string $rightSegment): int
+    {
+        preg_match_all('/\d+|\D+/', $leftSegment, $leftParts);
+        preg_match_all('/\d+|\D+/', $rightSegment, $rightParts);
+
+        $leftParts = $leftParts[0] ?? [];
+        $rightParts = $rightParts[0] ?? [];
+        $partsCount = max(count($leftParts), count($rightParts));
+
+        for ($index = 0; $index < $partsCount; $index++) {
+            $leftPart = $leftParts[$index] ?? null;
+            $rightPart = $rightParts[$index] ?? null;
+
+            if ($leftPart === null) {
+                return -1;
+            }
+
+            if ($rightPart === null) {
+                return 1;
+            }
+
+            $leftIsNumeric = ctype_digit($leftPart);
+            $rightIsNumeric = ctype_digit($rightPart);
+
+            if ($leftIsNumeric && $rightIsNumeric) {
+                $comparison = ((int) $leftPart) <=> ((int) $rightPart);
+            } else {
+                $comparison = strcmp($leftPart, $rightPart);
+            }
+
+            if ($comparison !== 0) {
+                return $comparison;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param  Collection<int, PariwisataSurveyQuestion>  $questions
      * @param  Collection<int, PariwisataSurveyAnswer>  $answersByQuestion
      * @return array<int, array<string, mixed>>
      */
@@ -1829,7 +2064,7 @@ class VillageSurveyAssignmentService
      */
     private function formatAssignmentActivities(VillageSurveyAssignment $assignment): array
     {
-        $logs = $assignment->logs
+        $logs = collect($assignment->logs)
             ->map(fn ($log): array => [
                 'date' => $this->formatDate($log->created_at),
                 'title' => $log->description ?: Str::headline($log->action),
@@ -1837,7 +2072,7 @@ class VillageSurveyAssignmentService
                 'type' => 'assignment',
             ]);
 
-        $histories = $assignment->answerHistories
+        $histories = collect($assignment->answerHistories)
             ->map(fn ($history): array => [
                 'date' => $this->formatDate($history->created_at),
                 'title' => trim(($history->question?->code ? "{$history->question->code} - " : '').Str::headline($history->action)),

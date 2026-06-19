@@ -51,7 +51,10 @@ import {
     store as storeUmkmDocument,
     update as updateUmkmDocument,
 } from '@/routes/survey-assignments/umkm/documents';
-import { update as updateUmkm } from '@/routes/survey-assignments/umkm';
+import {
+    exportMethod as exportUmkm,
+    update as updateUmkm,
+} from '@/routes/survey-assignments/umkm';
 import { update as updateUmkmAnswer } from '@/routes/survey-assignments/umkm/answers';
 
 type UserSummary = {
@@ -2755,6 +2758,16 @@ export default function ShowUmkm({
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
+                            <a
+                                href={exportUmkm.url({
+                                    assignment: assignment.code,
+                                    umkm: umkm.id,
+                                })}
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
+                            >
+                                <Download size={16} />
+                                Export Excel
+                            </a>
                             <button
                                 type="button"
                                 onClick={() => setIsEditOpen(true)}
