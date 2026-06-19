@@ -197,6 +197,11 @@ type SurveyAssignmentShowProps = {
         lowest_aspect: { name: string; score_percent: number } | null;
     };
     aspects: SurveyAspect[];
+    tab_counts: {
+        kemenpar: number;
+        umkm: number;
+        istc: number;
+    };
     umkms: UmkmData[];
     pariwisata: PariwisataData[];
     pariwisata_survey_groups: PariwisataSurveyGroup[];
@@ -2931,6 +2936,7 @@ export default function SurveyAssignmentShow({
     active_tab,
     summary,
     aspects,
+    tab_counts,
     umkms,
     pariwisata,
     pariwisata_survey_groups,
@@ -3166,21 +3172,21 @@ export default function SurveyAssignmentShow({
                             <TabButton
                                 active={activeTab === 'desa'}
                                 label="Kemenpar"
-                                count={summary.total_questions}
+                                count={tab_counts.kemenpar}
                                 icon={<MapPin size={16} />}
                                 href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'desa' } })}
                             />
                             <TabButton
                                 active={activeTab === 'umkm'}
                                 label="UMKM"
-                                count={umkms.length}
+                                count={tab_counts.umkm}
                                 icon={<ClipboardCheck size={16} />}
                                 href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'umkm' } })}
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
                                 label="ISTC"
-                                count={pariwisata.length}
+                                count={tab_counts.istc}
                                 icon={<Flag size={16} />}
                                 href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'pariwisata' } })}
                             />
