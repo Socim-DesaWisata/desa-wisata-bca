@@ -238,7 +238,7 @@ class DashboardService
         return PariwisataVillage::query()
             ->select(['id', 'village_id', 'name', 'is_active', 'updated_at'])
             ->whereHas('surveyAnswers')
-            ->with(['village:id,name,city,province', 'categories:id,pariwisata_village_id,category', 'surveyAnswers:id,village_survey_assignment_id,score,category_name_snapshot'])
+            ->with(['village:id,name,city,province', 'categories:id,pariwisata_village_id,category', 'surveyAnswers:pariwisata_survey_answers.id,village_survey_assignment_id,score,category_name_snapshot'])
             ->withCount('surveyAnswers')
             ->withSum('surveyAnswers as total_score', 'score')
             ->orderByDesc('total_score')
