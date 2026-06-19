@@ -29,7 +29,7 @@ class DashboardService
             'recent_assignments' => $this->recentAssignments(),
             'priorities' => $this->priorities(),
             'activities' => $this->activities(),
-            'general_report' => $this->generalReportData($filters['general_report_filter'] ?? 'Bulan Ini'),
+            'general_report' => $this->generalReportData($filters['general_report_filter'] ?? 'Bulan Ini', $filters['program_type'] ?? 'Semua Program'),
             'aktivitas_survey' => $this->aktivitasSurveyData($filters['activity_filter'] ?? '30 Hari Terakhir'),
             'status_survey' => $this->statusSurveyData($filters['status_filter'] ?? 'Tahun Ini'),
             'omset_charts' => [
@@ -496,10 +496,23 @@ class DashboardService
         };
     }
 
-    private function generalReportData(string $filter): array
+    private function generalReportData(string $filter, string $programType): array
     {
         $query = VillageSurveyAssignment::query();
         $query = $this->applyTimeFilter($query, $filter, 'created_at');
+        
+        $typeCode = match($programType) {
+            'KEMENPAR' => 'village',
+            'UMKM' => 'umkm',
+            'ISTC' => 'pariwisata',
+            default => null,
+        };
+
+        if ($typeCode) {
+            $query->whereHas('template', function ($q) use ($typeCode) {
+                $q->where('type', $typeCode);
+            });
+        }
         
         $total = $query->count();
         $selesai = (clone $query)->whereIn('status', ['submitted', 'approved'])->count();
@@ -508,17 +521,45 @@ class DashboardService
         
         $csrTotal = class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0;
         
-        $averageScoreRaw = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($filter) {
+        $averageScoreRaw = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($filter, $typeCode) {
             $this->applyTimeFilter($q, $filter, 'created_at');
+            if ($typeCode) {
+                $q->whereHas('template', function ($tq) use ($typeCode) {
+                    $tq->where('type', $typeCode);
+                });
+            }
         })->avg('score') ?? 0;
         
         $averageScore = round($averageScoreRaw * 20, 1);
         
+        $lastMonthScoreRaw = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($filter, $typeCode) {
+            $q->whereYear('created_at', now()->subMonth()->year)->whereMonth('created_at', now()->subMonth()->month);
+            if ($typeCode) {
+                $q->whereHas('template', function ($tq) use ($typeCode) {
+                    $tq->where('type', $typeCode);
+                });
+            }
+        })->avg('score') ?? 0;
+        $lastMonthScore = round($lastMonthScoreRaw * 20, 1);
+
+        $trendPercentage = 0;
+        if ($lastMonthScore > 0) {
+            $trendPercentage = round((($averageScore - $lastMonthScore) / $lastMonthScore) * 100);
+        } elseif ($averageScore > 0) {
+            $trendPercentage = 100;
+        }
+        $trendStr = ($trendPercentage >= 0 ? '+' : '') . $trendPercentage . '%';
+        
         $areaData = [];
         for ($i = 4; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthScore = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($month) {
+            $monthScore = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($month, $typeCode) {
                 $q->whereYear('created_at', $month->year)->whereMonth('created_at', $month->month);
+                if ($typeCode) {
+                    $q->whereHas('template', function ($tq) use ($typeCode) {
+                        $tq->where('type', $typeCode);
+                    });
+                }
             })->avg('score') ?? 0;
             $areaData[] = [
                 'name' => $month->format('M'),
@@ -528,13 +569,13 @@ class DashboardService
 
         return [
             'average_score' => $averageScore,
-            'trend' => '+0%', // static for now
+            'trend' => $trendStr,
             'total_assessment' => $total,
             'selesai' => $selesai,
             'dalam_proses' => $dalamProses,
             'belum_dimulai' => $belumDimulai,
             'total_program_csr' => $csrTotal,
-            'total_anggaran' => 120000000,
+            'total_anggaran' => 0,
             'area_data' => $areaData,
         ];
     }

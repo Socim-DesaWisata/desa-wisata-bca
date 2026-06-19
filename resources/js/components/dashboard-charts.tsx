@@ -60,21 +60,22 @@ export function DashboardCharts() {
     const filters = (props as any).filters || {};
 
     const [generalReportFilter, setGeneralReportFilter] = useState(filters.general_report_filter || 'Bulan Ini');
+    const [programTypeFilter, setProgramTypeFilter] = useState(filters.program_type || 'Semua Program');
     const [activityFilter, setActivityFilter] = useState(filters.activity_filter || '30 Hari Terakhir');
     const [statusFilter, setStatusFilter] = useState(filters.status_filter || 'Tahun Ini');
 
     const updateFilter = (key: string, value: string) => {
-        if (key === 'general_report_filter') updateFilter('general_report_filter', value);
-        if (key === 'activity_filter') updateFilter('activity_filter', value);
-        if (key === 'status_filter') updateFilter('status_filter', value);
+        if (key === 'general_report_filter') setGeneralReportFilter(value);
+        if (key === 'program_type') setProgramTypeFilter(value);
+        if (key === 'activity_filter') setActivityFilter(value);
+        if (key === 'status_filter') setStatusFilter(value);
 
         router.get(
             // @ts-ignore
             route('dashboard'),
             {
-                general_report_filter: key === 'general_report_filter' ? value : generalReportFilter,
-                activity_filter: key === 'activity_filter' ? value : activityFilter,
-                status_filter: key === 'status_filter' ? value : statusFilter,
+                ...filters,
+                [key]: value,
             },
             {
                 preserveState: true,
@@ -95,20 +96,36 @@ export function DashboardCharts() {
                     <h2 className="text-sm font-bold text-[#303030]">
                         General Report
                     </h2>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                {generalReportFilter} <ChevronDown className="size-3" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[130px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', 'Hari Ini')}>Hari Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', '2025')}>2025</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('general_report_filter', '2024')}>2024</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
+                                    {programTypeFilter} <ChevronDown className="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[140px]">
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'Semua Program')}>Semua Program</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'KEMENPAR')}>KEMENPAR</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'UMKM')}>UMKM</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'ISTC')}>ISTC</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
+                                    {generalReportFilter} <ChevronDown className="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[130px]">
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', 'Hari Ini')}>Hari Ini</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', '2025')}>2025</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', '2024')}>2024</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
                 <div className="flex flex-1 gap-4">
                     <div className="flex flex-1 flex-col justify-between">
@@ -277,11 +294,11 @@ export function DashboardCharts() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '7 Hari Terakhir')}>7 Hari Terakhir</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '30 Hari Terakhir')}>30 Hari Terakhir</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '2025')}>2025</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('activity_filter', '2024')}>2024</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '7 Hari Terakhir')}>7 Hari Terakhir</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '30 Hari Terakhir')}>30 Hari Terakhir</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '2025')}>2025</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '2024')}>2024</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -370,10 +387,10 @@ export function DashboardCharts() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', '2025')}>2025</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onClick={() => updateFilter('status_filter', '2024')}>2024</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', '2025')}>2025</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', '2024')}>2024</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

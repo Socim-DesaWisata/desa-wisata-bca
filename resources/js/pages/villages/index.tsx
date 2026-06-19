@@ -10,6 +10,7 @@ import {
     Eye,
     FileText,
     Info,
+    Loader2,
     MapPinned,
     MoreHorizontal,
     Pencil,
@@ -396,6 +397,31 @@ function VillageLocationPicker({
         [],
     );
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+            const data = await res.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error('Search error:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const selectResult = (result: any) => {
+        onPick(Number(result.lat), Number(result.lon));
+        setSearchResults([]);
+        setSearchQuery(result.display_name);
+    };
+
     return (
         <section className="space-y-2">
             <div className="flex items-center justify-between gap-3">
@@ -414,7 +440,34 @@ function VillageLocationPicker({
                     </span>
                 )}
             </div>
-            <div className="overflow-hidden rounded-xl border border-[#DDE4EC]">
+            <div className="relative overflow-hidden rounded-xl border border-[#DDE4EC]">
+                <div className="absolute left-2 top-2 z-[1000] w-[280px] max-w-[calc(100%-16px)]">
+                    <form onSubmit={handleSearch} className="relative flex items-center">
+                        <input 
+                            type="text" 
+                            placeholder="Cari lokasi desa..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="h-10 w-full rounded-lg border-none bg-white/95 pl-10 pr-4 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] outline-none backdrop-blur placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
+                        />
+                        <Search className="absolute left-3.5 size-4 text-[#7C7C7C]" />
+                        {isSearching && <Loader2 className="absolute right-3.5 size-4 animate-spin text-[#0066AE]" />}
+                    </form>
+                    {searchResults.length > 0 && (
+                        <div className="mt-1 max-h-48 overflow-y-auto rounded-lg bg-white shadow-[0_6px_16px_rgba(3,17,32,0.12)]">
+                            {searchResults.map((result, i) => (
+                                <button 
+                                    key={i} 
+                                    type="button" 
+                                    onClick={() => selectResult(result)}
+                                    className="w-full border-b border-[#EFEFEF] px-3 py-2 text-left text-[11px] leading-4 text-[#303030] transition last:border-0 hover:bg-[#F1F5F8]"
+                                >
+                                    {result.display_name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
                 <MapContainer
                     center={position ?? defaultMapCenter}
                     zoom={position ? selectedMapZoom : defaultMapZoom}
@@ -427,7 +480,10 @@ function VillageLocationPicker({
                     />
                     <MapResizer isOpen={isOpen} />
                     <MapRecenter position={position} />
-                    <MapClickHandler onPick={onPick} />
+                    <MapClickHandler onPick={(lat, lng) => {
+                        setSearchResults([]);
+                        onPick(lat, lng);
+                    }} />
                     {position && (
                         <Marker
                             draggable

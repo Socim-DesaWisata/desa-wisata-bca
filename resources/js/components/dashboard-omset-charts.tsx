@@ -110,7 +110,7 @@ export function DashboardOmsetCharts() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[100px]">
                             {['2027', '2026', '2025', '2024'].map(year => (
-                                <DropdownMenuItem key={year} className="cursor-pointer text-xs" onClick={() => updateYear('umkm', year)}>
+                                <DropdownMenuItem key={year} className="cursor-pointer text-xs" onSelect={() => updateYear('umkm', year)}>
                                     {year}
                                 </DropdownMenuItem>
                             ))}
@@ -189,7 +189,7 @@ export function DashboardOmsetCharts() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[100px]">
                             {['2027', '2026', '2025', '2024'].map(year => (
-                                <DropdownMenuItem key={year} className="cursor-pointer text-xs" onClick={() => updateYear('wisata', year)}>
+                                <DropdownMenuItem key={year} className="cursor-pointer text-xs" onSelect={() => updateYear('wisata', year)}>
                                     {year}
                                 </DropdownMenuItem>
                             ))}
