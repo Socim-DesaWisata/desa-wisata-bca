@@ -471,6 +471,8 @@ class VillageSurveyAssignmentService
             ]);
         }
 
+        $tabCounts = $this->buildAssignmentTabCounts($assignment);
+
         $summary = $this->emptyAssignmentSummary();
         $aspects = [];
 
@@ -531,6 +533,7 @@ class VillageSurveyAssignmentService
                 'reviewed_by_user' => $this->formatUser($assignment->reviewedBy),
             ],
             'summary' => $summary,
+            'tab_counts' => $tabCounts,
             'aspects' => $aspects,
             'desa_survey' => [
                 'summary' => $summary,
@@ -571,6 +574,26 @@ class VillageSurveyAssignmentService
                 'reviewed_at' => $this->formatDateTimeLocal($assignment->reviewed_at),
             ],
             'village_annual_edit_values' => $this->formatVillageAnnualEditValues($assignment->village),
+        ];
+    }
+
+    /**
+     * @return array{kemenpar: int, umkm: int, istc: int}
+     */
+    private function buildAssignmentTabCounts(VillageSurveyAssignment $assignment): array
+    {
+        $villageId = $assignment->village_id;
+
+        return [
+            'kemenpar' => SurveyQuestion::query()
+                ->where('survey_template_id', $assignment->survey_template_id)
+                ->count(),
+            'umkm' => VillageUmkm::query()
+                ->where('village_id', $villageId)
+                ->count(),
+            'istc' => PariwisataVillage::query()
+                ->where('village_id', $villageId)
+                ->count(),
         ];
     }
 

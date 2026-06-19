@@ -283,6 +283,16 @@ test('survey assignment detail merges assignment logs and answer histories', fun
         'label' => 'Baik',
         'sort_order' => 1,
     ]);
+    VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Count',
+    ]);
+    PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'ISTC Count',
+        'is_active' => true,
+    ]);
     $answer = SurveyAnswer::query()->create([
         'village_survey_assignment_id' => $assignment->id,
         'survey_question_id' => $question->id,
@@ -351,6 +361,16 @@ test('survey assignment show defaults invalid tab to desa payload', function () 
         'label' => 'Baik',
         'sort_order' => 1,
     ]);
+    VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Count',
+    ]);
+    PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'ISTC Count',
+        'is_active' => true,
+    ]);
 
     $this->actingAs($user)
         ->post(route('survey-assignments.take-survey.store', $assignment), [
@@ -367,6 +387,9 @@ test('survey assignment show defaults invalid tab to desa payload', function () 
             ->component('survey-assignment/show')
             ->where('active_tab', 'desa')
             ->where('summary.total_questions', 1)
+            ->where('tab_counts.kemenpar', 1)
+            ->where('tab_counts.umkm', 1)
+            ->where('tab_counts.istc', 1)
             ->where('umkms', [])
             ->where('pariwisata', [])
             ->where('pariwisata_survey_groups', [])
@@ -383,6 +406,12 @@ test('survey assignment show umkm tab only sends umkm payload', function () {
         'survey_template_id' => $template->id,
         'assigned_by' => $user->id,
     ]);
+    SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Amenitas',
+        'question_text' => 'Pertanyaan Kemenpar Count',
+        'sort_order' => 1,
+    ]);
     $umkm = VillageUmkm::query()->create([
         'village_id' => $village->id,
         'created_by' => $user->id,
@@ -390,6 +419,11 @@ test('survey assignment show umkm tab only sends umkm payload', function () {
         'business_owner_name' => 'Pemilik UMKM',
         'name' => 'UMKM Tab',
         'product_category' => 'Kuliner',
+    ]);
+    PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'ISTC Count',
+        'is_active' => true,
     ]);
     $question = UmkmSurveyQuestion::query()->create([
         'survey_template_id' => $umkmTemplate->id,
@@ -423,6 +457,9 @@ test('survey assignment show umkm tab only sends umkm payload', function () {
             ->component('survey-assignment/show')
             ->where('active_tab', 'umkm')
             ->where('summary.total_questions', 0)
+            ->where('tab_counts.kemenpar', 1)
+            ->where('tab_counts.umkm', 1)
+            ->where('tab_counts.istc', 1)
             ->where('aspects', [])
             ->where('umkms.0.name', 'UMKM Tab')
             ->where('pariwisata', [])
@@ -632,6 +669,17 @@ test('survey assignment show pariwisata tab only sends pariwisata payload', func
         'survey_template_id' => $assignmentTemplate->id,
         'assigned_by' => $user->id,
     ]);
+    SurveyQuestion::query()->create([
+        'survey_template_id' => $assignmentTemplate->id,
+        'aspect' => 'Amenitas',
+        'question_text' => 'Pertanyaan Kemenpar Count',
+        'sort_order' => 1,
+    ]);
+    VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Count',
+    ]);
     PariwisataVillage::query()->create([
         'village_id' => $village->id,
         'name' => 'ISTC Tab',
@@ -674,6 +722,9 @@ test('survey assignment show pariwisata tab only sends pariwisata payload', func
             ->component('survey-assignment/show')
             ->where('active_tab', 'pariwisata')
             ->where('summary.total_questions', 0)
+            ->where('tab_counts.kemenpar', 1)
+            ->where('tab_counts.umkm', 1)
+            ->where('tab_counts.istc', 1)
             ->where('aspects', [])
             ->where('umkms', [])
             ->where('pariwisata.0.name', 'ISTC Tab')
