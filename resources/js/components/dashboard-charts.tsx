@@ -470,11 +470,18 @@ export function AssessmentRadarChart({
         );
     }
 
-    // Limit aspect labels length for display
-    const chartData = data.map(item => ({
+    // Pad data to ensure at least 3 points for a proper polygon
+    let chartData = data.map(item => ({
         ...item,
         aspectLabel: item.aspect.length > 15 ? item.aspect.substring(0, 15) + '...' : item.aspect,
     }));
+
+    if (chartData.length === 1) {
+        chartData.push({ aspect: ' ', score: 0, aspectLabel: ' ' });
+        chartData.push({ aspect: '  ', score: 0, aspectLabel: '  ' });
+    } else if (chartData.length === 2) {
+        chartData.push({ aspect: ' ', score: 0, aspectLabel: ' ' });
+    }
 
     return (
         <div className={`relative ${className}`}>

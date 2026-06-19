@@ -325,8 +325,22 @@ export default function Dashboard({
     top_umkm_categories = [],
     recent_assignments = [],
     activities = [],
-}: DashboardProps) {
+    filters = {},
+}: DashboardProps & { filters?: Record<string, string | null> }) {
     const { auth } = usePage().props;
+
+    const programType = filters.program_type || 'Semua Program';
+    const activeTopSurveys = programType === 'UMKM' 
+        ? top_umkm_surveys 
+        : programType === 'ISTC' 
+            ? top_pariwisata_surveys 
+            : top_village_surveys;
+
+    const performaTitle = programType === 'UMKM' 
+        ? 'Performa Assessment UMKM Terbaik'
+        : programType === 'ISTC'
+            ? 'Performa Assessment Pariwisata Terbaik'
+            : 'Performa Assessment Desa Terbaik';
 
     if (dashboard_mode === 'enumerator') {
         return (
@@ -550,15 +564,15 @@ export default function Dashboard({
                         </Panel>
                     </div>
 
-                    {top_village_surveys && top_village_surveys.length > 0 && (
+                    {activeTopSurveys && activeTopSurveys.length > 0 && (
                         <div className="mb-2">
                             <div className="mb-3 flex items-center justify-between gap-4">
                                 <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                    Performa Assessment Desa Terbaik
+                                    {performaTitle}
                                 </h2>
                             </div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {top_village_surveys.map((survey) => (
+                                {activeTopSurveys.map((survey) => (
                                     <Panel key={survey.id} className="p-4 flex flex-col">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="min-w-0 pr-2">

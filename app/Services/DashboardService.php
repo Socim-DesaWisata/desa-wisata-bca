@@ -195,7 +195,7 @@ class DashboardService
         return VillageUmkm::query()
             ->select(['id', 'village_id', 'name', 'product_category', 'updated_at'])
             ->whereHas('surveyAnswers')
-            ->with(['village:id,name,city,province'])
+            ->with(['village:id,name,city,province', 'surveyAnswers:id,umkm_id,weighted_score,criteria_name_snapshot'])
             ->withCount('surveyAnswers')
             ->withSum('surveyAnswers as total_score', 'weighted_score')
             ->orderByDesc('total_score')
@@ -203,6 +203,15 @@ class DashboardService
             ->get()
             ->map(function (VillageUmkm $umkm): array {
                 $assignment = $this->latestAssignmentForVillage((int) $umkm->village_id);
+                
+                $aspectScores = collect($umkm->surveyAnswers)
+                    ->groupBy('criteria_name_snapshot')
+                    ->map(function ($answers, $criteria) {
+                        return [
+                            'aspect' => $criteria ?: 'Umum',
+                            'score' => round($answers->sum('weighted_score'), 1)
+                        ];
+                    })->values()->all();
 
                 return [
                     'id' => $umkm->id,
@@ -213,6 +222,7 @@ class DashboardService
                     'answers' => $umkm->survey_answers_count.' jawaban',
                     'status' => $umkm->village?->name ?? '-',
                     'url' => $assignment ? route('survey-assignments.umkm.show', [$assignment, $umkm]) : null,
+                    'aspect_scores' => $aspectScores,
                 ];
             })
             ->all();
@@ -228,7 +238,7 @@ class DashboardService
         return PariwisataVillage::query()
             ->select(['id', 'village_id', 'name', 'is_active', 'updated_at'])
             ->whereHas('surveyAnswers')
-            ->with(['village:id,name,city,province', 'categories:id,pariwisata_village_id,category'])
+            ->with(['village:id,name,city,province', 'categories:id,pariwisata_village_id,category', 'surveyAnswers:id,village_survey_assignment_id,score,category_name_snapshot'])
             ->withCount('surveyAnswers')
             ->withSum('surveyAnswers as total_score', 'score')
             ->orderByDesc('total_score')
@@ -237,6 +247,15 @@ class DashboardService
             ->map(function (PariwisataVillage $pariwisata) use ($maxScore): array {
                 $assignment = $this->latestAssignmentForVillage((int) $pariwisata->village_id);
                 $totalScore = (float) ($pariwisata->total_score ?? 0);
+                
+                $aspectScores = collect($pariwisata->surveyAnswers)
+                    ->groupBy('category_name_snapshot')
+                    ->map(function ($answers, $category) {
+                        return [
+                            'aspect' => $category ?: 'Umum',
+                            'score' => round($answers->avg('score') * 20, 1)
+                        ];
+                    })->values()->all();
 
                 return [
                     'id' => $pariwisata->id,
@@ -247,6 +266,7 @@ class DashboardService
                     'answers' => $pariwisata->survey_answers_count.' jawaban',
                     'status' => $pariwisata->is_active ? 'Aktif' : 'Nonaktif',
                     'url' => $assignment ? route('survey-assignments.pariwisata.show', [$assignment, $pariwisata]) : null,
+                    'aspect_scores' => $aspectScores,
                 ];
             })
             ->all();
@@ -498,12 +518,71 @@ class DashboardService
 
     private function generalReportData(string $filter, string $programType): array
     {
+        if ($programType === 'UMKM') {
+            $query = \App\Models\VillageUmkm::query();
+            $query = $this->applyTimeFilter($query, $filter, 'created_at');
+            
+            $total = $query->count();
+            $selesai = (clone $query)->whereHas('surveyAnswers')->count();
+            $dalamProses = 0;
+            $belumDimulai = (clone $query)->whereDoesntHave('surveyAnswers')->count();
+            
+            $csrTotal = class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0;
+            
+            $totalSumRaw = \App\Models\UmkmSurveyAnswer::whereHas('umkm', function($q) use ($filter) {
+                $this->applyTimeFilter($q, $filter, 'created_at');
+            })->sum('weighted_score');
+            $countAnswers = (clone $query)->whereHas('surveyAnswers')->count();
+            
+            $averageScore = $countAnswers > 0 ? round((float) ($totalSumRaw / $countAnswers), 1) : 0;
+            
+            $lastMonthTotalSumRaw = \App\Models\UmkmSurveyAnswer::whereHas('umkm', function($q) {
+                $q->whereYear('created_at', now()->subMonth()->year)->whereMonth('created_at', now()->subMonth()->month);
+            })->sum('weighted_score');
+            $lastMonthCountAnswers = \App\Models\VillageUmkm::whereYear('created_at', now()->subMonth()->year)->whereMonth('created_at', now()->subMonth()->month)->whereHas('surveyAnswers')->count();
+            
+            $lastMonthScore = $lastMonthCountAnswers > 0 ? round((float) ($lastMonthTotalSumRaw / $lastMonthCountAnswers), 1) : 0;
+            
+            $trendPercentage = 0;
+            if ($lastMonthScore > 0) {
+                $trendPercentage = round((($averageScore - $lastMonthScore) / $lastMonthScore) * 100);
+            } elseif ($averageScore > 0) {
+                $trendPercentage = 100;
+            }
+            $trendStr = ($trendPercentage >= 0 ? '+' : '') . $trendPercentage . '%';
+            
+            $areaData = [];
+            for ($i = 4; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $mTotalSumRaw = \App\Models\UmkmSurveyAnswer::whereHas('umkm', function($q) use ($month) {
+                    $q->whereYear('created_at', $month->year)->whereMonth('created_at', $month->month);
+                })->sum('weighted_score');
+                $mCountAnswers = \App\Models\VillageUmkm::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->whereHas('surveyAnswers')->count();
+                $monthScore = $mCountAnswers > 0 ? round((float) ($mTotalSumRaw / $mCountAnswers), 1) : 0;
+                $areaData[] = [
+                    'name' => $month->format('M'),
+                    'score' => $monthScore
+                ];
+            }
+            
+            return [
+                'average_score' => $averageScore,
+                'trend' => $trendStr,
+                'total_assessment' => $total,
+                'selesai' => $selesai,
+                'dalam_proses' => $dalamProses,
+                'belum_dimulai' => $belumDimulai,
+                'total_program_csr' => $csrTotal,
+                'total_anggaran' => 0,
+                'area_data' => $areaData,
+            ];
+        }
+
         $query = VillageSurveyAssignment::query();
         $query = $this->applyTimeFilter($query, $filter, 'created_at');
         
         $typeCode = match($programType) {
             'KEMENPAR' => 'village',
-            'UMKM' => 'umkm',
             'ISTC' => 'pariwisata',
             default => null,
         };
