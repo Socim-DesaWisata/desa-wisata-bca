@@ -1479,10 +1479,14 @@ class VillageSurveyAssignmentService
             'final_score' => $finalScore,
             'highest_aspect' => $highestAspect ? [
                 'name' => $highestAspect['name'],
+                'score' => $highestAspect['score'],
+                'max_score' => $highestAspect['max_score'],
                 'score_percent' => $highestAspect['score_percent'],
             ] : null,
             'lowest_aspect' => $lowestAspect ? [
                 'name' => $lowestAspect['name'],
+                'score' => $lowestAspect['score'],
+                'max_score' => $lowestAspect['max_score'],
                 'score_percent' => $lowestAspect['score_percent'],
             ] : null,
         ];

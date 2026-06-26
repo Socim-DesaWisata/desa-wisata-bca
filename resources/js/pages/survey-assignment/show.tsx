@@ -144,6 +144,8 @@ type SurveyAspect = {
 
 type ScoreAspectSummary = {
     name: string;
+    score: number;
+    max_score: number;
     score_percent: number;
 };
 
@@ -202,8 +204,8 @@ type SurveyAssignmentShowProps = {
         total_score: number;
         max_score: number;
         final_score: number;
-        highest_aspect: { name: string; score_percent: number } | null;
-        lowest_aspect: { name: string; score_percent: number } | null;
+        highest_aspect: { name: string; score: number; max_score: number; score_percent: number } | null;
+        lowest_aspect: { name: string; score: number; max_score: number; score_percent: number } | null;
     };
     aspects: SurveyAspect[];
     tab_counts: {
@@ -601,7 +603,14 @@ function MetricCard({
 }) {
     if (compact) {
         return (
-            <Card className="rounded-xl border border-[#EEF2F7] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <Card
+                className={classNames(
+                    'rounded-xl border p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]',
+                    tone === 'blue'
+                        ? '!border-[#0066AE] !bg-[#0066AE]'
+                        : 'border-[#EEF2F7] bg-white',
+                )}
+            >
                 <div className="flex items-center gap-3">
                     <span
                         className={classNames(
@@ -614,17 +623,27 @@ function MetricCard({
                         {icon}
                     </span>
                     <div className="min-w-0 flex-1">
-                        <p className="truncate text-[11px] font-semibold text-[#667085]">
+                        <p
+                            className={classNames(
+                                'truncate text-[11px] font-semibold',
+                                tone === 'blue' ? 'text-white/80' : 'text-[#667085]',
+                            )}
+                        >
                             {label}
                         </p>
                         <div className="mt-0.5 flex min-w-0 items-baseline gap-1.5">
-                            <p className="truncate text-lg leading-6 font-black text-[#111827] tabular-nums">
+                            <p
+                                className={classNames(
+                                    'truncate text-lg leading-6 font-black tabular-nums',
+                                    tone === 'blue' ? 'text-white' : 'text-[#111827]',
+                                )}
+                            >
                                 {value}
                             </p>
                             <p
                                 className={classNames(
                                     'shrink-0 text-xs leading-4 font-bold tabular-nums',
-                                    tone === 'blue' && 'text-[#667085]',
+                                    tone === 'blue' && 'text-white/90',
                                     tone === 'green' && 'text-[#00893D]',
                                     tone === 'orange' && 'text-[#F97316]',
                                 )}
@@ -790,11 +809,15 @@ function formatStatScore(value: number) {
     });
 }
 
+function formatPointScore(score: number, maxScore: number) {
+    return `${score.toLocaleString('id-ID')}/${maxScore.toLocaleString('id-ID')}`;
+}
+
 function ScoreBar({ aspect }: { aspect: ScoreAspectSummary }) {
     const bucket = scoreBucketFor(aspect.score_percent);
 
     return (
-        <div className="grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_52px] md:items-center">
+        <div className="grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_72px] md:items-center">
             <p className="truncate text-xs font-bold text-[#344256]">
                 {aspect.name}
             </p>
@@ -812,7 +835,7 @@ function ScoreBar({ aspect }: { aspect: ScoreAspectSummary }) {
                 />
             </div>
             <p className="text-right text-xs font-black text-[#303030]">
-                {formatStatScore(aspect.score_percent)}
+                {formatPointScore(aspect.score, aspect.max_score)}
             </p>
         </div>
     );
@@ -830,6 +853,8 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
     const finalScore = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
     const scoreAspects = aspects.map((aspect) => ({
         name: aspect.name,
+        score: aspect.score,
+        max_score: aspect.max_score,
         score_percent: aspect.score_percent,
     }));
 
@@ -841,23 +866,6 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
     );
 }
 
-function readinessLabel(score: number) {
-    const normalizedScore = clampScore(score);
-
-    if (normalizedScore >= 85) {
-        return 'Excellent Readiness';
-    }
-
-    if (normalizedScore >= 70) {
-        return 'High Readiness';
-    }
-
-    if (normalizedScore >= 40) {
-        return 'Moderate Readiness';
-    }
-
-    return 'Low Readiness';
-}
 
 function SurveyFinalScoreGauge({ score }: { score: number }) {
     const normalizedScore = clampScore(score);
@@ -902,9 +910,7 @@ function SurveyFinalScoreGauge({ score }: { score: number }) {
                         <p className="text-4xl font-black tracking-[-0.04em] text-[#111827]">
                             {formatStatScore(normalizedScore)}%
                         </p>
-                        <p className="mt-1 text-sm font-semibold text-[#8A97A8]">
-                            {readinessLabel(normalizedScore)}
-                        </p>
+                        
                     </div>
                 </div>
 
@@ -924,7 +930,7 @@ function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
                 Skor per Aspek
             </h2>
             <p className="mt-1 text-sm font-medium text-[#8A97A8]">
-                Skor tertimbang setiap aspek
+                Total skor per aspek
             </p>
 
             <div className="mt-6 space-y-4">
@@ -936,7 +942,7 @@ function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
                     aspects.map((aspect) => (
                         <div
                             key={aspect.name}
-                            className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_52px] md:items-center"
+                            className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_72px] md:items-center"
                         >
                             <p className="truncate text-xs font-semibold text-[#344256]">
                                 {aspect.name}
@@ -950,23 +956,16 @@ function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
                                 />
                             </div>
                             <p className="text-right text-xs font-black text-[#111827] tabular-nums">
-                                {formatStatScore(aspect.score_percent)}%
+                                {formatPointScore(aspect.score, aspect.max_score)}
                             </p>
                         </div>
                     ))
                 )}
             </div>
 
-            <div className="mt-6 grid grid-cols-5 pl-0 text-[11px] font-bold text-[#9AA7B6] md:mr-[52px] md:ml-[160px]">
-                {[0, 25, 50, 75, 100].map((value) => (
-                    <span
-                        key={value}
-                        className="text-center first:text-left last:text-right"
-                    >
-                        {value}%
-                    </span>
-                ))}
-            </div>
+            <p className="mt-5 text-[11px] font-bold text-[#9AA7B6] md:ml-[160px]">
+                Total skor aktual / skor maksimal per aspek
+            </p>
         </Card>
     );
 }
@@ -1125,7 +1124,7 @@ function StatisticsChartCard({
                                 Skor per Aspek
                             </h2>
                             <p className="text-sm font-semibold text-[#7C7C7C]">
-                                Skor tertimbang (0-100)
+                                Total poin per aspek
                             </p>
                         </div>
                     </div>
@@ -1133,17 +1132,6 @@ function StatisticsChartCard({
                     <div className="mt-5 space-y-4">
                         {aspects.map((aspect) => (
                             <ScoreBar key={aspect.name} aspect={aspect} />
-                        ))}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-6 gap-2 pl-0 text-[11px] font-bold text-[#8A97A8] md:ml-[180px]">
-                        {[0, 20, 40, 60, 80, 100].map((value) => (
-                            <span
-                                key={value}
-                                className="text-right first:text-left"
-                            >
-                                {value}
-                            </span>
                         ))}
                     </div>
 
@@ -2452,7 +2440,7 @@ function PariwisataTab({
                     label="Total Skor"
                     value={`${surveySummary.total_score} / ${surveySummary.max_score}`}
                     helper="Skor kumulatif survey ISTC"
-                    icon={<BarChart3 size={22} />}
+                    icon={<BarChart3  size={22} />}
                 />
                 <MetricCard
                     label="Nilai Akhir"
@@ -3701,17 +3689,27 @@ export default function SurveyAssignmentShow({
 
                                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                     <MetricCard
-                                        label="Total Skor"
-                                        value={String(summary.total_score)}
-                                        helper={`/ ${summary.max_score}`}
-                                        icon={<BarChart3 size={18} />}
-                                        compact
-                                    />
+                                    label="Total Skor"
+                                    value={String(summary.total_score)}
+                                    helper={`/ ${summary.max_score}`}
+                                    icon={
+                                        <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
+                                            <BarChart3 size={22} />
+                                        </span>
+                                    }
+                                    tone="blue"
+                                    compact
+                                />
                                     <MetricCard
-                                        label="Nilai Akhir"
-                                        value={String(summary.final_score)}
-                                        helper="/ 100"
-                                        icon={<Star size={18} />}
+                                        label="Survey Terjawab"
+                                        value={`${summary.answered_questions}/${summary.total_questions}`}
+                                        helper=""
+                                        icon={
+                                        <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
+                                            <ClipboardCheck size={22} />
+                                        </span>
+                                    }
+                                        tone="blue"
                                         compact
                                     />
                                     <MetricCard
@@ -3721,7 +3719,10 @@ export default function SurveyAssignmentShow({
                                         }
                                         helper={
                                             summary.highest_aspect
-                                                ? `${summary.highest_aspect.score_percent}%`
+                                                ? formatPointScore(
+                                                      summary.highest_aspect.score,
+                                                      summary.highest_aspect.max_score,
+                                                  )
                                                 : '-'
                                         }
                                         icon={<Trophy size={18} />}
@@ -3735,7 +3736,10 @@ export default function SurveyAssignmentShow({
                                         }
                                         helper={
                                             summary.lowest_aspect
-                                                ? `${summary.lowest_aspect.score_percent}%`
+                                                ? formatPointScore(
+                                                      summary.lowest_aspect.score,
+                                                      summary.lowest_aspect.max_score,
+                                                  )
                                                 : '-'
                                         }
                                         icon={<AlertTriangle size={18} />}
@@ -3842,9 +3846,16 @@ export default function SurveyAssignmentShow({
                                                             }{' '}
                                                             dokumen
                                                         </span>
+                                                        <span className="text-xs font-semibold text-[#303030]">
+                                                            {formatPointScore(
+                                                                aspect.score,
+                                                                aspect.max_score,
+                                                            )}{' '}
+                                                            poin
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div className="grid min-w-[180px] grid-cols-[1fr_58px_20px] items-center gap-3">
+                                                <div className="grid min-w-[200px] grid-cols-[1fr_76px_20px] items-center gap-3">
                                                     <div className="h-2 overflow-hidden rounded-full bg-white">
                                                         <div
                                                             className="h-full rounded-full bg-[#0066AE]"
@@ -3854,7 +3865,10 @@ export default function SurveyAssignmentShow({
                                                         />
                                                     </div>
                                                     <span className="text-right text-xs font-bold text-[#0066AE]">
-                                                        {aspect.score_percent}
+                                                        {formatPointScore(
+                                                            aspect.score,
+                                                            aspect.max_score,
+                                                        )}
                                                     </span>
                                                     <ChevronDown
                                                         size={18}
