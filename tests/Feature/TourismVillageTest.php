@@ -2,6 +2,9 @@
 
 use App\Models\TourismVillage;
 use App\Models\User;
+use App\Models\VillageMedia;
+use App\Models\VillageProfileItem;
+use App\Models\VillageProfileItemCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -54,5 +57,86 @@ test('authenticated users can create a tourism village', function () {
         'name' => 'Desa Wisata Baru',
         'slug' => 'desa-wisata-baru',
         'created_by' => $user->id,
+    ]);
+});
+
+test('edit page exposes village media from database', function () {
+    $user = User::factory()->create();
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+
+    VillageMedia::query()->create([
+        'village_id' => $village->id,
+        'uploaded_by' => $user->id,
+        'type' => 'image',
+        'title' => 'Foto Cover Desa',
+        'file_path' => 'villages/cover.jpg',
+        'mime_type' => 'image/jpeg',
+        'file_size' => 12345,
+        'is_cover' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('villages.edit', $village))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('villages/edit')
+            ->where('village.media.0.title', 'Foto Cover Desa')
+            ->where('village.media.0.url', '/storage/villages/cover.jpg')
+            ->where('village.media.0.is_cover', true)
+        );
+});
+
+test('updating village without profile items preserves existing profile data', function () {
+    $user = User::factory()->create();
+    $village = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+        'code' => 'DW-PRESERVE-001',
+        'slug' => 'desa-preserve-profile',
+    ]);
+    $category = VillageProfileItemCategory::query()->create([
+        'name' => 'Paket Wisata',
+        'slug' => 'paket-wisata',
+        'is_active' => true,
+        'sort_order' => 0,
+    ]);
+    $profileItem = VillageProfileItem::query()->create([
+        'village_id' => $village->id,
+        'category_id' => $category->id,
+        'created_by' => $user->id,
+        'name' => 'Paket Lama',
+        'description' => 'Tetap tersimpan.',
+        'is_active' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('villages.update', $village), [
+            'code' => 'DW-PRESERVE-001',
+            'name' => 'Desa Preserve Updated',
+            'slug' => 'desa-preserve-profile',
+            'description' => 'Updated.',
+            'province' => $village->province,
+            'city' => $village->city,
+            'district' => $village->district,
+            'subdistrict' => $village->subdistrict,
+            'address' => $village->address,
+            'postal_code' => $village->postal_code,
+            'latitude' => (string) $village->latitude,
+            'longitude' => (string) $village->longitude,
+            'maps_url' => $village->maps_url,
+            'manager_name' => $village->manager_name,
+            'manager_phone' => $village->manager_phone,
+            'manager_email' => $village->manager_email,
+            'status' => 'active',
+            'media' => [],
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('village_profile_items', [
+        'id' => $profileItem->id,
+        'village_id' => $village->id,
+        'name' => 'Paket Lama',
+        'deleted_at' => null,
     ]);
 });

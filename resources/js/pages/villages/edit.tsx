@@ -7,36 +7,31 @@ import type { LatLngExpression } from 'leaflet';
 import {
     Archive,
     ArrowLeft,
-    BedDouble,
-    Box,
     CalendarDays,
     Check,
     ChevronRight,
     CircleAlert,
     Clock3,
+    Loader2,
     Eye,
     FileImage,
     FileText,
-    Gift,
     Image,
     Info,
     Landmark,
     MapPinned,
     MapPin,
-    Package,
-    Plus,
     Save,
+    Search,
     ShieldCheck,
-    Sparkles,
-    Store,
     Trash2,
     Upload,
     User,
     Zap,
 } from 'lucide-react';
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 
 type Option = {
     value?: string;
@@ -60,27 +55,6 @@ type MediaForm = {
     sort_order: number;
 };
 
-type ProfileItemForm = {
-    id: number | null;
-    category_slug: string;
-    category_name: string;
-    name: string;
-    description: string;
-    address: string;
-    latitude: string;
-    longitude: string;
-    maps_url: string;
-    price_min: string;
-    price_max: string;
-    price_text: string;
-    opening_hours: string;
-    contact_name: string;
-    contact_phone: string;
-    metadata: string;
-    is_active: boolean;
-    sort_order: number;
-    media: MediaForm[];
-};
 
 type VillageForm = {
     id: number;
@@ -104,7 +78,6 @@ type VillageForm = {
     created_by: string;
     updated_at: string;
     media: MediaForm[];
-    profile_items: ProfileItemForm[];
 };
 
 type VillagePayload = Omit<VillageForm, 'id' | 'created_by' | 'updated_at'>;
@@ -112,8 +85,31 @@ type VillagePayload = Omit<VillageForm, 'id' | 'created_by' | 'updated_at'>;
 type EditProps = {
     village: VillageForm;
     status_options: Option[];
-    profile_category_options: Option[];
     media_type_options: Option[];
+};
+
+type ReverseGeocodeAddress = {
+    state?: string;
+    province?: string;
+    region?: string;
+    state_district?: string;
+    city?: string;
+    town?: string;
+    regency?: string;
+    county?: string;
+    city_district?: string;
+    district?: string;
+    municipality?: string;
+    village?: string;
+    suburb?: string;
+    hamlet?: string;
+    neighbourhood?: string;
+    postcode?: string;
+};
+
+type ReverseGeocodeResponse = {
+    address?: ReverseGeocodeAddress;
+    display_name?: string;
 };
 
 type SectionState = 'complete' | 'partial' | 'empty';
@@ -123,6 +119,66 @@ type LinkHref = ComponentProps<typeof Link>['href'];
 const defaultLatitude = '-7.2965549';
 const defaultLongitude = '112.7927000';
 
+const defaultMapCenter: LatLngExpression = [
+    Number(defaultLatitude),
+    Number(defaultLongitude),
+];
+const defaultMapZoom = 14;
+const selectedMapZoom = 14;
+
+const provinceTranslations: Record<string, string> = {
+    Aceh: 'Aceh',
+    Bali: 'Bali',
+    'Bangka Belitung': 'Kepulauan Bangka Belitung',
+    'Bangka Belitung Islands': 'Kepulauan Bangka Belitung',
+    Banten: 'Banten',
+    Bengkulu: 'Bengkulu',
+    'Central Java': 'Jawa Tengah',
+    'Central Kalimantan': 'Kalimantan Tengah',
+    'Central Sulawesi': 'Sulawesi Tengah',
+    'East Java': 'Jawa Timur',
+    'East Kalimantan': 'Kalimantan Timur',
+    'East Nusa Tenggara': 'Nusa Tenggara Timur',
+    Gorontalo: 'Gorontalo',
+    Jakarta: 'DKI Jakarta',
+    Jambi: 'Jambi',
+    Lampung: 'Lampung',
+    Maluku: 'Maluku',
+    'North Kalimantan': 'Kalimantan Utara',
+    'North Maluku': 'Maluku Utara',
+    'North Sulawesi': 'Sulawesi Utara',
+    'North Sumatra': 'Sumatera Utara',
+    Papua: 'Papua',
+    Riau: 'Riau',
+    'Riau Islands': 'Kepulauan Riau',
+    'South Kalimantan': 'Kalimantan Selatan',
+    'South Sulawesi': 'Sulawesi Selatan',
+    'South Sumatra': 'Sumatera Selatan',
+    'Southeast Sulawesi': 'Sulawesi Tenggara',
+    'Special Region of Yogyakarta': 'DI Yogyakarta',
+    'Daerah Istimewa Yogyakarta': 'DI Yogyakarta',
+    Yogyakarta: 'DI Yogyakarta',
+    'West Java': 'Jawa Barat',
+    'West Kalimantan': 'Kalimantan Barat',
+    'West Nusa Tenggara': 'Nusa Tenggara Barat',
+    'West Papua': 'Papua Barat',
+    'West Sulawesi': 'Sulawesi Barat',
+    'West Sumatra': 'Sumatera Barat',
+    'Central Papua': 'Papua Tengah',
+    'Highland Papua': 'Papua Pegunungan',
+    'South Papua': 'Papua Selatan',
+    'Southwest Papua': 'Papua Barat Daya',
+};
+
+const provinceAliases = Object.entries(provinceTranslations).reduce(
+    (aliases, [alias, province]) => ({
+        ...aliases,
+        [alias.toLowerCase()]: province,
+        [province.toLowerCase()]: province,
+    }),
+    {} as Record<string, string>,
+);
+
 function slugify(value: string) {
     return value
         .toLowerCase()
@@ -131,11 +187,6 @@ function slugify(value: string) {
         .replace(/^-+|-+$/g, '');
 }
 
-function parseCoordinate(value: string, fallback: number) {
-    const parsed = Number(value);
-
-    return Number.isFinite(parsed) ? parsed : fallback;
-}
 
 function hasZeroCoordinates(latitude: string, longitude: string) {
     return Number(latitude) === 0 && Number(longitude) === 0;
@@ -157,15 +208,68 @@ function googleMapsUrl(latitude: string, longitude: string) {
     return `https://www.google.com/maps?q=${latitude},${longitude}`;
 }
 
-function formatFileSize(size: number | null) {
-    if (!size) return '-';
+function coordinateValue(value: number) {
+    return value.toFixed(7);
+}
 
-    if (size < 1024 * 1024) {
-        return `${Math.round(size / 1024)} KB`;
+function cleanProvinceName(value: string) {
+    return value
+        .trim()
+        .replace(/^province of\s+/i, '')
+        .replace(/^provinsi\s+/i, '')
+        .replace(/^daerah istimewa\s+/i, 'DI ')
+        .replace(/^daerah khusus ibukota\s+/i, 'DKI ')
+        .replace(/\s+/g, ' ');
+}
+
+function provinceName(value?: string) {
+    if (!value) {
+        return undefined;
     }
 
-    return `${(size / 1024 / 1024).toFixed(1)} MB`;
+    const cleaned = cleanProvinceName(value);
+
+    return provinceAliases[cleaned.toLowerCase()] ?? cleaned;
 }
+
+function resolveProvinceName(
+    address: ReverseGeocodeAddress,
+    displayName?: string,
+) {
+    const knownProvinces = new Set(Object.values(provinceAliases));
+    const directProvince = [address.state, address.province]
+        .map(provinceName)
+        .find(Boolean);
+
+    if (directProvince) {
+        return directProvince;
+    }
+
+    const fallbackProvince = [address.region, address.state_district]
+        .map(provinceName)
+        .find((segment) => segment && knownProvinces.has(segment));
+
+    if (fallbackProvince) {
+        return fallbackProvince;
+    }
+
+    return displayName
+        ?.split(',')
+        .map(provinceName)
+        .find((segment) => segment && knownProvinces.has(segment));
+}
+
+function parseCoordinates(latitude: string, longitude: string) {
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+    }
+
+    return { lat, lng };
+}
+
 
 function blankMedia(sortOrder = 0): MediaForm {
     return {
@@ -181,35 +285,6 @@ function blankMedia(sortOrder = 0): MediaForm {
         url: null,
         is_cover: false,
         sort_order: sortOrder,
-    };
-}
-
-function blankProfileItem(
-    category: Option,
-    sortOrder = 0,
-    latitude = defaultLatitude,
-    longitude = defaultLongitude,
-): ProfileItemForm {
-    return {
-        id: null,
-        category_slug: category.slug ?? 'fasilitas',
-        category_name: category.name ?? category.label ?? 'Fasilitas',
-        name: '',
-        description: '',
-        address: '',
-        latitude,
-        longitude,
-        maps_url: googleMapsUrl(latitude, longitude),
-        price_min: '',
-        price_max: '',
-        price_text: '',
-        opening_hours: '',
-        contact_name: '',
-        contact_phone: '',
-        metadata: '',
-        is_active: true,
-        sort_order: sortOrder,
-        media: [],
     };
 }
 
@@ -235,92 +310,207 @@ function MapClickHandler({
     return null;
 }
 
-function MiniMap({
+function MapResizer({ active }: { active: boolean }) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!active) {
+            return;
+        }
+
+        const timeout = window.setTimeout(() => {
+            map.invalidateSize();
+        }, 150);
+
+        return () => window.clearTimeout(timeout);
+    }, [active, map]);
+
+    return null;
+}
+
+function MapRecenter({
+    position,
+}: {
+    position: { lat: number; lng: number } | null;
+}) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (position) {
+            map.setView([position.lat, position.lng], selectedMapZoom);
+        }
+    }, [map, position]);
+
+    return null;
+}
+
+function VillageLocationPicker({
     latitude,
     longitude,
-    fallbackLatitude,
-    fallbackLongitude,
+    active,
+    isResolvingAddress,
+    locationError,
     onPick,
 }: {
     latitude: string;
     longitude: string;
-    fallbackLatitude: string;
-    fallbackLongitude: string;
-    onPick: (latitude: string, longitude: string) => void;
+    active: boolean;
+    isResolvingAddress: boolean;
+    locationError: string | null;
+    onPick: (latitude: number, longitude: number) => void;
 }) {
-    const position = useMemo<LatLngExpression>(() => {
-        const normalizedFallbackLatitude = normalizeLatitude(
-            fallbackLatitude,
-            fallbackLongitude,
-        );
-        const normalizedFallbackLongitude = normalizeLongitude(
-            fallbackLatitude,
-            fallbackLongitude,
-        );
-        const normalizedLatitude = normalizeLatitude(latitude, longitude);
-        const normalizedLongitude = normalizeLongitude(latitude, longitude);
-
-        return [
-            parseCoordinate(
-                normalizedLatitude,
-                parseCoordinate(
-                    normalizedFallbackLatitude,
-                    Number(defaultLatitude),
-                ),
-            ),
-            parseCoordinate(
-                normalizedLongitude,
-                parseCoordinate(
-                    normalizedFallbackLongitude,
-                    Number(defaultLongitude),
-                ),
-            ),
-        ];
-    }, [fallbackLatitude, fallbackLongitude, latitude, longitude]);
+    const position = useMemo(
+        () => parseCoordinates(latitude, longitude),
+        [latitude, longitude],
+    );
     const markerIcon = useMemo(
         () =>
             L.divIcon({
                 className: '',
-                html: '<div style="width:34px;height:34px;border-radius:999px;background:#0066AE;box-shadow:0 10px 20px rgba(0,102,174,.28);display:flex;align-items:center;justify-content:center;border:4px solid white"><div style="width:9px;height:9px;border-radius:999px;background:white"></div></div>',
-                iconSize: [34, 34],
-                iconAnchor: [17, 17],
+                html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10],
             }),
         [],
     );
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+
+    async function handleSearch() {
+        if (!searchQuery.trim()) {
+            return;
+        }
+
+        setIsSearching(true);
+
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`,
+            );
+            const payload = (await response.json()) as Array<{
+                display_name: string;
+                lat: string;
+                lon: string;
+            }>;
+
+            setSearchResults(payload);
+        } catch (error) {
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }
+
+    function selectResult(result: { display_name: string; lat: string; lon: string }) {
+        onPick(Number(result.lat), Number(result.lon));
+        setSearchResults([]);
+        setSearchQuery(result.display_name);
+    }
+
     return (
-        <div className="h-[168px] overflow-hidden rounded-lg border border-[#AAD2F8] bg-[#EAF4FB]">
-            <MapContainer
-                center={position}
-                zoom={14}
-                className="h-full w-full"
-                scrollWheelZoom
-            >
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <MapClickHandler
-                    onPick={(lat, lng) =>
-                        onPick(lat.toFixed(7), lng.toFixed(7))
-                    }
-                />
-                <Marker
-                    draggable
-                    icon={markerIcon}
-                    position={position}
-                    eventHandlers={{
-                        dragend(event) {
-                            const latLng = event.target.getLatLng();
-                            onPick(
-                                latLng.lat.toFixed(7),
-                                latLng.lng.toFixed(7),
-                            );
-                        },
-                    }}
-                />
-            </MapContainer>
-        </div>
+        <section className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <p className="text-sm font-bold text-[#303030]">
+                        Lokasi Pin Desa
+                    </p>
+                    <p className="text-xs leading-5 text-[#7C7C7C]">
+                        Klik peta, geser pin, atau cari lokasi untuk mengisi koordinat dan alamat administratif otomatis.
+                    </p>
+                </div>
+                {isResolvingAddress && (
+                    <span className="rounded-full bg-[#EAF3FF] px-2 py-1 text-[11px] font-bold text-[#0066AE]">
+                        Membaca alamat...
+                    </span>
+                )}
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-[#DDE4EC]">
+                <div className="absolute top-2 right-2 z-[1000] w-[280px] max-w-[calc(100%-16px)]">
+                    <div className="relative flex items-center">
+                        <input
+                            type="text"
+                            placeholder="Cari lokasi desa..."
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    void handleSearch();
+                                }
+                            }}
+                            className="h-10 w-full rounded-lg border-none bg-white/95 pr-10 pl-10 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] outline-none backdrop-blur placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
+                        />
+                        <Search className="absolute left-3.5 size-4 text-[#7C7C7C]" />
+                        {isSearching && (
+                            <Loader2 className="absolute right-3.5 size-4 animate-spin text-[#0066AE]" />
+                        )}
+                    </div>
+                    {searchResults.length > 0 && (
+                        <div className="mt-1 max-h-48 overflow-y-auto rounded-lg bg-white shadow-[0_6px_16px_rgba(3,17,32,0.12)]">
+                            {searchResults.map((result, index) => (
+                                <button
+                                    key={`${result.lat}-${result.lon}-${index}`}
+                                    type="button"
+                                    onClick={() => selectResult(result)}
+                                    className="w-full border-b border-[#EFEFEF] px-3 py-2 text-left text-[11px] leading-4 text-[#303030] transition last:border-0 hover:bg-[#F1F5F8]"
+                                >
+                                    {result.display_name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <MapContainer
+                    center={position ?? defaultMapCenter}
+                    zoom={position ? selectedMapZoom : defaultMapZoom}
+                    className="h-[320px] w-full"
+                    scrollWheelZoom
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <MapResizer active={active} />
+                    <MapRecenter position={position} />
+                    <MapClickHandler
+                        onPick={(lat, lng) => {
+                            setSearchResults([]);
+                            onPick(lat, lng);
+                        }}
+                    />
+                    {position && (
+                        <Marker
+                            draggable
+                            icon={markerIcon}
+                            position={[position.lat, position.lng]}
+                            eventHandlers={{
+                                dragend(event) {
+                                    const latLng = event.target.getLatLng();
+                                    onPick(latLng.lat, latLng.lng);
+                                },
+                            }}
+                        />
+                    )}
+                </MapContainer>
+            </div>
+            <div className="flex flex-col gap-1 text-xs leading-5 text-[#7C7C7C] sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                    Koordinat:{' '}
+                    <strong className="text-[#303030]">
+                        {position
+                            ? `${coordinateValue(position.lat)}, ${coordinateValue(position.lng)}`
+                            : 'Belum dipilih'}
+                    </strong>
+                </span>
+                {locationError && (
+                    <span className="font-semibold text-[#D81313]">
+                        {locationError}
+                    </span>
+                )}
+            </div>
+        </section>
     );
 }
 
@@ -501,7 +691,6 @@ function CompletionPill({
 export default function VillageEdit({
     village,
     status_options,
-    profile_category_options,
     media_type_options,
 }: EditProps) {
     const [activeSection, setActiveSection] = useState('main');
@@ -530,21 +719,12 @@ export default function VillageEdit({
             manager_email: village.manager_email,
             status: village.status,
             media: village.media ?? [],
-            profile_items: (village.profile_items ?? []).map((item) => ({
-                ...item,
-                latitude: normalizeLatitude(item.latitude, item.longitude),
-                longitude: normalizeLongitude(item.latitude, item.longitude),
-                maps_url:
-                    item.maps_url ||
-                    googleMapsUrl(
-                        normalizeLatitude(item.latitude, item.longitude),
-                        normalizeLongitude(item.latitude, item.longitude),
-                    ),
-            })),
         });
+    const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
+    const [locationPickVersion, setLocationPickVersion] = useState(0);
 
     const formErrors = errors as Partial<Record<string, string>>;
-    const profileCount = data.profile_items.length;
     const mediaCount = data.media.length;
     const progress = Math.min(
         100,
@@ -564,11 +744,101 @@ export default function VillageEdit({
                 data.manager_email,
             ].filter(Boolean).length /
                 12) *
-                78 +
-                (mediaCount > 0 ? 10 : 0) +
-                (profileCount > 0 ? 12 : 0),
+                90 +
+                (mediaCount > 0 ? 10 : 0),
         ),
     );
+
+    useEffect(() => {
+        if (locationPickVersion === 0) {
+            return;
+        }
+
+        const coordinates = parseCoordinates(data.latitude, data.longitude);
+
+        if (!coordinates) {
+            return;
+        }
+
+        const abortController = new AbortController();
+        const timeout = window.setTimeout(async () => {
+            setIsResolvingAddress(true);
+            setLocationError(null);
+
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coordinates.lat}&lon=${coordinates.lng}&addressdetails=1`,
+                    {
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                        signal: abortController.signal,
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error('Reverse geocode failed.');
+                }
+
+                const payload = (await response.json()) as ReverseGeocodeResponse;
+                const address = payload.address ?? {};
+
+                setData((current) => ({
+                    ...current,
+                    province:
+                        resolveProvinceName(address, payload.display_name) ??
+                        current.province,
+                    city:
+                        address.city ??
+                        address.town ??
+                        address.regency ??
+                        address.county ??
+                        current.city,
+                    district:
+                        address.city_district ??
+                        address.district ??
+                        address.municipality ??
+                        address.county ??
+                        current.district,
+                    subdistrict:
+                        address.village ??
+                        address.suburb ??
+                        address.hamlet ??
+                        address.neighbourhood ??
+                        current.subdistrict,
+                    postal_code: address.postcode ?? current.postal_code,
+                }));
+            } catch (error) {
+                if (!abortController.signal.aborted) {
+                    setLocationError(
+                        'Alamat tidak bisa diisi otomatis. Field tetap bisa diisi manual.',
+                    );
+                }
+            } finally {
+                if (!abortController.signal.aborted) {
+                    setIsResolvingAddress(false);
+                }
+            }
+        }, 600);
+
+        return () => {
+            abortController.abort();
+            window.clearTimeout(timeout);
+        };
+    }, [data.latitude, data.longitude, locationPickVersion, setData]);
+
+    function handleLocationPick(latitude: number, longitude: number) {
+        const lat = coordinateValue(latitude);
+        const lng = coordinateValue(longitude);
+
+        setLocationPickVersion((current) => current + 1);
+        setData((current) => ({
+            ...current,
+            latitude: lat,
+            longitude: lng,
+            maps_url: googleMapsUrl(lat, lng),
+        }));
+    }
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -594,101 +864,9 @@ export default function VillageEdit({
         );
     }
 
-    function updateProfileItem(index: number, item: ProfileItemForm) {
-        setData(
-            'profile_items',
-            data.profile_items.map((profileItem, itemIndex) =>
-                itemIndex === index ? item : profileItem,
-            ),
-        );
-    }
-
-    function removeProfileItem(index: number) {
-        setData(
-            'profile_items',
-            data.profile_items.filter((_, itemIndex) => itemIndex !== index),
-        );
-    }
-
-    function addProfileItem(category: Option) {
-        const latitude = normalizeLatitude(data.latitude, data.longitude);
-        const longitude = normalizeLongitude(data.latitude, data.longitude);
-
-        setData('profile_items', [
-            ...data.profile_items,
-            blankProfileItem(
-                category,
-                data.profile_items.length,
-                latitude,
-                longitude,
-            ),
-        ]);
-    }
-
     function goToSection(id: string) {
         setActiveSection(id);
     }
-
-    const categoryMeta = [
-        {
-            slug: 'fasilitas',
-            label: 'Fasilitas',
-            icon: Store,
-            description:
-                'Kelola fasilitas pendukung yang tersedia di desa wisata.',
-        },
-        {
-            slug: 'atraksi',
-            label: 'Atraksi',
-            icon: Sparkles,
-            description:
-                'Kelola atraksi, aktivitas, dan pengalaman wisata unggulan.',
-        },
-        {
-            slug: 'suvenir',
-            label: 'Suvenir',
-            icon: Gift,
-            description: 'Kelola produk suvenir dan ekonomi kreatif desa.',
-        },
-        {
-            slug: 'homestay',
-            label: 'Homestay',
-            icon: BedDouble,
-            description: 'Kelola akomodasi, homestay, dan informasi kontaknya.',
-        },
-        {
-            slug: 'paket-wisata',
-            label: 'Paket Wisata',
-            icon: Package,
-            description: 'Kelola paket wisata, harga, dan jadwal operasional.',
-        },
-    ] as const;
-
-    const categories = categoryMeta.map((meta) => {
-        const option = profile_category_options.find(
-            (category) => category.slug === meta.slug,
-        );
-
-        return {
-            ...meta,
-            option: option ?? { slug: meta.slug, name: meta.label },
-            items: data.profile_items
-                .map((item, index) => ({ item, index }))
-                .filter(({ item }) => item.category_slug === meta.slug),
-        };
-    });
-
-    const stateForCategory = (slug: string): SectionState => {
-        const items = data.profile_items.filter(
-            (item) => item.category_slug === slug,
-        );
-
-        if (items.length === 0) return 'empty';
-
-        return items.every((item) => item.name && item.description)
-            ? 'complete'
-            : 'partial';
-    };
 
     const sections = [
         {
@@ -715,17 +893,7 @@ export default function VillageEdit({
             icon: FileImage,
             state: (mediaCount > 0 ? 'partial' : 'empty') as SectionState,
         },
-        ...categoryMeta.map((category) => ({
-            id: category.slug,
-            label: category.label,
-            icon: category.icon,
-            state: stateForCategory(category.slug),
-        })),
     ];
-
-    const activeCategory = categories.find(
-        (category) => category.slug === activeSection,
-    );
 
     const activePanel =
         activeSection === 'location' ? (
@@ -736,101 +904,80 @@ export default function VillageEdit({
                 description="Atur alamat administratif dan titik koordinat desa wisata."
                 complete
             >
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_270px]">
-                    <div className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-4">
+                    <VillageLocationPicker
+                        latitude={data.latitude}
+                        longitude={data.longitude}
+                        active={activeSection === 'location'}
+                        isResolvingAddress={isResolvingAddress}
+                        locationError={locationError}
+                        onPick={handleLocationPick}
+                    />
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {errorText(formErrors, 'latitude')}
+                        {errorText(formErrors, 'longitude')}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
                         <Field
                             label="Provinsi"
                             value={data.province}
                             onChange={(value) => setData('province', value)}
-                            placeholder="Jawa Timur"
+                            placeholder="Contoh: Jawa Timur"
                             error={formErrors.province}
                         />
                         <Field
-                            label="Kota/Kabupaten"
+                            label="Kota / Kabupaten"
                             value={data.city}
                             onChange={(value) => setData('city', value)}
-                            placeholder="Surabaya"
+                            placeholder="Contoh: Surabaya"
                             error={formErrors.city}
                         />
                         <Field
                             label="Kecamatan"
                             value={data.district}
                             onChange={(value) => setData('district', value)}
-                            placeholder="Sukolilo"
+                            placeholder="Contoh: Gayungan"
                             error={formErrors.district}
                         />
                         <Field
-                            label="Kelurahan/Desa"
+                            label="Kelurahan / Desa"
                             value={data.subdistrict}
                             onChange={(value) => setData('subdistrict', value)}
-                            placeholder="Keputih"
+                            placeholder="Contoh: Ketintang"
                             error={formErrors.subdistrict}
                         />
                         <Field
                             label="Kode Pos"
                             value={data.postal_code}
                             onChange={(value) => setData('postal_code', value)}
-                            placeholder="60111"
+                            placeholder="Contoh: 60231"
                             error={formErrors.postal_code}
                         />
-                        <div className="md:col-span-3">
+                        <Field
+                            label="URL Google Maps"
+                            value={data.maps_url}
+                            onChange={(value) => setData('maps_url', value)}
+                            placeholder="https://www.google.com/maps?q=-7.3223551,112.7034573"
+                            error={formErrors.maps_url}
+                        />
+                        <div className="md:col-span-2">
                             <TextAreaField
-                                label="Alamat Lengkap"
+                                label="Alamat"
                                 value={data.address}
                                 onChange={(value) => setData('address', value)}
-                                placeholder="Jl. Keputih Tegal Timur..."
+                                placeholder="Contoh: Jl. Ketintang Madya, Surabaya, Jawa Timur"
                                 error={formErrors.address}
                             />
                         </div>
-                        <Field
-                            label="Latitude"
-                            value={data.latitude}
-                            onChange={(value) => setData('latitude', value)}
-                            placeholder={defaultLatitude}
-                            error={formErrors.latitude}
-                        />
-                        <Field
-                            label="Longitude"
-                            value={data.longitude}
-                            onChange={(value) => setData('longitude', value)}
-                            placeholder={defaultLongitude}
-                            error={formErrors.longitude}
-                        />
-                        <Field
-                            label="Google Maps URL"
-                            value={data.maps_url}
-                            onChange={(value) => setData('maps_url', value)}
-                            placeholder="https://maps.app.goo.gl/..."
-                            error={formErrors.maps_url}
-                        />
                     </div>
-                    <div className="space-y-2">
-                        <MiniMap
-                            latitude={data.latitude}
-                            longitude={data.longitude}
-                            fallbackLatitude={village.latitude}
-                            fallbackLongitude={village.longitude}
-                            onPick={(latitude, longitude) =>
-                                setData((current) => ({
-                                    ...current,
-                                    latitude,
-                                    longitude,
-                                    maps_url: googleMapsUrl(
-                                        latitude,
-                                        longitude,
-                                    ),
-                                }))
-                            }
-                        />
-                        <a
-                            href={data.maps_url || '#'}
-                            target="_blank"
-                            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white text-sm font-bold text-[#0066AE]"
-                        >
-                            Buka Google Maps
-                            <ChevronRight className="size-3.5" />
-                        </a>
-                    </div>
+                    <a
+                        href={data.maps_url || '#'}
+                        target="_blank"
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-4 text-sm font-bold text-[#0066AE]"
+                    >
+                        Buka Google Maps
+                        <ChevronRight className="size-3.5" />
+                    </a>
                 </div>
             </SectionCard>
         ) : activeSection === 'manager' ? (
@@ -871,7 +1018,7 @@ export default function VillageEdit({
                 id="media"
                 icon={Image}
                 title="Media Desa"
-                description="Upload cover image, galeri foto, video, atau tautan eksternal."
+                description="Upload cover image, galeri foto, atau video desa."
             >
                 <div className="space-y-3">
                     <button
@@ -889,7 +1036,7 @@ export default function VillageEdit({
                             Tambah Media Desa
                         </span>
                         <span className="text-xs text-[#7C7C7C]">
-                            Upload file atau gunakan external URL
+                            Upload file gambar atau video desa
                         </span>
                     </button>
                     {data.media.map((media, index) => (
@@ -906,21 +1053,6 @@ export default function VillageEdit({
                     ))}
                 </div>
             </SectionCard>
-        ) : activeCategory ? (
-            <ProfileItemsSection
-                id={activeCategory.slug}
-                icon={activeCategory.icon}
-                title={activeCategory.label}
-                description={activeCategory.description}
-                items={activeCategory.items}
-                errors={formErrors}
-                onAdd={() => addProfileItem(activeCategory.option)}
-                onChange={updateProfileItem}
-                onRemove={removeProfileItem}
-                mediaOptions={media_type_options}
-                villageLatitude={data.latitude}
-                villageLongitude={data.longitude}
-            />
         ) : (
             <SectionCard
                 id="main"
@@ -998,9 +1130,7 @@ export default function VillageEdit({
                                 Edit Desa Wisata
                             </h1>
                             <p className="mt-1 max-w-3xl text-sm leading-5 text-[#7C7C7C]">
-                                Kelola informasi utama, media, fasilitas,
-                                atraksi, suvenir, homestay, dan paket wisata
-                                desa.
+                                Kelola informasi utama, lokasi, kontak pengelola, dan media desa.
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">
                                 <InfoBadge
@@ -1019,11 +1149,6 @@ export default function VillageEdit({
                                 <InfoBadge
                                     icon={Image}
                                     label={`${mediaCount} Media`}
-                                />
-                                <InfoBadge
-                                    icon={Sparkles}
-                                    label={`${profileCount} Potensi Desa`}
-                                    orange
                                 />
                             </div>
                         </div>
@@ -1084,7 +1209,7 @@ export default function VillageEdit({
                                 </div>
                             </div>
                             <div className="hidden bg-[#E2E8F0] lg:block" />
-                            <div className="flex gap-1 overflow-x-auto px-3 py-4 md:grid md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-9">
+                            <div className="flex gap-1 overflow-x-auto px-3 py-4 md:grid md:grid-cols-4">
                                 {sections.map((section) => (
                                     <CompletionPill
                                         key={section.id}
@@ -1216,7 +1341,7 @@ export default function VillageEdit({
                                     icon={FileText}
                                 >
                                     <div className="space-y-1">
-                                        {sections.slice(0, 7).map((section) => (
+                                        {sections.map((section) => (
                                             <div
                                                 key={section.id}
                                                 className="flex items-center justify-between text-xs"
@@ -1265,11 +1390,6 @@ export default function VillageEdit({
                                         icon={Image}
                                         label="Tambah Media"
                                         onClick={() => goToSection('media')}
-                                    />
-                                    <QuickAction
-                                        icon={Sparkles}
-                                        label="Tambah Potensi Desa"
-                                        onClick={() => goToSection('fasilitas')}
                                     />
                                     <button
                                         type="button"
@@ -1402,15 +1522,6 @@ function MediaEditor({
                     <p className="text-sm font-bold text-[#303030]">
                         Media #{index + 1}
                     </p>
-                    {media.url && (
-                        <a
-                            href={media.url}
-                            target="_blank"
-                            className="block truncate text-xs font-semibold text-[#0066AE]"
-                        >
-                            Lihat file tersimpan
-                        </a>
-                    )}
                 </div>
                 <button
                     type="button"
@@ -1421,15 +1532,6 @@ function MediaEditor({
                 </button>
             </div>
             <div className="grid gap-3 md:grid-cols-4">
-                {media.url && media.type === 'image' && (
-                    <div className="md:col-span-4">
-                        <img
-                            src={media.url}
-                            alt={media.title || `Media ${index + 1}`}
-                            className="h-36 w-full rounded-lg border border-[#DDE4EC] object-cover"
-                        />
-                    </div>
-                )}
                 <label>
                     <span className="mb-1 block text-sm font-bold text-[#303030]">
                         Tipe
@@ -1461,6 +1563,7 @@ function MediaEditor({
                     </span>
                     <input
                         type="file"
+                        accept={media.type === 'video' ? 'video/*' : 'image/*'}
                         onChange={(event) =>
                             onChange({
                                 ...media,
@@ -1471,15 +1574,15 @@ function MediaEditor({
                     />
                     {errorText(errors, `${prefix}.file`)}
                 </label>
-                <Field
-                    label="External URL"
-                    value={media.external_url}
-                    onChange={(value) =>
-                        onChange({ ...media, external_url: value })
-                    }
-                    placeholder="https://..."
-                    error={errors[`${prefix}.external_url`]}
-                />
+                {media.url && media.type === 'image' && (
+                    <div className="md:col-span-4">
+                        <img
+                            src={media.url}
+                            alt={media.title || `Media ${index + 1}`}
+                            className="h-36 w-full rounded-lg border border-[#DDE4EC] object-cover"
+                        />
+                    </div>
+                )}
                 <Field
                     label="Urutan"
                     value={String(media.sort_order ?? 0)}
@@ -1489,18 +1592,6 @@ function MediaEditor({
                     placeholder="0"
                     error={errors[`${prefix}.sort_order`]}
                 />
-                <div>
-                    <span className="mb-1 block text-sm font-bold text-[#303030]">
-                        File tersimpan
-                    </span>
-                    <div className="min-h-11 rounded-lg border border-[#DDE4EC] bg-white px-3 py-2 text-xs leading-5 text-[#7C7C7C]">
-                        <p className="truncate">{media.file_path || '-'}</p>
-                        <p>
-                            {media.mime_type || '-'} ·{' '}
-                            {formatFileSize(media.file_size)}
-                        </p>
-                    </div>
-                </div>
                 <label className="flex items-center gap-2 pt-5 text-sm font-bold text-[#303030]">
                     <input
                         type="checkbox"
@@ -1514,378 +1605,6 @@ function MediaEditor({
                     />
                     Jadikan cover
                 </label>
-                <div className="md:col-span-4">
-                    <TextAreaField
-                        label="Caption"
-                        value={media.caption}
-                        onChange={(value) =>
-                            onChange({ ...media, caption: value })
-                        }
-                        placeholder="Keterangan media..."
-                        error={errors[`${prefix}.caption`]}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ProfileItemsSection({
-    id,
-    icon: Icon,
-    title,
-    description,
-    items,
-    errors,
-    onAdd,
-    onChange,
-    onRemove,
-    mediaOptions,
-    villageLatitude,
-    villageLongitude,
-}: {
-    id: string;
-    icon: typeof Info;
-    title: string;
-    description: string;
-    items: { item: ProfileItemForm; index: number }[];
-    errors: Partial<Record<string, string>>;
-    onAdd: () => void;
-    onChange: (index: number, item: ProfileItemForm) => void;
-    onRemove: (index: number) => void;
-    mediaOptions: Option[];
-    villageLatitude: string;
-    villageLongitude: string;
-}) {
-    return (
-        <SectionCard
-            id={id}
-            icon={Icon}
-            title={title}
-            description={description}
-            complete={items.length > 0}
-        >
-            <div className="space-y-3">
-                <button
-                    type="button"
-                    onClick={onAdd}
-                    className="flex w-full items-center justify-between rounded-lg border border-dashed border-[#AAD2F8] bg-[#F8FBFF] px-4 py-3 text-left text-[#0066AE] transition hover:bg-[#EAF4FB]"
-                >
-                    <span>
-                        <span className="block text-sm font-bold">
-                            Tambah {title}
-                        </span>
-                        <span className="text-xs font-semibold text-[#7C7C7C]">
-                            Buat item baru dengan detail, harga, kontak, dan
-                            lokasi.
-                        </span>
-                    </span>
-                    <Plus className="size-5" />
-                </button>
-
-                {items.length === 0 ? (
-                    <div className="rounded-lg border border-[#EFEFEF] bg-[#FCFDFF] px-4 py-5 text-center">
-                        <p className="text-sm font-bold text-[#303030]">
-                            Belum ada data {title.toLowerCase()}
-                        </p>
-                        <p className="mt-1 text-xs text-[#7C7C7C]">
-                            Tambahkan data agar profil desa lebih lengkap.
-                        </p>
-                    </div>
-                ) : (
-                    items.map(({ item, index }) => (
-                        <ProfileItemEditor
-                            key={index}
-                            item={item}
-                            index={index}
-                            errors={errors}
-                            prefix={`profile_items.${index}`}
-                            onChange={(next) => onChange(index, next)}
-                            onRemove={() => onRemove(index)}
-                            mediaOptions={mediaOptions}
-                            villageLatitude={villageLatitude}
-                            villageLongitude={villageLongitude}
-                        />
-                    ))
-                )}
-            </div>
-        </SectionCard>
-    );
-}
-
-function ProfileItemEditor({
-    item,
-    index,
-    errors,
-    prefix,
-    onChange,
-    onRemove,
-    mediaOptions,
-    villageLatitude,
-    villageLongitude,
-}: {
-    item: ProfileItemForm;
-    index: number;
-    errors: Partial<Record<string, string>>;
-    prefix: string;
-    onChange: (item: ProfileItemForm) => void;
-    onRemove: () => void;
-    mediaOptions: Option[];
-    villageLatitude: string;
-    villageLongitude: string;
-}) {
-    function updateItemMedia(mediaIndex: number, media: MediaForm) {
-        onChange({
-            ...item,
-            media: item.media.map((mediaItem, itemIndex) =>
-                itemIndex === mediaIndex ? media : mediaItem,
-            ),
-        });
-    }
-
-    function removeItemMedia(mediaIndex: number) {
-        onChange({
-            ...item,
-            media: item.media.filter(
-                (_, itemIndex) => itemIndex !== mediaIndex,
-            ),
-        });
-    }
-
-    return (
-        <div className="rounded-lg border border-[#DDE4EC] bg-[#FCFDFF] p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                    <p className="text-sm font-bold text-[#303030]">
-                        {item.category_name} #{index + 1}
-                    </p>
-                    <p className="text-xs text-[#7C7C7C]">
-                        {item.is_active ? 'Aktif ditampilkan' : 'Disembunyikan'}
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    onClick={onRemove}
-                    className="flex size-8 items-center justify-center rounded-md border border-[#F4C8C8] bg-white text-[#D81313]"
-                >
-                    <Trash2 className="size-4" />
-                </button>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-                <Field
-                    label="Nama"
-                    value={item.name}
-                    onChange={(value) => onChange({ ...item, name: value })}
-                    placeholder="Gazebo tepi sawah"
-                    error={errors[`${prefix}.name`]}
-                />
-                <Field
-                    label="Jam Operasional"
-                    value={item.opening_hours}
-                    onChange={(value) =>
-                        onChange({ ...item, opening_hours: value })
-                    }
-                    placeholder="08.00 - 17.00 WIB"
-                    error={errors[`${prefix}.opening_hours`]}
-                />
-                <Field
-                    label="Harga"
-                    value={item.price_text}
-                    onChange={(value) =>
-                        onChange({ ...item, price_text: value })
-                    }
-                    placeholder="Mulai Rp25.000"
-                    error={errors[`${prefix}.price_text`]}
-                />
-                <Field
-                    label="Harga Minimum"
-                    value={item.price_min}
-                    onChange={(value) =>
-                        onChange({ ...item, price_min: value })
-                    }
-                    placeholder="25000"
-                    error={errors[`${prefix}.price_min`]}
-                />
-                <Field
-                    label="Harga Maksimum"
-                    value={item.price_max}
-                    onChange={(value) =>
-                        onChange({ ...item, price_max: value })
-                    }
-                    placeholder="150000"
-                    error={errors[`${prefix}.price_max`]}
-                />
-                <Field
-                    label="Urutan"
-                    value={String(item.sort_order ?? 0)}
-                    onChange={(value) =>
-                        onChange({ ...item, sort_order: Number(value) || 0 })
-                    }
-                    placeholder="0"
-                    error={errors[`${prefix}.sort_order`]}
-                />
-                <div className="md:col-span-3">
-                    <TextAreaField
-                        label="Deskripsi"
-                        value={item.description}
-                        onChange={(value) =>
-                            onChange({ ...item, description: value })
-                        }
-                        placeholder="Jelaskan fasilitas, atraksi, produk, atau layanan ini."
-                        error={errors[`${prefix}.description`]}
-                    />
-                </div>
-                <div className="md:col-span-3">
-                    <TextAreaField
-                        label="Alamat"
-                        value={item.address}
-                        onChange={(value) =>
-                            onChange({ ...item, address: value })
-                        }
-                        placeholder="Lokasi spesifik item di area desa wisata."
-                        error={errors[`${prefix}.address`]}
-                    />
-                </div>
-                <div className="grid gap-4 md:col-span-3 lg:grid-cols-[minmax(0,1fr)_270px]">
-                    <div className="grid gap-3 md:grid-cols-3">
-                        <Field
-                            label="Latitude"
-                            value={item.latitude}
-                            onChange={(value) =>
-                                onChange({ ...item, latitude: value })
-                            }
-                            placeholder={defaultLatitude}
-                            error={errors[`${prefix}.latitude`]}
-                        />
-                        <Field
-                            label="Longitude"
-                            value={item.longitude}
-                            onChange={(value) =>
-                                onChange({ ...item, longitude: value })
-                            }
-                            placeholder={defaultLongitude}
-                            error={errors[`${prefix}.longitude`]}
-                        />
-                        <Field
-                            label="Maps URL"
-                            value={item.maps_url}
-                            onChange={(value) =>
-                                onChange({ ...item, maps_url: value })
-                            }
-                            placeholder="https://maps.app.goo.gl/..."
-                            error={errors[`${prefix}.maps_url`]}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <MiniMap
-                            latitude={item.latitude}
-                            longitude={item.longitude}
-                            fallbackLatitude={villageLatitude}
-                            fallbackLongitude={villageLongitude}
-                            onPick={(latitude, longitude) =>
-                                onChange({
-                                    ...item,
-                                    latitude,
-                                    longitude,
-                                    maps_url: googleMapsUrl(
-                                        latitude,
-                                        longitude,
-                                    ),
-                                })
-                            }
-                        />
-                        <a
-                            href={item.maps_url || '#'}
-                            target="_blank"
-                            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white text-sm font-bold text-[#0066AE]"
-                        >
-                            Buka Google Maps
-                            <ChevronRight className="size-3.5" />
-                        </a>
-                    </div>
-                </div>
-                <Field
-                    label="Nama Kontak"
-                    value={item.contact_name}
-                    onChange={(value) =>
-                        onChange({ ...item, contact_name: value })
-                    }
-                    placeholder="Budi Santoso"
-                    error={errors[`${prefix}.contact_name`]}
-                />
-                <Field
-                    label="Nomor Kontak"
-                    value={item.contact_phone}
-                    onChange={(value) =>
-                        onChange({ ...item, contact_phone: value })
-                    }
-                    placeholder="0812-3456-7890"
-                    error={errors[`${prefix}.contact_phone`]}
-                />
-                <label className="flex items-center gap-2 pt-5 text-sm font-bold text-[#303030]">
-                    <input
-                        type="checkbox"
-                        checked={item.is_active}
-                        onChange={(event) =>
-                            onChange({
-                                ...item,
-                                is_active: event.target.checked,
-                            })
-                        }
-                    />
-                    Aktif
-                </label>
-                <div className="md:col-span-3">
-                    <TextAreaField
-                        label="Metadata JSON"
-                        value={item.metadata}
-                        onChange={(value) =>
-                            onChange({ ...item, metadata: value })
-                        }
-                        placeholder='{"kapasitas": "20 orang", "catatan": "Opsional"}'
-                        error={errors[`${prefix}.metadata`]}
-                    />
-                </div>
-                <div className="space-y-3 md:col-span-3">
-                    <button
-                        type="button"
-                        onClick={() =>
-                            onChange({
-                                ...item,
-                                media: [
-                                    ...item.media,
-                                    blankMedia(item.media.length),
-                                ],
-                            })
-                        }
-                        className="flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#AAD2F8] bg-white p-4 text-center text-[#0066AE] transition hover:bg-[#EAF4FB]"
-                    >
-                        <Upload className="size-5" />
-                        <span className="mt-2 text-sm font-bold">
-                            Tambah Gambar / Media
-                        </span>
-                        <span className="text-xs text-[#7C7C7C]">
-                            Gunakan upload file untuk gambar, video, atau
-                            dokumen pendukung.
-                        </span>
-                    </button>
-
-                    {item.media.map((media, mediaIndex) => (
-                        <MediaEditor
-                            key={mediaIndex}
-                            media={media}
-                            index={mediaIndex}
-                            options={mediaOptions}
-                            errors={errors}
-                            prefix={`${prefix}.media.${mediaIndex}`}
-                            onChange={(next) =>
-                                updateItemMedia(mediaIndex, next)
-                            }
-                            onRemove={() => removeItemMedia(mediaIndex)}
-                        />
-                    ))}
-                </div>
             </div>
         </div>
     );
