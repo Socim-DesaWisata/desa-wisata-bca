@@ -214,7 +214,10 @@ class TourismVillageService
             ]);
 
             $this->syncVillageMedia($village, $data['media'] ?? [], $actor);
-            $this->syncProfileItems($village, $data['profile_items'] ?? [], $actor);
+
+            if (array_key_exists('profile_items', $data)) {
+                $this->syncProfileItems($village, $data['profile_items'] ?? [], $actor);
+            }
         });
 
         return $village;
@@ -415,8 +418,6 @@ class TourismVillageService
         return [
             ['value' => 'image', 'label' => 'Gambar'],
             ['value' => 'video', 'label' => 'Video'],
-            ['value' => 'document', 'label' => 'Dokumen'],
-            ['value' => 'url', 'label' => 'URL Eksternal'],
         ];
     }
 
@@ -579,6 +580,8 @@ class TourismVillageService
             'status' => $village->status,
             'created_by' => $village->creator?->name ?? '-',
             'updated_at' => $this->formatDate($village->updated_at),
+            'media' => $village->media->map(fn (VillageMedia $media): array => $this->formatMedia($media))->values(),
+            'profile_items' => $village->profileItems->map(fn (VillageProfileItem $item): array => $this->formatProfileItemForForm($item))->values(),
         ];
     }
 
@@ -777,7 +780,7 @@ class TourismVillageService
             'file_path' => $this->storedFilePath($media, $media['file_path'] ?? null),
             'external_url' => $media['external_url'] ?? null,
             'mime_type' => $this->uploadedMimeType($media, $media['mime_type'] ?? null),
-            'file_size' => $this->uploadedFileSize($media),
+            'file_size' => $this->uploadedFileSize($media, $media['file_size'] ?? null),
             'is_cover' => (bool) ($media['is_cover'] ?? false),
             'sort_order' => (int) ($media['sort_order'] ?? $index),
         ];
@@ -817,11 +820,11 @@ class TourismVillageService
     /**
      * @param  array<string, mixed>  $media
      */
-    private function uploadedFileSize(array $media): ?int
+    private function uploadedFileSize(array $media, mixed $fallback): ?int
     {
         $file = $media['file'] ?? null;
 
-        return $file instanceof UploadedFile ? $file->getSize() : null;
+        return $file instanceof UploadedFile ? $file->getSize() : ($fallback !== null ? (int) $fallback : null);
     }
 
     /**

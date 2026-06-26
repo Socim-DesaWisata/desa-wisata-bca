@@ -29,6 +29,15 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+    PolarAngleAxis,
+    PolarGrid,
+    PolarRadiusAxis,
+    Radar,
+    RadarChart,
+    ResponsiveContainer,
+    Tooltip,
+} from 'recharts';
 
 import {
     Dialog,
@@ -364,7 +373,6 @@ type PariwisataData = {
     detail_url: string;
 };
 
-
 type PariwisataSurveyOption = {
     id: number;
     score: number;
@@ -582,13 +590,54 @@ function MetricCard({
     helper,
     icon,
     tone = 'blue',
+    compact = false,
 }: {
     label: string;
     value: string;
     helper: string;
     icon: React.ReactNode;
     tone?: 'blue' | 'green' | 'orange';
+    compact?: boolean;
 }) {
+    if (compact) {
+        return (
+            <Card className="rounded-xl border border-[#EEF2F7] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+                <div className="flex items-center gap-3">
+                    <span
+                        className={classNames(
+                            'flex size-9 shrink-0 items-center justify-center rounded-lg text-white shadow-[0_6px_14px_rgba(0,102,174,0.22)]',
+                            tone === 'blue' && 'bg-[#0066AE]',
+                            tone === 'green' && 'bg-[#00893D]',
+                            tone === 'orange' && 'bg-[#F97316]',
+                        )}
+                    >
+                        {icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-[#667085]">
+                            {label}
+                        </p>
+                        <div className="mt-0.5 flex min-w-0 items-baseline gap-1.5">
+                            <p className="truncate text-lg leading-6 font-black text-[#111827] tabular-nums">
+                                {value}
+                            </p>
+                            <p
+                                className={classNames(
+                                    'shrink-0 text-xs leading-4 font-bold tabular-nums',
+                                    tone === 'blue' && 'text-[#667085]',
+                                    tone === 'green' && 'text-[#00893D]',
+                                    tone === 'orange' && 'text-[#F97316]',
+                                )}
+                            >
+                                {helper}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+
     return (
         <Card className="p-4">
             <div className="flex items-start justify-between gap-3">
@@ -770,49 +819,287 @@ function ScoreBar({ aspect }: { aspect: ScoreAspectSummary }) {
 }
 
 function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
-    const answers = aspects.flatMap((aspect) =>
-        aspect.questions.map((q) => q.answer).filter(Boolean),
+    const totalScore = aspects.reduce(
+        (total, aspect) => total + aspect.score,
+        0,
     );
-    const totalAnswers = answers.length;
-    const distribution = answerScoreBuckets.map((bucket) => {
-        const count = answers.filter((answer) => {
-            const score = answer ? Math.round(answer.score) : 0;
-            return score === bucket.min;
-        }).length;
-
-        return {
-            ...bucket,
-            count,
-            percentage: totalAnswers > 0 ? (count / totalAnswers) * 100 : 0,
-        };
-    });
+    const maxScore = aspects.reduce(
+        (total, aspect) => total + aspect.max_score,
+        0,
+    );
+    const finalScore = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+    const scoreAspects = aspects.map((aspect) => ({
+        name: aspect.name,
+        score_percent: aspect.score_percent,
+    }));
 
     return (
-        <StatisticsChartCard
-            aspects={aspects.map((aspect) => ({
-                name: aspect.name,
-                score_percent: aspect.score_percent,
-            }))}
-            distribution={distribution.map((bucket) => ({
-                ...bucket,
-                score: bucket.min,
-            }))}
+        <VillageStatisticsCards
+            aspects={scoreAspects}
+            finalScore={finalScore}
         />
     );
 }
 
+function readinessLabel(score: number) {
+    const normalizedScore = clampScore(score);
+
+    if (normalizedScore >= 85) {
+        return 'Excellent Readiness';
+    }
+
+    if (normalizedScore >= 70) {
+        return 'High Readiness';
+    }
+
+    if (normalizedScore >= 40) {
+        return 'Moderate Readiness';
+    }
+
+    return 'Low Readiness';
+}
+
+function SurveyFinalScoreGauge({ score }: { score: number }) {
+    const normalizedScore = clampScore(score);
+
+    return (
+        <Card className="flex min-h-[360px] flex-col rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <div>
+                <h2 className="text-base font-bold text-[#111827]">
+                    Skor Akhir Survey
+                </h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                    Nilai kesiapan keseluruhan
+                </p>
+            </div>
+
+            <div className="flex flex-1 flex-col items-center justify-center pt-4">
+                <div className="relative h-40 w-full max-w-[280px]">
+                    <svg
+                        viewBox="0 0 240 140"
+                        className="h-full w-full"
+                        aria-label={`Skor akhir ${formatStatScore(normalizedScore)} persen`}
+                    >
+                        <path
+                            d="M 30 115 A 90 90 0 0 1 210 115"
+                            fill="none"
+                            stroke="#E9EEF5"
+                            strokeLinecap="round"
+                            strokeWidth="20"
+                            pathLength={100}
+                        />
+                        <path
+                            d="M 30 115 A 90 90 0 0 1 210 115"
+                            fill="none"
+                            stroke="#0066AE"
+                            strokeLinecap="round"
+                            strokeWidth="20"
+                            pathLength={100}
+                            strokeDasharray={`${normalizedScore} ${100 - normalizedScore}`}
+                        />
+                    </svg>
+                    <div className="absolute inset-x-0 bottom-0 text-center">
+                        <p className="text-4xl font-black tracking-[-0.04em] text-[#111827]">
+                            {formatStatScore(normalizedScore)}%
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-[#8A97A8]">
+                            {readinessLabel(normalizedScore)}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-7 flex w-full max-w-[260px] justify-between text-xs font-bold text-[#9AA7B6]">
+                    <span>0%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+        </Card>
+    );
+}
+
+function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
+    return (
+        <Card className="min-h-[360px] rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <h2 className="text-base font-bold text-[#111827]">
+                Skor per Aspek
+            </h2>
+            <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                Skor tertimbang setiap aspek
+            </p>
+
+            <div className="mt-6 space-y-4">
+                {aspects.length === 0 ? (
+                    <div className="flex h-52 items-center justify-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                        Belum ada data aspek
+                    </div>
+                ) : (
+                    aspects.map((aspect) => (
+                        <div
+                            key={aspect.name}
+                            className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_52px] md:items-center"
+                        >
+                            <p className="truncate text-xs font-semibold text-[#344256]">
+                                {aspect.name}
+                            </p>
+                            <div className="relative h-4 overflow-hidden rounded-full bg-[#EAF0F7]">
+                                <div
+                                    className="h-full rounded-full bg-[#0066AE]"
+                                    style={{
+                                        width: `${clampScore(aspect.score_percent)}%`,
+                                    }}
+                                />
+                            </div>
+                            <p className="text-right text-xs font-black text-[#111827] tabular-nums">
+                                {formatStatScore(aspect.score_percent)}%
+                            </p>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            <div className="mt-6 grid grid-cols-5 pl-0 text-[11px] font-bold text-[#9AA7B6] md:mr-[52px] md:ml-[160px]">
+                {[0, 25, 50, 75, 100].map((value) => (
+                    <span
+                        key={value}
+                        className="text-center first:text-left last:text-right"
+                    >
+                        {value}%
+                    </span>
+                ))}
+            </div>
+        </Card>
+    );
+}
+
+function AspectRadarComparison({ aspects }: { aspects: ScoreAspectSummary[] }) {
+    const chartData = aspects.map((aspect) => ({
+        aspect:
+            aspect.name.length > 18
+                ? `${aspect.name.slice(0, 18)}…`
+                : aspect.name,
+        fullAspect: aspect.name,
+        score: Number(clampScore(aspect.score_percent).toFixed(1)),
+    }));
+
+    if (chartData.length === 1) {
+        chartData.push({ aspect: ' ', fullAspect: ' ', score: 0 });
+        chartData.push({ aspect: '  ', fullAspect: '  ', score: 0 });
+    } else if (chartData.length === 2) {
+        chartData.push({ aspect: ' ', fullAspect: ' ', score: 0 });
+    }
+
+    return (
+        <Card className="min-h-[360px] rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <h2 className="text-base font-bold text-[#111827]">
+                Perbandingan Aspek (Radar)
+            </h2>
+            <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                Visualisasi nilai antar aspek
+            </p>
+
+            <div className="mt-4 h-[265px]">
+                {aspects.length === 0 ? (
+                    <div className="flex h-full items-center justify-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                        Belum ada data aspek
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart
+                            cx="50%"
+                            cy="50%"
+                            outerRadius="66%"
+                            data={chartData}
+                        >
+                            <PolarGrid stroke="#E4EAF2" />
+                            <PolarAngleAxis
+                                dataKey="aspect"
+                                tick={{
+                                    fill: '#667085',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                }}
+                            />
+                            <PolarRadiusAxis
+                                angle={90}
+                                domain={[0, 100]}
+                                tick={{
+                                    fill: '#98A2B3',
+                                    fontSize: 9,
+                                    fontWeight: 600,
+                                }}
+                                tickCount={5}
+                                axisLine={false}
+                            />
+                            <Radar
+                                dataKey="score"
+                                stroke="#0066AE"
+                                strokeWidth={2}
+                                fill="#0066AE"
+                                fillOpacity={0.22}
+                                dot={{
+                                    r: 3,
+                                    fill: '#0066AE',
+                                    stroke: '#FFFFFF',
+                                    strokeWidth: 1.5,
+                                }}
+                            />
+                            <Tooltip
+                                formatter={(value) => [
+                                    `${formatStatScore(Number(value))}%`,
+                                    'Skor',
+                                ]}
+                                labelFormatter={(label) => {
+                                    const item = chartData.find(
+                                        (data) => data.aspect === label,
+                                    );
+
+                                    return item?.fullAspect ?? label;
+                                }}
+                                contentStyle={{
+                                    border: '1px solid #E5EDF6',
+                                    borderRadius: '12px',
+                                    boxShadow:
+                                        '0 12px 32px rgba(15, 23, 42, 0.08)',
+                                    fontSize: '12px',
+                                }}
+                            />
+                        </RadarChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
+        </Card>
+    );
+}
+
+function VillageStatisticsCards({
+    aspects,
+    finalScore,
+}: {
+    aspects: ScoreAspectSummary[];
+    finalScore: number;
+}) {
+    return (
+        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.25fr_1fr]">
+            <SurveyFinalScoreGauge score={finalScore} />
+            <AspectScoreBars aspects={aspects} />
+            <AspectRadarComparison aspects={aspects} />
+        </div>
+    );
+}
 function StatisticsChartCard({
     aspects,
     distribution,
 }: {
     aspects: ScoreAspectSummary[];
-    distribution: Array<ScoreDistributionSummary & {
-        key: string;
-        label: string;
-        color: string;
-        textColor: string;
-        percentage?: number;
-    }>;
+    distribution: Array<
+        ScoreDistributionSummary & {
+            key: string;
+            label: string;
+            color: string;
+            textColor: string;
+            percentage?: number;
+        }
+    >;
 }) {
     const totalAnswers = distribution.reduce(
         (total, bucket) => total + bucket.count,
@@ -1068,7 +1355,7 @@ function QuestionRow({
                 </div>
             </div>
 
-            <div className="min-w-0">
+            <div className="flex min-w-0 flex-col justify-center text-center">
                 <p className="mb-2 text-xs font-bold text-[#303030]">
                     Dokumen Pendukung ({question.answer?.documents.length ?? 0})
                 </p>
@@ -1077,15 +1364,15 @@ function QuestionRow({
                         <DocumentBadge key={document.id} document={document} />
                     ))}
                     {(question.answer?.documents.length ?? 0) === 0 && (
-                        <p className="rounded-lg bg-[#F7F7F7] px-3 py-2 text-xs font-semibold text-[#7C7C7C]">
+                        <p className="rounded-lg bg-[#F7F7F7] px-3 py-2 text-center text-xs font-semibold text-[#7C7C7C]">
                             Tidak ada dokumen
                         </p>
                     )}
                 </div>
             </div>
 
-            <div className="min-w-0 text-xs">
-                <p className="flex items-center gap-2 font-semibold text-[#7C7C7C]">
+            <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
                     <UserRound size={14} className="text-[#0066AE]" />
                     Dijawab oleh
                 </p>
@@ -1094,8 +1381,8 @@ function QuestionRow({
                 </p>
             </div>
 
-            <div className="min-w-0 text-xs">
-                <p className="flex items-center gap-2 font-semibold text-[#7C7C7C]">
+            <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
                     <Clock3 size={14} className="text-[#0066AE]" />
                     Terakhir diedit
                 </p>
@@ -1104,7 +1391,7 @@ function QuestionRow({
                 </p>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-center justify-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button
@@ -1147,7 +1434,6 @@ function QuestionRow({
     );
 }
 
-
 function PariwisataQuestionRow({
     question,
     number,
@@ -1162,7 +1448,9 @@ function PariwisataQuestionRow({
     const answered = Boolean(question.answer);
     const title = question.indicator_name ?? question.criteria_name ?? '-';
     const meta = [
-        question.criteria_code ? `${question.criteria_code}  ${question.criteria_name ?? '-'}` : null,
+        question.criteria_code
+            ? `${question.criteria_code}  ${question.criteria_name ?? '-'}`
+            : null,
         question.indicator_code ? `${question.indicator_code}` : null,
     ].filter(Boolean);
 
@@ -1183,7 +1471,8 @@ function PariwisataQuestionRow({
                 )}
                 {(question.indicator_description || question.document_hint) && (
                     <p className="mt-2 text-xs font-semibold text-[#7C7C7C]">
-                        {question.indicator_description ?? question.document_hint}
+                        {question.indicator_description ??
+                            question.document_hint}
                     </p>
                 )}
             </div>
@@ -1198,7 +1487,8 @@ function PariwisataQuestionRow({
                     )}
                 >
                     <p className="text-sm font-bold">
-                        Skor {question.answer?.score ?? '-'} / {question.max_score || '-'}
+                        Skor {question.answer?.score ?? '-'} /{' '}
+                        {question.max_score || '-'}
                     </p>
                     <p className="line-clamp-2 text-[11px] font-semibold opacity-80">
                         {question.answer?.score_label ?? 'Belum dijawab'}
@@ -1299,18 +1589,25 @@ function PariwisataAnswerDetailModal({
                         Detail Jawaban Survey ISTC
                     </DialogTitle>
                     <DialogDescription>
-                        Pertanyaan, opsi jawaban, skor terpilih, catatan, dan file pendukung.
+                        Pertanyaan, opsi jawaban, skor terpilih, catatan, dan
+                        file pendukung.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-5">
                     <section className="rounded-xl bg-[#F8FBFF] p-4">
                         <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#0066AE]">
-                            {question.criteria_code && <span>{question.criteria_code}</span>}
-                            {question.indicator_code && <span> {question.indicator_code}</span>}
+                            {question.criteria_code && (
+                                <span>{question.criteria_code}</span>
+                            )}
+                            {question.indicator_code && (
+                                <span> {question.indicator_code}</span>
+                            )}
                         </div>
                         <h3 className="mt-2 text-base leading-6 font-bold text-[#303030]">
-                            {question.indicator_name ?? question.criteria_name ?? '-'}
+                            {question.indicator_name ??
+                                question.criteria_name ??
+                                '-'}
                         </h3>
                         {question.indicator_description && (
                             <p className="mt-2 text-sm font-semibold text-[#7C7C7C]">
@@ -1367,20 +1664,37 @@ function PariwisataAnswerDetailModal({
                         </h4>
                         <div className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
                             <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
-                                <p className="text-xs font-bold text-[#7C7C7C]">Dijawab oleh</p>
-                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.answered_by.name ?? '-'}</p>
+                                <p className="text-xs font-bold text-[#7C7C7C]">
+                                    Dijawab oleh
+                                </p>
+                                <p className="mt-1 font-semibold text-[#303030]">
+                                    {question.answer?.answered_by.name ?? '-'}
+                                </p>
                             </div>
                             <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
-                                <p className="text-xs font-bold text-[#7C7C7C]">Dijawab pada</p>
-                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.answered_at ?? '-'}</p>
+                                <p className="text-xs font-bold text-[#7C7C7C]">
+                                    Dijawab pada
+                                </p>
+                                <p className="mt-1 font-semibold text-[#303030]">
+                                    {question.answer?.answered_at ?? '-'}
+                                </p>
                             </div>
                             <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
-                                <p className="text-xs font-bold text-[#7C7C7C]">Terakhir diedit oleh</p>
-                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.last_edited_by.name ?? '-'}</p>
+                                <p className="text-xs font-bold text-[#7C7C7C]">
+                                    Terakhir diedit oleh
+                                </p>
+                                <p className="mt-1 font-semibold text-[#303030]">
+                                    {question.answer?.last_edited_by.name ??
+                                        '-'}
+                                </p>
                             </div>
                             <div className="rounded-xl bg-[#F7F7F7] px-4 py-3">
-                                <p className="text-xs font-bold text-[#7C7C7C]">Terakhir diedit pada</p>
-                                <p className="mt-1 font-semibold text-[#303030]">{question.answer?.last_edited_at ?? '-'}</p>
+                                <p className="text-xs font-bold text-[#7C7C7C]">
+                                    Terakhir diedit pada
+                                </p>
+                                <p className="mt-1 font-semibold text-[#303030]">
+                                    {question.answer?.last_edited_at ?? '-'}
+                                </p>
                             </div>
                         </div>
                     </section>
@@ -1409,7 +1723,10 @@ function PariwisataAnswerDetailModal({
                         </h4>
                         <div className="mt-2 space-y-2">
                             {question.answer?.documents.map((document) => (
-                                <DocumentBadge key={document.id} document={document} />
+                                <DocumentBadge
+                                    key={document.id}
+                                    document={document}
+                                />
                             ))}
                             {(question.answer?.documents.length ?? 0) === 0 && (
                                 <p className="rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#7C7C7C]">
@@ -1423,7 +1740,6 @@ function PariwisataAnswerDetailModal({
         </Dialog>
     );
 }
-
 
 function PariwisataAnswerEditModal({
     assignmentCode,
@@ -1482,7 +1798,11 @@ function PariwisataAnswerEditModal({
     };
 
     function updateAnswerField(
-        key: 'question_id' | 'pariwisata_suvey_option_id' | 'notes' | 'documents',
+        key:
+            | 'question_id'
+            | 'pariwisata_suvey_option_id'
+            | 'notes'
+            | 'documents',
         value: number | string | File[],
     ) {
         setData('answers', [
@@ -1499,8 +1819,9 @@ function PariwisataAnswerEditModal({
         errorBag.pariwisata_suvey_option_id;
     const notesError = errorBag['answers.0.notes'] ?? errorBag.notes;
     const documentsError =
-        Object.entries(errorBag).find(([key]) =>
-            key.startsWith('answers.0.documents') || key === 'documents',
+        Object.entries(errorBag).find(
+            ([key]) =>
+                key.startsWith('answers.0.documents') || key === 'documents',
         )?.[1] ?? undefined;
 
     function handleFilesChange(fileList: FileList | null) {
@@ -1508,7 +1829,10 @@ function PariwisataAnswerEditModal({
             return;
         }
 
-        updateAnswerField('documents', [...currentAnswer.documents, ...Array.from(fileList)]);
+        updateAnswerField('documents', [
+            ...currentAnswer.documents,
+            ...Array.from(fileList),
+        ]);
     }
 
     function removePendingFile(fileIndex: number) {
@@ -1539,18 +1863,25 @@ function PariwisataAnswerEditModal({
                         Edit Jawaban Survey ISTC
                     </DialogTitle>
                     <DialogDescription>
-                        Ubah jawaban, catatan, atau tambahkan dokumen pendukung untuk pertanyaan ini.
+                        Ubah jawaban, catatan, atau tambahkan dokumen pendukung
+                        untuk pertanyaan ini.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form className="space-y-5" onSubmit={handleSubmit}>
                     <section className="rounded-xl bg-[#F8FBFF] p-4">
                         <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#0066AE]">
-                            {question.criteria_code && <span>{question.criteria_code}</span>}
-                            {question.indicator_code && <span>{question.indicator_code}</span>}
+                            {question.criteria_code && (
+                                <span>{question.criteria_code}</span>
+                            )}
+                            {question.indicator_code && (
+                                <span>{question.indicator_code}</span>
+                            )}
                         </div>
                         <h3 className="mt-2 text-base leading-6 font-bold text-[#303030]">
-                            {question.indicator_name ?? question.criteria_name ?? '-'}
+                            {question.indicator_name ??
+                                question.criteria_name ??
+                                '-'}
                         </h3>
                         {question.indicator_description && (
                             <p className="mt-2 text-sm font-semibold text-[#7C7C7C]">
@@ -1566,7 +1897,8 @@ function PariwisataAnswerEditModal({
                         <div className="mt-2 divide-y divide-[#EFEFEF] rounded-xl border border-[#EFEFEF]">
                             {question.options.map((option) => {
                                 const selected =
-                                    String(option.id) === currentAnswer.pariwisata_suvey_option_id;
+                                    String(option.id) ===
+                                    currentAnswer.pariwisata_suvey_option_id;
 
                                 return (
                                     <label
@@ -1582,13 +1914,17 @@ function PariwisataAnswerEditModal({
                                             value={option.id}
                                             checked={selected}
                                             onChange={(event) =>
-                                                updateAnswerField('pariwisata_suvey_option_id', event.target.value)
+                                                updateAnswerField(
+                                                    'pariwisata_suvey_option_id',
+                                                    event.target.value,
+                                                )
                                             }
                                             className="mt-1"
                                         />
                                         <div className="min-w-0">
                                             <p className="font-bold text-[#0066AE]">
-                                                Skor {option.score} · {option.label}
+                                                Skor {option.score} ·{' '}
+                                                {option.label}
                                             </p>
                                             {option.description && (
                                                 <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
@@ -1609,9 +1945,11 @@ function PariwisataAnswerEditModal({
                         </h4>
                         <textarea
                             value={currentAnswer.notes}
-                            onChange={(event) => updateAnswerField('notes', event.target.value)}
+                            onChange={(event) =>
+                                updateAnswerField('notes', event.target.value)
+                            }
                             rows={4}
-                            className="mt-2 w-full rounded-xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-medium text-[#303030] outline-none transition focus:border-[#0066AE] focus:ring-2 focus:ring-[#0066AE]/10"
+                            className="mt-2 w-full rounded-xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-medium text-[#303030] transition outline-none focus:border-[#0066AE] focus:ring-2 focus:ring-[#0066AE]/10"
                             placeholder="Tambahkan catatan jawaban bila diperlukan"
                         />
                         <FieldError message={notesError} />
@@ -1623,7 +1961,10 @@ function PariwisataAnswerEditModal({
                         </h4>
                         <div className="mt-2 space-y-2">
                             {question.answer?.documents.map((document) => (
-                                <DocumentBadge key={document.id} document={document} />
+                                <DocumentBadge
+                                    key={document.id}
+                                    document={document}
+                                />
                             ))}
                             {(question.answer?.documents.length ?? 0) === 0 && (
                                 <p className="rounded-xl bg-[#F7F7F7] px-4 py-3 text-sm font-semibold text-[#7C7C7C]">
@@ -1642,11 +1983,14 @@ function PariwisataAnswerEditModal({
                                 type="file"
                                 multiple
                                 accept="image/jpeg,image/png,image/webp,application/pdf"
-                                onChange={(event) => handleFilesChange(event.target.files)}
+                                onChange={(event) =>
+                                    handleFilesChange(event.target.files)
+                                }
                                 className="block w-full text-sm font-medium text-[#303030] file:mr-3 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
                             />
                             <p className="mt-2 text-xs font-semibold text-[#7C7C7C]">
-                                JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per file.
+                                JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per
+                                file.
                             </p>
                         </div>
                         <FieldError message={documentsError} />
@@ -1662,12 +2006,18 @@ function PariwisataAnswerEditModal({
                                                 {file.name}
                                             </p>
                                             <p className="text-xs font-semibold text-[#7C7C7C]">
-                                                {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                                {(
+                                                    file.size /
+                                                    (1024 * 1024)
+                                                ).toFixed(2)}{' '}
+                                                MB
                                             </p>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => removePendingFile(index)}
+                                            onClick={() =>
+                                                removePendingFile(index)
+                                            }
                                             className="inline-flex items-center gap-1 rounded-lg border border-[#F2D6D6] bg-[#FFF7F7] px-3 py-2 text-xs font-bold text-[#D81313]"
                                         >
                                             <Trash2 size={14} />
@@ -1680,7 +2030,10 @@ function PariwisataAnswerEditModal({
                     </section>
 
                     <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => onOpenChange(false)}>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                        >
                             <Button>Batal</Button>
                         </button>
                         <button type="submit" disabled={processing}>
@@ -2176,19 +2529,26 @@ function PariwisataTab({
                             />
                             <input
                                 value={search}
-                                onChange={(event) => setSearch(event.target.value)}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
+                                }
                                 className="h-10 w-full rounded-lg border border-[#DDE4EC] bg-white pr-3 pl-9 text-sm outline-none focus:border-[#0066AE]"
                                 placeholder="Cari pertanyaan, aspek, atau kode..."
                             />
                         </label>
                         <select
                             value={aspectFilter}
-                            onChange={(event) => setAspectFilter(event.target.value)}
+                            onChange={(event) =>
+                                setAspectFilter(event.target.value)
+                            }
                             className="h-10 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#0066AE]"
                         >
                             <option value="all">Semua Aspek</option>
                             {surveyGroups.map((group) => (
-                                <option key={group.category_name} value={group.category_name}>
+                                <option
+                                    key={group.category_name}
+                                    value={group.category_name}
+                                >
                                     {group.category_name}
                                 </option>
                             ))}
@@ -2211,20 +2571,29 @@ function PariwisataTab({
                 {filteredGroups.map((group) => {
                     const scorePercent =
                         group.max_score > 0
-                            ? Math.round((group.score / group.max_score) * 1000) / 10
+                            ? Math.round(
+                                  (group.score / group.max_score) * 1000,
+                              ) / 10
                             : 0;
 
                     return (
                         <div key={group.category_name}>
                             <button
                                 type="button"
-                                onClick={() => toggleAspect(group.category_name)}
+                                onClick={() =>
+                                    toggleAspect(group.category_name)
+                                }
                                 className="flex w-full flex-col gap-3 border-b border-[#DDE9F6] bg-[#EAF3FF] px-4 py-3 text-left transition hover:bg-[#DDEFFF] sm:flex-row sm:items-center sm:justify-between"
-                                aria-expanded={!closedAspects[group.category_name]}
+                                aria-expanded={
+                                    !closedAspects[group.category_name]
+                                }
                             >
                                 <div className="flex min-w-0 items-center gap-3">
                                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#0066AE]">
-                                        <ShieldCheck size={18} strokeWidth={2.1} />
+                                        <ShieldCheck
+                                            size={18}
+                                            strokeWidth={2.1}
+                                        />
                                     </span>
                                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
                                         <h3 className="text-sm font-bold text-[#303030]">
@@ -2245,7 +2614,9 @@ function PariwisataTab({
                                     <div className="h-2 overflow-hidden rounded-full bg-white">
                                         <div
                                             className="h-full rounded-full bg-[#0066AE]"
-                                            style={{ width: `${Math.min(scorePercent, 100)}%` }}
+                                            style={{
+                                                width: `${Math.min(scorePercent, 100)}%`,
+                                            }}
                                         />
                                     </div>
                                     <span className="text-right text-xs font-bold text-[#0066AE]">
@@ -2255,7 +2626,9 @@ function PariwisataTab({
                                         size={18}
                                         className={classNames(
                                             'text-[#0066AE] transition-transform',
-                                            closedAspects[group.category_name] && '-rotate-90',
+                                            closedAspects[
+                                                group.category_name
+                                            ] && '-rotate-90',
                                         )}
                                     />
                                 </div>
@@ -2433,8 +2806,8 @@ function AnswerDetailModal({
                         Detail Jawaban Survey
                     </DialogTitle>
                     <DialogDescription>
-                        Pertanyaan, opsi jawaban, skor terpilih, catatan, dan file
-                        pendukung.
+                        Pertanyaan, opsi jawaban, skor terpilih, catatan, dan
+                        file pendukung.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -2513,7 +2886,6 @@ function AnswerDetailModal({
     );
 }
 
-
 function SurveyAnswerEditModal({
     assignmentCode,
     question,
@@ -2572,7 +2944,11 @@ function SurveyAnswerEditModal({
     };
 
     function updateAnswerField(
-        key: 'question_id' | 'survey_question_option_id' | 'notes' | 'documents',
+        key:
+            | 'question_id'
+            | 'survey_question_option_id'
+            | 'notes'
+            | 'documents',
         value: number | string | File[],
     ) {
         setData('answers', [
@@ -2617,7 +2993,10 @@ function SurveyAnswerEditModal({
         event.preventDefault();
 
         const formData = new FormData();
-        formData.append('answers[0][question_id]', String(currentAnswer.question_id));
+        formData.append(
+            'answers[0][question_id]',
+            String(currentAnswer.question_id),
+        );
         formData.append(
             'answers[0][survey_question_option_id]',
             currentAnswer.survey_question_option_id,
@@ -2630,15 +3009,19 @@ function SurveyAnswerEditModal({
 
         setIsSubmitting(true);
 
-        router.post(storeSurveyDraft.url({ assignment: assignmentCode }), formData, {
-            forceFormData: true,
-            preserveScroll: true,
-            onFinish: () => setIsSubmitting(false),
-            onSuccess: () => {
-                reset();
-                onOpenChange(false);
+        router.post(
+            storeSurveyDraft.url({ assignment: assignmentCode }),
+            formData,
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onFinish: () => setIsSubmitting(false),
+                onSuccess: () => {
+                    reset();
+                    onOpenChange(false);
+                },
             },
-        });
+        );
     }
 
     const errorBag = errors as Record<string, string | undefined>;
@@ -2647,8 +3030,9 @@ function SurveyAnswerEditModal({
         errorBag.survey_question_option_id;
     const notesError = errorBag['answers.0.notes'] ?? errorBag.notes;
     const documentsError =
-        Object.entries(errorBag).find(([key]) =>
-            key.startsWith('answers.0.documents') || key === 'documents',
+        Object.entries(errorBag).find(
+            ([key]) =>
+                key.startsWith('answers.0.documents') || key === 'documents',
         )?.[1] ?? undefined;
 
     return (
@@ -2766,7 +3150,9 @@ function SurveyAnswerEditModal({
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => deleteStoredDocument(document)}
+                                        onClick={() =>
+                                            deleteStoredDocument(document)
+                                        }
                                         className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
                                     >
                                         <Trash2 className="size-4" />
@@ -2786,13 +3172,17 @@ function SurveyAnswerEditModal({
                             Dokumen Baru
                         </h4>
                         <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F1F5F8] px-4 py-4 text-left transition hover:bg-[#EAF3FF]">
-                            <Plus size={20} className="shrink-0 text-[#0066AE]" />
+                            <Plus
+                                size={20}
+                                className="shrink-0 text-[#0066AE]"
+                            />
                             <span className="min-w-0 flex-1">
                                 <span className="block text-sm font-bold text-[#0066AE]">
                                     Tambah dokumen pendukung
                                 </span>
                                 <span className="block text-xs font-medium text-[#7C7C7C]">
-                                    JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per file.
+                                    JPG, PNG, WEBP, atau PDF. Maksimal 50 MB per
+                                    file.
                                 </span>
                             </span>
                             <input
@@ -2823,7 +3213,9 @@ function SurveyAnswerEditModal({
                                         </span>
                                         <button
                                             type="button"
-                                            onClick={() => removePendingFile(index)}
+                                            onClick={() =>
+                                                removePendingFile(index)
+                                            }
                                             className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#D81313] transition hover:bg-[#FDECEC]"
                                         >
                                             <Trash2 className="size-4" />
@@ -2835,7 +3227,10 @@ function SurveyAnswerEditModal({
                     </section>
 
                     <div className="flex items-center justify-end gap-2 border-t border-[#EFEFEF] pt-4">
-                        <button type="button" onClick={() => onOpenChange(false)}>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                        >
                             <Button>Batal</Button>
                         </button>
                         <button
@@ -2844,7 +3239,9 @@ function SurveyAnswerEditModal({
                             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967] disabled:opacity-60"
                         >
                             <Save size={16} />
-                            {processing || isSubmitting ? 'Menyimpan...' : 'Simpan Jawaban'}
+                            {processing || isSubmitting
+                                ? 'Menyimpan...'
+                                : 'Simpan Jawaban'}
                         </button>
                     </div>
                 </form>
@@ -2998,7 +3395,7 @@ export default function SurveyAssignmentShow({
         [aspectFilter, aspects, search],
     );
 
-    const villageTitle = `Assessment ${assignment.village.name}`;
+    const villageTitle = `${assignment.village.name}`;
 
     function toggleAspect(aspectName: string) {
         setClosedAspects((current) => ({
@@ -3172,23 +3569,32 @@ export default function SurveyAssignmentShow({
                             <TabButton
                                 active={activeTab === 'desa'}
                                 label="Kemenpar"
-                                count={tab_counts.kemenpar}
+                                count={1}
                                 icon={<MapPin size={16} />}
-                                href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'desa' } })}
+                                href={showSurveyAssignment.url(
+                                    { assignment: assignment.code },
+                                    { query: { tab: 'desa' } },
+                                )}
                             />
                             <TabButton
                                 active={activeTab === 'umkm'}
                                 label="UMKM"
                                 count={tab_counts.umkm}
                                 icon={<ClipboardCheck size={16} />}
-                                href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'umkm' } })}
+                                href={showSurveyAssignment.url(
+                                    { assignment: assignment.code },
+                                    { query: { tab: 'umkm' } },
+                                )}
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
                                 label="ISTC"
                                 count={tab_counts.istc}
                                 icon={<Flag size={16} />}
-                                href={showSurveyAssignment.url({ assignment: assignment.code }, { query: { tab: 'pariwisata' } })}
+                                href={showSurveyAssignment.url(
+                                    { assignment: assignment.code },
+                                    { query: { tab: 'pariwisata' } },
+                                )}
                             />
                         </div>
                     </div>
@@ -3293,18 +3699,20 @@ export default function SurveyAssignmentShow({
                                     </div>
                                 </Card>
 
-                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                     <MetricCard
                                         label="Total Skor"
-                                        value={`${summary.total_score} / ${summary.max_score}`}
-                                        helper="Skor kumulatif"
-                                        icon={<BarChart3 size={22} />}
+                                        value={String(summary.total_score)}
+                                        helper={`/ ${summary.max_score}`}
+                                        icon={<BarChart3 size={18} />}
+                                        compact
                                     />
                                     <MetricCard
                                         label="Nilai Akhir"
                                         value={String(summary.final_score)}
-                                        helper={`${summary.answered_questions} dari ${summary.total_questions} terjawab`}
-                                        icon={<Star size={22} />}
+                                        helper="/ 100"
+                                        icon={<Star size={18} />}
+                                        compact
                                     />
                                     <MetricCard
                                         label="Aspek Tertinggi"
@@ -3313,14 +3721,12 @@ export default function SurveyAssignmentShow({
                                         }
                                         helper={
                                             summary.highest_aspect
-                                                ? String(
-                                                      summary.highest_aspect
-                                                          .score_percent,
-                                                  )
+                                                ? `${summary.highest_aspect.score_percent}%`
                                                 : '-'
                                         }
-                                        icon={<Trophy size={22} />}
+                                        icon={<Trophy size={18} />}
                                         tone="green"
+                                        compact
                                     />
                                     <MetricCard
                                         label="Perlu Perhatian"
@@ -3329,14 +3735,12 @@ export default function SurveyAssignmentShow({
                                         }
                                         helper={
                                             summary.lowest_aspect
-                                                ? String(
-                                                      summary.lowest_aspect
-                                                          .score_percent,
-                                                  )
+                                                ? `${summary.lowest_aspect.score_percent}%`
                                                 : '-'
                                         }
-                                        icon={<AlertTriangle size={22} />}
+                                        icon={<AlertTriangle size={18} />}
                                         tone="orange"
+                                        compact
                                     />
                                 </div>
 
@@ -4595,9 +4999,3 @@ SurveyAssignmentShow.layout = {
         { title: 'Detail', href: '#' },
     ],
 };
-
-
-
-
-
-

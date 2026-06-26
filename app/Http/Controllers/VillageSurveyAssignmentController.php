@@ -120,6 +120,7 @@ class VillageSurveyAssignmentController extends Controller
             ? (string) $request->query('tab')
             : 'desa';
 
+        
         return Inertia::render('survey-assignment/show', $service->getShowData($assignment, $tab));
     }
 

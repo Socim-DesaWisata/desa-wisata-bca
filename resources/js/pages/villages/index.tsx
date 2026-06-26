@@ -135,6 +135,9 @@ type VillageForm = {
 
 type ReverseGeocodeAddress = {
     state?: string;
+    province?: string;
+    region?: string;
+    state_district?: string;
     city?: string;
     town?: string;
     regency?: string;
@@ -151,6 +154,7 @@ type ReverseGeocodeAddress = {
 
 type ReverseGeocodeResponse = {
     address?: ReverseGeocodeAddress;
+    display_name?: string;
 };
 
 type VillagesIndexProps = {
@@ -202,6 +206,7 @@ const selectedMapZoom = 14;
 const provinceTranslations: Record<string, string> = {
     Aceh: 'Aceh',
     Bali: 'Bali',
+    'Bangka Belitung': 'Kepulauan Bangka Belitung',
     'Bangka Belitung Islands': 'Kepulauan Bangka Belitung',
     Banten: 'Banten',
     Bengkulu: 'Bengkulu',
@@ -228,13 +233,28 @@ const provinceTranslations: Record<string, string> = {
     'South Sumatra': 'Sumatera Selatan',
     'Southeast Sulawesi': 'Sulawesi Tenggara',
     'Special Region of Yogyakarta': 'DI Yogyakarta',
+    'Daerah Istimewa Yogyakarta': 'DI Yogyakarta',
+    Yogyakarta: 'DI Yogyakarta',
     'West Java': 'Jawa Barat',
     'West Kalimantan': 'Kalimantan Barat',
     'West Nusa Tenggara': 'Nusa Tenggara Barat',
     'West Papua': 'Papua Barat',
     'West Sulawesi': 'Sulawesi Barat',
     'West Sumatra': 'Sumatera Barat',
+    'Central Papua': 'Papua Tengah',
+    'Highland Papua': 'Papua Pegunungan',
+    'South Papua': 'Papua Selatan',
+    'Southwest Papua': 'Papua Barat Daya',
 };
+
+const provinceAliases = Object.entries(provinceTranslations).reduce(
+    (aliases, [alias, province]) => ({
+        ...aliases,
+        [alias.toLowerCase()]: province,
+        [province.toLowerCase()]: province,
+    }),
+    {} as Record<string, string>,
+);
 
 function classNames(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
@@ -300,12 +320,51 @@ function googleMapsUrl(latitude: string, longitude: string) {
     return `https://www.google.com/maps?q=${latitude},${longitude}`;
 }
 
+function cleanProvinceName(value: string) {
+    return value
+        .trim()
+        .replace(/^province of\s+/i, '')
+        .replace(/^provinsi\s+/i, '')
+        .replace(/^daerah istimewa\s+/i, 'DI ')
+        .replace(/^daerah khusus ibukota\s+/i, 'DKI ')
+        .replace(/\s+/g, ' ');
+}
+
 function provinceName(value?: string) {
     if (!value) {
         return undefined;
     }
 
-    return provinceTranslations[value] ?? value;
+    const cleaned = cleanProvinceName(value);
+
+    return provinceAliases[cleaned.toLowerCase()] ?? cleaned;
+}
+
+function resolveProvinceName(
+    address: ReverseGeocodeAddress,
+    displayName?: string,
+) {
+    const knownProvinces = new Set(Object.values(provinceAliases));
+    const directProvince = [address.state, address.province]
+        .map(provinceName)
+        .find(Boolean);
+
+    if (directProvince) {
+        return directProvince;
+    }
+
+    const fallbackProvince = [address.region, address.state_district]
+        .map(provinceName)
+        .find((segment) => segment && knownProvinces.has(segment));
+
+    if (fallbackProvince) {
+        return fallbackProvince;
+    }
+
+    return displayName
+        ?.split(',')
+        .map(provinceName)
+        .find((segment) => segment && knownProvinces.has(segment));
 }
 
 function parseCoordinates(latitude: string, longitude: string) {
@@ -401,8 +460,7 @@ function VillageLocationPicker({
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<any[]>([]);
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSearch = async () => {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
         try {
@@ -441,18 +499,24 @@ function VillageLocationPicker({
                 )}
             </div>
             <div className="relative overflow-hidden rounded-xl border border-[#DDE4EC]">
-                <div className="absolute left-2 top-2 z-[1000] w-[280px] max-w-[calc(100%-16px)]">
-                    <form onSubmit={handleSearch} className="relative flex items-center">
+                <div className="absolute top-2 right-2 z-[1000] w-[280px] max-w-[calc(100%-16px)]">
+                    <div className="relative flex items-center">
                         <input 
                             type="text" 
                             placeholder="Cari lokasi desa..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    void handleSearch();
+                                }
+                            }}
                             className="h-10 w-full rounded-lg border-none bg-white/95 pl-10 pr-4 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] outline-none backdrop-blur placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
                         />
                         <Search className="absolute left-3.5 size-4 text-[#7C7C7C]" />
                         {isSearching && <Loader2 className="absolute right-3.5 size-4 animate-spin text-[#0066AE]" />}
-                    </form>
+                    </div>
                     {searchResults.length > 0 && (
                         <div className="mt-1 max-h-48 overflow-y-auto rounded-lg bg-white shadow-[0_6px_16px_rgba(3,17,32,0.12)]">
                             {searchResults.map((result, i) => (
@@ -577,7 +641,9 @@ export default function VillagesIndex({
 
                 setData((current) => ({
                     ...current,
-                    province: provinceName(address.state) ?? current.province,
+                    province:
+                        resolveProvinceName(address, payload.display_name) ??
+                        current.province,
                     city:
                         address.city ??
                         address.town ??

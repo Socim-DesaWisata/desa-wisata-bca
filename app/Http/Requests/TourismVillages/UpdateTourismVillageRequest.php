@@ -50,7 +50,7 @@ class UpdateTourismVillageRequest extends FormRequest
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'verified', 'review', 'archived'])],
             'media' => ['nullable', 'array'],
             'media.*.id' => ['nullable', 'integer'],
-            'media.*.type' => ['required_with:media', 'string', 'max:50'],
+            'media.*.type' => ['required_with:media', 'string', Rule::in(['image', 'video'])],
             'media.*.title' => ['nullable', 'string', 'max:150'],
             'media.*.caption' => ['nullable', 'string'],
             'media.*.file_path' => ['nullable', 'string', 'max:255'],
