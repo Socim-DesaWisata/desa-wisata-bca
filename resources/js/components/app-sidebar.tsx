@@ -137,72 +137,23 @@ export function AdminSidebarContent({
 
     return (
         <div className="relative flex h-full flex-col overflow-hidden bg-[#093967] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_28%,rgba(255,255,255,0.04)_100%)]" />
-            <div
-                className="pointer-events-none absolute right-0 bottom-0 left-0 flex items-end justify-center text-white opacity-30"
-                style={{ height: '300px' }}
-            >
-                <svg
-                    viewBox="0 0 200 200"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="preserve-3d h-full w-full opacity-60 mix-blend-overlay"
-                >
-                    <path
-                        d="M0 150 L50 100 L100 130 L150 80 L200 120 L200 200 L0 200 Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                        fill="none"
-                    />
-                    <path
-                        d="M40 180 L40 130 L60 130 L60 180"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M50 130 L50 100"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M120 190 L120 140 L160 140 L160 190"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M140 140 L140 110"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <circle
-                        cx="150"
-                        cy="50"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M15 60 L30 55 L45 60"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        fill="none"
-                    />
-                    <path
-                        d="M60 40 L70 35 L80 40"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        fill="none"
-                    />
-                </svg>
+            <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+                <img
+                    src="/images/dashboard-image.webp"
+                    alt="Ilustrasi desa wisata"
+                    className="h-full w-full object-cover object-[center_58%] opacity-95"
+                />
+                <img
+                    src="/images/dashboard-image.webp"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-x-0 top-0 h-[220px] w-full [mask-image:linear-gradient(180deg,rgba(0,0,0,1)_0%,rgba(0,0,0,0.82)_42%,rgba(0,0,0,0.18)_78%,transparent_100%)] object-cover object-[center_36%] opacity-90 blur-xl"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,57,103,0.24)_0%,rgba(9,57,103,0.32)_16%,rgba(9,57,103,0.48)_42%,rgba(9,57,103,0.68)_72%,rgba(9,57,103,0.86)_100%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_28%,rgba(255,255,255,0.04)_100%)]" />
+                <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(9,57,103,0.82)_0%,rgba(9,57,103,0.36)_54%,rgba(9,57,103,0)_100%)]" />
             </div>
-
-            <div className="relative pb-3">
+            <div className="relative z-10 pb-3">
                 <Link
                     href={dashboard()}
                     prefetch
@@ -215,7 +166,7 @@ export function AdminSidebarContent({
                 <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.24),transparent)]" />
             </div>
 
-            <nav className="relative flex-1 [scrollbar-width:none] overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden">
+            <nav className="relative z-10 flex-1 [scrollbar-width:none] overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden">
                 {visibleNavGroups.map((group, groupIndex) => (
                     <div
                         key={group.label}
@@ -390,14 +341,15 @@ export function AdminSidebarContent({
                 ))}
             </nav>
 
-            <div className="relative pt-3">
-                <div className="mb-2 px-2 text-[10px] font-semibold tracking-[0.08em] text-white/45 uppercase">
+            <div className="relative z-10 mt-3 overflow-hidden rounded-[26px]  bg-[linear-gradient(180deg,rgba(14,76,138,0.26)_0%,rgba(14,76,138,0.16)_100%)] px-2 pt-4 pb-2 shadow-[0_18px_32px_rgba(3,17,32,0.18)] backdrop-blur-md">
+                {' '}
+                <div className="relative px-2 text-[10px] font-semibold tracking-[0.08em] text-white/72 uppercase">
                     CSR Dashboard
                 </div>
                 {auth.user && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex w-full items-center gap-2.5 rounded-2xl border border-white/16 bg-white/12 p-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur transition duration-150 hover:bg-white/16">
+                            <button className="relative flex w-full items-center gap-2.5 rounded-2xl border border-white/16 bg-[#0E4C8A]/58 p-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-md transition duration-150 hover:bg-[#0E4C8A]/66">
                                 <span className="relative flex size-[34px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/35 bg-gradient-to-br from-white to-[#AAD2F8] text-[13px] font-bold text-[#0066AE] shadow-[0_6px_16px_rgba(3,17,32,0.16)]">
                                     {auth.user.avatar ? (
                                         <img

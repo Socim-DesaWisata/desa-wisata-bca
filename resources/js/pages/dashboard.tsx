@@ -1,24 +1,17 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    ArrowDownToLine,
     ArrowUpRight,
-    CalendarDays,
-    CheckCircle2,
     ChevronRight,
     ClipboardCheck,
     FileSearch,
-    FileText,
+    Eye,
     Info,
     MapPin,
-    MoreVertical,
-    Plus,
-    Search,
     Store,
     Ticket,
     Timer,
     TrendingUp,
-    UserRound,
     X,
     ArrowRight,
 } from 'lucide-react';
@@ -62,10 +55,8 @@ type RecentAssignment = {
     code: string;
     village: string;
     location: string;
-    progress: number;
     status: string;
     status_label: string;
-    enumerators: number;
     updated_at: string;
     aspect_scores?: { aspect: string; score: number }[];
 };
@@ -129,6 +120,8 @@ type DashboardProps = {
     top_village_surveys?: TopSurveyRow[];
     top_umkm_surveys?: TopSurveyRow[];
     top_pariwisata_surveys?: TopSurveyRow[];
+    top_umkm_turnovers?: TopSurveyRow[];
+    top_pariwisata_turnovers?: TopSurveyRow[];
     top_umkm_categories?: TopUmkmCategory[];
     recent_assignments?: RecentAssignment[];
     priorities?: Priority[];
@@ -143,40 +136,6 @@ const kpiIcons = {
     store: Store,
     ticket: Ticket,
 };
-
-const activityIcons = {
-    user: UserRound,
-    check: CheckCircle2,
-    file: FileText,
-    plus: Plus,
-    clipboard: ClipboardCheck,
-};
-
-const toneColors = {
-    success: colors.success,
-    blue: colors.blue500,
-    warning: colors.warning,
-    danger: colors.danger,
-};
-
-const quickActions = [
-    { label: 'Tambah Desa', icon: MapPin, href: villagesRoute.url() },
-    {
-        label: 'Buat Survey',
-        icon: ClipboardCheck,
-        href: surveyAssignments.url(),
-    },
-    {
-        label: 'Review Jawaban',
-        icon: Search,
-        href: surveyAssignments.url({ query: { status: 'submitted' } }),
-    },
-    {
-        label: 'Export Laporan',
-        icon: ArrowDownToLine,
-        href: surveyAssignments.url(),
-    },
-];
 
 function statusClass(status: string) {
     if (status === 'submitted' || status === 'Submitted')
@@ -322,25 +281,15 @@ export default function Dashboard({
     top_village_surveys = [],
     top_umkm_surveys = [],
     top_pariwisata_surveys = [],
+    top_umkm_turnovers = [],
+    top_pariwisata_turnovers = [],
     top_umkm_categories = [],
     recent_assignments = [],
-    activities = [],
     filters = {},
 }: DashboardProps & { filters?: Record<string, string | null> }) {
     const { auth } = usePage().props;
 
     const programType = filters.program_type || 'Semua Program';
-    const activeTopSurveys = programType === 'UMKM' 
-        ? top_umkm_surveys 
-        : programType === 'ISTC' 
-            ? top_pariwisata_surveys 
-            : top_village_surveys;
-
-    const performaTitle = programType === 'UMKM' 
-        ? 'Performa Assessment UMKM Terbaik'
-        : programType === 'ISTC'
-            ? 'Performa Assessment Pariwisata Terbaik'
-            : 'Performa Assessment Desa Terbaik';
 
     if (dashboard_mode === 'enumerator') {
         return (
@@ -564,61 +513,18 @@ export default function Dashboard({
                         </Panel>
                     </div>
 
-                    {activeTopSurveys && activeTopSurveys.length > 0 && (
-                        <div className="mb-2">
-                            <div className="mb-3 flex items-center justify-between gap-4">
-                                <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                    {performaTitle}
-                                </h2>
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {activeTopSurveys.map((survey) => (
-                                    <Panel key={survey.id} className="p-4 flex flex-col">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="min-w-0 pr-2">
-                                                <h3 className="font-bold text-[#303030] text-sm truncate">{survey.name}</h3>
-                                                <p className="text-xs text-[#7C7C7C] truncate">{survey.meta}</p>
-                                            </div>
-                                            <div className="shrink-0 bg-[#EAF8F0] text-[#00893D] px-2 py-1 rounded text-xs font-bold">
-                                                {survey.score}/100
-                                            </div>
-                                        </div>
-                                        <div className="h-[220px] w-full mt-2 -mx-2">
-                                            <AssessmentRadarChart data={survey.aspect_scores || []} />
-                                        </div>
-                                        {survey.url && (
-                                            <Link href={survey.url} className="mt-4 flex justify-center w-full rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
-                                                Lihat Detail <ChevronRight className="inline size-3 ml-1" />
-                                            </Link>
-                                        )}
-                                    </Panel>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <div className="mb-4 space-y-4">
                         <Panel className="p-3.5 sm:p-4">
                             <div className="mb-3 flex items-center justify-between gap-4">
                                 <h2 className="text-base leading-6 font-bold text-[#303030]">
                                     Assignment Survey Terbaru
                                 </h2>
-                                <div className="flex gap-2">
-                                    <button onClick={() => alert('Fitur Export segera hadir')} className="flex h-8 items-center gap-2 rounded-lg border border-[#EFEFEF] px-3 text-xs font-semibold text-[#303030] transition hover:bg-[#F7F7F7]">
-                                        <ArrowDownToLine className="size-3.5" />{' '}
-                                        Export Excel
-                                    </button>
-                                    <button onClick={() => alert('Fitur Export segera hadir')} className="flex h-8 items-center gap-2 rounded-lg border border-[#EFEFEF] px-3 text-xs font-semibold text-[#303030] transition hover:bg-[#F7F7F7]">
-                                        <ArrowDownToLine className="size-3.5" />{' '}
-                                        Export PDF
-                                    </button>
-                                    <Link
-                                        href={surveyAssignments.url()}
-                                        className="inline-flex h-8 items-center justify-center rounded-lg bg-[#F8FBFE] px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]"
-                                    >
-                                        Lihat Semua
-                                    </Link>
-                                </div>
+                                <Link
+                                    href={surveyAssignments.url()}
+                                    className="inline-flex h-8 items-center justify-center rounded-lg bg-[#F8FBFE] px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]"
+                                >
+                                    Lihat Semua
+                                </Link>
                             </div>
 
                             <div className="overflow-x-auto">
@@ -628,9 +534,7 @@ export default function Dashboard({
                                             {[
                                                 'Desa Wisata',
                                                 'Lokasi',
-                                                'Progress',
                                                 'Status',
-                                                'Enumerator',
                                                 'Update Terakhir',
                                                 'Aksi',
                                             ].map((head) => (
@@ -671,61 +575,25 @@ export default function Dashboard({
                                                     </p>
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <div className="flex w-24 flex-col gap-1">
-                                                        <span className="text-xs font-bold text-[#303030]">
-                                                            {row.progress}%
-                                                        </span>
-                                                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-[#E6EEF5]">
-                                                            <span
-                                                                className="block h-full rounded-full bg-[#0066AE]"
-                                                                style={{
-                                                                    width: `${row.progress}%`,
-                                                                }}
-                                                            />
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-2 py-2">
                                                     <span
                                                         className={`inline-flex h-6 min-w-20 items-center justify-center rounded-md px-2 text-[10px] font-bold ${statusClass(row.status)}`}
                                                     >
                                                         {row.status_label}
                                                     </span>
                                                 </td>
-                                                <td className="px-2 py-2 whitespace-nowrap">
-                                                    <div className="flex items-center">
-                                                        <div className="flex -space-x-2">
-                                                            <div className="z-20 size-6 rounded-full border-2 border-white bg-gray-300"></div>
-                                                            <div className="z-10 size-6 rounded-full border-2 border-white bg-gray-400"></div>
-                                                        </div>
-                                                        {row.enumerators >
-                                                            2 && (
-                                                                <span className="ml-1 text-[10px] font-bold text-[#7C7C7C]">
-                                                                    +
-                                                                    {row.enumerators -
-                                                                        2}
-                                                                </span>
-                                                            )}
-                                                    </div>
-                                                </td>
                                                 <td className="px-2 py-2 text-xs whitespace-nowrap text-[#303030]">
                                                     {row.updated_at}
                                                 </td>
                                                 <td className="px-2 py-2 text-center last:pr-0">
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        <Link
-                                                            href={showSurveyAssignment.url(
-                                                                row.code,
-                                                            )}
-                                                            className="inline-flex size-7 items-center justify-center rounded hover:bg-[#F1F5F8]"
-                                                            aria-label={`Detail ${row.village}`}
-                                                        >
-                                                            <Info className="size-4 text-[#7C7C7C]" />
-                                                        </Link>
-                                                        <button className="inline-flex size-7 items-center justify-center rounded hover:bg-[#F1F5F8]">
-                                                            <MoreVertical className="size-4 text-[#7C7C7C]" />
-                                                        </button>
-                                                    </div>
+                                                    <Link
+                                                        href={showSurveyAssignment.url(
+                                                            row.code,
+                                                        )}
+                                                        className="inline-flex size-8 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                                                        aria-label={`Detail ${row.village}`}
+                                                    >
+                                                        <Eye className="size-4" />
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))}
@@ -765,14 +633,14 @@ export default function Dashboard({
                             <TopStatisticList
                                 title="Top 3 Omset UMKM"
                                 icon={Store}
-                                data={top_umkm_surveys.slice(0, 3).map(s => ({ label: s.name, value: `Rp${(s.score * 1250000).toLocaleString('id-ID')}` }))}
+                                data={top_umkm_turnovers.slice(0, 3).map((item) => ({ label: item.name, value: `Rp${Number(item.score).toLocaleString('id-ID')}` }))}
                                 linkHref={umkm.url()}
                                 linkLabel="Lihat Semua UMKM"
                             />
                             <TopStatisticList
                                 title="Top 3 Omset Wisata"
                                 icon={MapPin}
-                                data={top_pariwisata_surveys.slice(0, 3).map(s => ({ label: s.name, value: `Rp${(s.score * 1850000).toLocaleString('id-ID')}` }))}
+                                data={top_pariwisata_turnovers.slice(0, 3).map((item) => ({ label: item.name, value: `Rp${Number(item.score).toLocaleString('id-ID')}` }))}
                                 linkHref={villagesRoute.url()}
                                 linkLabel="Lihat Semua Wisata"
                             />
