@@ -602,33 +602,6 @@ export default function Dashboard({
                             </div>
                         </Panel>
 
-                        <div className="flex items-start gap-3 rounded-xl border border-[#EAF3FF] bg-[#F8FBFE] p-4">
-                            <Info
-                                className="mt-0.5 size-5 shrink-0 text-[#0066AE]"
-                                strokeWidth={2}
-                            />
-                            <div>
-                                <h3 className="text-sm font-bold text-[#0066AE]">
-                                    Important Notes
-                                </h3>
-                                <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs font-medium text-[#0066AE]/80">
-                                    <li>
-                                        Pastikan setiap assignment survey
-                                        memiliki minimal 2 enumerator.
-                                    </li>
-                                    <li>
-                                        Update data desa dan UMKM secara berkala
-                                        untuk menjaga akurasi laporan.
-                                    </li>
-                                    <li>
-                                        Perhatikan status survey yang belum
-                                        dimulai agar program berjalan tepat
-                                        waktu.
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                             <TopStatisticList
                                 title="Top 3 Omset UMKM"
