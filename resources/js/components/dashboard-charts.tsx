@@ -18,7 +18,7 @@ import {
     PolarAngleAxis,
     PolarRadiusAxis,
 } from 'recharts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import {
     DropdownMenu,
@@ -63,6 +63,18 @@ export function DashboardCharts() {
     const [programTypeFilter, setProgramTypeFilter] = useState(filters.program_type || 'Semua Program');
     const [activityFilter, setActivityFilter] = useState(filters.activity_filter || '30 Hari Terakhir');
     const [statusFilter, setStatusFilter] = useState(filters.status_filter || 'Tahun Ini');
+
+    useEffect(() => {
+        setGeneralReportFilter(filters.general_report_filter || 'Bulan Ini');
+        setProgramTypeFilter(filters.program_type || 'Semua Program');
+        setActivityFilter(filters.activity_filter || '30 Hari Terakhir');
+        setStatusFilter(filters.status_filter || 'Tahun Ini');
+    }, [
+        filters.activity_filter,
+        filters.general_report_filter,
+        filters.program_type,
+        filters.status_filter,
+    ]);
 
     const updateFilter = (key: string, value: string) => {
         if (key === 'general_report_filter') setGeneralReportFilter(value);

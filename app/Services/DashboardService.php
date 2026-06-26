@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AnnualTurnover;
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataVillage;
 use App\Models\TourismVillage;
@@ -25,6 +26,8 @@ class DashboardService
             'top_village_surveys' => $this->topVillageSurveys(),
             'top_umkm_surveys' => $this->topUmkmSurveys(),
             'top_pariwisata_surveys' => $this->topPariwisataSurveys(),
+            'top_umkm_turnovers' => $this->topUmkmTurnovers(),
+            'top_pariwisata_turnovers' => $this->topPariwisataTurnovers(),
             'top_umkm_categories' => $this->topUmkmCategories(),
             'recent_assignments' => $this->recentAssignments(),
             'priorities' => $this->priorities(),
@@ -168,7 +171,7 @@ class DashboardService
                     ->map(function ($answers, $aspect) {
                         return [
                             'aspect' => $aspect ?: 'Umum',
-                            'score' => round($answers->avg('score') * 20, 1)
+                            'score' => round($answers->avg('score') * 20, 1),
                         ];
                     })->values()->all();
 
@@ -203,13 +206,13 @@ class DashboardService
             ->get()
             ->map(function (VillageUmkm $umkm): array {
                 $assignment = $this->latestAssignmentForVillage((int) $umkm->village_id);
-                
+
                 $aspectScores = collect($umkm->surveyAnswers)
                     ->groupBy('criteria_name_snapshot')
                     ->map(function ($answers, $criteria) {
                         return [
                             'aspect' => $criteria ?: 'Umum',
-                            'score' => round($answers->sum('weighted_score'), 1)
+                            'score' => round($answers->sum('weighted_score'), 1),
                         ];
                     })->values()->all();
 
@@ -247,13 +250,13 @@ class DashboardService
             ->map(function (PariwisataVillage $pariwisata) use ($maxScore): array {
                 $assignment = $this->latestAssignmentForVillage((int) $pariwisata->village_id);
                 $totalScore = (float) ($pariwisata->total_score ?? 0);
-                
+
                 $aspectScores = collect($pariwisata->surveyAnswers)
                     ->groupBy('category_name_snapshot')
                     ->map(function ($answers, $category) {
                         return [
                             'aspect' => $category ?: 'Umum',
-                            'score' => round($answers->avg('score') * 20, 1)
+                            'score' => round($answers->avg('score') * 20, 1),
                         ];
                     })->values()->all();
 
@@ -273,28 +276,87 @@ class DashboardService
     }
 
     /**
-     * @return array<int, array<string, string|int>>
+     * @return array<int, array<string, mixed>>
      */
-    private function topUmkmCategories(): array
+    private function topUmkmTurnovers(): array
     {
-        return VillageUmkmCategory::query()
-            ->selectRaw('category, COUNT(*) as total')
-            ->groupBy('category')
-            ->orderByDesc('total')
-            ->orderBy('category')
-            ->limit(4)
+        return VillageUmkm::query()
+            ->select(['id', 'village_id', 'name', 'product_category'])
+            ->whereHas('annualTurnovers')
+            ->with(['village:id,name,city,province'])
+            ->withCount('annualTurnovers')
+            ->withSum('annualTurnovers as total_turnover', 'value')
+            ->orderByDesc('total_turnover')
+            ->limit(3)
             ->get()
-            ->map(fn (VillageUmkmCategory $category): array => [
-                'category' => (string) $category->category,
-                'label' => $this->umkmCategoryLabel((string) $category->category),
-                'total' => (int) $category->total,
-            ])
+            ->map(function (VillageUmkm $umkm): array {
+                return [
+                    'id' => $umkm->id,
+                    'name' => $umkm->name,
+                    'meta' => $umkm->product_category ?: ($umkm->village?->name ?? '-'),
+                    'score' => round((float) ($umkm->total_turnover ?? 0), 2),
+                    'progress' => null,
+                    'answers' => $umkm->annual_turnovers_count.' tahun data',
+                    'status' => $umkm->village?->name ?? '-',
+                    'url' => null,
+                    'aspect_scores' => [],
+                ];
+            })
             ->all();
     }
 
     /**
-     * @return array<int, array<string, string|int>>
+     * @return array<int, array<string, mixed>>
      */
+    private function topPariwisataTurnovers(): array
+    {
+        return PariwisataVillage::query()
+            ->select(['id', 'village_id', 'name', 'is_active'])
+            ->whereHas('annualTurnovers')
+            ->with(['village:id,name,city,province', 'categories:id,pariwisata_village_id,category'])
+            ->withCount('annualTurnovers')
+            ->withSum('annualTurnovers as total_turnover', 'value')
+            ->orderByDesc('total_turnover')
+            ->limit(3)
+            ->get()
+            ->map(function (PariwisataVillage $pariwisata): array {
+                return [
+                    'id' => $pariwisata->id,
+                    'name' => $pariwisata->name,
+                    'meta' => $pariwisata->categories->pluck('category')->map(fn (string $category): string => Str::headline($category))->implode(', ') ?: ($pariwisata->village?->name ?? '-'),
+                    'score' => round((float) ($pariwisata->total_turnover ?? 0), 2),
+                    'progress' => null,
+                    'answers' => $pariwisata->annual_turnovers_count.' tahun data',
+                    'status' => $pariwisata->is_active ? 'Aktif' : 'Nonaktif',
+                    'url' => null,
+                    'aspect_scores' => [],
+                ];
+            })
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, int|string>>
+     */
+    private function topUmkmCategories(): array
+    {
+        return VillageUmkm::query()
+            ->selectRaw('product_category, COUNT(*) as total')
+            ->whereNotNull('product_category')
+            ->where('product_category', '!=', '')
+            ->groupBy('product_category')
+            ->orderByDesc('total')
+            ->orderBy('product_category')
+            ->limit(3)
+            ->get()
+            ->map(fn (VillageUmkm $umkm): array => [
+                'category' => (string) $umkm->product_category,
+                'label' => (string) $umkm->product_category,
+                'total' => (int) $umkm->total,
+            ])
+            ->all();
+    }
+
     private function recentAssignments(): array
     {
         return VillageSurveyAssignment::query()
@@ -319,19 +381,12 @@ class DashboardService
             ->limit(5)
             ->get()
             ->map(function (VillageSurveyAssignment $assignment): array {
-                $totalQuestions = $assignment->template
-                    ? $assignment->template->questions()->count()
-                    : 0;
-                $progress = $totalQuestions > 0
-                    ? (int) round(($assignment->answers_count / $totalQuestions) * 100)
-                    : 0;
-
                 $aspectScores = collect($assignment->answers)
                     ->groupBy('aspect_snapshot')
                     ->map(function ($answers, $aspect) {
                         return [
                             'aspect' => $aspect ?: 'Umum',
-                            'score' => round($answers->avg('score') * 20, 1)
+                            'score' => round($answers->avg('score') * 20, 1),
                         ];
                     })->values()->all();
 
@@ -343,14 +398,8 @@ class DashboardService
                         $assignment->village?->city,
                         $assignment->village?->province,
                     ])->filter()->implode(', ') ?: '-',
-                    'progress' => min($progress, 100),
                     'status' => $assignment->status,
                     'status_label' => $this->statusLabel($assignment->status),
-                    'enumerators' => collect($assignment->answers)
-                        ->pluck('answered_by')
-                        ->filter()
-                        ->unique()
-                        ->count(),
                     'updated_at' => $assignment->updated_at?->diffForHumans() ?? '-',
                     'aspect_scores' => $aspectScores,
                 ];
@@ -504,67 +553,35 @@ class DashboardService
 
     private function applyTimeFilter($query, string $filter, string $column = 'created_at')
     {
-        return match ($filter) {
-            'Hari Ini' => $query->whereDate($column, today()),
-            '7 Hari Terakhir' => $query->where($column, '>=', now()->subDays(7)),
-            '30 Hari Terakhir' => $query->where($column, '>=', now()->subDays(30)),
-            'Bulan Ini' => $query->whereYear($column, now()->year)->whereMonth($column, now()->month),
-            'Tahun Ini' => $query->whereYear($column, now()->year),
-            '2025' => $query->whereYear($column, 2025),
-            '2024' => $query->whereYear($column, 2024),
-            default => $query,
-        };
+        [$start, $end] = $this->filterRange($filter);
+
+        if ($start && $end) {
+            return $query->whereBetween($column, [$start, $end]);
+        }
+
+        return $query;
     }
 
     private function generalReportData(string $filter, string $programType): array
     {
         if ($programType === 'UMKM') {
-            $query = \App\Models\VillageUmkm::query();
+            $query = VillageUmkm::query();
             $query = $this->applyTimeFilter($query, $filter, 'created_at');
-            
-            $total = $query->count();
+
+            $total = (clone $query)->count();
             $selesai = (clone $query)->whereHas('surveyAnswers')->count();
             $dalamProses = 0;
             $belumDimulai = (clone $query)->whereDoesntHave('surveyAnswers')->count();
-            
-            $csrTotal = class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0;
-            
-            $totalSumRaw = \App\Models\UmkmSurveyAnswer::whereHas('umkm', function($q) use ($filter) {
-                $this->applyTimeFilter($q, $filter, 'created_at');
-            })->sum('weighted_score');
-            $countAnswers = (clone $query)->whereHas('surveyAnswers')->count();
-            
-            $averageScore = $countAnswers > 0 ? round((float) ($totalSumRaw / $countAnswers), 1) : 0;
-            
-            $lastMonthTotalSumRaw = \App\Models\UmkmSurveyAnswer::whereHas('umkm', function($q) {
-                $q->whereYear('created_at', now()->subMonth()->year)->whereMonth('created_at', now()->subMonth()->month);
-            })->sum('weighted_score');
-            $lastMonthCountAnswers = \App\Models\VillageUmkm::whereYear('created_at', now()->subMonth()->year)->whereMonth('created_at', now()->subMonth()->month)->whereHas('surveyAnswers')->count();
-            
-            $lastMonthScore = $lastMonthCountAnswers > 0 ? round((float) ($lastMonthTotalSumRaw / $lastMonthCountAnswers), 1) : 0;
-            
-            $trendPercentage = 0;
-            if ($lastMonthScore > 0) {
-                $trendPercentage = round((($averageScore - $lastMonthScore) / $lastMonthScore) * 100);
-            } elseif ($averageScore > 0) {
-                $trendPercentage = 100;
-            }
-            $trendStr = ($trendPercentage >= 0 ? '+' : '') . $trendPercentage . '%';
-            
-            $areaData = [];
-            for ($i = 4; $i >= 0; $i--) {
-                $month = now()->subMonths($i);
-                $mTotalSumRaw = \App\Models\UmkmSurveyAnswer::whereHas('umkm', function($q) use ($month) {
-                    $q->whereYear('created_at', $month->year)->whereMonth('created_at', $month->month);
-                })->sum('weighted_score');
-                $mCountAnswers = \App\Models\VillageUmkm::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->whereHas('surveyAnswers')->count();
-                $monthScore = $mCountAnswers > 0 ? round((float) ($mTotalSumRaw / $mCountAnswers), 1) : 0;
-                $areaData[] = [
-                    'name' => $month->format('M'),
-                    'score' => $monthScore
-                ];
-            }
-            
+            $averageScore = $this->averageUmkmScoreForQuery(clone $query);
+            $lastScore = $this->averageUmkmScoreForComparison($filter);
+            $trendStr = $this->trendFromScores($averageScore, $lastScore);
+            $areaData = collect($this->chartBucketsForFilter($filter))
+                ->map(fn (array $bucket): array => [
+                    'name' => $bucket['label'],
+                    'score' => $this->averageUmkmScoreForRange($bucket['start'], $bucket['end']),
+                ])
+                ->all();
+
             return [
                 'average_score' => $averageScore,
                 'trend' => $trendStr,
@@ -572,79 +589,35 @@ class DashboardService
                 'selesai' => $selesai,
                 'dalam_proses' => $dalamProses,
                 'belum_dimulai' => $belumDimulai,
-                'total_program_csr' => $csrTotal,
+                'total_program_csr' => class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0,
                 'total_anggaran' => 0,
                 'area_data' => $areaData,
             ];
         }
 
-        $query = VillageSurveyAssignment::query();
-        $query = $this->applyTimeFilter($query, $filter, 'created_at');
-        
-        $typeCode = match($programType) {
+        $typeCode = match ($programType) {
             'KEMENPAR' => 'village',
             'ISTC' => 'pariwisata',
             default => null,
         };
 
-        if ($typeCode) {
-            $query->whereHas('template', function ($q) use ($typeCode) {
-                $q->where('type', $typeCode);
-            });
-        }
-        
-        $total = $query->count();
+        $query = VillageSurveyAssignment::query();
+        $query = $this->applyTimeFilter($query, $filter, 'created_at');
+        $query = $this->applyProgramTypeFilter($query, $typeCode);
+
+        $total = (clone $query)->count();
         $selesai = (clone $query)->whereIn('status', ['submitted', 'approved'])->count();
         $dalamProses = (clone $query)->whereIn('status', ['in_progress', 'need_revision'])->count();
         $belumDimulai = (clone $query)->whereIn('status', ['assigned', 'rejected'])->count();
-        
-        $csrTotal = class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0;
-        
-        $averageScoreRaw = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($filter, $typeCode) {
-            $this->applyTimeFilter($q, $filter, 'created_at');
-            if ($typeCode) {
-                $q->whereHas('template', function ($tq) use ($typeCode) {
-                    $tq->where('type', $typeCode);
-                });
-            }
-        })->avg('score') ?? 0;
-        
-        $averageScore = round($averageScoreRaw * 20, 1);
-        
-        $lastMonthScoreRaw = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($filter, $typeCode) {
-            $q->whereYear('created_at', now()->subMonth()->year)->whereMonth('created_at', now()->subMonth()->month);
-            if ($typeCode) {
-                $q->whereHas('template', function ($tq) use ($typeCode) {
-                    $tq->where('type', $typeCode);
-                });
-            }
-        })->avg('score') ?? 0;
-        $lastMonthScore = round($lastMonthScoreRaw * 20, 1);
-
-        $trendPercentage = 0;
-        if ($lastMonthScore > 0) {
-            $trendPercentage = round((($averageScore - $lastMonthScore) / $lastMonthScore) * 100);
-        } elseif ($averageScore > 0) {
-            $trendPercentage = 100;
-        }
-        $trendStr = ($trendPercentage >= 0 ? '+' : '') . $trendPercentage . '%';
-        
-        $areaData = [];
-        for ($i = 4; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthScore = \App\Models\SurveyAnswer::whereHas('assignment', function ($q) use ($month, $typeCode) {
-                $q->whereYear('created_at', $month->year)->whereMonth('created_at', $month->month);
-                if ($typeCode) {
-                    $q->whereHas('template', function ($tq) use ($typeCode) {
-                        $tq->where('type', $typeCode);
-                    });
-                }
-            })->avg('score') ?? 0;
-            $areaData[] = [
-                'name' => $month->format('M'),
-                'score' => round((float) $monthScore * 20, 1)
-            ];
-        }
+        $averageScore = $this->averageVillageScoreForQuery(clone $query, $typeCode);
+        $lastScore = $this->averageVillageScoreForComparison($filter, $typeCode);
+        $trendStr = $this->trendFromScores($averageScore, $lastScore);
+        $areaData = collect($this->chartBucketsForFilter($filter))
+            ->map(fn (array $bucket): array => [
+                'name' => $bucket['label'],
+                'score' => $this->averageVillageScoreForRange($bucket['start'], $bucket['end'], $typeCode),
+            ])
+            ->all();
 
         return [
             'average_score' => $averageScore,
@@ -653,7 +626,7 @@ class DashboardService
             'selesai' => $selesai,
             'dalam_proses' => $dalamProses,
             'belum_dimulai' => $belumDimulai,
-            'total_program_csr' => $csrTotal,
+            'total_program_csr' => class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0,
             'total_anggaran' => 0,
             'area_data' => $areaData,
         ];
@@ -661,21 +634,18 @@ class DashboardService
 
     private function aktivitasSurveyData(string $filter): array
     {
-        $query = VillageSurveyAssignment::query();
-        $query = $this->applyTimeFilter($query, $filter, 'created_at');
-        
-        // Group by month
-        $barData = [];
-        for ($i = 4; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $q = (clone $query)->whereYear('created_at', $date->year)->whereMonth('created_at', $date->month);
-            $barData[] = [
-                'name' => $date->format('M'),
-                'selesai' => (clone $q)->whereIn('status', ['submitted', 'approved'])->count(),
-                'proses' => (clone $q)->whereIn('status', ['in_progress', 'need_revision'])->count(),
-                'belum' => (clone $q)->whereIn('status', ['assigned', 'rejected'])->count(),
-            ];
-        }
+        $barData = collect($this->chartBucketsForFilter($filter))
+            ->map(function (array $bucket): array {
+                $query = VillageSurveyAssignment::query()->whereBetween('created_at', [$bucket['start'], $bucket['end']]);
+
+                return [
+                    'name' => $bucket['label'],
+                    'selesai' => (clone $query)->whereIn('status', ['submitted', 'approved'])->count(),
+                    'proses' => (clone $query)->whereIn('status', ['in_progress', 'need_revision'])->count(),
+                    'belum' => (clone $query)->whereIn('status', ['assigned', 'rejected'])->count(),
+                ];
+            })
+            ->all();
 
         return [
             'bar_data' => $barData,
@@ -686,7 +656,7 @@ class DashboardService
     {
         $query = VillageSurveyAssignment::query();
         $query = $this->applyTimeFilter($query, $filter, 'created_at');
-        
+
         $selesai = (clone $query)->whereIn('status', ['submitted', 'approved'])->count();
         $dalamProses = (clone $query)->whereIn('status', ['in_progress', 'need_revision'])->count();
         $belumDimulai = (clone $query)->whereIn('status', ['assigned', 'rejected'])->count();
@@ -703,48 +673,227 @@ class DashboardService
 
     private function omsetChartsDataFor(string $type, ?string $filterYear = null): array
     {
-        $currentYear = $filterYear ? (int) $filterYear : (int) now()->year;
-        $years = [
-            $currentYear - 2,
-            $currentYear - 1,
-            $currentYear,
-            $currentYear + 1,
-        ];
-
         $column = $type === 'umkm' ? 'umkm_id' : 'pariwisata_id';
+        $availableYears = AnnualTurnover::query()
+            ->whereNotNull($column)
+            ->orderByDesc('year')
+            ->distinct()
+            ->pluck('year')
+            ->map(fn ($year): int => (int) $year)
+            ->values()
+            ->all();
 
-        $turnovers = \App\Models\AnnualTurnover::query()
+        $currentYear = $filterYear
+            ? (int) $filterYear
+            : ($availableYears[0] ?? (int) now()->year);
+
+        $years = range($currentYear - 3, $currentYear);
+
+        $turnovers = AnnualTurnover::query()
             ->selectRaw('year, SUM(value) as total_omset')
             ->whereNotNull($column)
             ->whereIn('year', $years)
             ->groupBy('year')
             ->pluck('total_omset', 'year');
 
-        $data = [];
-        foreach ($years as $year) {
-            $data[] = [
+        $data = collect($years)
+            ->map(fn (int $year): array => [
                 'year' => (string) $year,
                 'omset' => (float) ($turnovers[$year] ?? 0),
-            ];
-        }
+            ])
+            ->all();
 
         $prev = (float) ($turnovers[$currentYear - 1] ?? 0);
         $curr = (float) ($turnovers[$currentYear] ?? 0);
 
-        if ($prev == 0) {
-            $trend = $curr > 0 ? '+100%' : '+0%';
-        } else {
-            $diff = $curr - $prev;
-            $percent = ($diff / $prev) * 100;
-            $sign = $percent > 0 ? '+' : '';
-            $trend = $sign . round($percent, 1) . '%';
-        }
-
         return [
             'data' => $data,
-            'trend' => $trend,
+            'trend' => $this->trendFromTotals($curr, $prev),
             'total' => $curr,
             'current_year' => $currentYear,
+            'available_years' => $availableYears,
         ];
+    }
+
+    private function applyProgramTypeFilter($query, ?string $typeCode)
+    {
+        if (! $typeCode) {
+            return $query;
+        }
+
+        return $query->whereHas('template', function ($templateQuery) use ($typeCode) {
+            $templateQuery->where('type', $typeCode);
+        });
+    }
+
+    private function averageVillageScoreForQuery($query, ?string $typeCode): float
+    {
+        $assignmentIds = (clone $this->applyProgramTypeFilter($query, $typeCode))->pluck('id');
+
+        if ($assignmentIds->isEmpty()) {
+            return 0.0;
+        }
+
+        $average = \App\Models\SurveyAnswer::query()
+            ->whereIn('village_survey_assignment_id', $assignmentIds)
+            ->avg('score') ?? 0;
+
+        return round((float) $average * 20, 1);
+    }
+
+    private function averageVillageScoreForRange($start, $end, ?string $typeCode): float
+    {
+        $query = VillageSurveyAssignment::query()->whereBetween('created_at', [$start, $end]);
+
+        return $this->averageVillageScoreForQuery($query, $typeCode);
+    }
+
+    private function averageVillageScoreForComparison(string $filter, ?string $typeCode): float
+    {
+        [$start, $end] = $this->comparisonRange($filter);
+
+        return $this->averageVillageScoreForRange($start, $end, $typeCode);
+    }
+
+    private function averageUmkmScoreForQuery($query): float
+    {
+        $umkmIds = (clone $query)->pluck('id');
+
+        if ($umkmIds->isEmpty()) {
+            return 0.0;
+        }
+
+        $completedCount = (clone $query)->whereHas('surveyAnswers')->count();
+
+        if ($completedCount === 0) {
+            return 0.0;
+        }
+
+        $totalWeightedScore = \App\Models\UmkmSurveyAnswer::query()
+            ->whereIn('umkm_id', $umkmIds)
+            ->sum('weighted_score');
+
+        return round((float) ($totalWeightedScore / $completedCount), 1);
+    }
+
+    private function averageUmkmScoreForRange($start, $end): float
+    {
+        $query = VillageUmkm::query()->whereBetween('created_at', [$start, $end]);
+
+        return $this->averageUmkmScoreForQuery($query);
+    }
+
+    private function averageUmkmScoreForComparison(string $filter): float
+    {
+        [$start, $end] = $this->comparisonRange($filter);
+
+        return $this->averageUmkmScoreForRange($start, $end);
+    }
+
+    private function filterRange(string $filter): array
+    {
+        $now = now();
+
+        return match ($filter) {
+            'Hari Ini' => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
+            '7 Hari Terakhir' => [$now->copy()->subDays(6)->startOfDay(), $now->copy()->endOfDay()],
+            '30 Hari Terakhir' => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay()],
+            'Bulan Ini' => [$now->copy()->startOfMonth(), $now->copy()->endOfDay()],
+            'Tahun Ini' => [$now->copy()->startOfYear(), $now->copy()->endOfYear()],
+            default => preg_match('/^\d{4}$/', $filter)
+                ? [now()->setYear((int) $filter)->startOfYear(), now()->setYear((int) $filter)->endOfYear()]
+                : [null, null],
+        };
+    }
+
+    private function comparisonRange(string $filter): array
+    {
+        $now = now();
+
+        return match ($filter) {
+            'Hari Ini' => [$now->copy()->subDay()->startOfDay(), $now->copy()->subDay()->endOfDay()],
+            '7 Hari Terakhir' => [$now->copy()->subDays(13)->startOfDay(), $now->copy()->subDays(7)->endOfDay()],
+            '30 Hari Terakhir' => [$now->copy()->subDays(59)->startOfDay(), $now->copy()->subDays(30)->endOfDay()],
+            'Bulan Ini' => [$now->copy()->subMonthNoOverflow()->startOfMonth(), $now->copy()->subMonthNoOverflow()->endOfMonth()],
+            'Tahun Ini' => [$now->copy()->subYear()->startOfYear(), $now->copy()->subYear()->endOfYear()],
+            default => preg_match('/^\d{4}$/', $filter)
+                ? [now()->setYear(((int) $filter) - 1)->startOfYear(), now()->setYear(((int) $filter) - 1)->endOfYear()]
+                : [$now->copy()->subDays(29)->startOfDay(), $now->copy()->subDay()->endOfDay()],
+        };
+    }
+
+    private function chartBucketsForFilter(string $filter): array
+    {
+        if ($filter === 'Tahun Ini' || preg_match('/^\d{4}$/', $filter)) {
+            $year = $filter === 'Tahun Ini' ? (int) now()->year : (int) $filter;
+
+            return collect(range(1, 12))
+                ->map(function (int $month) use ($year): array {
+                    $date = now()->copy()->setYear($year)->setMonth($month)->startOfMonth();
+
+                    return [
+                        'label' => $date->format('M'),
+                        'start' => $date->copy()->startOfMonth(),
+                        'end' => $date->copy()->endOfMonth(),
+                    ];
+                })
+                ->all();
+        }
+
+        if ($filter === 'Bulan Ini') {
+            return collect(range(1, (int) now()->day))
+                ->map(function (int $day): array {
+                    $date = now()->copy()->startOfMonth()->setDay($day);
+
+                    return [
+                        'label' => $date->format('d'),
+                        'start' => $date->copy()->startOfDay(),
+                        'end' => $date->copy()->endOfDay(),
+                    ];
+                })
+                ->all();
+        }
+
+        $days = match ($filter) {
+            'Hari Ini' => 1,
+            '7 Hari Terakhir' => 7,
+            default => 30,
+        };
+
+        return collect(range($days - 1, 0))
+            ->map(function (int $offset): array {
+                $date = now()->copy()->subDays($offset);
+
+                return [
+                    'label' => $date->format('d M'),
+                    'start' => $date->copy()->startOfDay(),
+                    'end' => $date->copy()->endOfDay(),
+                ];
+            })
+            ->all();
+    }
+
+    private function trendFromScores(float $current, float $previous): string
+    {
+        if ($previous == 0.0) {
+            return $current > 0 ? '+100%' : '+0%';
+        }
+
+        $percent = (($current - $previous) / $previous) * 100;
+        $sign = $percent > 0 ? '+' : '';
+
+        return $sign.round($percent, 1).'%';
+    }
+
+    private function trendFromTotals(float $current, float $previous): string
+    {
+        if ($previous == 0.0) {
+            return $current > 0 ? '+100%' : '+0%';
+        }
+
+        $percent = (($current - $previous) / $previous) * 100;
+        $sign = $percent > 0 ? '+' : '';
+
+        return $sign.round($percent, 1).'%';
     }
 }

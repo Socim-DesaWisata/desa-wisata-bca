@@ -7,7 +7,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import {
     DropdownMenu,
@@ -42,9 +42,20 @@ export function DashboardOmsetCharts() {
 
     const umkm = omsetCharts.umkm;
     const wisata = omsetCharts.wisata;
+    const filters = (props as any).filters || {};
+    const umkmYears = (umkm.available_years || [umkm.current_year]).map((year: number | string) => String(year));
+    const wisataYears = (wisata.available_years || [wisata.current_year]).map((year: number | string) => String(year));
 
     const [umkmYear, setUmkmYear] = useState(String(umkm.current_year));
     const [wisataYear, setWisataYear] = useState(String(wisata.current_year));
+
+    useEffect(() => {
+        setUmkmYear(String(umkm.current_year));
+    }, [umkm.current_year]);
+
+    useEffect(() => {
+        setWisataYear(String(wisata.current_year));
+    }, [wisata.current_year]);
 
     const updateYear = (type: 'umkm' | 'wisata', year: string) => {
         if (type === 'umkm') setUmkmYear(year);
@@ -54,9 +65,9 @@ export function DashboardOmsetCharts() {
             // @ts-ignore
             route('dashboard'),
             {
-                ...((props as any).filters || {}),
-                umkm_year: type === 'umkm' ? year : umkmYear,
-                wisata_year: type === 'wisata' ? year : wisataYear,
+                ...filters,
+                umkm_year: type === 'umkm' ? year : String(umkm.current_year),
+                wisata_year: type === 'wisata' ? year : String(wisata.current_year),
             },
             {
                 preserveState: true,
@@ -109,7 +120,7 @@ export function DashboardOmsetCharts() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[100px]">
-                            {['2027', '2026', '2025', '2024'].map(year => (
+                            {umkmYears.map((year: string) => (
                                 <DropdownMenuItem key={year} className="cursor-pointer text-xs" onSelect={() => updateYear('umkm', year)}>
                                     {year}
                                 </DropdownMenuItem>
@@ -188,7 +199,7 @@ export function DashboardOmsetCharts() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[100px]">
-                            {['2027', '2026', '2025', '2024'].map(year => (
+                            {wisataYears.map((year: string) => (
                                 <DropdownMenuItem key={year} className="cursor-pointer text-xs" onSelect={() => updateYear('wisata', year)}>
                                     {year}
                                 </DropdownMenuItem>

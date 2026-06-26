@@ -31,7 +31,13 @@ import {
     BarChart,
     CartesianGrid,
     LabelList,
+    PolarAngleAxis,
+    PolarGrid,
+    PolarRadiusAxis,
+    Radar,
+    RadarChart,
     ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts';
@@ -374,12 +380,76 @@ function MetricCard({
     value,
     helper,
     icon,
+    tone = 'blue',
+    compact = false,
 }: {
     label: string;
     value: string;
     helper: string;
     icon: ReactNode;
+    tone?: 'blue' | 'green' | 'orange';
+    compact?: boolean;
 }) {
+    if (compact) {
+        return (
+            <Card
+                className={classNames(
+                    'rounded-xl border p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]',
+                    tone === 'blue'
+                        ? '!border-[#0066AE] !bg-[#0066AE]'
+                        : 'border-[#EEF2F7] bg-white',
+                )}
+            >
+                <div className="flex items-center gap-3">
+                    <span
+                        className={classNames(
+                            'flex size-9 shrink-0 items-center justify-center rounded-lg text-white shadow-[0_6px_14px_rgba(0,102,174,0.22)]',
+                            tone === 'blue' && 'bg-[#0066AE]',
+                            tone === 'green' && 'bg-[#00893D]',
+                            tone === 'orange' && 'bg-[#F97316]',
+                        )}
+                    >
+                        {icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <p
+                            className={classNames(
+                                'truncate text-[11px] font-semibold',
+                                tone === 'blue'
+                                    ? 'text-white/80'
+                                    : 'text-[#667085]',
+                            )}
+                        >
+                            {label}
+                        </p>
+                        <div className="mt-0.5 flex min-w-0 items-baseline gap-1.5">
+                            <p
+                                className={classNames(
+                                    'truncate text-lg leading-6 font-black tabular-nums',
+                                    tone === 'blue'
+                                        ? 'text-white'
+                                        : 'text-[#111827]',
+                                )}
+                            >
+                                {value}
+                            </p>
+                            <p
+                                className={classNames(
+                                    'shrink-0 text-xs leading-4 font-bold tabular-nums',
+                                    tone === 'blue' && 'text-white/90',
+                                    tone === 'green' && 'text-[#00893D]',
+                                    tone === 'orange' && 'text-[#F97316]',
+                                )}
+                            >
+                                {helper}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+
     return (
         <Card className="p-4">
             <div className="flex items-start justify-between gap-3">
@@ -388,18 +458,31 @@ function MetricCard({
                     <p className="mt-2 text-2xl leading-7 font-bold text-[#303030]">
                         {value}
                     </p>
-                    <p className="mt-1 text-xs font-bold text-[#0066AE]">
+                    <p
+                        className={classNames(
+                            'mt-1 text-xs font-bold',
+                            tone === 'blue' && 'text-[#0066AE]',
+                            tone === 'green' && 'text-[#00893D]',
+                            tone === 'orange' && 'text-[#F97316]',
+                        )}
+                    >
                         {helper}
                     </p>
                 </div>
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                <span
+                    className={classNames(
+                        'flex size-10 shrink-0 items-center justify-center rounded-full',
+                        tone === 'blue' && 'bg-[#EAF3FF] text-[#0066AE]',
+                        tone === 'green' && 'bg-[#EAF8F0] text-[#00893D]',
+                        tone === 'orange' && 'bg-[#FFF4EA] text-[#F97316]',
+                    )}
+                >
                     {icon}
                 </span>
             </div>
         </Card>
     );
 }
-
 type ScoreBucket = {
     key: string;
     label: string;
@@ -674,209 +757,267 @@ function UmkmAnnualCharts({ values }: { values: UmkmEditValues }) {
     );
 }
 
-function UmkmSurveyStatistics({ groups }: { groups: UmkmSurveyGroup[] }) {
-    const criteriaRows = groups.map((group) => ({
-        code: group.criteria_code,
-        name: criteriaLabel(group.criteria_code, group.criteria_name),
-        score: criteriaPerformanceScore(group),
-    }));
+type CriteriaScoreSummary = {
+    code: string;
+    name: string;
+    score: number;
+    max_score: number;
+    score_percent: number;
+};
 
-    const answers = groups.flatMap((group) => group.answers);
-    const totalAnswers = answers.length;
-    const distribution = scoreBuckets.map((bucket) => {
-        const count = answers.filter((answer) => {
-            const score = Math.round(answerScorePercent(answer));
+function formatPointScore(score: number, maxScore: number) {
+    return `${score.toLocaleString('id-ID')}/${maxScore.toLocaleString('id-ID')}`;
+}
 
-            return score >= bucket.min && score <= bucket.max;
-        }).length;
-
-        return {
-            ...bucket,
-            count,
-            percentage: totalAnswers > 0 ? (count / totalAnswers) * 100 : 0,
-        };
-    });
-
-    const radius = 58;
-    const circumference = 2 * Math.PI * radius;
-    let currentOffset = 0;
+function UmkmFinalScoreGauge({ score }: { score: number }) {
+    const normalizedScore = clampScore(score);
 
     return (
-        <Card className="overflow-hidden p-5">
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-                <div className="min-w-0">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                            <h2 className="text-base font-bold text-[#303030]">
-                                Performa per Kriteria
-                            </h2>
-                            <p className="text-sm font-semibold text-[#7C7C7C]">
-                                Skor tertimbang (0-100)
-                            </p>
-                        </div>
-                    </div>
+        <Card className="flex min-h-[360px] flex-col rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <div>
+                <h2 className="text-base font-bold text-[#111827]">
+                    Skor Akhir Survey
+                </h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                    Nilai kesiapan keseluruhan
+                </p>
+            </div>
 
-                    <div className="mt-5 space-y-4">
-                        {criteriaRows.length > 0 ? (
-                            criteriaRows.map((row) => {
-                                const bucket = scoreBucketFor(row.score);
-
-                                return (
-                                    <div
-                                        key={row.code}
-                                        className="grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_52px] md:items-center"
-                                    >
-                                        <p className="truncate text-xs font-bold text-[#344256]">
-                                            {row.name}
-                                        </p>
-                                        <div className="relative h-7 overflow-hidden rounded-full bg-[#EEF3F8]">
-                                            <div className="absolute inset-y-0 left-0 w-1/5 border-r border-white/90" />
-                                            <div className="absolute inset-y-0 left-[40%] w-px bg-white/90" />
-                                            <div className="absolute inset-y-0 left-[60%] w-px bg-white/90" />
-                                            <div className="absolute inset-y-0 left-[80%] w-px bg-white/90" />
-                                            <div
-                                                className="h-full rounded-full transition-[width]"
-                                                style={{
-                                                    width: `${clampScore(row.score)}%`,
-                                                    backgroundColor:
-                                                        bucket.color,
-                                                }}
-                                            />
-                                        </div>
-                                        <p className="text-right text-xs font-black text-[#303030]">
-                                            {formatStatScore(row.score)}
-                                        </p>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            <div className="rounded-xl border border-dashed border-[#DDE4EC] bg-[#F8FBFE] px-4 py-8 text-center text-sm font-semibold text-[#7C7C7C]">
-                                Belum ada data survey untuk dihitung.
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-6 gap-2 pl-0 text-[11px] font-bold text-[#8A97A8] md:ml-[180px]">
-                        {[0, 20, 40, 60, 80, 100].map((value) => (
-                            <span
-                                key={value}
-                                className="text-right first:text-left"
-                            >
-                                {value}
-                            </span>
-                        ))}
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap gap-4">
-                        {performanceLegends.map((legend) => (
-                            <span
-                                key={legend.label}
-                                className="inline-flex items-center gap-2 text-xs font-bold text-[#566579]"
-                            >
-                                <span
-                                    className="size-2.5 rounded-full"
-                                    style={{ backgroundColor: legend.color }}
-                                />
-                                {legend.label}
-                            </span>
-                        ))}
+            <div className="flex flex-1 flex-col items-center justify-center pt-4">
+                <div className="relative h-40 w-full max-w-[280px]">
+                    <svg
+                        viewBox="0 0 240 140"
+                        className="h-full w-full"
+                        aria-label={`Skor akhir ${formatStatScore(normalizedScore)} persen`}
+                    >
+                        <path
+                            d="M 30 115 A 90 90 0 0 1 210 115"
+                            fill="none"
+                            stroke="#E9EEF5"
+                            strokeLinecap="round"
+                            strokeWidth="20"
+                            pathLength={100}
+                        />
+                        <path
+                            d="M 30 115 A 90 90 0 0 1 210 115"
+                            fill="none"
+                            stroke="#0066AE"
+                            strokeLinecap="round"
+                            strokeWidth="20"
+                            pathLength={100}
+                            strokeDasharray={`${normalizedScore} ${100 - normalizedScore}`}
+                        />
+                    </svg>
+                    <div className="absolute inset-x-0 bottom-0 text-center">
+                        <p className="text-4xl font-black tracking-[-0.04em] text-[#111827]">
+                            {formatStatScore(normalizedScore)}%
+                        </p>
                     </div>
                 </div>
 
-                <div className="min-w-0 border-t border-[#E7ECF2] pt-5 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-6">
-                    <h2 className="text-base font-bold text-[#303030]">
-                        Distribusi Skor Jawaban
-                    </h2>
-                    <p className="text-sm font-semibold text-[#7C7C7C]">
-                        Total {totalAnswers} jawaban
-                    </p>
-
-                    <div className="mt-5 grid gap-5 sm:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-1">
-                        <div className="relative mx-auto size-44">
-                            <svg
-                                viewBox="0 0 160 160"
-                                className="size-full -rotate-90"
-                                aria-hidden="true"
-                            >
-                                <circle
-                                    cx="80"
-                                    cy="80"
-                                    r={radius}
-                                    fill="none"
-                                    stroke="#EEF3F8"
-                                    strokeWidth="22"
-                                />
-                                {totalAnswers > 0 &&
-                                    distribution.map((bucket) => {
-                                        const length =
-                                            (bucket.percentage / 100) *
-                                            circumference;
-                                        const dashOffset = -currentOffset;
-                                        currentOffset += length;
-
-                                        if (bucket.count === 0) {
-                                            return null;
-                                        }
-
-                                        return (
-                                            <circle
-                                                key={bucket.key}
-                                                cx="80"
-                                                cy="80"
-                                                r={radius}
-                                                fill="none"
-                                                stroke={bucket.color}
-                                                strokeWidth="22"
-                                                strokeDasharray={`${length} ${circumference - length}`}
-                                                strokeDashoffset={dashOffset}
-                                            />
-                                        );
-                                    })}
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                <p className="text-3xl font-black text-[#303030]">
-                                    {totalAnswers}
-                                </p>
-                                <p className="text-xs font-bold text-[#7C7C7C]">
-                                    Jawaban
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            {distribution.map((bucket) => (
-                                <div
-                                    key={bucket.key}
-                                    className="flex items-center justify-between gap-3 rounded-lg bg-[#F8FBFE] px-3 py-2"
-                                >
-                                    <span className="inline-flex items-center gap-2 text-sm font-bold text-[#344256]">
-                                        <span
-                                            className="size-2.5 rounded-full"
-                                            style={{
-                                                backgroundColor: bucket.color,
-                                            }}
-                                        />
-                                        {bucket.label}
-                                    </span>
-                                    <span
-                                        className={classNames(
-                                            'text-sm font-black',
-                                            bucket.textColor,
-                                        )}
-                                    >
-                                        {bucket.count} (
-                                        {formatStatScore(bucket.percentage)}%)
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                <div className="mt-7 flex w-full max-w-[260px] justify-between text-xs font-bold text-[#9AA7B6]">
+                    <span>0%</span>
+                    <span>100%</span>
                 </div>
             </div>
         </Card>
     );
 }
 
+function UmkmCriteriaScoreBars({
+    criteria,
+}: {
+    criteria: CriteriaScoreSummary[];
+}) {
+    return (
+        <Card className="min-h-[360px] rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <h2 className="text-base font-bold text-[#111827]">
+                Performa per Kriteria
+            </h2>
+            <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                Total skor per kriteria
+            </p>
+
+            <div className="mt-6 space-y-4">
+                {criteria.length === 0 ? (
+                    <div className="flex h-52 items-center justify-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                        Belum ada data kriteria
+                    </div>
+                ) : (
+                    criteria.map((criterion) => (
+                        <div
+                            key={criterion.code}
+                            className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_72px] md:items-center"
+                        >
+                            <p className="truncate text-xs font-semibold text-[#344256]">
+                                {criterion.name}
+                            </p>
+                            <div className="relative h-4 overflow-hidden rounded-full bg-[#EAF0F7]">
+                                <div
+                                    className="h-full rounded-full bg-[#0066AE]"
+                                    style={{
+                                        width: `${clampScore(criterion.score_percent)}%`,
+                                    }}
+                                />
+                            </div>
+                            <p className="text-right text-xs font-black text-[#111827] tabular-nums">
+                                {formatPointScore(
+                                    criterion.score,
+                                    criterion.max_score,
+                                )}
+                            </p>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            <p className="mt-5 text-[11px] font-bold text-[#9AA7B6] md:ml-[160px]">
+                Total skor aktual / skor maksimal per kriteria
+            </p>
+        </Card>
+    );
+}
+
+function UmkmCriteriaRadarComparison({
+    criteria,
+}: {
+    criteria: CriteriaScoreSummary[];
+}) {
+    const chartData = criteria.map((criterion) => ({
+        criteria:
+            criterion.name.length > 18
+                ? `${criterion.name.slice(0, 18)}…`
+                : criterion.name,
+        fullCriteria: criterion.name,
+        score: Number(clampScore(criterion.score_percent).toFixed(1)),
+    }));
+
+    if (chartData.length === 1) {
+        chartData.push({ criteria: ' ', fullCriteria: ' ', score: 0 });
+        chartData.push({ criteria: '  ', fullCriteria: '  ', score: 0 });
+    } else if (chartData.length === 2) {
+        chartData.push({ criteria: ' ', fullCriteria: ' ', score: 0 });
+    }
+
+    return (
+        <Card className="min-h-[360px] rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <h2 className="text-base font-bold text-[#111827]">
+                Perbandingan Kriteria (Radar)
+            </h2>
+            <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                Visualisasi nilai antar kriteria
+            </p>
+
+            <div className="mt-4 h-[265px]">
+                {criteria.length === 0 ? (
+                    <div className="flex h-full items-center justify-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                        Belum ada data kriteria
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart
+                            cx="50%"
+                            cy="50%"
+                            outerRadius="66%"
+                            data={chartData}
+                        >
+                            <PolarGrid stroke="#E4EAF2" />
+                            <PolarAngleAxis
+                                dataKey="criteria"
+                                tick={{
+                                    fill: '#667085',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                }}
+                            />
+                            <PolarRadiusAxis
+                                angle={90}
+                                domain={[0, 100]}
+                                tick={{
+                                    fill: '#98A2B3',
+                                    fontSize: 9,
+                                    fontWeight: 600,
+                                }}
+                                tickCount={5}
+                                axisLine={false}
+                            />
+                            <Radar
+                                dataKey="score"
+                                stroke="#0066AE"
+                                strokeWidth={2}
+                                fill="#0066AE"
+                                fillOpacity={0.22}
+                                dot={{
+                                    r: 3,
+                                    fill: '#0066AE',
+                                    stroke: '#FFFFFF',
+                                    strokeWidth: 1.5,
+                                }}
+                            />
+                            <Tooltip
+                                formatter={(value) => [
+                                    `${formatStatScore(Number(value))}%`,
+                                    'Skor',
+                                ]}
+                                labelFormatter={(label) => {
+                                    const item = chartData.find(
+                                        (data) => data.criteria === label,
+                                    );
+
+                                    return item?.fullCriteria ?? label;
+                                }}
+                                contentStyle={{
+                                    border: '1px solid #E5EDF6',
+                                    borderRadius: '12px',
+                                    boxShadow:
+                                        '0 12px 32px rgba(15, 23, 42, 0.08)',
+                                    fontSize: '12px',
+                                }}
+                            />
+                        </RadarChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
+        </Card>
+    );
+}
+
+function UmkmStatisticsCards({
+    criteria,
+    finalScore,
+}: {
+    criteria: CriteriaScoreSummary[];
+    finalScore: number;
+}) {
+    return (
+        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.25fr_1fr]">
+            <UmkmFinalScoreGauge score={finalScore} />
+            <UmkmCriteriaScoreBars criteria={criteria} />
+            <UmkmCriteriaRadarComparison criteria={criteria} />
+        </div>
+    );
+}
+
+function UmkmSurveyStatistics({ groups }: { groups: UmkmSurveyGroup[] }) {
+    const criteria = groups.map((group) => ({
+        code: group.criteria_code,
+        name: criteriaLabel(group.criteria_code, group.criteria_name),
+        score: group.weighted_score,
+        max_score: group.criteria_weight_percent,
+        score_percent: criteriaPerformanceScore(group),
+    }));
+    const totalScore = criteria.reduce(
+        (total, criterion) => total + criterion.score,
+        0,
+    );
+    const maxScore = criteria.reduce(
+        (total, criterion) => total + criterion.max_score,
+        0,
+    );
+    const finalScore = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+
+    return <UmkmStatisticsCards criteria={criteria} finalScore={finalScore} />;
+}
 function DetailPair({ label, value }: { label: string; value: ReactNode }) {
     return (
         <div className="min-w-0 rounded-lg bg-[#F8FBFE] px-3 py-2">
@@ -1324,7 +1465,7 @@ function DocumentModal({
                             {data.file?.name ??
                                 (isEdit
                                     ? 'Kosongkan jika tidak ingin mengganti file.'
-                                                    : 'PDF atau gambar, maksimal 50 MB.')}
+                                    : 'PDF atau gambar, maksimal 50 MB.')}
                         </p>
                         <FieldError message={fieldError(errors, 'file')} />
                     </label>
@@ -2887,25 +3028,29 @@ export default function ShowUmkm({
                             label="Jawaban"
                             value={String(survey_summary.answered_questions)}
                             helper="Total assessment"
-                            icon={<CheckCircle2 size={22} />}
+                            icon={<CheckCircle2 size={18} />}
+                            compact
                         />
                         <MetricCard
                             label="Rata-rata"
                             value={String(survey_summary.average_score)}
-                            helper="Skala 0-100"
-                            icon={<Star size={22} />}
+                            helper="/ 100"
+                            icon={<Star size={18} />}
+                            compact
                         />
                         <MetricCard
                             label="Weighted Score"
                             value={String(survey_summary.weighted_score)}
-                            helper="Akumulasi bobot"
-                            icon={<BadgeDollarSign size={22} />}
+                            helper="/ 100"
+                            icon={<BadgeDollarSign size={18} />}
+                            compact
                         />
                         <MetricCard
                             label="Update Survey"
                             value={survey_summary.last_answered_at}
                             helper="Terakhir diedit"
-                            icon={<CalendarDays size={22} />}
+                            icon={<CalendarDays size={18} />}
+                            compact
                         />
                     </div>
 
