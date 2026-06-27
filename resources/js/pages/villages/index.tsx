@@ -111,6 +111,8 @@ type VillageFilters = {
     province: string | null;
     view?: 'active' | 'trash' | null;
     per_page: number;
+    sort_by?: 'total_score' | null;
+    sort_direction?: 'asc' | 'desc' | null;
 };
 
 type VillageForm = {
@@ -464,7 +466,9 @@ function VillageLocationPicker({
         if (!searchQuery.trim()) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`,
+            );
             const data = await res.json();
             setSearchResults(data);
         } catch (error) {
@@ -501,9 +505,9 @@ function VillageLocationPicker({
             <div className="relative overflow-hidden rounded-xl border border-[#DDE4EC]">
                 <div className="absolute top-2 right-2 z-[1000] w-[280px] max-w-[calc(100%-16px)]">
                     <div className="relative flex items-center">
-                        <input 
-                            type="text" 
-                            placeholder="Cari lokasi desa..." 
+                        <input
+                            type="text"
+                            placeholder="Cari lokasi desa..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={(event) => {
@@ -512,17 +516,19 @@ function VillageLocationPicker({
                                     void handleSearch();
                                 }
                             }}
-                            className="h-10 w-full rounded-lg border-none bg-white/95 pl-10 pr-4 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] outline-none backdrop-blur placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
+                            className="h-10 w-full rounded-lg border-none bg-white/95 pr-4 pl-10 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] backdrop-blur outline-none placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
                         />
                         <Search className="absolute left-3.5 size-4 text-[#7C7C7C]" />
-                        {isSearching && <Loader2 className="absolute right-3.5 size-4 animate-spin text-[#0066AE]" />}
+                        {isSearching && (
+                            <Loader2 className="absolute right-3.5 size-4 animate-spin text-[#0066AE]" />
+                        )}
                     </div>
                     {searchResults.length > 0 && (
                         <div className="mt-1 max-h-48 overflow-y-auto rounded-lg bg-white shadow-[0_6px_16px_rgba(3,17,32,0.12)]">
                             {searchResults.map((result, i) => (
-                                <button 
-                                    key={i} 
-                                    type="button" 
+                                <button
+                                    key={i}
+                                    type="button"
                                     onClick={() => selectResult(result)}
                                     className="w-full border-b border-[#EFEFEF] px-3 py-2 text-left text-[11px] leading-4 text-[#303030] transition last:border-0 hover:bg-[#F1F5F8]"
                                 >
@@ -544,10 +550,12 @@ function VillageLocationPicker({
                     />
                     <MapResizer isOpen={isOpen} />
                     <MapRecenter position={position} />
-                    <MapClickHandler onPick={(lat, lng) => {
-                        setSearchResults([]);
-                        onPick(lat, lng);
-                    }} />
+                    <MapClickHandler
+                        onPick={(lat, lng) => {
+                            setSearchResults([]);
+                            onPick(lat, lng);
+                        }}
+                    />
                     {position && (
                         <Marker
                             draggable
@@ -597,6 +605,8 @@ export default function VillagesIndex({
         province: filters.province ?? '',
         view: filters.view ?? 'active',
         per_page: String(filters.per_page ?? 10),
+        sort_by: filters.sort_by ?? '',
+        sort_direction: filters.sort_direction ?? '',
     });
     const [isResolvingAddress, setIsResolvingAddress] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
@@ -683,23 +693,27 @@ export default function VillagesIndex({
         };
     }, [data.latitude, data.longitude, isCreateOpen, setData]);
 
+    function filterQuery(overrides: Partial<typeof filterForm> = {}) {
+        const next = { ...filterForm, ...overrides };
+
+        return {
+            search: next.search || undefined,
+            status: next.status || undefined,
+            province: next.province || undefined,
+            view: next.view || undefined,
+            per_page: next.per_page || undefined,
+            sort_by: next.sort_by || undefined,
+            sort_direction: next.sort_direction || undefined,
+        };
+    }
+
     function submitFilters(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        router.get(
-            villagesRoute.url(),
-            {
-                search: filterForm.search || undefined,
-                status: filterForm.status || undefined,
-                province: filterForm.province || undefined,
-                view: filterForm.view || undefined,
-                per_page: filterForm.per_page || undefined,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+        router.get(villagesRoute.url(), filterQuery(), {
+            preserveState: true,
+            preserveScroll: true,
+        });
     }
 
     function resetFilters() {
@@ -709,6 +723,8 @@ export default function VillagesIndex({
             province: '',
             view: 'active',
             per_page: '10',
+            sort_by: '',
+            sort_direction: '',
         });
 
         router.get(villagesRoute.url(), {}, { preserveScroll: true });
@@ -733,15 +749,28 @@ export default function VillagesIndex({
             view,
         }));
 
+        router.get(villagesRoute.url(), filterQuery({ view }), {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }
+
+    function toggleScoreSort() {
+        const sort_direction =
+            filterForm.sort_by === 'total_score' &&
+            filterForm.sort_direction === 'desc'
+                ? 'asc'
+                : 'desc';
+
+        setFilterForm((current) => ({
+            ...current,
+            sort_by: 'total_score',
+            sort_direction,
+        }));
+
         router.get(
             villagesRoute.url(),
-            {
-                search: filterForm.search || undefined,
-                status: filterForm.status || undefined,
-                province: filterForm.province || undefined,
-                view,
-                per_page: filterForm.per_page || undefined,
-            },
+            filterQuery({ sort_by: 'total_score', sort_direction }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -749,6 +778,13 @@ export default function VillagesIndex({
         );
     }
 
+    function scoreSortLabel() {
+        if (filterForm.sort_by !== 'total_score') {
+            return '↕';
+        }
+
+        return filterForm.sort_direction === 'asc' ? '↑' : '↓';
+    }
     function handleDelete(village: VillageRow) {
         if (!window.confirm('Pindahkan desa wisata ini ke trash?')) {
             return;
@@ -995,7 +1031,22 @@ export default function VillagesIndex({
                                                     key={head}
                                                     className="px-3 py-3 font-bold whitespace-nowrap"
                                                 >
-                                                    {head}
+                                                    {head === 'Skor Survey' ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={
+                                                                toggleScoreSort
+                                                            }
+                                                            className="inline-flex items-center gap-1 font-bold text-[#093967]"
+                                                        >
+                                                            {head}
+                                                            <span aria-hidden="true">
+                                                                {scoreSortLabel()}
+                                                            </span>
+                                                        </button>
+                                                    ) : (
+                                                        head
+                                                    )}
                                                 </th>
                                             ))}
                                         </tr>
@@ -1207,6 +1258,12 @@ export default function VillagesIndex({
                                                             filterForm.view ||
                                                             undefined,
                                                         per_page: perPage,
+                                                        sort_by:
+                                                            filterForm.sort_by ||
+                                                            undefined,
+                                                        sort_direction:
+                                                            filterForm.sort_direction ||
+                                                            undefined,
                                                     },
                                                     {
                                                         preserveState: true,

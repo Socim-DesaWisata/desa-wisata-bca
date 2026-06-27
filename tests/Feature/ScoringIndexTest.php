@@ -259,3 +259,147 @@ test('pariwisata index score uses total answer score divided by active template 
             ->where('pariwisata.data.0.total_score', 50)
         );
 });
+
+test('survey assignment index sorts total score across full backend result set', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Atraksi',
+        'code' => 'SORT-001',
+        'question_text' => 'Pertanyaan sorting',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 10,
+        'label' => 'Maksimal',
+        'sort_order' => 1,
+    ]);
+
+    $lowVillage = TourismVillage::factory()->create(['created_by' => $user->id, 'name' => 'Desa Skor Rendah']);
+    $highVillage = TourismVillage::factory()->create(['created_by' => $user->id, 'name' => 'Desa Skor Tinggi']);
+    $lowAssignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $lowVillage->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+        'updated_at' => now()->addDay(),
+    ]);
+    $highAssignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $highVillage->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+        'updated_at' => now()->subDay(),
+    ]);
+
+    SurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $lowAssignment->id,
+        'survey_question_id' => $question->id,
+        'survey_question_option_id' => $option->id,
+        'score' => 2,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+    ]);
+    SurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $highAssignment->id,
+        'survey_question_id' => $question->id,
+        'survey_question_option_id' => $option->id,
+        'score' => 8,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments', ['sort_by' => 'total_score', 'sort_direction' => 'desc']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('assignments.data.0.id', $highAssignment->id)
+            ->where('assignments.data.1.id', $lowAssignment->id)
+        );
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments', ['sort_by' => 'total_score', 'sort_direction' => 'asc']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('assignments.data.0.id', $lowAssignment->id)
+            ->where('assignments.data.1.id', $highAssignment->id)
+        );
+});
+
+test('village index sorts survey score across full backend result set', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Amenitas',
+        'code' => 'VILLAGE-SORT-001',
+        'question_text' => 'Pertanyaan sorting desa',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 10,
+        'label' => 'Maksimal',
+        'sort_order' => 1,
+    ]);
+
+    $lowVillage = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+        'name' => 'Desa Nilai Rendah',
+        'updated_at' => now()->addDay(),
+    ]);
+    $highVillage = TourismVillage::factory()->create([
+        'created_by' => $user->id,
+        'name' => 'Desa Nilai Tinggi',
+        'updated_at' => now()->subDay(),
+    ]);
+    $lowAssignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $lowVillage->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $highAssignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $highVillage->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+
+    SurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $lowAssignment->id,
+        'survey_question_id' => $question->id,
+        'survey_question_option_id' => $option->id,
+        'score' => 1,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+    ]);
+    SurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $highAssignment->id,
+        'survey_question_id' => $question->id,
+        'survey_question_option_id' => $option->id,
+        'score' => 9,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('villages', ['sort_by' => 'total_score', 'sort_direction' => 'desc']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('villages.data.0.id', $highVillage->id)
+            ->where('villages.data.1.id', $lowVillage->id)
+        );
+
+    $this->actingAs($user)
+        ->get(route('villages', ['sort_by' => 'total_score', 'sort_direction' => 'asc']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('villages.data.0.id', $lowVillage->id)
+            ->where('villages.data.1.id', $highVillage->id)
+        );
+});

@@ -23,6 +23,8 @@ class IndexVillageSurveyAssignmentRequest extends FormRequest
             'template_id' => ['nullable', 'integer', 'exists:survey_templates,id'],
             'view' => ['nullable', 'string', Rule::in(['active', 'trash'])],
             'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
+            'sort_by' => ['nullable', 'string', Rule::in(['total_score'])],
+            'sort_direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
         ];
     }
 }

@@ -51,6 +51,8 @@ class TourismVillageService
             'province' => Arr::get($filters, 'province'),
             'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => (int) Arr::get($filters, 'per_page', 10),
+            'sort_by' => Arr::get($filters, 'sort_by') === 'total_score' ? 'total_score' : null,
+            'sort_direction' => Arr::get($filters, 'sort_direction') === 'asc' ? 'asc' : 'desc',
         ];
 
         $query = TourismVillage::query()
@@ -101,7 +103,12 @@ class TourismVillageService
             })
             ->when($normalizedFilters['status'], fn ($query, string $status) => $query->where('status', $status))
             ->when($normalizedFilters['province'], fn ($query, string $province) => $query->where('province', $province))
-            ->latest('updated_at')
+            ->when($normalizedFilters['sort_by'] === 'total_score',
+                fn ($query) => $query->orderByRaw('COALESCE(total_score, 0) '.$normalizedFilters['sort_direction'])
+                    ->latest('updated_at')
+                    ->orderByDesc('id'),
+                fn ($query) => $query->latest('updated_at')
+            )
             ->paginate($normalizedFilters['per_page'])
             ->withQueryString();
 

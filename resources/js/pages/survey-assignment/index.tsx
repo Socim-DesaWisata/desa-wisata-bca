@@ -104,6 +104,8 @@ type AssignmentFilters = {
     template_id: number | null;
     view?: 'active' | 'trash' | null;
     per_page: number;
+    sort_by?: 'total_score' | null;
+    sort_direction?: 'asc' | 'desc' | null;
 };
 
 type SurveyAssignmentIndexProps = {
@@ -216,27 +218,33 @@ export default function SurveyAssignmentIndex({
         template_id: filters.template_id ? String(filters.template_id) : '',
         view: filters.view ?? 'active',
         per_page: String(filters.per_page ?? 10),
+        sort_by: filters.sort_by ?? '',
+        sort_direction: filters.sort_direction ?? '',
     });
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm<AssignmentForm>(defaultForm);
 
+    function filterQuery(overrides: Partial<typeof filterForm> = {}) {
+        const next = { ...filterForm, ...overrides };
+
+        return {
+            search: next.search || undefined,
+            status: next.status || undefined,
+            template_id: next.template_id || undefined,
+            view: next.view || undefined,
+            per_page: next.per_page || undefined,
+            sort_by: next.sort_by || undefined,
+            sort_direction: next.sort_direction || undefined,
+        };
+    }
+
     function submitFilters(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        router.get(
-            surveyAssignments.url(),
-            {
-                search: filterForm.search || undefined,
-                status: filterForm.status || undefined,
-                template_id: filterForm.template_id || undefined,
-                view: filterForm.view || undefined,
-                per_page: filterForm.per_page || undefined,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+        router.get(surveyAssignments.url(), filterQuery(), {
+            preserveState: true,
+            preserveScroll: true,
+        });
     }
 
     function resetFilters() {
@@ -246,6 +254,8 @@ export default function SurveyAssignmentIndex({
             template_id: '',
             view: 'active',
             per_page: '10',
+            sort_by: '',
+            sort_direction: '',
         });
 
         router.get(surveyAssignments.url(), {}, { preserveScroll: true });
@@ -257,15 +267,28 @@ export default function SurveyAssignmentIndex({
             view,
         }));
 
+        router.get(surveyAssignments.url(), filterQuery({ view }), {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }
+
+    function toggleScoreSort() {
+        const sort_direction =
+            filterForm.sort_by === 'total_score' &&
+            filterForm.sort_direction === 'desc'
+                ? 'asc'
+                : 'desc';
+
+        setFilterForm((current) => ({
+            ...current,
+            sort_by: 'total_score',
+            sort_direction,
+        }));
+
         router.get(
             surveyAssignments.url(),
-            {
-                search: filterForm.search || undefined,
-                status: filterForm.status || undefined,
-                template_id: filterForm.template_id || undefined,
-                view,
-                per_page: filterForm.per_page || undefined,
-            },
+            filterQuery({ sort_by: 'total_score', sort_direction }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -273,8 +296,18 @@ export default function SurveyAssignmentIndex({
         );
     }
 
+    function scoreSortLabel() {
+        if (filterForm.sort_by !== 'total_score') {
+            return '↕';
+        }
+
+        return filterForm.sort_direction === 'asc' ? '↑' : '↓';
+    }
     function handleDelete(assignment: AssignmentRow) {
-        if (!assignment.code || !window.confirm('Pindahkan survey assignment ini ke trash?')) {
+        if (
+            !assignment.code ||
+            !window.confirm('Pindahkan survey assignment ini ke trash?')
+        ) {
             return;
         }
 
@@ -284,13 +317,20 @@ export default function SurveyAssignmentIndex({
     }
 
     function handleRestore(assignment: AssignmentRow) {
-        if (!assignment.code || !window.confirm('Pulihkan survey assignment ini dari trash?')) {
+        if (
+            !assignment.code ||
+            !window.confirm('Pulihkan survey assignment ini dari trash?')
+        ) {
             return;
         }
 
-        router.patch(restoreSurveyAssignment.url(assignment.code), {}, {
-            preserveScroll: true,
-        });
+        router.patch(
+            restoreSurveyAssignment.url(assignment.code),
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
     }
 
     function openCreateModal() {
@@ -320,13 +360,7 @@ export default function SurveyAssignmentIndex({
 
         router.get(
             surveyAssignments.url(),
-            {
-                search: filterForm.search || undefined,
-                status: filterForm.status || undefined,
-                template_id: filterForm.template_id || undefined,
-                view: filterForm.view || undefined,
-                per_page: perPage,
-            },
+            filterQuery({ per_page: perPage }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -600,11 +634,26 @@ export default function SurveyAssignmentIndex({
                                                 key={head}
                                                 className={
                                                     head === 'Total Skor'
-                                                        ? 'px-5 py-4 font-bold whitespace-nowrap bg-[#EAF3FF] text-[#0066AE] text-sm text-center'
+                                                        ? 'bg-[#EAF3FF] px-5 py-4 text-center text-sm font-bold whitespace-nowrap text-[#0066AE]'
                                                         : 'px-3 py-3 font-bold whitespace-nowrap'
                                                 }
                                             >
-                                                {head}
+                                                {head === 'Total Skor' ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={
+                                                            toggleScoreSort
+                                                        }
+                                                        className="inline-flex items-center justify-center gap-1 font-bold text-[#0066AE]"
+                                                    >
+                                                        {head}
+                                                        <span aria-hidden="true">
+                                                            {scoreSortLabel()}
+                                                        </span>
+                                                    </button>
+                                                ) : (
+                                                    head
+                                                )}
                                             </th>
                                         ))}
                                     </tr>
@@ -707,24 +756,34 @@ export default function SurveyAssignmentIndex({
                                                                 {assignment.is_trashed ? (
                                                                     <DropdownMenuItem
                                                                         className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                        onSelect={(event) => {
+                                                                        onSelect={(
+                                                                            event,
+                                                                        ) => {
                                                                             event.preventDefault();
-                                                                            handleRestore(assignment);
+                                                                            handleRestore(
+                                                                                assignment,
+                                                                            );
                                                                         }}
                                                                     >
                                                                         <ClipboardCheck className="size-4 text-[#00893D]" />
-                                                                        Pulihkan Assignment
+                                                                        Pulihkan
+                                                                        Assignment
                                                                     </DropdownMenuItem>
                                                                 ) : (
                                                                     <DropdownMenuItem
                                                                         className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                        onSelect={(event) => {
+                                                                        onSelect={(
+                                                                            event,
+                                                                        ) => {
                                                                             event.preventDefault();
-                                                                            handleDelete(assignment);
+                                                                            handleDelete(
+                                                                                assignment,
+                                                                            );
                                                                         }}
                                                                     >
                                                                         <Trash2 className="size-4 text-[#D81313]" />
-                                                                        Hapus Assignment
+                                                                        Hapus
+                                                                        Assignment
                                                                     </DropdownMenuItem>
                                                                 )}
                                                             </>
@@ -995,10 +1054,3 @@ SurveyAssignmentIndex.layout = {
         { title: 'Survey Assignment', href: surveyAssignments() },
     ],
 };
-
-
-
-
-
-
-

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'village_id', 'name', 'operational_days', 'operational_hours', 'operational_schedule',
+    'village_id', 'name', 'image_path', 'operational_days', 'operational_hours', 'operational_schedule',
     'entrance_ticket_price', 'entrance_ticket_description', 'address', 'person_in_charge_name',
     'person_in_charge_phone', 'person_in_charge_address', 'is_active',
 ])]
