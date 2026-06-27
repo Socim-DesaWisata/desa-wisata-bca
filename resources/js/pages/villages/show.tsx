@@ -170,7 +170,7 @@ const tabs = [
     [Star, 'Attractions'],
     [Bed, 'Homestay'],
     [Package, 'Tour Packages'],
-    [Gift, 'Souvenirs'],
+    [Gift, 'UMKM'],
 ] as const;
 const facilities: FacilityItem[] = [
     [Car, 'Parking Area', 'text-[#006A73]'],
@@ -569,6 +569,107 @@ function ProductCard({
         </article>
     );
 }
+function ShowcaseProductCard({
+    p,
+    variant,
+}: {
+    p: Product;
+    variant: 'pariwisata' | 'umkm';
+}) {
+    const isUmkm = variant === 'umkm';
+    const accent = isUmkm ? '#047C8F' : '#0D8F55';
+    const soft = isUmkm ? '#E8F6F8' : '#EAF7EF';
+    const Icon = isUmkm ? Storefront : Leaf;
+
+    return (
+        <article className="group overflow-hidden rounded-[20px] border border-[#DDE7E7] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
+            <div className="relative aspect-[16/9] overflow-hidden bg-[#EDF3F3]">
+                <img
+                    src={p.image}
+                    alt={p.title}
+                    className="h-full w-full object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
+                {p.badge ? (
+                    <span
+                        className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]"
+                        style={{ backgroundColor: accent }}
+                    >
+                        <Icon className="size-3.5" weight="fill" />
+                        {p.badge}
+                    </span>
+                ) : null}
+            </div>
+            <div className="space-y-2.5 p-4">
+                <div>
+                    <h3 className="text-[13px] leading-tight font-extrabold text-[#0F172A]">
+                        {p.title}
+                    </h3>
+                    {p.desc ? (
+                        <p className="mt-1 line-clamp-2 text-[11px] leading-[1.65] font-semibold text-[#506169]">
+                            {p.desc}
+                        </p>
+                    ) : null}
+                </div>
+                <div
+                    className="rounded-[14px] p-3"
+                    style={{ backgroundColor: soft }}
+                >
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <p className="truncate whitespace-nowrap text-[9px] font-extrabold tracking-[0.06em] text-[#6B7C83] uppercase">
+                                {isUmkm ? 'Omset Tahunan' : 'Harga Tiket'}
+                            </p>
+                            <p
+                                className="mt-0.5 truncate whitespace-nowrap text-[11px] leading-tight font-extrabold"
+                                style={{ color: accent }}
+                            >
+                                {p.price || (isUmkm ? 'Data belum tersedia' : 'Gratis / Hubungi Pengelola')}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="truncate whitespace-nowrap text-[9px] font-extrabold tracking-[0.06em] text-[#6B7C83] uppercase">
+                                {isUmkm ? 'Kategori' : 'Jam Operasional'}
+                            </p>
+                            <p className="mt-0.5 inline-flex max-w-full items-center gap-1 overflow-hidden text-[10px] leading-tight font-extrabold text-[#263238]">
+                                {isUmkm ? (
+                                    <ShoppingBagOpen
+                                        className="size-4"
+                                        weight="fill"
+                                        style={{ color: accent }}
+                                    />
+                                ) : (
+                                    <Clock
+                                        className="size-4"
+                                        weight="fill"
+                                        style={{ color: accent }}
+                                    />
+                                )}
+                                <span className="truncate">{isUmkm ? p.desc || p.badge || 'UMKM Lokal' : p.meta || 'Jadwal fleksibel'}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 border-t border-[#EAF0F0] pt-2.5">
+                    <p className="inline-flex min-w-0 items-center gap-1.5 truncate text-[11px] font-extrabold text-[#506169]">
+                        {isUmkm ? (
+                            <Storefront className="size-3.5 shrink-0" weight="fill" />
+                        ) : (
+                            <MapPin className="size-3.5 shrink-0" weight="fill" />
+                        )}
+                        <span className="truncate">{isUmkm ? 'Produk Unggulan Desa' : p.desc || 'Destinasi Wisata'}</span>
+                    </p>
+                    <span
+                        className="grid size-7 shrink-0 place-items-center rounded-full text-white"
+                        style={{ backgroundColor: accent }}
+                    >
+                        <Star className="size-3" weight="fill" />
+                    </span>
+                </div>
+            </div>
+        </article>
+    );
+}
 function PackageCard({ p }: { p: Product }) {
     return (
         <article className="grid gap-3 rounded-[14px] border border-[#DDE7E7] bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:grid-cols-[88px_1fr]">
@@ -578,7 +679,7 @@ function PackageCard({ p }: { p: Product }) {
                 className="aspect-[4/3] w-full rounded-[10px] object-cover sm:h-full"
             />
             <div>
-                <h3 className="text-[12px] leading-snug font-extrabold text-[#0F172A]">
+                <h3 className="text-[13px] leading-snug font-extrabold text-[#0F172A]">
                     {p.title}
                 </h3>
                 <p className="mt-1.5 text-[10px] leading-[1.55] font-semibold text-[#3F4F56]">
@@ -933,33 +1034,25 @@ export default function VillageDetail({ village }: VillageShowProps) {
                         </section>
                         <section>
                             <Heading icon={Star}>Tourist Attractions</Heading>
-                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                 {attractionItems.map((p) => (
-                                    <ProductCard key={p.title} p={p} />
+                                    <ShowcaseProductCard
+                                        key={p.title}
+                                        p={p}
+                                        variant="pariwisata"
+                                    />
                                 ))}
                             </div>
                         </section>
                         <section>
-                            <Heading icon={Bed}>Homestay Rooms</Heading>
-                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                {homestayItems.map((p) => (
-                                    <ProductCard key={p.title} p={p} />
-                                ))}
-                            </div>
-                        </section>
-                        <section>
-                            <Heading icon={Package}>Tour Packages</Heading>
-                            <div className="grid gap-4 xl:grid-cols-3">
-                                {packageItems.map((p) => (
-                                    <PackageCard key={p.title} p={p} />
-                                ))}
-                            </div>
-                        </section>
-                        <section>
-                            <Heading icon={Gift}>Souvenirs</Heading>
-                            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                            <Heading icon={Gift}>UMKM</Heading>
+                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                 {souvenirItems.map((p) => (
-                                    <ProductCard key={p.title} p={p} centered />
+                                    <ShowcaseProductCard
+                                        key={p.title}
+                                        p={p}
+                                        variant="umkm"
+                                    />
                                 ))}
                             </div>
                         </section>
@@ -976,12 +1069,6 @@ export default function VillageDetail({ village }: VillageShowProps) {
                     </div>
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
                         <QrBlock rows={villageInfoRows} villageName={villageName} />
-                        <SidebarCard
-                            title="Village Statistics"
-                            icon={Buildings}
-                        >
-                            <Rows rows={statisticRows} />
-                        </SidebarCard>
                         <SidebarCard title="Location Address" icon={MapPin}>
                             <p className="text-[12px] leading-6 font-semibold text-[#263238]">
                                 {locationText}
@@ -1029,52 +1116,6 @@ export default function VillageDetail({ village }: VillageShowProps) {
                                     />
                                     @officialdewi_ngubalan
                                 </p>
-                            </div>
-                        </SidebarCard>
-                        <SidebarCard title="Share This Village" icon={ShareFat}>
-                            <p className="mb-5 text-[12px] leading-6 font-semibold text-[#263238]">
-                                Share the beauty of {villageName} with others.
-                            </p>
-                            <div className="flex gap-3">
-                                <Social
-                                    label="Facebook"
-                                    className="bg-[#1877F2]"
-                                >
-                                    <FacebookLogo
-                                        className="size-5"
-                                        weight="fill"
-                                    />
-                                </Social>
-                                <Social
-                                    label="WhatsApp"
-                                    className="bg-[#25D366]"
-                                >
-                                    <ChatsCircle
-                                        className="size-5"
-                                        weight="fill"
-                                    />
-                                </Social>
-                                <Social
-                                    label="Instagram"
-                                    className="bg-[#E4405F]"
-                                >
-                                    <InstagramLogo
-                                        className="size-5"
-                                        weight="fill"
-                                    />
-                                </Social>
-                                <Social label="TikTok" className="bg-[#111827]">
-                                    <TiktokLogo
-                                        className="size-5"
-                                        weight="fill"
-                                    />
-                                </Social>
-                                <Social
-                                    label="Copy link"
-                                    className="bg-[#EDF3F3] text-[#0F172A]"
-                                >
-                                    <Copy className="size-5" weight="bold" />
-                                </Social>
                             </div>
                         </SidebarCard>
                     </div>
