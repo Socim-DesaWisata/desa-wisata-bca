@@ -3,6 +3,7 @@
 namespace App\Http\Requests\VillageSurveyAssignments;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Validator;
 
 class UpdateVillageAnnualDataRequest extends FormRequest
@@ -52,36 +53,53 @@ class UpdateVillageAnnualDataRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                $populationKeys = collect($this->input('annual_population_stats', []))
-                    ->map(fn (array $row): string => implode('|', [
-                        $row['year'] ?? '',
-                        $row['category_value'] ?? '',
-                    ]))
-                    ->filter(fn (string $key): bool => trim(str_replace('|', '', $key)) !== '');
+                $populationKeys = $this->duplicateKeys(
+                    $this->input('annual_population_stats', []),
+                    'category_value'
+                );
 
-                if ($populationKeys->duplicates()->isNotEmpty()) {
+                if ($populationKeys->isNotEmpty()) {
                     $validator->errors()->add('annual_population_stats', 'Kombinasi tahun dan kategori penduduk tidak boleh duplikat.');
                 }
 
-                $vulnerableYears = collect($this->input('vulnerable_group_annuals', []))
-                    ->pluck('year')
-                    ->filter()
-                    ->map(fn (mixed $year): int => (int) $year);
+                $vulnerableKeys = $this->duplicateKeys(
+                    $this->input('vulnerable_group_annuals', []),
+                    'vulnerable_category'
+                );
 
-                if ($vulnerableYears->duplicates()->isNotEmpty()) {
-                    $validator->errors()->add('vulnerable_group_annuals', 'Tahun kelompok rentan tidak boleh duplikat.');
+                if ($vulnerableKeys->isNotEmpty()) {
+                    $validator->errors()->add('vulnerable_group_annuals', 'Kombinasi tahun dan kategori kelompok rentan tidak boleh duplikat.');
                 }
 
-                $activeYears = collect($this->input('active_group_annuals', []))
-                    ->pluck('year')
-                    ->filter()
-                    ->map(fn (mixed $year): int => (int) $year);
+                $activeKeys = $this->duplicateKeys(
+                    $this->input('active_group_annuals', []),
+                    'active_category'
+                );
 
-                if ($activeYears->duplicates()->isNotEmpty()) {
-                    $validator->errors()->add('active_group_annuals', 'Tahun kelompok aktif tidak boleh duplikat.');
+                if ($activeKeys->isNotEmpty()) {
+                    $validator->errors()->add('active_group_annuals', 'Kombinasi tahun dan kategori kelompok aktif tidak boleh duplikat.');
                 }
             },
         ];
+    }
+
+    /**
+     * @return Collection<int, string>
+     */
+    private function duplicateKeys(mixed $rows, string $categoryKey): Collection
+    {
+        if (! is_array($rows)) {
+            return collect();
+        }
+
+        return collect($rows)
+            ->map(fn (array $row): string => implode('|', [
+                $row['year'] ?? '',
+                str((string) ($row[$categoryKey] ?? ''))->trim()->lower()->toString(),
+            ]))
+            ->filter(fn (string $key): bool => trim(str_replace('|', '', $key)) !== '')
+            ->duplicates()
+            ->values();
     }
 
     /**

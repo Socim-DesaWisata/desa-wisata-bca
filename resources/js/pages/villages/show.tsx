@@ -1,28 +1,55 @@
 import { Head } from '@inertiajs/react';
+import { show as showVillage } from '@/routes/villages';
 import {
-    ArrowRight,
-    BedDouble,
-    ChevronDown,
-    Clock3,
-    Facebook,
-    Image as ImageIcon,
-    Instagram,
-    Mail,
+    Bed,
+    Buildings,
+    Camera,
+    Car,
+    ChatsCircle,
+    Clock,
+    Copy,
+    EnvelopeSimple,
+    FacebookLogo,
+    ForkKnife,
+    Gift,
+    House,
+    Info,
+    InstagramLogo,
+    Leaf,
     MapPin,
-    Mountain,
+    MapTrifold,
+    Package,
+    Palette,
+    Park,
     Phone,
-    ScrollText,
-    Search,
-    ShieldCheck,
-    ShoppingBag,
+    QrCode,
+    ShareFat,
+    ShoppingBagOpen,
+    SignIn,
+    SquaresFour,
     Star,
-    Store,
-    TreePine,
-    Users,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+    Storefront,
+    TiktokLogo,
+    Toilet,
+    Trophy,
+    User,
+    UsersThree,
+    VideoCamera,
+    WifiHigh,
+} from '@phosphor-icons/react';
+import type { Icon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+
+type Product = {
+    title: string;
+    image?: string | null;
+    href?: string;
+    desc?: string;
+    price?: string;
+    meta?: string;
+    badge?: string;
+    tone?: string;
+};
 
 type MediaItem = {
     id: number;
@@ -53,18 +80,13 @@ type UmkmItem = {
     business_owner_name: string | null;
     production_address: string | null;
     annual_revenue: string | null;
-    current_obstacles: string | null;
-    certifications: string | null;
-    has_exported: boolean | null;
-    export_destination_countries: string | null;
-    collector_name: string | null;
-    collector_email: string | null;
     product_photo_url: string | null;
     categories: BadgeItem[];
 };
 type PariwisataItem = {
     id: number;
     name: string;
+    image_url: string | null;
     operational_days: string | null;
     operational_hours: string | null;
     entrance_ticket_price: string | null;
@@ -72,1068 +94,931 @@ type PariwisataItem = {
     address: string | null;
     person_in_charge_name: string | null;
     person_in_charge_phone: string | null;
-    person_in_charge_address: string | null;
     status_label: string;
     categories: BadgeItem[];
 };
+type KemenparAspectScore = {
+    name: string;
+    score: number;
+    max_score: number;
+    score_percent: number;
+};
+type VillageLinkItem = {
+    id: number;
+    name: string;
+    location: string;
+    description: string | null;
+    cover_url: string | null;
+};
+
 type VillageShowProps = {
     village: {
         id: number;
+        code: string;
         name: string;
         description: string | null;
         location: string;
         address: string;
         postal_code: string;
+        province: string | null;
+        city: string | null;
+        district: string | null;
+        subdistrict: string | null;
+        maps_url: string | null;
         manager_name: string;
         manager_phone: string;
         manager_email: string;
-        maps_url: string | null;
+        status_label: string;
+        category_label: string;
         media: MediaItem[];
         cover: MediaItem | null;
         profile_items: ProfileGroup[];
         umkms: UmkmItem[];
         pariwisata: PariwisataItem[];
+        kemenpar_aspect_scores: KemenparAspectScore[];
     };
+    village_options: VillageLinkItem[];
+    nearby_villages: VillageLinkItem[];
 };
-type IconCardItem = { icon: LucideIcon; title: string; description: string };
-type TestimonialItem = { name: string; role: string; avatar: string };
-type ArticleItem = { title: string; image: string; date: string };
+type Row = { label: string; value: string; icon: Icon };
+type FacilityItem = readonly [Icon, string, string];
+const cx = (...c: Array<string | false | undefined>) =>
+    c.filter(Boolean).join(' ');
 
-const fallbackImages = {
-    hero: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1800&q=80',
-    gallery1:
-        'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=900&q=80',
-    gallery2:
-        'https://images.unsplash.com/photo-1466721591366-2d5fba72006d?auto=format&fit=crop&w=700&q=80',
-    gallery3:
-        'https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=700&q=80',
-    gallery4:
-        'https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=700&q=80',
-    gallery5:
-        'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=700&q=80',
-    article1:
-        'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=700&q=80',
-    article2:
-        'https://images.unsplash.com/photo-1459666644539-a9755287d6b0?auto=format&fit=crop&w=700&q=80',
-    article3:
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=700&q=80',
-    avatar1:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80',
-    avatar2:
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=180&q=80',
-};
-const galleryFallbacks = [
-    fallbackImages.gallery1,
-    fallbackImages.gallery2,
-    fallbackImages.gallery3,
-    fallbackImages.gallery4,
-    fallbackImages.gallery5,
-];
-const aboutHighlights: IconCardItem[] = [
-    {
-        icon: TreePine,
-        title: 'Potensi Alam',
-        description:
-            'Menampilkan karakter desa melalui lanskap, suasana, dan pengalaman lokal.',
-    },
-    {
-        icon: ScrollText,
-        title: 'Pengalaman Terkurasi',
-        description:
-            'Paket, atraksi, dan homestay ditampilkan dari data profil backend.',
-    },
-    {
-        icon: ShieldCheck,
-        title: 'Terhubung Pengelola',
-        description:
-            'Informasi kontak, alamat, dan titik kunjungan tersedia langsung dari data desa.',
-    },
-];
-const whyChooseUs: IconCardItem[] = [
-    {
-        icon: Users,
-        title: 'Berbasis Komunitas',
-        description:
-            'Program desa, UMKM, dan layanan wisata terhubung dalam satu halaman.',
-    },
-    {
-        icon: Store,
-        title: 'UMKM Lokal',
-        description:
-            'Produk warga dan kategori usaha tampil dari data UMKM aktual.',
-    },
-    {
-        icon: Mountain,
-        title: 'Destinasi Nyata',
-        description: 'ISTC/pariwisata aktif ditampilkan langsung dari backend.',
-    },
-    {
-        icon: BedDouble,
-        title: 'Akomodasi Desa',
-        description: 'Homestay dan fasilitas inap mengikuti data profil item.',
-    },
-    {
-        icon: Search,
-        title: 'Informasi Ringkas',
-        description:
-            'Pengunjung bisa melihat paket, atraksi, galeri, dan kontak tanpa data dummy utama.',
-    },
-];
-const testimonials: TestimonialItem[] = [
-    {
-        name: 'Rina K.',
-        role: 'Pengalaman desa terasa hangat, informatif, dan mudah direncanakan sejak awal.',
-        avatar: fallbackImages.avatar1,
-    },
-    {
-        name: 'Budi S.',
-        role: 'Informasi paket, atraksi, dan kontak pengelola membantu saat menyusun kunjungan rombongan.',
-        avatar: fallbackImages.avatar2,
-    },
-];
-const faqs = [
-    'Bagaimana cara menuju lokasi desa wisata?',
-    'Apakah tersedia homestay atau akomodasi lokal?',
-    'Apakah wisata cocok untuk keluarga dan rombongan?',
-    'Siapa yang bisa dihubungi untuk reservasi dan informasi lanjutan?',
-];
-const articles: ArticleItem[] = [
-    {
-        title: 'Mengembangkan potensi desa lewat atraksi dan paket wisata',
-        image: fallbackImages.article1,
-        date: '10 Mei 2024',
-    },
-    {
-        title: 'Peran UMKM dalam ekosistem desa wisata yang berkelanjutan',
-        image: fallbackImages.article2,
-        date: '15 Mei 2024',
-    },
-    {
-        title: 'Kolaborasi pengelola, masyarakat, dan wisatawan untuk pengalaman otentik',
-        image: fallbackImages.article3,
-        date: '20 Mei 2024',
-    },
-];
-
-function classNames(...classes: Array<string | false | null | undefined>) {
-    return classes.filter(Boolean).join(' ');
-}
-function normalize(value: string) {
-    return value.toLowerCase().replace(/\s+/g, '-');
-}
-function textOrFallback(value: string | null | undefined, fallback = '-') {
-    return value && value.trim() !== '' ? value : fallback;
-}
-function truncate(value: string | null | undefined, length = 140) {
-    return !value
-        ? '-'
-        : value.length > length
-            ? `${value.slice(0, length).trim()}...`
-            : value;
-}
-function mediaUrl(item?: MediaItem | null) {
-    return item?.url || fallbackImages.gallery1;
-}
-function profileMediaUrl(item: ProfileItem, fallbackIndex = 0) {
-    return (
-        item.media.find((media) => media.is_cover)?.url ||
-        item.media[0]?.url ||
-        galleryFallbacks[fallbackIndex % galleryFallbacks.length]
-    );
-}
-function findGroup(
-    groups: ProfileGroup[],
+const textOrFallback = (value: string | null | undefined, fallback: string) =>
+    value && value !== '-' && value.trim() !== '' ? value : fallback;
+const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '-');
+const firstMediaUrl = (media: MediaItem[] | undefined) =>
+    media?.find((item) => item.is_cover)?.url || media?.[0]?.url || null;
+const groupItems = (
+    groups: ProfileGroup[] | undefined,
     matcher: (category: string) => boolean,
-) {
+) => groups?.find((group) => matcher(normalize(group.category)))?.items ?? [];
+const profileProducts = (
+    items: ProfileItem[],
+    badge?: string,
+    tone?: string,
+) =>
+    items.map((item) => ({
+        title: item.name,
+        image: firstMediaUrl(item.media),
+        desc: item.description ?? item.address ?? undefined,
+        price: item.price_text ?? undefined,
+        meta: item.opening_hours ?? undefined,
+        badge,
+        tone,
+    }));
+
+const nav = [
+    [House, 'Home', '#home'],
+    [User, 'Profil', '#profil'],
+    [Star, 'Pariwisata', '#pariwisata'],
+    [Gift, 'UMKM', '#umkm'],
+] as const;
+const footerCols = [
+    [
+        'Explore',
+        'Why Rural Tourism, Tourism Villages, Attraction Packages, Activities, Travel Inspiration, Partner Villages',
+    ],
+    [
+        'Categories',
+        'Nature & Adventure, Culture & Heritage, Culinary & Gastronomy, Creative Economy, Wellness & Relaxation, Educational Tourism',
+    ],
+    [
+        'Information',
+        'News & Articles, Event Calendar, Village Awards, Download Center, Gallery, FAQ',
+    ],
+    ['Help & Support', 'Help Center, Contact Us, Privacy Policy, Terms of Use'],
+];
+
+function Logo() {
     return (
-        groups.find((group) => matcher(normalize(group.category)))?.items ?? []
+        <div className="flex items-center gap-3">
+            <div className="relative grid size-14 place-items-center overflow-hidden rounded-[18px] bg-[#e8f7f8] ring-1 ring-[#cfe3e4]">
+                <span className="absolute bottom-2 h-5 w-10 rounded-t-full bg-[#0066AE]" />
+                <span className="absolute bottom-2.5 h-3 w-12 rounded-t-full bg-[#f8a42c]" />
+                <span className="absolute top-2 h-7 w-7 rotate-45 rounded-sm bg-[#0066AE]" />
+                <span className="absolute bottom-3 h-1.5 w-9 rounded-full bg-white" />
+            </div>
+            <div className="leading-tight">
+                <p className="text-[18px] font-extrabold text-[#0f172a]">
+                    Desa Bakti BCA
+                </p>
+                <p className="text-[12px] font-semibold text-[#7C7C7C]">
+                    Explore Authentic Villages
+                </p>
+            </div>
+        </div>
     );
 }
+function TopNav({ villages }: { villages: VillageLinkItem[] }) {
+    return (
+        <header className="border-b border-[#dde7e7] bg-white">
+            <div className="mx-auto flex h-20 max-w-[1360px] items-center justify-between gap-8 px-8">
+                <Logo />
+                <nav className="hidden items-center gap-7 lg:flex">
+                    {nav.map(([Icon, label, href]) => (
+                        <a
+                            key={label}
+                            href={href}
+                            className="group inline-flex h-11 items-center gap-2 text-[13px] font-bold text-[#303030] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-[#0066AE] active:scale-[0.98]"
+                        >
+                            <Icon className="size-5" />
+                            {label}
+                        </a>
+                    ))}
+                </nav>
+                <details className="group relative">
+                    <summary className="inline-flex h-12 cursor-pointer list-none items-center gap-2 rounded-lg bg-[#093967] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(0,102,174,0.18)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98] [&::-webkit-details-marker]:hidden">
+                        <MapTrifold className="size-5" />
+                        List Desa
+                        <span className="text-[11px] transition group-open:rotate-180">v</span>
+                    </summary>
+                    <div className="absolute right-0 z-30 mt-3 w-72 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+                        <div className="max-h-80 overflow-y-auto p-2">
+                            {villages.map((item) => (
+                                <a
+                                    key={item.id}
+                                    href={showVillage.url(item.id)}
+                                    className="block rounded-xl px-3 py-2.5 text-left transition hover:bg-[#EAF3FF]"
+                                >
+                                    <span className="block text-[13px] font-extrabold text-[#093967]">
+                                        {item.name}
+                                    </span>
+                                    <span className="mt-0.5 block text-[11px] font-semibold text-[#64748B]">
+                                        {item.location}
+                                    </span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </header>
+    );
+}
+function Hero({
+    village,
+    heroImage,
+}: {
+    village: VillageShowProps['village'];
+    heroImage: string | null;
+}) {
+    const location = textOrFallback(
+        village.address !== '-' ? village.address : village.location,
+        'Banjarbanggi, Pitu, Ngawi Regency, East Java',
+    );
 
-function SectionHeading({
+    return (
+        <section className="relative h-[260px] overflow-hidden bg-[#093967] md:h-[286px]">
+            {heroImage ? (
+                <img
+                    src={heroImage}
+                    alt={`${village.name} landscape`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                />
+            ) : (
+                <ImagePlaceholder
+                    label="hero desa"
+                    className="absolute inset-0 bg-[#EAF3FF]"
+                />
+            )}
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,34,68,0.78)_0%,rgba(0,68,120,0.58)_42%,rgba(0,102,174,0.16)_100%)]" />
+            <div className="relative mx-auto flex h-full max-w-[1360px] items-center px-8">
+                <div className="max-w-[860px] translate-y-1 text-white">
+                    <h1 className="text-[34px] leading-[1.1] font-extrabold tracking-[-0.01em] drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)] md:text-[40px]">
+                        {textOrFallback(village.name, 'Tidak ada data')}
+                    </h1>
+                    <div className="mt-5 flex items-center gap-2 text-[15px] font-bold drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
+                        <MapPin className="size-5" weight="fill" />
+                        {location}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+function Heading({
+    icon: Icon,
+    children,
+}: {
+    icon: Icon;
+    children: ReactNode;
+}) {
+    return (
+        <h2 className="mb-4 flex items-center gap-2 text-[18px] font-extrabold text-[#0066AE]">
+            <Icon className="size-5" weight="fill" />
+            <span className="text-[#093967]">{children}</span>
+        </h2>
+    );
+}
+function Panel({ children }: { children: ReactNode }) {
+    return (
+        <section className="rounded-[18px] border border-[#EFEFEF] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            {children}
+        </section>
+    );
+}
+function EmptyState({ title }: { title: string }) {
+    return (
+        <div className="grid min-h-[140px] place-items-center rounded-[16px] border border-dashed border-[#C8D8E8] bg-[#F8FBFE] px-5 text-center text-[13px] font-extrabold text-[#7C7C7C]">
+            {title}
+        </div>
+    );
+}
+function ImagePlaceholder({ label, className }: { label: string; className?: string }) {
+    return (
+        <div className={cx('grid h-full w-full place-items-center bg-[#EAF3FF] p-4 text-center text-[12px] font-extrabold text-[#7C7C7C]', className)}>
+            Tidak ada gambar {label}
+        </div>
+    );
+}
+function FacilityGrid({ items }: { items: FacilityItem[] }) {
+    return (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+            {items.map(([Icon, label, color], i) => (
+                <div
+                    key={`${label}-${i}`}
+                    className="grid min-h-[92px] place-items-center rounded-[14px] border border-[#EFEFEF] bg-[#F8FBFE] p-3 text-center transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-[#AAD2F8]"
+                >
+                    <Icon className={cx('size-6', color)} weight="fill" />
+                    <p className="mt-2 text-[11px] leading-tight font-extrabold text-[#303030]">
+                        {label}
+                    </p>
+                </div>
+            ))}
+        </div>
+    );
+}
+function ProductCard({
+    p,
+    centered = false,
+}: {
+    p: Product;
+    centered?: boolean;
+}) {
+    const card = (
+        <article className="overflow-hidden rounded-[14px] border border-[#EFEFEF] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+            <div className="relative aspect-[16/9] overflow-hidden bg-[#F1F5F8]">
+                {p.image ? (
+                    <img
+                        src={p.image}
+                        alt={p.title}
+                        className="h-full w-full object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.04]"
+                    />
+                ) : (
+                    <ImagePlaceholder label={p.title} />
+                )}
+                {p.badge ? (
+                    <span
+                        className={cx(
+                            'absolute top-2 left-2 rounded-md px-2.5 py-1 text-[10px] font-extrabold text-white',
+                            p.tone,
+                        )}
+                    >
+                        {p.badge}
+                    </span>
+                ) : null}
+            </div>
+            <div className={cx('p-4', centered && 'text-center')}>
+                <h3 className="text-[13px] leading-snug font-extrabold text-[#303030]">
+                    {p.title}
+                </h3>
+                {p.desc ? (
+                    <p className="mt-2 min-h-[48px] text-[11px] leading-[1.55] font-semibold text-[#303030]">
+                        {p.desc}
+                    </p>
+                ) : null}
+                {p.meta && !p.price ? (
+                    <p className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#303030]">
+                        <MapPin
+                            className="size-3.5 text-[#0066AE]"
+                            weight="fill"
+                        />
+                        {p.meta}
+                    </p>
+                ) : null}
+                {p.price ? (
+                    <p className="mt-3 text-[13px] font-extrabold text-[#0066AE]">
+                        {p.price}{' '}
+                        {p.meta ? (
+                            <span className="font-bold text-[#7C7C7C]">
+                                {p.meta}
+                            </span>
+                        ) : null}
+                    </p>
+                ) : null}
+            </div>
+        </article>
+    );
+
+    return p.href ? (
+        <a href={p.href} className="block">
+            {card}
+        </a>
+    ) : (
+        card
+    );
+}
+function ShowcaseProductCard({
+    p,
+    variant,
+}: {
+    p: Product;
+    variant: 'pariwisata' | 'umkm';
+}) {
+    const isUmkm = variant === 'umkm';
+    const accent = isUmkm ? '#0066AE' : '#0066AE';
+    const soft = isUmkm ? '#EAF3FF' : '#EAF3FF';
+    const Icon = isUmkm ? Storefront : Leaf;
+
+    return (
+        <article className="group overflow-hidden rounded-[20px] border border-[#EFEFEF] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
+            <div className="relative aspect-[16/9] overflow-hidden bg-[#F1F5F8]">
+                {p.image ? (
+                    <img
+                        src={p.image}
+                        alt={p.title}
+                        className="h-full w-full object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                    />
+                ) : (
+                    <ImagePlaceholder label={p.title} />
+                )}
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
+                {p.badge ? (
+                    <span
+                        className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]"
+                        style={{ backgroundColor: accent }}
+                    >
+                        <Icon className="size-3.5" weight="fill" />
+                        {p.badge}
+                    </span>
+                ) : null}
+            </div>
+            <div className="space-y-2.5 p-4">
+                <div>
+                    <h3 className="text-[13px] leading-tight font-extrabold text-[#303030]">
+                        {p.title}
+                    </h3>
+                    {p.desc ? (
+                        <p className="mt-1 line-clamp-2 text-[11px] leading-[1.65] font-semibold text-[#506169]">
+                            {p.desc}
+                        </p>
+                    ) : null}
+                </div>
+                <div
+                    className="rounded-[14px] p-3"
+                    style={{ backgroundColor: soft }}
+                >
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <p className="truncate whitespace-nowrap text-[9px] font-extrabold tracking-[0.06em] text-[#7C7C7C] uppercase">
+                                {isUmkm ? 'Omset Tahunan' : 'Harga Tiket'}
+                            </p>
+                            <p
+                                className="mt-0.5 truncate whitespace-nowrap text-[11px] leading-tight font-extrabold"
+                                style={{ color: accent }}
+                            >
+                                {p.price || 'Tidak ada data'}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="truncate whitespace-nowrap text-[9px] font-extrabold tracking-[0.06em] text-[#7C7C7C] uppercase">
+                                {isUmkm ? 'Kategori' : 'Jam Operasional'}
+                            </p>
+                            <p className="mt-0.5 inline-flex max-w-full items-center gap-1 overflow-hidden text-[10px] leading-tight font-extrabold text-[#303030]">
+                                {isUmkm ? (
+                                    <ShoppingBagOpen
+                                        className="size-4"
+                                        weight="fill"
+                                        style={{ color: accent }}
+                                    />
+                                ) : (
+                                    <Clock
+                                        className="size-4"
+                                        weight="fill"
+                                        style={{ color: accent }}
+                                    />
+                                )}
+                                <span className="truncate">{isUmkm ? p.desc || p.badge || 'Tidak ada data' : p.meta || 'Tidak ada data'}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 border-t border-[#EFEFEF] pt-2.5">
+                    <p className="inline-flex min-w-0 items-center gap-1.5 truncate text-[11px] font-extrabold text-[#506169]">
+                        {isUmkm ? (
+                            <Storefront className="size-3.5 shrink-0" weight="fill" />
+                        ) : (
+                            <MapPin className="size-3.5 shrink-0" weight="fill" />
+                        )}
+                        <span className="truncate">{isUmkm ? p.desc || 'Tidak ada data' : p.desc || 'Tidak ada data'}</span>
+                    </p>
+                    <span
+                        className="grid size-7 shrink-0 place-items-center rounded-full text-white"
+                        style={{ backgroundColor: accent }}
+                    >
+                        <Star className="size-3" weight="fill" />
+                    </span>
+                </div>
+            </div>
+        </article>
+    );
+}
+function SidebarCard({
     title,
-    action,
-    href,
+    icon: Icon,
+    children,
 }: {
     title: string;
-    action?: string;
-    href?: string;
+    icon: Icon;
+    children: ReactNode;
 }) {
     return (
-        <div className="mb-5 flex items-end justify-between gap-4">
-            <h2 className="text-[30px] leading-[1.12] font-bold text-[#26311f] md:text-[36px]">
+        <aside className="rounded-[18px] border border-[#EFEFEF] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <h3 className="mb-4 flex items-center gap-2 text-[15px] font-extrabold text-[#303030]">
+                <Icon className="size-5 text-[#0066AE]" weight="fill" />
                 {title}
-            </h2>
-            {action ? (
-                <a
-                    href={href ?? '#'}
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0066AE] transition hover:text-[#093967]"
+            </h3>
+            {children}
+        </aside>
+    );
+}
+function Rows({ rows }: { rows: Row[] }) {
+    return (
+        <div className="space-y-3">
+            {rows.map(({ label, value, icon: Icon }) => (
+                <div
+                    key={label}
+                    className="flex items-center gap-3 text-[12px]"
                 >
-                    {action}
-                    <ArrowRight className="size-4" />
-                </a>
-            ) : null}
+                    <Icon
+                        className="size-4.5 shrink-0 text-[#0066AE]"
+                        weight="fill"
+                    />
+                    <span className="font-bold text-[#303030]">{label}</span>
+                    <span className="ml-auto text-right font-extrabold text-[#303030]">
+                        {value}
+                    </span>
+                </div>
+            ))}
         </div>
     );
 }
-function NavLink({
-    href,
-    children,
-    active,
-}: {
-    href: string;
-    children: ReactNode;
-    active?: boolean;
-}) {
+function QrBlock({ rows, villageName }: { rows: Row[]; villageName: string }) {
     return (
-        <a
-            href={href}
-            className={classNames(
-                'relative text-[13px] font-semibold text-[#26311f] transition hover:text-[#0066AE]',
-                active && 'text-[#0066AE]',
-            )}
-        >
-            {children}
-            {active ? (
-                <span className="absolute -bottom-2 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#0066AE]" />
-            ) : null}
-        </a>
-    );
-}
-function LinkButton({
-    href,
-    children,
-    primary = true,
-}: {
-    href: string;
-    children: ReactNode;
-    primary?: boolean;
-}) {
-    return (
-        <a
-            href={href}
-            target={href.startsWith('http') ? '_blank' : undefined}
-            rel={href.startsWith('http') ? 'noreferrer' : undefined}
-            className={classNames(
-                'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-[13px] font-bold transition',
-                primary
-                    ? 'bg-[#0066AE] text-white shadow-[0_12px_24px_rgba(0,102,174,0.22)] hover:bg-[#093967]'
-                    : 'border border-[#DCE3EA] bg-white text-[#26311f] hover:bg-[#F8FBFE]',
-            )}
-        >
-            {children}
-        </a>
-    );
-}
-function StatCard({
-    icon: Icon,
-    value,
-    label,
-}: {
-    icon: LucideIcon;
-    value: string;
-    label: string;
-}) {
-    return (
-        <div className="flex items-center gap-3 rounded-[16px] border border-[#DCE3EA] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(0,102,174,0.07)]">
-            <div className="flex size-11 items-center justify-center rounded-[12px] bg-[#F1F5F8] text-[#0066AE]">
-                <Icon className="size-5" />
-            </div>
-            <div>
-                <p className="text-[24px] leading-none font-extrabold text-[#0066AE]">
-                    {value}
-                </p>
-                <p className="mt-1 text-[12px] font-medium text-[#8a8577]">
-                    {label}
-                </p>
-            </div>
-        </div>
-    );
-}
-function AboutHighlight({ icon: Icon, title, description }: IconCardItem) {
-    return (
-        <div className="rounded-[16px] border border-[#DCE3EA] bg-white p-4 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
-            <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
-                <Icon className="size-4.5" />
-            </div>
-            <h3 className="text-[14px] font-bold text-[#26311f]">{title}</h3>
-            <p className="mt-1.5 text-[12px] leading-5 text-[#59564c]">
-                {description}
-            </p>
-        </div>
-    );
-}
-function ProfileCard({ item, index }: { item: ProfileItem; index: number }) {
-    return (
-        <article className="overflow-hidden rounded-[16px] border border-[#DCE3EA] bg-white shadow-[0_12px_30px_rgba(0,102,174,0.05)]">
-            <div className="aspect-[4/3] overflow-hidden">
-                <img
-                    src={profileMediaUrl(item, index)}
-                    alt={item.name}
-                    className="h-full w-full object-cover"
-                />
-            </div>
-            <div className="p-4">
-                <h3 className="text-[14px] font-bold text-[#26311f]">
-                    {item.name}
-                </h3>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-[#8a8577]">
-                    {item.opening_hours ? (
-                        <span className="inline-flex items-center gap-1">
-                            <Clock3 className="size-3.5" />
-                            {item.opening_hours}
-                        </span>
-                    ) : null}
-                    {item.price_text ? <span>{item.price_text}</span> : null}
-                </div>
-                <p className="mt-3 text-[12px] leading-6 text-[#59564c]">
-                    {truncate(item.description)}
-                </p>
-            </div>
-        </article>
-    );
-}
-function WhyItem({ icon: Icon, title, description }: IconCardItem) {
-    return (
-        <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#2FA6FC]">
-                <Icon className="size-4.5" />
-            </div>
-            <div>
-                <h3 className="text-[14px] font-bold text-[#26311f]">
-                    {title}
-                </h3>
-                <p className="mt-1 text-[12px] leading-5 text-[#59564c]">
-                    {description}
-                </p>
-            </div>
-        </div>
-    );
-}
-function Badge({ label }: { label: string }) {
-    return (
-        <span className="inline-flex rounded-full bg-[#EAF3FF] px-3 py-1 text-[11px] font-semibold text-[#0066AE]">
-            {label}
-        </span>
-    );
-}
-function UmkmCard({ item, index }: { item: UmkmItem; index: number }) {
-    return (
-        <article className="overflow-hidden rounded-[16px] border border-[#DCE3EA] bg-white shadow-[0_12px_30px_rgba(0,102,174,0.05)]">
-            <div className="aspect-[4/3] overflow-hidden bg-[#F1F5F8]">
-                <img
-                    src={
-                        item.product_photo_url ||
-                        galleryFallbacks[index % galleryFallbacks.length]
-                    }
-                    alt={item.name}
-                    className="h-full w-full object-cover"
-                />
-            </div>
-            <div className="space-y-3 p-4">
-                <div>
-                    <p className="text-[11px] font-semibold tracking-[0.08em] text-[#2FA6FC] uppercase">
-                        UMKM
-                    </p>
-                    <h3 className="mt-1 text-[14px] font-bold text-[#26311f]">
-                        {item.name}
-                    </h3>
-                    <p className="mt-1 text-[12px] text-[#59564c]">
-                        {textOrFallback(item.brand_name)}
-                    </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {item.categories.length > 0 ? (
-                        item.categories.map((category) => (
-                            <Badge key={category.id} label={category.label} />
-                        ))
-                    ) : (
-                        <Badge
-                            label={textOrFallback(
-                                item.product_category,
-                                'Produk Lokal',
-                            )}
-                        />
-                    )}
-                </div>
-                <div className="space-y-1.5 text-[12px] leading-6 text-[#59564c]">
-                    <p>
-                        <span className="font-semibold text-[#26311f]">
-                            Pemilik:
-                        </span>{' '}
-                        {textOrFallback(item.business_owner_name)}
-                    </p>
-                    <p>
-                        <span className="font-semibold text-[#26311f]">
-                            Alamat produksi:
-                        </span>{' '}
-                        {textOrFallback(item.production_address)}
-                    </p>
-                    <p>
-                        <span className="font-semibold text-[#26311f]">
-                            Omzet/tahun:
-                        </span>{' '}
-                        {textOrFallback(item.annual_revenue)}
-                    </p>
-                    <p>
-                        <span className="font-semibold text-[#26311f]">
-                            Ekspor:
-                        </span>{' '}
-                        {item.has_exported
-                            ? `Ya${item.export_destination_countries ? ` • ${item.export_destination_countries}` : ''}`
-                            : 'Belum'}
-                    </p>
-                </div>
-                <p className="text-[12px] leading-6 text-[#59564c]">
-                    {truncate(
-                        item.current_obstacles ||
-                        item.certifications ||
-                        'Belum ada catatan tambahan.',
-                        120,
-                    )}
-                </p>
-            </div>
-        </article>
-    );
-}
-function PariwisataCard({ item }: { item: PariwisataItem }) {
-    return (
-        <article className="rounded-[16px] border border-[#DCE3EA] bg-white p-5 shadow-[0_12px_30px_rgba(0,102,174,0.05)]">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <p className="text-[11px] font-semibold tracking-[0.08em] text-[#2FA6FC] uppercase">
-                        ISTC / Pariwisata
-                    </p>
-                    <h3 className="mt-1 text-[16px] font-bold text-[#26311f]">
-                        {item.name}
-                    </h3>
-                </div>
-                <Badge label={item.status_label} />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-                {item.categories.map((category) => (
-                    <Badge key={category.id} label={category.label} />
-                ))}
-            </div>
-            <div className="mt-4 grid gap-3 text-[12px] leading-6 text-[#59564c] md:grid-cols-2">
-                <p>
-                    <span className="font-semibold text-[#26311f]">
-                        Hari operasional:
-                    </span>{' '}
-                    {textOrFallback(item.operational_days)}
-                </p>
-                <p>
-                    <span className="font-semibold text-[#26311f]">
-                        Jam operasional:
-                    </span>{' '}
-                    {textOrFallback(item.operational_hours)}
-                </p>
-                <p>
-                    <span className="font-semibold text-[#26311f]">
-                        Tiket masuk:
-                    </span>{' '}
-                    {textOrFallback(item.entrance_ticket_price)}
-                </p>
-                <p>
-                    <span className="font-semibold text-[#26311f]">PIC:</span>{' '}
-                    {textOrFallback(item.person_in_charge_name)}
-                </p>
-                <p>
-                    <span className="font-semibold text-[#26311f]">
-                        Telepon PIC:
-                    </span>{' '}
-                    {textOrFallback(item.person_in_charge_phone)}
-                </p>
-                <p>
-                    <span className="font-semibold text-[#26311f]">
-                        Alamat:
-                    </span>{' '}
-                    {textOrFallback(item.address)}
-                </p>
-            </div>
-            {item.entrance_ticket_description ? (
-                <p className="mt-3 text-[12px] leading-6 text-[#59564c]">
-                    {item.entrance_ticket_description}
-                </p>
-            ) : null}
-        </article>
-    );
-}
-function TestimonialCard({ item }: { item: TestimonialItem }) {
-    return (
-        <article className="rounded-[16px] border border-[#DCE3EA] bg-white p-4 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
-            <div className="flex items-start gap-3">
-                <img
-                    src={item.avatar}
-                    alt={item.name}
-                    className="size-11 rounded-full object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold text-[#26311f]">
-                        {item.name}
-                    </p>
-                    <p className="mt-1 text-[12px] leading-5 text-[#59564c]">
-                        {item.role}
-                    </p>
-                    <div className="mt-2 flex items-center gap-0.5 text-[#f4b44f]">
-                        {Array.from({ length: 5 }).map((_, idx) => (
-                            <Star key={idx} className="size-3.5 fill-current" />
+        <SidebarCard title="Village QR Code" icon={QrCode}>
+            <div className="mb-5 grid grid-cols-[112px_1fr] items-center gap-4 rounded-[14px] bg-[#F8FBFE] p-4">
+                <div className="grid aspect-square place-items-center rounded-lg bg-white p-2">
+                    <div className="grid size-full grid-cols-5 gap-1">
+                        {Array.from({ length: 25 }).map((_, i) => (
+                            <span
+                                key={i}
+                                className={cx(
+                                    'rounded-[1px]',
+                                    [
+                                        0, 1, 3, 4, 5, 8, 10, 12, 14, 16, 18,
+                                        19, 20, 22, 24,
+                                    ].includes(i)
+                                        ? 'bg-[#303030]'
+                                        : 'bg-white',
+                                )}
+                            />
                         ))}
                     </div>
                 </div>
+                <p className="text-[12px] leading-5 font-bold text-[#303030]">
+                    Scan to view {villageName}
+                </p>
             </div>
-        </article>
+            <Rows rows={rows} />
+        </SidebarCard>
     );
 }
-function FaqItem({
-    question,
-    open,
-    onClick,
-}: {
-    question: string;
-    open: boolean;
-    onClick: () => void;
-}) {
+const clampPercent = (value: number) => Math.min(Math.max(value, 0), 100);
+
+function AspectScoreIcon({ className }: { className?: string }) {
     return (
-        <div className="overflow-hidden rounded-[12px] border border-[#DCE3EA] bg-white">
-            <button
-                type="button"
-                onClick={onClick}
-                className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left"
-            >
-                <span className="text-[13px] font-semibold text-[#26311f]">
-                    {question}
-                </span>
-                <ChevronDown
-                    className={classNames(
-                        'size-4 shrink-0 text-[#8a8577] transition',
-                        open && 'rotate-180',
-                    )}
-                />
-            </button>
-            {open ? (
-                <div className="border-t border-[#DCE3EA] px-4 py-3 text-[12px] leading-6 text-[#59564c]">
-                    Silakan hubungi pengelola desa untuk reservasi, jadwal
-                    kegiatan, detail akomodasi, dan kebutuhan kunjungan lainnya.
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            className={className}
+        >
+            <path
+                d="M4 19V5M4 19H20M8 16V11M12 16V8M16 16V6"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
+function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectScore[] }) {
+    return (
+        <SidebarCard title="Skor Per Aspek (Kemenpar)" icon={AspectScoreIcon as unknown as Icon}>
+            <p className="mb-4 text-[12px] leading-5 font-semibold text-[#7C7C7C]">
+                Total skor aktual / skor maksimal per aspek.
+            </p>
+            {aspects.length === 0 ? (
+                <div className="flex h-40 items-center justify-center rounded-[14px] bg-[#F8FBFE] text-center text-[12px] font-bold text-[#7C7C7C]">
+                    Belum ada data skor Kemenpar
                 </div>
-            ) : null}
+            ) : (
+                <div className="space-y-4">
+                    {aspects.map((aspect) => (
+                        <div key={aspect.name} className="space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="truncate text-[12px] font-extrabold text-[#303030]">
+                                    {aspect.name}
+                                </p>
+                                <p className="shrink-0 text-[11px] font-black tabular-nums text-[#303030]">
+                                    {aspect.score}/{aspect.max_score}
+                                </p>
+                            </div>
+                            <div className="h-3 overflow-hidden rounded-full bg-[#EAF3FF]">
+                                <div
+                                    className="h-full rounded-full bg-[#0066AE]"
+                                    style={{
+                                        width: `${clampPercent(aspect.score_percent)}%`,
+                                    }}
+                                />
+                            </div>
+                            <p className="text-right text-[10px] font-bold tabular-nums text-[#7C7C7C]">
+                                {aspect.score_percent.toFixed(1)}%
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </SidebarCard>
+    );
+}
+function MapPreview({ villageName }: { villageName: string }) {
+    return (
+        <div className="relative mt-4 h-40 overflow-hidden rounded-[12px] bg-[#EAF8EF]">
+            <div className="absolute inset-0 [background-image:linear-gradient(35deg,transparent_42%,rgba(27,166,201,0.22)_43%,rgba(27,166,201,0.22)_45%,transparent_46%),linear-gradient(140deg,transparent_46%,rgba(14,138,74,0.18)_47%,rgba(14,138,74,0.18)_49%,transparent_50%)] opacity-80" />
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 text-center">
+                <MapPin
+                    className="mx-auto size-9 text-[#E64848]"
+                    weight="fill"
+                />
+                <p className="mt-1 text-[10px] font-extrabold text-[#303030]">
+                    {villageName}
+                </p>
+            </div>
+            <span className="absolute bottom-2 left-2 text-[11px] font-extrabold text-[#1877F2]">
+                Google
+            </span>
         </div>
     );
 }
-function ArticleCard({ item }: { item: ArticleItem }) {
+function Social({
+    children,
+    label,
+    className,
+}: {
+    children: ReactNode;
+    label: string;
+    className: string;
+}) {
     return (
-        <article className="overflow-hidden rounded-[14px] border border-[#DCE3EA] bg-white shadow-[0_8px_22px_rgba(0,102,174,0.04)]">
-            <div className="aspect-[4/3] overflow-hidden">
-                <img
-                    src={item.image}
-                    alt={item.title}
-                    className="h-full w-full object-cover"
-                />
+        <a
+            href="#"
+            aria-label={label}
+            className={cx(
+                'grid size-10 place-items-center rounded-full bg-white text-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98]',
+                className,
+            )}
+        >
+            {children}
+        </a>
+    );
+}
+function Footer() {
+    return (
+        <footer className="mx-auto mt-8 max-w-[1360px] overflow-hidden rounded-t-[24px] bg-[#F1F5F8]">
+            <div className="grid gap-9 px-10 py-10 lg:grid-cols-[1.35fr_repeat(5,1fr)]">
+                <div>
+                    <Logo />
+                    <p className="mt-4 max-w-[260px] text-[12px] leading-6 font-semibold text-[#303030]">
+                        Explore authentic villages, empower local communities,
+                        and preserve Indonesia's cultural heritage.
+                    </p>
+                    <div className="mt-6 flex gap-3">
+                        <Social label="Facebook" className="bg-[#1877F2]">
+                            <FacebookLogo className="size-5" weight="fill" />
+                        </Social>
+                        <Social label="Instagram" className="bg-[#E4405F]">
+                            <InstagramLogo className="size-5" weight="fill" />
+                        </Social>
+                        <Social label="Video channel" className="bg-[#e62117]">
+                            <VideoCamera className="size-5" weight="fill" />
+                        </Social>
+                        <Social label="TikTok" className="bg-[#111827]">
+                            <TiktokLogo className="size-5" weight="fill" />
+                        </Social>
+                    </div>
+                </div>
+                {footerCols.map(([title, links]) => (
+                    <div key={title}>
+                        <h3 className="text-[13px] font-extrabold text-[#093967]">
+                            {title}
+                        </h3>
+                        <div className="mt-4 space-y-2.5">
+                            {links.split(', ').map((link) => (
+                                <a
+                                    key={link}
+                                    href="#"
+                                    className="block text-[11px] font-semibold text-[#303030] hover:text-[#0066AE]"
+                                >
+                                    {link}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+                <div>
+                    <h3 className="text-[13px] font-extrabold text-[#093967]">
+                        Contact Us
+                    </h3>
+                    <div className="mt-4 space-y-4 text-[12px] leading-5 font-semibold text-[#303030]">
+                        <p className="flex gap-2">
+                            <MapPin
+                                className="mt-0.5 size-4 shrink-0 text-[#0066AE]"
+                                weight="fill"
+                            />
+                            Jl. Nusantara No. 66 Jakarta, Indonesia
+                        </p>
+                        <p className="flex gap-2">
+                            <Phone
+                                className="mt-0.5 size-4 shrink-0 text-[#0066AE]"
+                                weight="fill"
+                            />
+                            +62 21 1234 5678
+                        </p>
+                        <p className="flex gap-2">
+                            <EnvelopeSimple
+                                className="mt-0.5 size-4 shrink-0 text-[#0066AE]"
+                                weight="fill"
+                            />
+                            info@villagetourism.id
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div className="p-3.5">
-                <p className="text-[11px] text-[#8a8577]">{item.date}</p>
-                <h3 className="mt-2 text-[13px] leading-5 font-semibold text-[#26311f]">
-                    {item.title}
-                </h3>
+            <div className="grid gap-3 bg-[#093967] px-10 py-4 text-[11px] font-bold text-white md:grid-cols-3">
+                <p>© 2024 Desa Bakti BCA. All rights reserved.</p>
+                <p className="text-center">
+                    Promoting Village Tourism, Empowering Local Communities
+                </p>
+                <p className="text-right">Made with care in Indonesia</p>
             </div>
-        </article>
+        </footer>
     );
 }
 
-export default function VillageShow({ village }: VillageShowProps) {
-    const [openFaq, setOpenFaq] = useState(0);
-    const packages = useMemo(
-        () =>
-            findGroup(village.profile_items, (category) =>
-                category.includes('paket'),
-            ),
-        [village.profile_items],
+export default function VillageDetail({
+    village,
+    village_options,
+    nearby_villages,
+}: VillageShowProps) {
+    const villageName = textOrFallback(village.name, 'Tidak ada data');
+    const locationText = textOrFallback(
+        village.address !== '-' ? village.address : village.location,
+        'Tidak ada data',
     );
-    const attractions = useMemo(
-        () =>
-            findGroup(village.profile_items, (category) =>
-                category.includes('atraksi'),
-            ),
-        [village.profile_items],
+    const heroImage = village.cover?.url || village.media[0]?.url || null;
+    const profileImage = village.media[1]?.url || heroImage;
+    const facilityProfiles = groupItems(village.profile_items, (category) =>
+        category.includes('fasilitas'),
     );
-    const homestays = useMemo(
-        () =>
-            findGroup(village.profile_items, (category) =>
-                category.includes('homestay'),
-            ),
-        [village.profile_items],
+    const attractionProfiles = groupItems(village.profile_items, (category) =>
+        category.includes('atraksi'),
     );
-    const gallery = useMemo(() => {
-        const profileMedia = village.profile_items.flatMap((group) =>
-            group.items.flatMap((item) => item.media),
-        );
-        const merged = [...village.media, ...profileMedia].filter(
-            (item) => item.url,
-        );
-        return merged
-            .filter(
-                (item, index, array) =>
-                    index ===
-                    array.findIndex((candidate) => candidate.url === item.url),
-            )
-            .slice(0, 6);
-    }, [village.media, village.profile_items]);
-    const stats = [
-        {
-            icon: ShoppingBag,
-            value: String(village.umkms.length),
-            label: 'UMKM Desa',
-        },
-        {
-            icon: Mountain,
-            value: String(village.pariwisata.length),
-            label: 'ISTC / Pariwisata',
-        },
+    const homestayProfiles = groupItems(village.profile_items, (category) =>
+        category.includes('homestay'),
+    );
+    const packageProfiles = groupItems(village.profile_items, (category) =>
+        category.includes('paket'),
+    );
+    const souvenirProfiles = groupItems(village.profile_items, (category) =>
+        category.includes('suvenir') || category.includes('souvenir'),
+    );
+    const facilityIconPool = [
+        Car,
+        UsersThree,
+        Toilet,
+        ForkKnife,
+        Camera,
+        WifiHigh,
+        Storefront,
+        Park,
+    ] as const;
+    const facilityColors = [
+        'text-[#0066AE]',
+        'text-[#f57914]',
+        'text-[#0066AE]',
+        'text-[#6d4aff]',
+        'text-[#ff3366]',
+        'text-[#007da7]',
+        'text-[#B96B1C]',
+        'text-[#0066AE]',
     ];
-    const heroImage =
-        village.cover?.url || gallery[0]?.url || fallbackImages.hero;
-    const aboutImage = gallery[1]?.url || heroImage;
-    const mapsHref = village.maps_url || '#kontak';
-    const phoneHref =
-        village.manager_phone && village.manager_phone !== '-'
-            ? `tel:${village.manager_phone}`
-            : '#kontak';
-    const mailHref =
-        village.manager_email && village.manager_email !== '-'
-            ? `mailto:${village.manager_email}`
-            : '#kontak';
+    const facilityItems = facilityProfiles.map((item, index) => [
+        facilityIconPool[index % facilityIconPool.length],
+        item.name,
+        facilityColors[index % facilityColors.length],
+    ] as const);
+    const attractionItems = village.pariwisata.length
+        ? village.pariwisata.map((item) => ({
+              title: item.name,
+              image: item.image_url,
+              desc: item.address || item.entrance_ticket_description || undefined,
+              price: item.entrance_ticket_price || undefined,
+              meta: item.operational_hours || item.operational_days || undefined,
+              badge: item.categories[0]?.label || item.status_label,
+              tone: 'bg-[#0066AE]',
+          }))
+        : profileProducts(attractionProfiles, undefined, 'bg-[#0066AE]');
+    const souvenirItems = village.umkms.length
+        ? village.umkms.map((item) => ({
+              title: item.brand_name || item.name,
+              image: item.product_photo_url,
+              desc: item.product_category || item.business_owner_name || undefined,
+              price: item.annual_revenue || undefined,
+              badge: item.categories[0]?.label,
+              tone: 'bg-[#0066AE]',
+          }))
+        : profileProducts(souvenirProfiles, undefined, 'bg-[#0066AE]');
+    const nearbyItems = nearby_villages.map((item) => ({
+        title: item.name,
+        image: item.cover_url,
+        desc: item.description || undefined,
+        meta: item.location,
+        href: showVillage.url(item.id),
+    }));
+    const villageInfoRows: Row[] = [
+        { icon: User, label: 'Village ID', value: village.code || 'Tidak ada data' },
+        { icon: Trophy, label: 'Status', value: village.status_label || 'Tidak ada data' },
+        { icon: Park, label: 'Tourism Village Category', value: village.category_label || 'Tidak ada data' },
+    ];
+    const statisticRows: Row[] = [
+        {
+            icon: Trophy,
+            label: 'Media Gallery',
+            value: `${village.media.length} Media`,
+        },
+        { icon: Storefront, label: 'MSME Count', value: `${village.umkms.length} MSMEs` },
+        { icon: UsersThree, label: 'Tourism Product Count', value: `${village.pariwisata.length} Produk` },
+        { icon: Buildings, label: 'Village Category', value: village.category_label || 'Tidak ada data' },
+    ];
+    const managerName = textOrFallback(village.manager_name, 'Tidak ada data');
+    const managerPhone = textOrFallback(village.manager_phone, 'Tidak ada data');
+    const managerEmail = textOrFallback(village.manager_email, 'Tidak ada data');
 
     return (
         <>
-            <Head
-                title={`${village.name || 'Desa Wisata'} - Desa Wisata BCA`}
-            />
-            <main className="min-h-screen bg-[#F8FBFE] text-[#26311f]">
-                <section>
-                    <div className="w-full bg-white">
-                        <header className="border-b border-[#DCE3EA] bg-[#F8FBFE]">
-                            <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-4 py-4 md:px-6 lg:px-8">
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <div className="flex size-11 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
-                                        <Mountain className="size-5" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="truncate text-[15px] font-bold text-[#0066AE]">
-                                            Desa Wisata
-                                        </p>
-                                        <p className="truncate text-[11px] text-[#8a8577]">
-                                            {village.name}
-                                        </p>
-                                    </div>
-                                </div>
-                                <nav className="hidden flex-1 items-center justify-center gap-7 lg:flex">
-                                    <NavLink href="#hero" active>
-                                        Beranda
-                                    </NavLink>
-                                    <NavLink href="#tentang">
-                                        Tentang Desa
-                                    </NavLink>
-                                    <NavLink href="#paket">
-                                        Paket Wisata
-                                    </NavLink>
-                                    <NavLink href="#atraksi">Atraksi</NavLink>
-                                    <NavLink href="#galeri">Galeri</NavLink>
-                                    <NavLink href="#umkm">UMKM</NavLink>
-                                    <NavLink href="#kontak">Kontak</NavLink>
-                                </nav>
-                            </div>
-                        </header>
-                        <section
-                            id="hero"
-                            className="relative isolate overflow-hidden bg-[#F8FBFE] px-4 pt-6 pb-0 md:px-6 md:pt-8 lg:px-8 lg:pt-10"
-                        >
-                            <div className="mx-auto grid max-w-[1180px] gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-                                <div className="relative z-10 max-w-[520px] pb-8 lg:pb-24">
-                                    <p className="text-[11px] font-semibold tracking-[0.12em] text-[#2FA6FC] uppercase">
-                                        {textOrFallback(
-                                            village.location,
-                                            'Desa Wisata',
-                                        )}
-                                    </p>
-                                    <h1 className="mt-4 text-[38px] leading-[1.05] font-bold text-[#26311f] sm:text-[46px] lg:text-[54px]">
-                                        {village.name}
-                                    </h1>
-                                    <p className="mt-4 max-w-[460px] text-[14px] leading-7 text-[#59564c]">
-                                        {textOrFallback(
-                                            village.description,
-                                            'Profil desa belum memiliki deskripsi detail.',
-                                        )}
-                                    </p>
-                                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                                        <LinkButton href={mapsHref}>
-                                            <MapPin className="size-4" />
-                                            Lihat Lokasi
-                                        </LinkButton>
-                                        <LinkButton
-                                            href={phoneHref}
-                                            primary={false}
-                                        >
-                                            <Phone className="size-4" />
-                                            Hubungi Kami
-                                        </LinkButton>
-                                    </div>
-                                </div>
-                                <div className="relative min-h-[320px] self-stretch overflow-hidden rounded-[24px] lg:min-h-[430px]">
+            <Head title={villageName} />
+            <main className="min-h-[100dvh] bg-[#F7F7F7] font-sans text-[#303030]">
+                <TopNav villages={village_options} />
+                <div id="home">
+                    <Hero village={village} heroImage={heroImage} />
+                </div>
+                <div className="mx-auto grid max-w-[1360px] gap-8 px-8 py-8 lg:grid-cols-[minmax(0,8fr)_minmax(320px,4fr)]">
+                    <div className="space-y-8">
+                        <section id="profil">
+                            <Panel>
+                            <Heading icon={User}>Profile</Heading>
+                            <div className="grid gap-6 md:grid-cols-[340px_1fr]">
+                                {profileImage ? (
                                     <img
-                                        src={heroImage}
-                                        alt={village.name}
-                                        className="h-full w-full object-cover"
+                                        src={profileImage}
+                                        alt={`${villageName} profile`}
+                                        className="aspect-[16/9] w-full rounded-[12px] object-cover shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-[#0066AE]/20 via-transparent to-[#093967]/18" />
+                                ) : (
+                                    <ImagePlaceholder
+                                        label="profil desa"
+                                        className="aspect-[16/9] rounded-[12px] shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
+                                    />
+                                )}
+                                <div className="space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
+                                    {village.description ? (
+                                        <>
+                                            <p>{village.description}</p>
+                                            {locationText !== 'Tidak ada data' ? (
+                                                <p>Desa ini berlokasi di {locationText}.</p>
+                                            ) : null}
+                                        </>
+                                    ) : (
+                                        <EmptyState title="Tidak ada data profil" />
+                                    )}
                                 </div>
                             </div>
-                            <div className="relative z-20 mx-auto max-w-[1180px] translate-y-8 pb-8">
-                                <div className="grid gap-3 p-3 md:grid-cols-2 lg:grid-cols-4 lg:p-4">
-                                    {stats.map((item) => (
-                                        <StatCard key={item.label} {...item} />
+                            </Panel>
+                        </section>
+                        <section id="pariwisata">
+                            <Heading icon={Star}>Tourist Attractions</Heading>
+                            {attractionItems.length ? (
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                    {attractionItems.map((p) => (
+                                        <ShowcaseProductCard
+                                            key={p.title}
+                                            p={p}
+                                            variant="pariwisata"
+                                        />
                                     ))}
                                 </div>
-                            </div>
+                            ) : (
+                                <EmptyState title="Tidak ada data pariwisata" />
+                            )}
+                        </section>
+                        <section id="umkm">
+                            <Heading icon={Gift}>UMKM</Heading>
+                            {souvenirItems.length ? (
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                    {souvenirItems.map((p) => (
+                                        <ShowcaseProductCard
+                                            key={p.title}
+                                            p={p}
+                                            variant="umkm"
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState title="Tidak ada data UMKM" />
+                            )}
+                        </section>
+                        <section>
+                            <Heading icon={MapPin}>
+                                Nearby Tourism Villages
+                            </Heading>
+                            {nearbyItems.length ? (
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                    {nearbyItems.map((p) => (
+                                        <ProductCard key={p.title} p={p} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState title="Tidak ada data desa lainnya" />
+                            )}
                         </section>
                     </div>
-                </section>
-                <section className="px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto max-w-[1180px]">
-                        <SectionHeading title="Mengapa Memilih Desa Wisata Kami" />
-                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-                            {whyChooseUs.map((item) => (
-                                <WhyItem key={item.title} {...item} />
-                            ))}
-                        </div>
-                    </div>
-                </section>
-                <section id="galeri" className="px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto max-w-[1180px]">
-                        <SectionHeading
-                            title="Galeri"
-                            action="Lihat Semua Galeri"
-                            href="#galeri"
-                        />
-                        <div className="grid gap-4 rounded-[20px] border border-[#DCE3EA] bg-white p-4 shadow-[0_10px_24px_rgba(0,102,174,0.04)] sm:grid-cols-2 lg:grid-cols-3">
-                            {(gallery.length > 0
-                                ? gallery
-                                : galleryFallbacks.map(
-                                    (url, index) =>
-                                        ({
-                                            id: index,
-                                            title: null,
-                                            caption: null,
-                                            url,
-                                            is_cover: index === 0,
-                                        }) as MediaItem,
-                                )
-                            ).map((image, index) => (
-                                <div
-                                    key={`${image.id}-${index}`}
-                                    className="aspect-[16/10] overflow-hidden rounded-[16px] bg-[#F1F5F8]"
+                    <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
+                        <QrBlock rows={villageInfoRows} villageName={villageName} />
+                        <KemenparAspectScoreCard aspects={village.kemenpar_aspect_scores} />
+                        <SidebarCard title="Location Address" icon={MapPin}>
+                            <p className="text-[12px] leading-6 font-semibold text-[#303030]">
+                                {locationText}
+                            </p>
+                            {village.maps_url ? (
+                                <a
+                                    href={village.maps_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-3 inline-flex text-[12px] font-extrabold text-[#0066AE]"
                                 >
-                                    <img
-                                        src={mediaUrl(image)}
-                                        alt={
-                                            image.title || `Galeri ${index + 1}`
-                                        }
-                                        className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-6">
-                            <SectionHeading title="Pengalaman Pengunjung" />
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {testimonials.map((item) => (
-                                    <TestimonialCard
-                                        key={item.name}
-                                        item={item}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <section id="umkm" className="px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto max-w-[1180px]">
-                        <SectionHeading
-                            title="UMKM Desa"
-                            action="Lihat Semua UMKM"
-                            href="#umkm"
-                        />
-                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                            {village.umkms.length > 0 ? (
-                                village.umkms.map((item, index) => (
-                                    <UmkmCard
-                                        key={item.id}
-                                        item={item}
-                                        index={index}
-                                    />
-                                ))
-                            ) : (
-                                <div className="rounded-[16px] border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-5 text-[13px] text-[#59564c]">
-                                    Belum ada data UMKM dari backend.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
-                <section id="istc" className="px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto max-w-[1180px]">
-                        <SectionHeading
-                            title="ISTC / Pariwisata"
-                            action="Lihat Semua Destinasi"
-                            href="#istc"
-                        />
-                        <div className="grid gap-5 lg:grid-cols-2">
-                            {village.pariwisata.length > 0 ? (
-                                village.pariwisata.map((item) => (
-                                    <PariwisataCard key={item.id} item={item} />
-                                ))
-                            ) : (
-                                <div className="rounded-[16px] border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-5 text-[13px] text-[#59564c]">
-                                    Belum ada data ISTC/pariwisata aktif dari
-                                    backend.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
-                <section className="px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto grid max-w-[1180px] gap-7 lg:grid-cols-[0.95fr_1.05fr]">
-                        <div>
-                            <SectionHeading title="FAQ" />
-                            <div className="space-y-3">
-                                {faqs.map((question, index) => (
-                                    <FaqItem
-                                        key={question}
-                                        question={question}
-                                        open={openFaq === index}
-                                        onClick={() =>
-                                            setOpenFaq(
-                                                openFaq === index ? -1 : index,
-                                            )
-                                        }
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <SectionHeading
-                                title="Artikel & Cerita Desa"
-                                action="Lihat Semua Artikel"
-                                href="#artikel"
-                            />
-                            <div className="grid gap-4 md:grid-cols-3">
-                                {articles.map((item) => (
-                                    <ArticleCard key={item.title} item={item} />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <section id="kontak" className="px-4 py-8 md:px-6 lg:px-8">
-                    <div className="mx-auto max-w-[1180px] overflow-hidden rounded-[24px] border border-[#BFD6EA] bg-[#F8FBFE]">
-                        <div className="grid gap-6 px-6 py-8 md:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
-                            <div>
-                                <p className="text-[11px] font-semibold tracking-[0.12em] text-[#2FA6FC] uppercase">
-                                    Kontak & Informasi
-                                </p>
-                                <h2 className="mt-3 text-[30px] leading-[1.12] font-bold text-[#26311f] md:text-[36px]">
-                                    Rencanakan kunjungan ke {village.name}
-                                </h2>
-                                <p className="mt-3 max-w-[620px] text-[14px] leading-7 text-[#59564c]">
-                                    Hubungi pengelola desa untuk reservasi,
-                                    koordinasi rombongan, dan informasi
-                                    aktivitas yang tersedia.
-                                </p>
-                                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                                    <LinkButton href={phoneHref}>
-                                        <Phone className="size-4" />
-                                        Hubungi Pengelola
-                                    </LinkButton>
-                                    <LinkButton href={mapsHref} primary={false}>
-                                        <MapPin className="size-4" />
-                                        Buka Peta
-                                    </LinkButton>
-                                </div>
-                            </div>
-                            <div className="rounded-[20px] border border-[#DCE3EA] bg-white p-5 shadow-[0_10px_24px_rgba(0,102,174,0.04)]">
-                                <div className="space-y-4 text-[13px] leading-6 text-[#59564c]">
-                                    <div className="flex gap-3">
-                                        <MapPin className="mt-0.5 size-4 shrink-0 text-[#0066AE]" />
-                                        <div>
-                                            <p className="font-semibold text-[#26311f]">
-                                                Alamat
-                                            </p>
-                                            <p>
-                                                {textOrFallback(
-                                                    village.address,
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <Users className="mt-0.5 size-4 shrink-0 text-[#0066AE]" />
-                                        <div>
-                                            <p className="font-semibold text-[#26311f]">
-                                                Pengelola
-                                            </p>
-                                            <p>
-                                                {textOrFallback(
-                                                    village.manager_name,
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <Phone className="mt-0.5 size-4 shrink-0 text-[#0066AE]" />
-                                        <div>
-                                            <p className="font-semibold text-[#26311f]">
-                                                Telepon
-                                            </p>
-                                            <a
-                                                href={phoneHref}
-                                                className="hover:text-[#0066AE]"
-                                            >
-                                                {textOrFallback(
-                                                    village.manager_phone,
-                                                )}
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <Mail className="mt-0.5 size-4 shrink-0 text-[#0066AE]" />
-                                        <div>
-                                            <p className="font-semibold text-[#26311f]">
-                                                Email
-                                            </p>
-                                            <a
-                                                href={mailHref}
-                                                className="hover:text-[#0066AE]"
-                                            >
-                                                {textOrFallback(
-                                                    village.manager_email,
-                                                )}
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <ImageIcon className="mt-0.5 size-4 shrink-0 text-[#0066AE]" />
-                                        <div>
-                                            <p className="font-semibold text-[#26311f]">
-                                                Media
-                                            </p>
-                                            <p>
-                                                {village.media.length} file
-                                                media desa
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <footer className="mt-2 border-t border-[#DCE3EA] bg-[#F8FBFE] px-4 py-10 md:px-6 lg:px-8">
-                    <div className="mx-auto max-w-[1180px]">
-                        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.7fr_0.8fr_1fr]">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex size-11 items-center justify-center rounded-full bg-[#0066AE] text-white">
-                                        <Mountain className="size-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[18px] font-bold text-[#0066AE]">
-                                            Desa Wisata
-                                        </p>
-                                        <p className="text-[12px] text-[#8a8577]">
-                                            {village.name}
-                                        </p>
-                                    </div>
-                                </div>
-                                <p className="mt-4 max-w-[280px] text-[12px] leading-6 text-[#59564c]">
-                                    Halaman desa memakai data backend untuk
-                                    profil, galeri, paket, atraksi, UMKM, dan
-                                    ISTC/pariwisata.
-                                </p>
-                                <div className="mt-4 flex items-center gap-2.5 text-[#0066AE]">
-                                    <span className="flex size-9 items-center justify-center rounded-full border border-[#BFD6EA] bg-white">
-                                        <Instagram className="size-4" />
-                                    </span>
-                                    <span className="flex size-9 items-center justify-center rounded-full border border-[#BFD6EA] bg-white">
-                                        <Facebook className="size-4" />
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-[13px] font-bold text-[#26311f]">
-                                    Tautan Cepat
-                                </h3>
-                                <div className="mt-4 space-y-2.5 text-[12px] text-[#59564c]">
-                                    <p>Beranda</p>
-                                    <p>Tentang Desa</p>
-                                    <p>Paket Wisata</p>
-                                    <p>Galeri</p>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-[13px] font-bold text-[#26311f]">
-                                    Informasi
-                                </h3>
-                                <div className="mt-4 space-y-3 text-[12px] text-[#59564c]">
-                                    <div className="flex gap-2">
-                                        <MapPin className="mt-0.5 size-3.5 shrink-0 text-[#093967]" />
-                                        <span>
-                                            {textOrFallback(village.location)}
-                                        </span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Phone className="mt-0.5 size-3.5 shrink-0 text-[#093967]" />
-                                        <span>
-                                            {textOrFallback(
-                                                village.manager_phone,
-                                            )}
-                                        </span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Mail className="mt-0.5 size-3.5 shrink-0 text-[#093967]" />
-                                        <span>
-                                            {textOrFallback(
-                                                village.manager_email,
-                                            )}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-[13px] font-bold text-[#26311f]">
-                                    Ringkasan
-                                </h3>
-                                <div className="mt-4 space-y-2.5 text-[12px] text-[#59564c]">
-                                    <p>{packages.length} paket wisata</p>
-                                    <p>{attractions.length} atraksi</p>
-                                    <p>{village.umkms.length} UMKM</p>
-                                    <p>
-                                        {village.pariwisata.length} data
-                                        ISTC/pariwisata
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-8 flex flex-col gap-3 border-t border-[#DCE3EA] pt-5 text-[11px] text-[#8a8577] md:flex-row md:items-center md:justify-between">
-                            <p>© 2024 {village.name}. Semua Hak Dilindungi.</p>
+                                    Buka Google Maps
+                                </a>
+                            ) : null}
+                            <MapPreview villageName={villageName} />
+                        </SidebarCard>
+                        <SidebarCard title="Contact Person" icon={User}>
                             <div className="flex items-center gap-4">
-                                <span>Kebijakan Privasi</span>
-                                <span>Syarat & Ketentuan</span>
+                                <div className="grid size-16 shrink-0 place-items-center rounded-full bg-[#F8FBFE] ring-1 ring-[#EFEFEF]">
+                                    <User className="size-10 text-[#7C7C7C]" />
+                                </div>
+                                <p className="text-[15px] leading-5 font-extrabold text-[#303030]">
+                                    {managerName}
+                                </p>
                             </div>
-                        </div>
+                            <div className="mt-5 space-y-3 text-[12px] font-bold text-[#303030]">
+                                <p className="flex items-center gap-3">
+                                    <Phone
+                                        className="size-4.5 text-[#0066AE]"
+                                        weight="fill"
+                                    />
+                                    {managerPhone}
+                                </p>
+                                <p className="flex items-center gap-3">
+                                    <EnvelopeSimple
+                                        className="size-4.5 text-[#0066AE]"
+                                        weight="fill"
+                                    />
+                                    {managerEmail}
+                                </p>
+
+                            </div>
+                        </SidebarCard>
                     </div>
-                </footer>
+                </div>
+                <Footer />
             </main>
         </>
     );
 }
 
-VillageShow.layout = null;
+VillageDetail.layout = null;

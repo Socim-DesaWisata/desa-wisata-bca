@@ -163,9 +163,11 @@ class TourismVillageService
             'umkms.categories:id,village_umkm_id,category',
             'umkms.dataCollector:id,name,email',
             'surveyAssignment.template:id,title,status',
+            'surveyAssignment.template.questions.options',
             'surveyAssignment.assignedBy:id,name',
             'surveyAssignment.submittedBy:id,name',
             'surveyAssignment.reviewedBy:id,name',
+            'surveyAssignment.answers:id,village_survey_assignment_id,survey_question_id,score',
             'enumerators:id,name,email',
             'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
             'pariwisataVillages.categories:id,pariwisata_village_id,category',
@@ -173,6 +175,8 @@ class TourismVillageService
 
         return [
             'village' => $this->formatVillageDetail($village),
+            'village_options' => $this->getVillageLinkItems(),
+            'nearby_villages' => $this->getVillageLinkItems($village->id, 4),
         ];
     }
 
@@ -551,6 +555,7 @@ class TourismVillageService
             'survey_assignment' => $village->surveyAssignment
                 ? $this->formatSurveyAssignment($village->surveyAssignment)
                 : null,
+            'kemenpar_aspect_scores' => $this->formatKemenparAspectScores($village->surveyAssignment),
             'enumerator_list' => $village->enumerators
                 ->map(fn (User $user): array => [
                     'id' => $user->id,
@@ -561,6 +566,60 @@ class TourismVillageService
         ];
     }
 
+    /**
+     * @return array<int, array{id: int, name: string, location: string, description: ?string, cover_url: ?string}>
+     */
+    private function getVillageLinkItems(?int $exceptId = null, ?int $limit = null): array
+    {
+        return TourismVillage::query()
+            ->select(['id', 'name', 'description', 'city', 'province'])
+            ->with(['media' => fn ($query) => $query->select(['id', 'village_id', 'file_path', 'external_url', 'is_cover', 'sort_order'])->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id')])
+            ->whereIn('status', ['active', 'verified'])
+            ->when($exceptId, fn ($query) => $query->whereKeyNot($exceptId))
+            ->latest('updated_at')
+            ->limit($limit ?? 100)
+            ->get()
+            ->map(fn (TourismVillage $village): array => [
+                'id' => $village->id,
+                'name' => $village->name,
+                'location' => collect([$village->city, $village->province])->filter()->implode(', ') ?: '-',
+                'description' => $village->description,
+                'cover_url' => $village->media->first()
+                    ? $this->mediaUrl($village->media->first()->file_path, $village->media->first()->external_url)
+                    : null,
+            ])
+            ->values()
+            ->all();
+    }
+    /**
+     * @return array<int, array{name: string, score: int, max_score: int, score_percent: float}>
+     */
+    private function formatKemenparAspectScores(?VillageSurveyAssignment $assignment): array
+    {
+        if (! $assignment?->template) {
+            return [];
+        }
+
+        $questions = $assignment->template->questions ?? collect();
+        $answersByQuestion = ($assignment->answers ?? collect())->keyBy('survey_question_id');
+
+        return $questions
+            ->groupBy('aspect')
+            ->map(function ($aspectQuestions, string $aspect) use ($answersByQuestion): array {
+                $score = $aspectQuestions->sum(fn ($question): int => (int) ($answersByQuestion->get($question->id)?->score ?? 0));
+                $maxScore = $aspectQuestions->sum(fn ($question): int => (int) $question->options->max('score'));
+                $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 1) : 0.0;
+
+                return [
+                    'name' => $aspect,
+                    'score' => $score,
+                    'max_score' => $maxScore,
+                    'score_percent' => $percent,
+                ];
+            })
+            ->values()
+            ->all();
+    }
     /**
      * @return array<string, mixed>
      */
@@ -894,6 +953,7 @@ class TourismVillageService
         return [
             'id' => $pariwisata->id,
             'name' => $pariwisata->name,
+            'image_url' => $this->mediaUrl($pariwisata->image_path ?? null, null),
             'operational_days' => $pariwisata->operational_days,
             'operational_hours' => $pariwisata->operational_hours,
             'entrance_ticket_price' => $pariwisata->entrance_ticket_price !== null ? $this->formatCurrency((float) $pariwisata->entrance_ticket_price) : null,

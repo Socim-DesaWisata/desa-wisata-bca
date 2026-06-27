@@ -1158,7 +1158,7 @@ export default function VillageEdit({
                                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
                             >
                                 <ArrowLeft className="size-4" />
-                                Kembali ke Detail
+                                Lihat Detail
                             </Link>
                             <button
                                 disabled={processing}
@@ -1391,16 +1391,6 @@ export default function VillageEdit({
                                         label="Tambah Media"
                                         onClick={() => goToSection('media')}
                                     />
-                                    <button
-                                        type="button"
-                                        className="flex h-9 w-full items-center justify-between rounded-lg border border-[#F4C8C8] bg-white px-3 text-sm font-bold text-[#D81313]"
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <Archive className="size-4" />
-                                            Arsipkan Desa
-                                        </span>
-                                        <ChevronRight className="size-4" />
-                                    </button>
                                 </RightPanel>
                             </div>
                         </aside>
