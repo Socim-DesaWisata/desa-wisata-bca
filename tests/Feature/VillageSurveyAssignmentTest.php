@@ -19,11 +19,14 @@ use App\Models\TourismVillage;
 use App\Models\UmkmSurveyAnswer;
 use App\Models\UmkmSurveyQuestion;
 use App\Models\User;
+use App\Models\VillageActiveGroupAnnual;
+use App\Models\VillageAnnualPopulationStat;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageSurveyAssignmentLog;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
 use App\Models\VillageUmkmDocument;
+use App\Models\VillageVulnerableGroupAnnual;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -1493,4 +1496,79 @@ test('pariwisata survey draft rejects documents above 50 mb per file', function 
         ->assertSessionHasErrors(['answers.0.documents.0']);
 
     $this->assertDatabaseCount('pariwisata_survey_answer_documents', 0);
+});
+
+test('village annual data allows same year for different categories only', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create(['created_by' => $user->id]);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('survey-assignments.village-annual-data.update', $assignment), [
+            'annual_population_stats' => [
+                ['year' => 2026, 'category_value' => 'Laki-laki', 'total_people' => 10, 'notes' => null],
+                ['year' => 2026, 'category_value' => 'Perempuan', 'total_people' => 12, 'notes' => null],
+            ],
+            'vulnerable_group_annuals' => [
+                ['year' => 2026, 'vulnerable_category' => 'Lansia', 'total_people' => 3, 'notes' => null],
+                ['year' => 2026, 'vulnerable_category' => 'Disabilitas', 'total_people' => 2, 'notes' => null],
+            ],
+            'active_group_annuals' => [
+                ['year' => 2026, 'active_category' => 'Pokdarwis', 'value' => 4, 'notes' => null],
+                ['year' => 2026, 'active_category' => 'Karang Taruna', 'value' => 5, 'notes' => null],
+            ],
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect(VillageAnnualPopulationStat::query()->where('village_id', $village->id)->count())->toBe(2);
+    expect(VillageVulnerableGroupAnnual::query()->where('village_id', $village->id)->count())->toBe(2);
+    expect(VillageActiveGroupAnnual::query()->where('village_id', $village->id)->count())->toBe(2);
+
+    $duplicatePayload = [
+        'annual_population_stats' => [],
+        'vulnerable_group_annuals' => [],
+        'active_group_annuals' => [],
+    ];
+
+    $this->actingAs($user)
+        ->from(route('survey-assignments.show', $assignment))
+        ->patch(route('survey-assignments.village-annual-data.update', $assignment), [
+            ...$duplicatePayload,
+            'annual_population_stats' => [
+                ['year' => 2026, 'category_value' => 'Total', 'total_people' => 22, 'notes' => null],
+                ['year' => 2026, 'category_value' => ' total ', 'total_people' => 22, 'notes' => null],
+            ],
+        ])
+        ->assertRedirect(route('survey-assignments.show', $assignment))
+        ->assertSessionHasErrors('annual_population_stats');
+
+    $this->actingAs($user)
+        ->from(route('survey-assignments.show', $assignment))
+        ->patch(route('survey-assignments.village-annual-data.update', $assignment), [
+            ...$duplicatePayload,
+            'vulnerable_group_annuals' => [
+                ['year' => 2026, 'vulnerable_category' => 'Lansia', 'total_people' => 3, 'notes' => null],
+                ['year' => 2026, 'vulnerable_category' => ' lansia ', 'total_people' => 4, 'notes' => null],
+            ],
+        ])
+        ->assertRedirect(route('survey-assignments.show', $assignment))
+        ->assertSessionHasErrors('vulnerable_group_annuals');
+
+    $this->actingAs($user)
+        ->from(route('survey-assignments.show', $assignment))
+        ->patch(route('survey-assignments.village-annual-data.update', $assignment), [
+            ...$duplicatePayload,
+            'active_group_annuals' => [
+                ['year' => 2026, 'active_category' => 'Pokdarwis', 'value' => 4, 'notes' => null],
+                ['year' => 2026, 'active_category' => ' pokdarwis ', 'value' => 5, 'notes' => null],
+            ],
+        ])
+        ->assertRedirect(route('survey-assignments.show', $assignment))
+        ->assertSessionHasErrors('active_group_annuals');
 });

@@ -1044,40 +1044,6 @@ function TakeSurveyContent({
                         )}
                     </section>
 
-                    <section className="rounded-b-3xl bg-white px-4 pb-5 sm:px-6">
-                        <div className="border-t border-[#EFEFEF] pt-5">
-                            <SectionTitle title="Informasi survey" />
-
-                            <div className="mt-3 grid gap-2.5 text-sm">
-                                {[
-                                    ['Template', template.title],
-                                    ['Status template', template.status ?? '-'],
-                                    ['Published at', template.published_at],
-                                    ['Assigned at', assignment.assigned_at],
-                                    ['Last saved at', assignment.last_saved_at],
-                                ].map(([label, value]) => (
-                                    <div
-                                        key={label}
-                                        className="grid grid-cols-[28px_1fr_auto] items-center gap-2.5"
-                                    >
-                                        <span className="flex size-7 items-center justify-center text-[#0066AE]">
-                                            <FileText
-                                                size={20}
-                                                strokeWidth={2.1}
-                                            />
-                                        </span>
-                                        <span className="font-medium text-[#7C7C7C]">
-                                            {label}
-                                        </span>
-                                        <span className="text-right font-semibold text-[#303030]">
-                                            {value}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
                     <footer className="mt-4 grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center">
                         <button
                             type="button"

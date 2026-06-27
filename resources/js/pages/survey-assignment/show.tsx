@@ -30,6 +30,10 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Legend,
     PolarAngleAxis,
     PolarGrid,
     PolarRadiusAxis,
@@ -37,6 +41,8 @@ import {
     RadarChart,
     ResponsiveContainer,
     Tooltip,
+    XAxis,
+    YAxis,
 } from 'recharts';
 
 import {
@@ -204,8 +210,18 @@ type SurveyAssignmentShowProps = {
         total_score: number;
         max_score: number;
         final_score: number;
-        highest_aspect: { name: string; score: number; max_score: number; score_percent: number } | null;
-        lowest_aspect: { name: string; score: number; max_score: number; score_percent: number } | null;
+        highest_aspect: {
+            name: string;
+            score: number;
+            max_score: number;
+            score_percent: number;
+        } | null;
+        lowest_aspect: {
+            name: string;
+            score: number;
+            max_score: number;
+            score_percent: number;
+        } | null;
     };
     aspects: SurveyAspect[];
     tab_counts: {
@@ -627,7 +643,9 @@ function MetricCard({
                         <p
                             className={classNames(
                                 'truncate text-[11px] font-semibold',
-                                tone === 'blue' ? 'text-white/80' : 'text-[#667085]',
+                                tone === 'blue'
+                                    ? 'text-white/80'
+                                    : 'text-[#667085]',
                             )}
                         >
                             {label}
@@ -636,7 +654,9 @@ function MetricCard({
                             <p
                                 className={classNames(
                                     'truncate text-lg leading-6 font-black tabular-nums',
-                                    tone === 'blue' ? 'text-white' : 'text-[#111827]',
+                                    tone === 'blue'
+                                        ? 'text-white'
+                                        : 'text-[#111827]',
                                 )}
                             >
                                 {value}
@@ -735,7 +755,245 @@ function SurveyStatistics({ aspects }: { aspects: SurveyAspect[] }) {
     );
 }
 
+function parseAnnualNumber(value: string) {
+    const parsed = Number(value);
 
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+type VillageAnnualChartSeries = {
+    key: string;
+    name: string;
+    color: string;
+};
+
+type VillageAnnualChartRow = {
+    year: string;
+} & Record<string, string | number>;
+
+const villageAnnualBluePalette = [
+    '#003F73',
+    '#0066AE',
+    '#1B7FC4',
+    '#2F99D6',
+    '#5BB3E5',
+    '#8BCDF0',
+    '#0F5D9C',
+    '#3A78B8',
+    '#64A6D9',
+];
+
+function annualSeriesKey(prefix: string, category: string) {
+    return `${prefix}_${category}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+}
+
+function annualCategoryLabel(value: string, fallback: string) {
+    return value.trim() || fallback;
+}
+
+function buildVillageAnnualChartData(values: VillageAnnualEditForm) {
+    const rows = new Map<string, VillageAnnualChartRow>();
+    const series = new Map<string, VillageAnnualChartSeries>();
+
+    const ensureRow = (year: string) => {
+        if (!rows.has(year)) {
+            rows.set(year, { year });
+        }
+
+        return rows.get(year)!;
+    };
+
+    const addValue = (
+        year: string,
+        prefix: string,
+        category: string,
+        value: string,
+    ) => {
+        if (!year) {
+            return;
+        }
+
+        const label = annualCategoryLabel(category, 'Tanpa Kategori');
+        const key = annualSeriesKey(prefix, label);
+
+        if (!series.has(key)) {
+            series.set(key, {
+                key,
+                name: `${prefix} - ${label}`,
+                color: villageAnnualBluePalette[
+                    series.size % villageAnnualBluePalette.length
+                ],
+            });
+        }
+
+        const row = ensureRow(year);
+        row[key] = Number(row[key] ?? 0) + parseAnnualNumber(value);
+    };
+
+    values.annual_population_stats.forEach((row) => {
+        addValue(row.year, 'Penduduk', row.category_value, row.total_people);
+    });
+
+    values.vulnerable_group_annuals.forEach((row) => {
+        addValue(
+            row.year,
+            'Kelompok Rentan',
+            row.vulnerable_category,
+            row.total_people,
+        );
+    });
+
+    values.active_group_annuals.forEach((row) => {
+        addValue(row.year, 'Kelompok Aktif', row.active_category, row.value);
+    });
+
+    return {
+        rows: Array.from(rows.values()).sort(
+            (first, second) => Number(first.year) - Number(second.year),
+        ),
+        series: Array.from(series.values()),
+    };
+}
+
+function VillageAnnualTooltip({
+    active,
+    label,
+    payload,
+}: {
+    active?: boolean;
+    label?: string;
+    payload?: Array<{
+        color?: string;
+        name?: string;
+        value?: number | string;
+    }>;
+}) {
+    const items = (payload ?? []).filter((item) => Number(item.value ?? 0) > 0);
+
+    if (!active || items.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-xl border border-[#D6E4F2] bg-white p-3 text-xs shadow-[0_12px_32px_rgba(15,23,42,0.12)]">
+            <p className="mb-2 font-black text-black">Tahun {label}</p>
+            <div className="space-y-1.5">
+                {items.map((item) => (
+                    <div
+                        key={item.name}
+                        className="flex items-center justify-between gap-4 font-bold text-black"
+                    >
+                        <span className="inline-flex items-center gap-2">
+                            <span
+                                className="size-2.5 rounded-full"
+                                style={{ backgroundColor: item.color }}
+                            />
+                            {item.name}
+                        </span>
+                        <span className="tabular-nums">
+                            {Number(item.value).toLocaleString('id-ID')}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function VillageAnnualMultipleBarChart({
+    values,
+}: {
+    values: VillageAnnualEditForm;
+}) {
+    const chartData = buildVillageAnnualChartData(values);
+    const hasData = chartData.rows.some((row) =>
+        chartData.series.some((item) => Number(row[item.key] ?? 0) > 0),
+    );
+
+    return (
+        <Card className="rounded-2xl border border-[#E5EDF6] bg-white p-6 shadow-none">
+            <div>
+                <h2 className="text-base font-bold text-[#111827]">
+                    Statistik Tahunan Desa
+                </h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                    Populasi, kelompok rentan, dan kelompok aktif per tahun.
+                </p>
+            </div>
+
+            <div className="mt-5 h-[340px]">
+                {!hasData ? (
+                    <div className="flex h-full items-center justify-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                        Belum ada data tahunan desa
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={chartData.rows}
+                            margin={{
+                                top: 12,
+                                right: 18,
+                                bottom: 0,
+                                left: 0,
+                            }}
+                        >
+                            <CartesianGrid
+                                stroke="#E4EAF2"
+                                strokeDasharray="4 4"
+                                vertical={false}
+                            />
+                            <XAxis
+                                dataKey="year"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{
+                                    fill: '#667085',
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tickFormatter={(value) =>
+                                    Number(value).toLocaleString('id-ID')
+                                }
+                                tick={{
+                                    fill: '#98A2B3',
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                }}
+                            />
+                            <Tooltip
+                                content={<VillageAnnualTooltip />}
+                                cursor={{ fill: 'rgba(0, 102, 174, 0.08)' }}
+                            />
+                            <Legend
+                                wrapperStyle={{
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    color: '#000000',
+                                }}
+                            />
+                            {chartData.series.map((item) => (
+                                <Bar
+                                    key={item.key}
+                                    dataKey={item.key}
+                                    name={item.name}
+                                    fill={item.color}
+                                    radius={[8, 8, 0, 0]}
+                                />
+                            ))}
+                        </BarChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
+        </Card>
+    );
+}
 function SurveyFinalScoreGauge({ score }: { score: number }) {
     const normalizedScore = clampScore(score);
 
@@ -779,7 +1037,6 @@ function SurveyFinalScoreGauge({ score }: { score: number }) {
                         <p className="text-4xl font-black tracking-[-0.04em] text-[#111827]">
                             {formatStatScore(normalizedScore)}%
                         </p>
-                        
                     </div>
                 </div>
 
@@ -825,7 +1082,10 @@ function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
                                 />
                             </div>
                             <p className="text-right text-xs font-black text-[#111827] tabular-nums">
-                                {formatPointScore(aspect.score, aspect.max_score)}
+                                {formatPointScore(
+                                    aspect.score,
+                                    aspect.max_score,
+                                )}
                             </p>
                         </div>
                     ))
@@ -2096,14 +2356,14 @@ function PariwisataTab({
         }),
     );
     const highestAspectDetail = surveySummary.highest_aspect
-        ? aspectSummaries.find(
+        ? (aspectSummaries.find(
               (aspect) => aspect.name === surveySummary.highest_aspect?.name,
-          ) ?? null
+          ) ?? null)
         : null;
     const lowestAspectDetail = surveySummary.lowest_aspect
-        ? aspectSummaries.find(
+        ? (aspectSummaries.find(
               (aspect) => aspect.name === surveySummary.lowest_aspect?.name,
-          ) ?? null
+          ) ?? null)
         : null;
 
     return (
@@ -2313,7 +2573,11 @@ function PariwisataTab({
                                             {group.documents_count} dokumen
                                         </span>
                                         <span className="text-xs font-semibold text-[#303030]">
-                                            {formatPointScore(group.score, group.max_score)} poin
+                                            {formatPointScore(
+                                                group.score,
+                                                group.max_score,
+                                            )}{' '}
+                                            poin
                                         </span>
                                     </div>
                                 </div>
@@ -2327,7 +2591,10 @@ function PariwisataTab({
                                         />
                                     </div>
                                     <span className="text-right text-xs font-bold text-[#0066AE]">
-                                        {formatPointScore(group.score, group.max_score)}
+                                        {formatPointScore(
+                                            group.score,
+                                            group.max_score,
+                                        )}
                                     </span>
                                     <ChevronDown
                                         size={18}
@@ -3420,26 +3687,26 @@ export default function SurveyAssignmentShow({
 
                                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                     <MetricCard
-                                    label="Total Skor"
-                                    value={String(summary.total_score)}
-                                    helper={`/ ${summary.max_score}`}
-                                    icon={
-                                        <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
-                                            <BarChart3 size={22} />
-                                        </span>
-                                    }
-                                    tone="blue"
-                                    compact
-                                />
+                                        label="Total Skor"
+                                        value={String(summary.total_score)}
+                                        helper={`/ ${summary.max_score}`}
+                                        icon={
+                                            <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
+                                                <BarChart3 size={22} />
+                                            </span>
+                                        }
+                                        tone="blue"
+                                        compact
+                                    />
                                     <MetricCard
                                         label="Survey Terjawab"
                                         value={`${summary.answered_questions}/${summary.total_questions}`}
                                         helper=""
                                         icon={
-                                        <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
-                                            <ClipboardCheck size={22} />
-                                        </span>
-                                    }
+                                            <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
+                                                <ClipboardCheck size={22} />
+                                            </span>
+                                        }
                                         tone="blue"
                                         compact
                                     />
@@ -3451,8 +3718,10 @@ export default function SurveyAssignmentShow({
                                         helper={
                                             summary.highest_aspect
                                                 ? formatPointScore(
-                                                      summary.highest_aspect.score,
-                                                      summary.highest_aspect.max_score,
+                                                      summary.highest_aspect
+                                                          .score,
+                                                      summary.highest_aspect
+                                                          .max_score,
                                                   )
                                                 : '-'
                                         }
@@ -3468,8 +3737,10 @@ export default function SurveyAssignmentShow({
                                         helper={
                                             summary.lowest_aspect
                                                 ? formatPointScore(
-                                                      summary.lowest_aspect.score,
-                                                      summary.lowest_aspect.max_score,
+                                                      summary.lowest_aspect
+                                                          .score,
+                                                      summary.lowest_aspect
+                                                          .max_score,
                                                   )
                                                 : '-'
                                         }
@@ -3480,6 +3751,10 @@ export default function SurveyAssignmentShow({
                                 </div>
 
                                 <SurveyStatistics aspects={aspects} />
+
+                                <VillageAnnualMultipleBarChart
+                                    values={village_annual_edit_values}
+                                />
 
                                 <Card className="overflow-hidden">
                                     <div className="border-b border-[#EFEFEF] p-4">
@@ -4744,5 +5019,3 @@ SurveyAssignmentShow.layout = {
         { title: 'Detail', href: '#' },
     ],
 };
-
-
