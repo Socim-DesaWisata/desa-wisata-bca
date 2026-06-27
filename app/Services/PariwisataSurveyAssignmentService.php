@@ -12,7 +12,9 @@ use App\Models\PariwisataVisitorTypeAnnual;
 use App\Models\User;
 use App\Models\VillageSurveyAssignment;
 use Illuminate\Support\Arr;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PariwisataSurveyAssignmentService
@@ -70,6 +72,7 @@ class PariwisataSurveyAssignmentService
             $pariwisataVillage = PariwisataVillage::query()->create([
                 ...$this->normalizePariwisataData($data),
                 'village_id' => $assignment->village_id,
+                'image_path' => $this->storeImage($data['image'] ?? null, (int) $assignment->village_id),
                 'operational_schedule' => filled($data['operational_schedule_notes'] ?? null)
                     ? ['notes' => $data['operational_schedule_notes']]
                     : null,
@@ -103,13 +106,26 @@ class PariwisataSurveyAssignmentService
         }
 
         return DB::transaction(function () use ($data, $user, $pariwisata): PariwisataVillage {
-            $pariwisata->update([
+            $payload = [
                 ...$this->normalizePariwisataData($data),
                 'operational_schedule' => filled($data['operational_schedule_notes'] ?? null)
                     ? ['notes' => $data['operational_schedule_notes']]
                     : null,
                 'is_active' => (bool) $data['is_active'],
-            ]);
+            ];
+
+            $imagePath = $this->storeImage($data['image'] ?? null, (int) $pariwisata->village_id);
+
+            if ($imagePath) {
+                $oldPath = $pariwisata->image_path;
+                $payload['image_path'] = $imagePath;
+            }
+
+            $pariwisata->update($payload);
+
+            if (isset($oldPath) && $oldPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
 
             $pariwisata->categories()->delete();
 
@@ -168,6 +184,15 @@ class PariwisataSurveyAssignmentService
             'person_in_charge_phone',
             'person_in_charge_address',
         ];
+    }
+
+    private function storeImage(mixed $file, int $villageId): ?string
+    {
+        if (! $file instanceof UploadedFile) {
+            return null;
+        }
+
+        return $file->storePublicly("pariwisata/{$villageId}/images", 'public');
     }
 
     /**

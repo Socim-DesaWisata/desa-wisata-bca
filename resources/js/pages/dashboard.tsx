@@ -24,7 +24,10 @@ import {
 } from '@/routes';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 import DashboardVillageMap from '@/components/dashboard-village-map';
-import { DashboardCharts, AssessmentRadarChart } from '@/components/dashboard-charts';
+import {
+    DashboardCharts,
+    AssessmentRadarChart,
+} from '@/components/dashboard-charts';
 import { DashboardOmsetCharts } from '@/components/dashboard-omset-charts';
 
 const colors = {
@@ -89,6 +92,7 @@ type TopSurveyRow = {
     progress: number | null;
     answers: string;
     status: string;
+    status_label?: string;
     url: string | null;
     aspect_scores?: { aspect: string; score: number }[];
 };
@@ -236,15 +240,14 @@ function TopStatisticList({
                 <h2 className="text-sm leading-6 font-bold text-[#303030]">
                     {title}
                 </h2>
-                <select className="h-8 cursor-pointer rounded-lg border border-[#0066AE] bg-[#0066AE] px-2 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                    <option>Minggu Ini</option>
-                    <option>Bulan Ini</option>
-                </select>
             </div>
             <div className="flex flex-1 flex-col space-y-3">
                 {data.length > 0 ? (
                     data.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between">
+                        <div
+                            key={index}
+                            className="flex items-center justify-between"
+                        >
                             <div className="flex items-center gap-3">
                                 <span className="w-4 text-left text-xs font-bold text-[#303030]">
                                     {index + 1}
@@ -252,7 +255,7 @@ function TopStatisticList({
                                 <span className="flex size-8 items-center justify-center rounded-full bg-[#F1F5F8] text-[#0066AE]">
                                     <Icon className="size-4" strokeWidth={2} />
                                 </span>
-                                <span className="text-sm font-semibold text-[#303030] line-clamp-1 max-w-[120px]">
+                                <span className="line-clamp-1 max-w-[120px] text-sm font-semibold text-[#303030]">
                                     {item.label}
                                 </span>
                             </div>
@@ -267,13 +270,131 @@ function TopStatisticList({
                     </div>
                 )}
             </div>
-            <Link href={linkHref} className="mt-4 flex w-full justify-between rounded-lg bg-[#F8FBFE] px-4 py-2.5 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]">
+            <Link
+                href={linkHref}
+                className="mt-4 flex w-full justify-between rounded-lg bg-[#F8FBFE] px-4 py-2.5 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]"
+            >
                 {linkLabel} <ChevronRight className="size-4" />
             </Link>
         </Panel>
     );
 }
 
+function TopVillageSurveyTable({ rows }: { rows: TopSurveyRow[] }) {
+    return (
+        <Panel className="p-3.5 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-4">
+                <h2 className="text-base leading-6 font-bold text-[#303030]">
+                    Top Desa dengan Skor Survey Tertinggi
+                </h2>
+                <span className="rounded-lg bg-[#F8FBFE] px-3 py-2 text-xs font-bold text-[#0066AE]">
+                    Top 5
+                </span>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+                    <thead className="border-b border-[#EFEFEF] text-[11px] font-bold tracking-wider text-[#7C7C7C] uppercase">
+                        <tr>
+                            {[
+                                'Peringkat',
+                                'Desa Wisata',
+                                'Lokasi',
+                                'Total Skor',
+                                'Jawaban',
+                                'Status',
+                                'Aksi',
+                            ].map((head) => (
+                                <th
+                                    key={head}
+                                    className="h-10 px-2 font-bold whitespace-nowrap first:pl-0 last:pr-0"
+                                >
+                                    {head}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EFEFEF] bg-white">
+                        {rows.length > 0 ? (
+                            rows.map((row, index) => (
+                                <tr
+                                    key={row.id}
+                                    className="h-14 transition-colors hover:bg-[#F8FBFE]"
+                                >
+                                    <td className="px-2 py-2 whitespace-nowrap first:pl-0">
+                                        <span className="inline-flex size-8 items-center justify-center rounded-lg bg-[#EAF3FF] text-xs font-black text-[#0066AE]">
+                                            {index + 1}
+                                        </span>
+                                    </td>
+                                    <td className="px-2 py-2 whitespace-nowrap">
+                                        <div className="flex items-center gap-3">
+                                            <div className="size-8 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                                                <img
+                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}&background=random`}
+                                                    alt={row.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            </div>
+                                            <span className="font-bold text-[#303030]">
+                                                {row.name}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-2 py-2 whitespace-nowrap">
+                                        <p className="text-xs text-[#303030]">
+                                            {row.meta}
+                                        </p>
+                                    </td>
+                                    <td className="px-2 py-2 whitespace-nowrap">
+                                        <span className="font-black text-[#303030] tabular-nums">
+                                            {Number(row.score).toLocaleString(
+                                                'id-ID',
+                                            )}
+                                        </span>
+                                    </td>
+                                    <td className="px-2 py-2 text-xs whitespace-nowrap text-[#303030]">
+                                        {row.answers}
+                                    </td>
+                                    <td className="px-2 py-2">
+                                        <span
+                                            className={`inline-flex h-6 min-w-20 items-center justify-center rounded-md px-2 text-[10px] font-bold ${statusClass(row.status)}`}
+                                        >
+                                            {row.status_label ?? row.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-2 py-2 text-center last:pr-0">
+                                        {row.url ? (
+                                            <Link
+                                                href={row.url}
+                                                className="inline-flex size-8 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                                                aria-label={`Detail ${row.name}`}
+                                            >
+                                                <Eye className="size-4" />
+                                            </Link>
+                                        ) : (
+                                            <span className="inline-flex size-8 items-center justify-center rounded-lg text-[#B0B0B0]">
+                                                <Eye className="size-4" />
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td
+                                    colSpan={7}
+                                    className="px-2 py-8 text-center text-sm font-semibold text-[#7C7C7C]"
+                                >
+                                    Belum ada data skor survey desa.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </Panel>
+    );
+}
 export default function Dashboard({
     dashboard_mode = 'admin',
     kpis = [],
@@ -403,7 +524,9 @@ export default function Dashboard({
                     <section className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {[
                             { type: 'time' },
-                            ...kpis.slice(0, 3).map(kpi => ({ type: 'kpi', data: kpi })),
+                            ...kpis
+                                .slice(0, 3)
+                                .map((kpi) => ({ type: 'kpi', data: kpi })),
                         ].map((item, index) => {
                             if (item.type === 'time') {
                                 return <CurrentTimeCard key="time" />;
@@ -462,8 +585,11 @@ export default function Dashboard({
                     </div>
 
                     <div className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Panel className="flex items-center overflow-hidden border-none p-0" style={{ backgroundColor: '#EAF2FE' }}>
-                            <div className="flex-[1.5] p-5 pl-6 z-10">
+                        <Panel
+                            className="flex items-center overflow-hidden border-none p-0"
+                            style={{ backgroundColor: '#EAF2FE' }}
+                        >
+                            <div className="z-10 flex-[1.5] p-5 pl-6">
                                 <h3 className="mb-1 text-[17px] font-bold text-[#0039A6]">
                                     Dukung Desa Wisata, Dukung Indonesia
                                 </h3>
@@ -471,10 +597,16 @@ export default function Dashboard({
                                     Kelola program CSR BCA dan bantu desa wisata
                                     tumbuh berkelanjutan.
                                 </p>
-                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#0039A6] pl-4 pr-1 text-xs font-bold text-white transition hover:bg-[#002B7F]">
+                                <Link
+                                    href={surveyAssignments.url()}
+                                    className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#0039A6] pr-1 pl-4 text-xs font-bold text-white transition hover:bg-[#002B7F]"
+                                >
                                     Kelola Program CSR
                                     <span className="flex size-7 items-center justify-center rounded-full bg-white text-[#0039A6]">
-                                        <ArrowRight className="size-3.5" strokeWidth={3} />
+                                        <ArrowRight
+                                            className="size-3.5"
+                                            strokeWidth={3}
+                                        />
                                     </span>
                                 </Link>
                             </div>
@@ -487,8 +619,11 @@ export default function Dashboard({
                             </div>
                         </Panel>
 
-                        <Panel className="flex items-center overflow-hidden border-none p-0" style={{ backgroundColor: '#E8F5E9' }}>
-                            <div className="flex-[1.5] p-5 pl-6 z-10">
+                        <Panel
+                            className="flex items-center overflow-hidden border-none p-0"
+                            style={{ backgroundColor: '#E8F5E9' }}
+                        >
+                            <div className="z-10 flex-[1.5] p-5 pl-6">
                                 <h3 className="mb-1 text-[17px] font-bold text-[#1B5E20]">
                                     Buat Assignment Survey Baru
                                 </h3>
@@ -496,10 +631,16 @@ export default function Dashboard({
                                     Undang enumerator dan mulai assessment
                                     dengan mudah dan terstruktur.
                                 </p>
-                                <Link href={surveyAssignments.url()} className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#4CAF50] pl-4 pr-1 text-xs font-bold text-white transition hover:bg-[#388E3C]">
+                                <Link
+                                    href={surveyAssignments.url()}
+                                    className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[#4CAF50] pr-1 pl-4 text-xs font-bold text-white transition hover:bg-[#388E3C]"
+                                >
                                     Buat Assignment
                                     <span className="flex size-7 items-center justify-center rounded-full bg-white text-[#4CAF50]">
-                                        <ArrowRight className="size-3.5" strokeWidth={3} />
+                                        <ArrowRight
+                                            className="size-3.5"
+                                            strokeWidth={3}
+                                        />
                                     </span>
                                 </Link>
                             </div>
@@ -602,32 +743,51 @@ export default function Dashboard({
                             </div>
                         </Panel>
 
+                        <TopVillageSurveyTable
+                            rows={top_village_surveys.slice(0, 5)}
+                        />
+
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                             <TopStatisticList
                                 title="Top 3 Omset UMKM"
                                 icon={Store}
-                                data={top_umkm_turnovers.slice(0, 3).map((item) => ({ label: item.name, value: `Rp${Number(item.score).toLocaleString('id-ID')}` }))}
+                                data={top_umkm_turnovers
+                                    .slice(0, 3)
+                                    .map((item) => ({
+                                        label: item.name,
+                                        value: `Rp${Number(item.score).toLocaleString('id-ID')}`,
+                                    }))}
                                 linkHref={umkm.url()}
                                 linkLabel="Lihat Semua UMKM"
                             />
                             <TopStatisticList
                                 title="Top 3 Omset Wisata"
                                 icon={MapPin}
-                                data={top_pariwisata_turnovers.slice(0, 3).map((item) => ({ label: item.name, value: `Rp${Number(item.score).toLocaleString('id-ID')}` }))}
+                                data={top_pariwisata_turnovers
+                                    .slice(0, 3)
+                                    .map((item) => ({
+                                        label: item.name,
+                                        value: `Rp${Number(item.score).toLocaleString('id-ID')}`,
+                                    }))}
                                 linkHref={villagesRoute.url()}
                                 linkLabel="Lihat Semua Wisata"
                             />
                             <TopStatisticList
                                 title="Top 3 Kategori UMKM"
                                 icon={Store}
-                                data={top_umkm_categories.slice(0, 3).map(c => ({ label: c.label, value: c.total }))}
+                                data={top_umkm_categories
+                                    .slice(0, 3)
+                                    .map((c) => ({
+                                        label: c.label,
+                                        value: c.total,
+                                    }))}
                                 linkHref={umkm.url()}
                                 linkLabel="Lihat Semua Kategori"
                             />
                         </div>
                     </div>
 
-                    <div className="mb-4 mt-2">
+                    <div className="mt-2 mb-4">
                         <DashboardOmsetCharts />
                     </div>
                 </div>

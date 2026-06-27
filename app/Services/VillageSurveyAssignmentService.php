@@ -47,26 +47,43 @@ class VillageSurveyAssignmentService
             'template_id' => Arr::get($filters, 'template_id'),
             'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => (int) Arr::get($filters, 'per_page', 10),
+            'sort_by' => Arr::get($filters, 'sort_by') === 'total_score' ? 'total_score' : null,
+            'sort_direction' => Arr::get($filters, 'sort_direction') === 'asc' ? 'asc' : 'desc',
         ];
 
+        $questionMaxScores = SurveyQuestion::query()
+            ->select('survey_questions.survey_template_id')
+            ->selectRaw('MAX(survey_question_options.score) as max_score')
+            ->leftJoin('survey_question_options', 'survey_question_options.survey_question_id', '=', 'survey_questions.id')
+            ->groupBy('survey_questions.id', 'survey_questions.survey_template_id');
+
+        $templateMaxScores = DB::query()
+            ->fromSub($questionMaxScores, 'question_scores')
+            ->select('survey_template_id')
+            ->selectRaw('COALESCE(SUM(max_score), 0) as max_score')
+            ->groupBy('survey_template_id');
+
         $query = VillageSurveyAssignment::query()
+            ->leftJoinSub($templateMaxScores, 'template_scores', function ($join): void {
+                $join->on('template_scores.survey_template_id', '=', 'village_survey_assignments.survey_template_id');
+            })
             ->select([
-                'id',
-                'code',
-                'village_id',
-                'survey_template_id',
-                'status',
-                'assigned_by',
-                'submitted_by',
-                'reviewed_by',
-                'assigned_at',
-                'started_at',
-                'last_saved_at',
-                'submitted_at',
-                'reviewed_at',
-                'created_at',
-                'updated_at',
-                'deleted_at',
+                'village_survey_assignments.id',
+                'village_survey_assignments.code',
+                'village_survey_assignments.village_id',
+                'village_survey_assignments.survey_template_id',
+                'village_survey_assignments.status',
+                'village_survey_assignments.assigned_by',
+                'village_survey_assignments.submitted_by',
+                'village_survey_assignments.reviewed_by',
+                'village_survey_assignments.assigned_at',
+                'village_survey_assignments.started_at',
+                'village_survey_assignments.last_saved_at',
+                'village_survey_assignments.submitted_at',
+                'village_survey_assignments.reviewed_at',
+                'village_survey_assignments.created_at',
+                'village_survey_assignments.updated_at',
+                'village_survey_assignments.deleted_at',
             ])
             ->with([
                 'village:id,code,name,city,province',
@@ -79,7 +96,9 @@ class VillageSurveyAssignmentService
                 'reviewedBy:id,name,email',
                 'answers:id,village_survey_assignment_id,score',
             ])
-            ->withCount(['answers', 'documents']);
+            ->selectRaw('COALESCE(template_scores.max_score, 0) as sortable_max_score')
+            ->withCount(['answers', 'documents'])
+            ->withSum('answers as total_answer_score', 'score');
 
         if ($normalizedFilters['view'] === 'trash') {
             $query->onlyTrashed();
@@ -91,7 +110,7 @@ class VillageSurveyAssignmentService
 
                 $query->where(function ($query) use ($search): void {
                     $query
-                        ->where('id', $search)
+                        ->where('village_survey_assignments.id', $search)
                         ->orWhere('code', 'like', "%{$search}%")
                         ->orWhereHas('village', function ($query) use ($search): void {
                             $query
@@ -103,9 +122,14 @@ class VillageSurveyAssignmentService
                         });
                 });
             })
-            ->when($normalizedFilters['status'], fn ($query, string $status) => $query->where('status', $status))
-            ->when($normalizedFilters['template_id'], fn ($query, int $templateId) => $query->where('survey_template_id', $templateId))
-            ->latest('updated_at')
+            ->when($normalizedFilters['status'], fn ($query, string $status) => $query->where('village_survey_assignments.status', $status))
+            ->when($normalizedFilters['template_id'], fn ($query, int $templateId) => $query->where('village_survey_assignments.survey_template_id', $templateId))
+            ->when($normalizedFilters['sort_by'] === 'total_score',
+                fn ($query) => $query->orderByRaw('(CASE WHEN COALESCE(sortable_max_score, 0) > 0 THEN (COALESCE(total_answer_score, 0) * 100.0 / sortable_max_score) ELSE 0 END) '.$normalizedFilters['sort_direction'])
+                    ->latest('village_survey_assignments.updated_at')
+                    ->orderByDesc('village_survey_assignments.id'),
+                fn ($query) => $query->latest('village_survey_assignments.updated_at')
+            )
             ->paginate($normalizedFilters['per_page'])
             ->withQueryString();
 
@@ -1687,6 +1711,7 @@ class VillageSurveyAssignmentService
         return [
             'id' => $pariwisata->id,
             'name' => $pariwisata->name,
+            'image_url' => $pariwisata->image_path ? Storage::disk('public')->url($pariwisata->image_path) : null,
             'operational_days' => $pariwisata->operational_days,
             'operational_hours' => $pariwisata->operational_hours,
             'operational_schedule' => $pariwisata->operational_schedule,

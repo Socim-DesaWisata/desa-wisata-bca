@@ -138,17 +138,6 @@ export function AdminSidebarContent({
     return (
         <div className="relative flex h-full flex-col overflow-hidden bg-[#093967] px-4 py-4 text-white shadow-[inset_-1px_0_0_rgba(255,255,255,0.12)]">
             <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-                <img
-                    src="/images/dashboard-image.webp"
-                    alt="Ilustrasi desa wisata"
-                    className="h-full w-full object-cover object-[center_58%] opacity-95"
-                />
-                <img
-                    src="/images/dashboard-image.webp"
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-x-0 top-0 h-[220px] w-full [mask-image:linear-gradient(180deg,rgba(0,0,0,1)_0%,rgba(0,0,0,0.82)_42%,rgba(0,0,0,0.18)_78%,transparent_100%)] object-cover object-[center_36%] opacity-90 blur-xl"
-                />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,57,103,0.24)_0%,rgba(9,57,103,0.32)_16%,rgba(9,57,103,0.48)_42%,rgba(9,57,103,0.68)_72%,rgba(9,57,103,0.86)_100%)]" />
                 <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_28%,rgba(255,255,255,0.04)_100%)]" />
                 <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(9,57,103,0.82)_0%,rgba(9,57,103,0.36)_54%,rgba(9,57,103,0)_100%)]" />

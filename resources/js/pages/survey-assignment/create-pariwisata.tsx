@@ -4,6 +4,7 @@ import {
     Banknote,
     BarChart3,
     GraduationCap,
+    ImagePlus,
     MapPin,
     Package,
     Plus,
@@ -87,6 +88,7 @@ type AnnualWorkerTrainingStatForm = {
 
 type PariwisataForm = {
     name: string;
+    image: File | null;
     categories: string[];
     operational_days: string;
     operational_hours: string;
@@ -115,6 +117,7 @@ type ErrorBag = Record<string, string | undefined>;
 
 const defaultForm: PariwisataForm = {
     name: '',
+    image: null,
     categories: [],
     operational_days: '',
     operational_hours: '',
@@ -576,6 +579,7 @@ export default function CreatePariwisata({
         event.preventDefault();
 
         post(storePariwisata.url(assignment.code), {
+            forceFormData: true,
             preserveScroll: true,
         });
     }
@@ -670,6 +674,34 @@ export default function CreatePariwisata({
                                         error={errors.name}
                                         placeholder="Contoh: Air Terjun Tirta"
                                     />
+
+                                    <label className="block space-y-1.5">
+                                        <span className="text-xs font-bold text-[#303030]">
+                                            Gambar Pariwisata
+                                        </span>
+                                        <div className="flex items-center gap-3 rounded-lg border border-dashed border-[#AAD2F8] bg-[#F8FBFE] px-3 py-3">
+                                            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#0066AE]">
+                                                <ImagePlus className="size-5" />
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <input
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    onChange={(event) =>
+                                                        setField(
+                                                            'image',
+                                                            event.target.files?.[0] ?? null,
+                                                        )
+                                                    }
+                                                    className="w-full text-sm font-semibold text-[#303030] file:mr-3 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
+                                                />
+                                                <p className="mt-1 truncate text-[11px] font-semibold text-[#7C7C7C]">
+                                                    {data.image?.name ?? 'JPG, PNG, atau WEBP maks. 50MB'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <FieldError message={errors.image} />
+                                    </label>
 
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="space-y-1.5">

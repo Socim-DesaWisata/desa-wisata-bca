@@ -6,6 +6,7 @@ import {
     Download,
     Eye,
     FileText,
+    ImagePlus,
     MapPin,
     Pencil,
     RefreshCcw,
@@ -79,6 +80,7 @@ type Assignment = {
 type Pariwisata = {
     id: number;
     name: string;
+    image_url: string | null;
     operational_days: string | null;
     operational_hours: string | null;
     entrance_ticket_price: string;
@@ -234,6 +236,7 @@ type PariwisataEditValues = {
 
 type PariwisataEditForm = PariwisataEditValues & {
     _method: 'patch';
+    image: File | null;
 };
 
 type ErrorBag = Record<string, string | undefined>;
@@ -264,6 +267,7 @@ const workerDimensionOptions: SelectOption[] = [
 function initialEditForm(values: PariwisataEditValues): PariwisataEditForm {
     return {
         _method: 'patch',
+        image: null,
         ...values,
     };
 }
@@ -850,6 +854,7 @@ function PariwisataEditSidebar({
     assignment,
     form,
     categoryOptions,
+    imageUrl,
     onSubmit,
 }: {
     open: boolean;
@@ -857,6 +862,7 @@ function PariwisataEditSidebar({
     assignment: Assignment;
     form: ReturnType<typeof useForm<PariwisataEditForm>>;
     categoryOptions: CategoryOption[];
+    imageUrl: string | null;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
     const { data, setData, processing, errors } = form;
@@ -1131,6 +1137,40 @@ function PariwisataEditSidebar({
                                 placeholder="Nama destinasi"
                                 required
                             />
+                            <label className="block space-y-1.5">
+                                <span className="text-xs font-bold text-[#344256]">
+                                    Gambar Pariwisata
+                                </span>
+                                {imageUrl && !data.image && (
+                                    <img
+                                        src={imageUrl}
+                                        alt={data.name || 'Gambar pariwisata'}
+                                        className="h-32 w-full rounded-xl border border-[#DCE3EA] object-cover"
+                                    />
+                                )}
+                                <div className="flex items-center gap-3 rounded-xl border border-dashed border-[#AAD2F8] bg-[#F8FBFE] px-3 py-3">
+                                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#0066AE]">
+                                        <ImagePlus className="size-5" />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            onChange={(event) =>
+                                                setData(
+                                                    'image',
+                                                    event.target.files?.[0] ?? null,
+                                                )
+                                            }
+                                            className="w-full text-sm font-semibold text-[#303030] file:mr-3 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
+                                        />
+                                        <p className="mt-1 truncate text-[11px] font-semibold text-[#7C7C7C]">
+                                            {data.image?.name ?? 'Kosongkan jika tidak ingin mengganti gambar'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <FieldError message={fieldError(errors, 'image')} />
+                            </label>
                             <div className="min-w-0">
                                 <div className="flex items-center justify-between gap-3">
                                     <span className="text-xs font-bold text-[#344256]">
@@ -2645,6 +2685,7 @@ export default function ShowPariwisata({
                 pariwisata: pariwisata.id,
             }),
             {
+                forceFormData: true,
                 preserveScroll: true,
                 onSuccess: closeEditSidebar,
             },
@@ -2727,7 +2768,15 @@ export default function ShowPariwisata({
                     <Card className="overflow-hidden">
                         <div className="border-b border-[#EFEFEF] bg-[#F8FBFE] p-5">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0">
+                                <div className="flex min-w-0 gap-4">
+                                    {pariwisata.image_url && (
+                                        <img
+                                            src={pariwisata.image_url}
+                                            alt={pariwisata.name}
+                                            className="hidden h-24 w-32 shrink-0 rounded-xl border border-[#DDE4EC] object-cover sm:block"
+                                        />
+                                    )}
+                                    <div className="min-w-0">
                                     <div className="flex flex-wrap gap-2">
                                         <span
                                             className={classNames(
@@ -2757,6 +2806,7 @@ export default function ShowPariwisata({
                                         {assignment.village.name} ·{' '}
                                         {assignment.village.location}
                                     </p>
+                                    </div>
                                 </div>
                                 <div className="rounded-xl bg-white px-4 py-3 text-right shadow-[0_8px_20px_rgba(9,57,103,0.08)]">
                                     <p className="text-[11px] font-black tracking-[0.06em] text-[#0066AE] uppercase">
@@ -2931,6 +2981,7 @@ export default function ShowPariwisata({
                 assignment={assignment}
                 form={editForm}
                 categoryOptions={category_options}
+                imageUrl={pariwisata.image_url}
                 onSubmit={submitEdit}
             />
         </>

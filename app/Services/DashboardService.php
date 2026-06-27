@@ -3,13 +3,15 @@
 namespace App\Services;
 
 use App\Models\AnnualTurnover;
+use App\Models\CsrProgram;
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataVillage;
+use App\Models\SurveyAnswer;
 use App\Models\TourismVillage;
+use App\Models\UmkmSurveyAnswer;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageSurveyAssignmentLog;
 use App\Models\VillageUmkm;
-use App\Models\VillageUmkmCategory;
 use Illuminate\Support\Str;
 
 class DashboardService
@@ -36,8 +38,8 @@ class DashboardService
             'aktivitas_survey' => $this->aktivitasSurveyData($filters['activity_filter'] ?? '30 Hari Terakhir'),
             'status_survey' => $this->statusSurveyData($filters['status_filter'] ?? 'Tahun Ini'),
             'omset_charts' => [
-                'umkm' => $this->omsetChartsDataFor('umkm', $filters['umkm_year'] ?? null),
-                'wisata' => $this->omsetChartsDataFor('pariwisata', $filters['wisata_year'] ?? null),
+                'umkm' => $this->omsetChartsDataFor('umkm'),
+                'wisata' => $this->omsetChartsDataFor('pariwisata'),
             ],
         ];
     }
@@ -154,26 +156,20 @@ class DashboardService
         return VillageSurveyAssignment::query()
             ->select(['id', 'code', 'village_id', 'survey_template_id', 'status', 'updated_at'])
             ->whereHas('answers')
-            ->with(['village:id,name,city,province', 'template:id,title', 'answers:id,village_survey_assignment_id,aspect_snapshot,score'])
+            ->with([
+                'village:id,name,city,province',
+                'template' => fn ($query) => $query
+                    ->select(['id', 'title'])
+                    ->withCount('questions'),
+            ])
             ->withCount('answers')
-            ->withAvg('answers as average_score', 'score')
-            ->orderByDesc('average_score')
-            ->limit(3)
+            ->withSum('answers as total_score', 'score')
+            ->orderByDesc('total_score')
+            ->limit(5)
             ->get()
             ->map(function (VillageSurveyAssignment $assignment): array {
-                $totalQuestions = $assignment->template
-                    ? $assignment->template->questions()->count()
-                    : 0;
-                $score = round(((float) ($assignment->average_score ?? 0)) * 20, 1);
-
-                $aspectScores = collect($assignment->answers)
-                    ->groupBy('aspect_snapshot')
-                    ->map(function ($answers, $aspect) {
-                        return [
-                            'aspect' => $aspect ?: 'Umum',
-                            'score' => round($answers->avg('score') * 20, 1),
-                        ];
-                    })->values()->all();
+                $totalQuestions = (int) ($assignment->template?->questions_count ?? 0);
+                $score = (int) ($assignment->total_score ?? 0);
 
                 return [
                     'id' => $assignment->id,
@@ -182,9 +178,10 @@ class DashboardService
                     'score' => $score,
                     'progress' => $totalQuestions > 0 ? min((int) round(($assignment->answers_count / $totalQuestions) * 100), 100) : 0,
                     'answers' => $assignment->answers_count.'/'.$totalQuestions,
-                    'status' => $this->statusLabel($assignment->status),
+                    'status' => $assignment->status,
+                    'status_label' => $this->statusLabel($assignment->status),
                     'url' => route('survey-assignments.show', $assignment),
-                    'aspect_scores' => $aspectScores,
+                    'aspect_scores' => [],
                 ];
             })
             ->all();
@@ -589,7 +586,7 @@ class DashboardService
                 'selesai' => $selesai,
                 'dalam_proses' => $dalamProses,
                 'belum_dimulai' => $belumDimulai,
-                'total_program_csr' => class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0,
+                'total_program_csr' => class_exists(CsrProgram::class) ? CsrProgram::count() : 0,
                 'total_anggaran' => 0,
                 'area_data' => $areaData,
             ];
@@ -626,7 +623,7 @@ class DashboardService
             'selesai' => $selesai,
             'dalam_proses' => $dalamProses,
             'belum_dimulai' => $belumDimulai,
-            'total_program_csr' => class_exists(\App\Models\CsrProgram::class) ? \App\Models\CsrProgram::count() : 0,
+            'total_program_csr' => class_exists(CsrProgram::class) ? CsrProgram::count() : 0,
             'total_anggaran' => 0,
             'area_data' => $areaData,
         ];
@@ -671,47 +668,33 @@ class DashboardService
         ];
     }
 
-    private function omsetChartsDataFor(string $type, ?string $filterYear = null): array
+    private function omsetChartsDataFor(string $type): array
     {
         $column = $type === 'umkm' ? 'umkm_id' : 'pariwisata_id';
-        $availableYears = AnnualTurnover::query()
-            ->whereNotNull($column)
-            ->orderByDesc('year')
-            ->distinct()
-            ->pluck('year')
-            ->map(fn ($year): int => (int) $year)
-            ->values()
-            ->all();
-
-        $currentYear = $filterYear
-            ? (int) $filterYear
-            : ($availableYears[0] ?? (int) now()->year);
-
-        $years = range($currentYear - 3, $currentYear);
 
         $turnovers = AnnualTurnover::query()
             ->selectRaw('year, SUM(value) as total_omset')
             ->whereNotNull($column)
-            ->whereIn('year', $years)
             ->groupBy('year')
+            ->orderBy('year')
             ->pluck('total_omset', 'year');
 
-        $data = collect($years)
-            ->map(fn (int $year): array => [
+        $data = $turnovers
+            ->map(fn ($total, int|string $year): array => [
                 'year' => (string) $year,
-                'omset' => (float) ($turnovers[$year] ?? 0),
+                'omset' => (float) $total,
             ])
+            ->values()
             ->all();
 
-        $prev = (float) ($turnovers[$currentYear - 1] ?? 0);
-        $curr = (float) ($turnovers[$currentYear] ?? 0);
+        $latestTotals = $turnovers->values()->take(-2)->values();
+        $prev = (float) ($latestTotals->get(0) ?? 0);
+        $curr = (float) ($latestTotals->get(1) ?? $latestTotals->get(0) ?? 0);
 
         return [
             'data' => $data,
-            'trend' => $this->trendFromTotals($curr, $prev),
-            'total' => $curr,
-            'current_year' => $currentYear,
-            'available_years' => $availableYears,
+            'trend' => $latestTotals->count() >= 2 ? $this->trendFromTotals($curr, $prev) : '+0%',
+            'total' => (float) $turnovers->sum(),
         ];
     }
 
@@ -734,7 +717,7 @@ class DashboardService
             return 0.0;
         }
 
-        $average = \App\Models\SurveyAnswer::query()
+        $average = SurveyAnswer::query()
             ->whereIn('village_survey_assignment_id', $assignmentIds)
             ->avg('score') ?? 0;
 
@@ -769,7 +752,7 @@ class DashboardService
             return 0.0;
         }
 
-        $totalWeightedScore = \App\Models\UmkmSurveyAnswer::query()
+        $totalWeightedScore = UmkmSurveyAnswer::query()
             ->whereIn('umkm_id', $umkmIds)
             ->sum('weighted_score');
 

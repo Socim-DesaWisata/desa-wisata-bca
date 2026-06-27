@@ -358,6 +358,7 @@ type UmkmData = {
 type PariwisataData = {
     id: number;
     name: string;
+    image_url: string | null;
     operational_days: string | null;
     operational_hours: string | null;
     operational_schedule: Record<string, string> | null;
@@ -2398,6 +2399,18 @@ function PariwisataCard({
     return (
         <Card className="overflow-hidden p-4 transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(9,57,103,0.10)]">
             <div className="flex flex-col gap-4">
+                {item.image_url ? (
+                    <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="h-40 w-full rounded-xl object-cover"
+                    />
+                ) : (
+                    <div className="flex h-40 items-center justify-center rounded-xl bg-[#EAF3FF] px-4 text-center text-sm font-bold text-[#0066AE]">
+                        {item.name}
+                    </div>
+                )}
+
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

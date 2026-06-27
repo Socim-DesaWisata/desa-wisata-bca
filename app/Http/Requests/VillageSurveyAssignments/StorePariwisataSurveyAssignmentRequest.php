@@ -33,6 +33,7 @@ class StorePariwisataSurveyAssignmentRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:51200'],
             'categories' => ['required', 'array', 'min:1'],
             'categories.*' => [
                 'required',
