@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::redirect('/', '/dashboard')->name('home');
+    Route::inertia('/detail', 'villages/detail');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::middleware('role:admin')->group(function () {

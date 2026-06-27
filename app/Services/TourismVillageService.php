@@ -894,6 +894,7 @@ class TourismVillageService
         return [
             'id' => $pariwisata->id,
             'name' => $pariwisata->name,
+            'image_url' => $this->mediaUrl($pariwisata->image_path ?? null, null),
             'operational_days' => $pariwisata->operational_days,
             'operational_hours' => $pariwisata->operational_hours,
             'entrance_ticket_price' => $pariwisata->entrance_ticket_price !== null ? $this->formatCurrency((float) $pariwisata->entrance_ticket_price) : null,
