@@ -34,7 +34,7 @@ import {
     Trophy,
     User,
     UsersThree,
-    VideoCamera,
+    YoutubeLogo,
     WifiHigh,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
@@ -124,6 +124,8 @@ type VillageShowProps = {
         city: string | null;
         district: string | null;
         subdistrict: string | null;
+        latitude: string | number | null;
+        longitude: string | number | null;
         maps_url: string | null;
         manager_name: string;
         manager_phone: string;
@@ -147,6 +149,8 @@ const cx = (...c: Array<string | false | undefined>) =>
 
 const textOrFallback = (value: string | null | undefined, fallback: string) =>
     value && value !== '-' && value.trim() !== '' ? value : fallback;
+const truncateText = (value: string, maxLength = 96) =>
+    value.length > maxLength ? `${value.slice(0, maxLength).trim()}....` : value;
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '-');
 const firstMediaUrl = (media: MediaItem[] | undefined) =>
     media?.find((item) => item.is_cover)?.url || media?.[0]?.url || null;
@@ -194,12 +198,11 @@ const footerCols = [
 function Logo() {
     return (
         <div className="flex items-center gap-3">
-            <div className="relative grid size-14 place-items-center overflow-hidden rounded-[18px] bg-[#e8f7f8] ring-1 ring-[#cfe3e4]">
-                <span className="absolute bottom-2 h-5 w-10 rounded-t-full bg-[#0066AE]" />
-                <span className="absolute bottom-2.5 h-3 w-12 rounded-t-full bg-[#f8a42c]" />
-                <span className="absolute top-2 h-7 w-7 rotate-45 rounded-sm bg-[#0066AE]" />
-                <span className="absolute bottom-3 h-1.5 w-9 rounded-full bg-white" />
-            </div>
+            <img
+                src="/logo/desa-logo-trans.webp"
+                alt="Desa Bakti BCA"
+                className="size-14 shrink-0 object-contain"
+            />
             <div className="leading-tight">
                 <p className="text-[18px] font-extrabold text-[#0f172a]">
                     Desa Bakti BCA
@@ -229,7 +232,7 @@ function TopNav({ villages }: { villages: VillageLinkItem[] }) {
                     ))}
                 </nav>
                 <details className="group relative">
-                    <summary className="inline-flex h-12 cursor-pointer list-none items-center gap-2 rounded-lg bg-[#093967] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(0,102,174,0.18)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98] [&::-webkit-details-marker]:hidden">
+                    <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-2 rounded-lg bg-[#093967] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(0,102,174,0.18)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98] [&::-webkit-details-marker]:hidden">
                         <MapTrifold className="size-5" />
                         List Desa
                         <span className="text-[11px] transition group-open:rotate-180">v</span>
@@ -270,7 +273,7 @@ function Hero({
     );
 
     return (
-        <section className="relative h-[260px] overflow-hidden bg-[#093967] md:h-[286px]">
+        <section className="relative h-[420px] overflow-hidden bg-[#093967] md:h-[560px]">
             {heroImage ? (
                 <img
                     src={heroImage}
@@ -314,7 +317,7 @@ function Heading({
 }
 function Panel({ children }: { children: ReactNode }) {
     return (
-        <section className="rounded-[18px] border border-[#EFEFEF] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+        <section className="rounded-[18px] p-5">
             {children}
         </section>
     );
@@ -385,8 +388,8 @@ function ProductCard({
                     {p.title}
                 </h3>
                 {p.desc ? (
-                    <p className="mt-2 min-h-[48px] text-[11px] leading-[1.55] font-semibold text-[#303030]">
-                        {p.desc}
+                    <p className="mt-2 line-clamp-2 min-h-[34px] text-[11px] leading-[1.55] font-semibold text-[#303030]">
+                        {truncateText(p.desc)}
                     </p>
                 ) : null}
                 {p.meta && !p.price ? (
@@ -627,9 +630,9 @@ function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectSco
                     Belum ada data skor Kemenpar
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-2.5">
                     {aspects.map((aspect) => (
-                        <div key={aspect.name} className="space-y-2">
+                        <div key={aspect.name} className="space-y-1.5">
                             <div className="flex items-center justify-between gap-3">
                                 <p className="truncate text-[12px] font-extrabold text-[#303030]">
                                     {aspect.name}
@@ -638,7 +641,7 @@ function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectSco
                                     {aspect.score}/{aspect.max_score}
                                 </p>
                             </div>
-                            <div className="h-3 overflow-hidden rounded-full bg-[#EAF3FF]">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-[#EAF3FF]">
                                 <div
                                     className="h-full rounded-full bg-[#0066AE]"
                                     style={{
@@ -646,9 +649,6 @@ function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectSco
                                     }}
                                 />
                             </div>
-                            <p className="text-right text-[10px] font-bold tabular-nums text-[#7C7C7C]">
-                                {aspect.score_percent.toFixed(1)}%
-                            </p>
                         </div>
                     ))}
                 </div>
@@ -656,22 +656,31 @@ function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectSco
         </SidebarCard>
     );
 }
-function MapPreview({ villageName }: { villageName: string }) {
+function GoogleMapPreview({
+    villageName,
+    location,
+    latitude,
+    longitude,
+}: {
+    villageName: string;
+    location: string;
+    latitude: string | number | null;
+    longitude: string | number | null;
+}) {
+    const coordinateQuery = latitude && longitude ? `${latitude},${longitude}` : null;
+    const query = coordinateQuery || [villageName, location].filter(Boolean).join(', ');
+    const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+
     return (
-        <div className="relative mt-4 h-40 overflow-hidden rounded-[12px] bg-[#EAF8EF]">
-            <div className="absolute inset-0 [background-image:linear-gradient(35deg,transparent_42%,rgba(27,166,201,0.22)_43%,rgba(27,166,201,0.22)_45%,transparent_46%),linear-gradient(140deg,transparent_46%,rgba(14,138,74,0.18)_47%,rgba(14,138,74,0.18)_49%,transparent_50%)] opacity-80" />
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 text-center">
-                <MapPin
-                    className="mx-auto size-9 text-[#E64848]"
-                    weight="fill"
-                />
-                <p className="mt-1 text-[10px] font-extrabold text-[#303030]">
-                    {villageName}
-                </p>
-            </div>
-            <span className="absolute bottom-2 left-2 text-[11px] font-extrabold text-[#1877F2]">
-                Google
-            </span>
+        <div className="mt-4 overflow-hidden rounded-[12px] border border-[#E5EAF1] bg-[#F8FBFE]">
+            <iframe
+                title={`Google Maps ${villageName}`}
+                src={mapSrc}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="h-56 w-full border-0"
+                allowFullScreen
+            />
         </div>
     );
 }
@@ -689,7 +698,7 @@ function Social({
             href="#"
             aria-label={label}
             className={cx(
-                'grid size-10 place-items-center rounded-full bg-white text-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98]',
+                'grid size-10 place-items-center rounded-full bg-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] ring-1 ring-[#E5EAF1] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98]',
                 className,
             )}
         >
@@ -708,16 +717,16 @@ function Footer() {
                         and preserve Indonesia's cultural heritage.
                     </p>
                     <div className="mt-6 flex gap-3">
-                        <Social label="Facebook" className="bg-[#1877F2]">
+                        <Social label="Facebook" className="text-[#1877F2]">
                             <FacebookLogo className="size-5" weight="fill" />
                         </Social>
-                        <Social label="Instagram" className="bg-[#E4405F]">
+                        <Social label="Instagram" className="text-[#E4405F]">
                             <InstagramLogo className="size-5" weight="fill" />
                         </Social>
-                        <Social label="Video channel" className="bg-[#e62117]">
-                            <VideoCamera className="size-5" weight="fill" />
+                        <Social label="YouTube" className="text-[#FF0000]">
+                            <YoutubeLogo className="size-5" weight="fill" />
                         </Social>
-                        <Social label="TikTok" className="bg-[#111827]">
+                        <Social label="TikTok" className="text-[#111827]">
                             <TiktokLogo className="size-5" weight="fill" />
                         </Social>
                     </div>
@@ -863,7 +872,6 @@ export default function VillageDetail({
     const villageInfoRows: Row[] = [
         { icon: User, label: 'Village ID', value: village.code || 'Tidak ada data' },
         { icon: Trophy, label: 'Status', value: village.status_label || 'Tidak ada data' },
-        { icon: Park, label: 'Tourism Village Category', value: village.category_label || 'Tidak ada data' },
     ];
     const statisticRows: Row[] = [
         {
@@ -968,7 +976,7 @@ export default function VillageDetail({
                         </section>
                     </div>
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
-                        <QrBlock rows={villageInfoRows} villageName={villageName} />
+                        {/* <QrBlock rows={villageInfoRows} villageName={villageName} /> */}
                         <KemenparAspectScoreCard aspects={village.kemenpar_aspect_scores} />
                         <SidebarCard title="Location Address" icon={MapPin}>
                             <p className="text-[12px] leading-6 font-semibold text-[#303030]">
@@ -984,7 +992,12 @@ export default function VillageDetail({
                                     Buka Google Maps
                                 </a>
                             ) : null}
-                            <MapPreview villageName={villageName} />
+                            <GoogleMapPreview
+                                villageName={villageName}
+                                location={locationText}
+                                latitude={village.latitude}
+                                longitude={village.longitude}
+                            />
                         </SidebarCard>
                         <SidebarCard title="Contact Person" icon={User}>
                             <div className="flex items-center gap-4">
