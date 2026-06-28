@@ -356,13 +356,21 @@ function FacilityGrid({ items }: { items: FacilityItem[] }) {
 function ProductCard({
     p,
     centered = false,
+    size = 'default',
 }: {
     p: Product;
     centered?: boolean;
+    size?: 'default' | 'large';
 }) {
+    const isLarge = size === 'large';
     const card = (
-        <article className="overflow-hidden rounded-[14px] border border-[#EFEFEF] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
-            <div className="relative aspect-[16/9] overflow-hidden bg-[#F1F5F8]">
+        <article
+            className={cx(
+                'overflow-hidden border border-[#EFEFEF] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)]',
+                isLarge ? 'rounded-[16px]' : 'rounded-[14px]',
+            )}
+        >
+            <div className={cx('relative overflow-hidden bg-[#F1F5F8]', isLarge ? 'aspect-[4/3]' : 'aspect-[16/9]')}>
                 {p.image ? (
                     <img
                         src={p.image}
@@ -383,26 +391,26 @@ function ProductCard({
                     </span>
                 ) : null}
             </div>
-            <div className={cx('p-4', centered && 'text-center')}>
-                <h3 className="text-[13px] leading-snug font-extrabold text-[#303030]">
+            <div className={cx(isLarge ? 'p-5' : 'p-4', centered && 'text-center')}>
+                <h3 className={cx('font-extrabold text-[#303030]', isLarge ? 'text-[15px] leading-snug' : 'text-[13px] leading-snug')}>
                     {p.title}
                 </h3>
                 {p.desc ? (
-                    <p className="mt-2 line-clamp-2 min-h-[34px] text-[11px] leading-[1.55] font-semibold text-[#303030]">
-                        {truncateText(p.desc)}
+                    <p className={cx('mt-2 line-clamp-2 font-semibold text-[#303030]', isLarge ? 'min-h-[38px] text-[12px] leading-[1.55]' : 'min-h-[34px] text-[11px] leading-[1.55]')}>
+                        {truncateText(p.desc, isLarge ? 86 : 96)}
                     </p>
                 ) : null}
                 {p.meta && !p.price ? (
-                    <p className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#303030]">
+                    <p className={cx('mt-3 inline-flex items-center gap-1 font-bold text-[#303030]', isLarge ? 'text-[12px]' : 'text-[11px]')}>
                         <MapPin
-                            className="size-3.5 text-[#0066AE]"
+                            className={isLarge ? 'size-4 text-[#0066AE]' : 'size-3.5 text-[#0066AE]'}
                             weight="fill"
                         />
                         {p.meta}
                     </p>
                 ) : null}
                 {p.price ? (
-                    <p className="mt-3 text-[13px] font-extrabold text-[#0066AE]">
+                    <p className={cx('mt-3 font-extrabold text-[#0066AE]', isLarge ? 'text-[14px]' : 'text-[13px]')}>
                         {p.price}{' '}
                         {p.meta ? (
                             <span className="font-bold text-[#7C7C7C]">
@@ -965,9 +973,9 @@ export default function VillageDetail({
                                 Nearby Tourism Villages
                             </Heading>
                             {nearbyItems.length ? (
-                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                    {nearbyItems.map((p) => (
-                                        <ProductCard key={p.title} p={p} />
+                                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                                    {nearbyItems.slice(0, 6).map((p) => (
+                                        <ProductCard key={p.title} p={p} size="large" />
                                     ))}
                                 </div>
                             ) : (
