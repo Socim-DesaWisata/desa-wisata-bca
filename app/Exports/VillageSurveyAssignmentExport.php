@@ -29,7 +29,6 @@ class VillageSurveyAssignmentExport
             'template:id,title,description,status,published_at',
             'template.questions' => fn ($query) => $query
                 ->select(['id', 'survey_template_id', 'aspect', 'code', 'question_text', 'document_hint', 'sort_order'])
-                ->orderBy('aspect')
                 ->orderBy('sort_order')
                 ->orderBy('id'),
             'template.questions.options' => fn ($query) => $query
