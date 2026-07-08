@@ -43,6 +43,7 @@ class VillageSurveyAssignmentExport
                 'survey_question_option_id',
                 'score',
                 'option_label_snapshot',
+                'notes',
                 'answered_by',
                 'last_edited_by',
                 'answered_at',
@@ -143,6 +144,7 @@ class VillageSurveyAssignmentExport
             'Status Jawaban',
             'Skor',
             'Jawaban/Opsi Dipilih',
+            'Catatan',
             'Dijawab Oleh',
             'Terakhir Diedit Oleh',
             'Tanggal Dijawab',
@@ -169,6 +171,7 @@ class VillageSurveyAssignmentExport
                     $answer ? 'Terjawab' : 'Belum dijawab',
                     $answer?->score,
                     $answer?->option_label_snapshot ?? $answer?->option?->label,
+                    $answer?->notes,
                     $answer?->answeredBy?->name,
                     $answer?->lastEditedBy?->name,
                     $this->formatDate($answer?->answered_at),
@@ -185,7 +188,7 @@ class VillageSurveyAssignmentExport
             ->all();
 
         foreach ($rows as $row) {
-            $docCount = count($row) - 13;
+            $docCount = count($row) - 14;
             if ($docCount > $maxDocuments) {
                 $maxDocuments = $docCount;
             }
@@ -205,11 +208,11 @@ class VillageSurveyAssignmentExport
         $sheet->getStyle("A1:{$lastColumn}1")->applyFromArray($this->headerStyle());
         $sheet->getStyle("A:{$lastColumn}")->getAlignment()->setVertical(Alignment::VERTICAL_TOP)->setWrapText(true);
 
-        foreach ([8, 12, 14, 18, 22, 36, 22, 18, 22, 22, 20, 20, 14, 30] as $index => $width) {
+        foreach ([8, 12, 14, 18, 22, 36, 22, 18, 30, 22, 22, 20, 20, 14, 30] as $index => $width) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($index + 1))->setWidth($width);
         }
 
-        for ($i = 14; $i < $lastColumnIndex; $i++) {
+        for ($i = 15; $i < $lastColumnIndex; $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i + 1))->setWidth(40);
         }
 
