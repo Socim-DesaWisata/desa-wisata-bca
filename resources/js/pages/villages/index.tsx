@@ -6,7 +6,6 @@ import {
     CheckCircle2,
     ChevronDown,
     ClipboardCheck,
-    Download,
     Eye,
     FileText,
     Info,
@@ -80,6 +79,8 @@ type VillageRow = {
     status: string;
     status_label: string;
     total_score: number;
+    istc_score: number;
+    village_type: string;
     is_trashed: boolean;
     deleted_at: string;
     created_by: string;
@@ -111,7 +112,7 @@ type VillageFilters = {
     province: string | null;
     view?: 'active' | 'trash' | null;
     per_page: number;
-    sort_by?: 'total_score' | null;
+    sort_by?: 'total_score' | 'istc_score' | null;
     sort_direction?: 'asc' | 'desc' | null;
 };
 
@@ -755,22 +756,22 @@ export default function VillagesIndex({
         });
     }
 
-    function toggleScoreSort() {
+    function toggleScoreSort(sortBy: 'total_score' | 'istc_score') {
         const sort_direction =
-            filterForm.sort_by === 'total_score' &&
+            filterForm.sort_by === sortBy &&
             filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
         setFilterForm((current) => ({
             ...current,
-            sort_by: 'total_score',
+            sort_by: sortBy,
             sort_direction,
         }));
 
         router.get(
             villagesRoute.url(),
-            filterQuery({ sort_by: 'total_score', sort_direction }),
+            filterQuery({ sort_by: sortBy, sort_direction }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -778,8 +779,8 @@ export default function VillagesIndex({
         );
     }
 
-    function scoreSortLabel() {
-        if (filterForm.sort_by !== 'total_score') {
+    function scoreSortLabel(sortBy: 'total_score' | 'istc_score') {
+        if (filterForm.sort_by !== sortBy) {
             return '↕';
         }
 
@@ -882,10 +883,6 @@ export default function VillagesIndex({
                                     Tambah Desa
                                 </button>
                             )}
-                            <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]">
-                                <Download className="size-4" />
-                                Export Data
-                            </button>
                         </div>
                     </header>
 
@@ -1015,33 +1012,45 @@ export default function VillagesIndex({
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[780px] border-collapse text-left text-sm">
+                                <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                                     <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
                                         <tr>
                                             {[
                                                 'Desa Wisata',
                                                 'Pengelola',
                                                 'Status',
-                                                'Skor Survey',
+                                                'Skor KEMENPAR',
+                                                'Skor ISTC',
+                                                'Jenis Desa',
                                                 'Dibuat Oleh',
-                                                'Diperbarui',
                                                 'Aksi',
                                             ].map((head) => (
                                                 <th
                                                     key={head}
                                                     className="px-3 py-3 font-bold whitespace-nowrap"
                                                 >
-                                                    {head === 'Skor Survey' ? (
+                                                    {head === 'Skor KEMENPAR' ||
+                                                    head === 'Skor ISTC' ? (
                                                         <button
                                                             type="button"
-                                                            onClick={
-                                                                toggleScoreSort
+                                                            onClick={() =>
+                                                                toggleScoreSort(
+                                                                    head ===
+                                                                        'Skor KEMENPAR'
+                                                                        ? 'total_score'
+                                                                        : 'istc_score',
+                                                                )
                                                             }
                                                             className="inline-flex items-center gap-1 font-bold text-[#093967]"
                                                         >
                                                             {head}
                                                             <span aria-hidden="true">
-                                                                {scoreSortLabel()}
+                                                                {scoreSortLabel(
+                                                                    head ===
+                                                                        'Skor KEMENPAR'
+                                                                        ? 'total_score'
+                                                                        : 'istc_score',
+                                                                )}
                                                             </span>
                                                         </button>
                                                     ) : (
@@ -1100,10 +1109,13 @@ export default function VillagesIndex({
                                                     {village.total_score}
                                                 </td>
                                                 <td className="px-3 py-3 font-medium text-[#303030]">
-                                                    {village.created_by}
+                                                    {village.istc_score}
                                                 </td>
                                                 <td className="px-3 py-3 font-medium text-[#303030]">
-                                                    {village.updated_at}
+                                                    {village.village_type}
+                                                </td>
+                                                <td className="px-3 py-3 font-medium text-[#303030]">
+                                                    {village.created_by}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <DropdownMenu>

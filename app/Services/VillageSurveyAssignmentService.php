@@ -225,6 +225,43 @@ class VillageSurveyAssignmentService
         });
     }
 
+    /**
+     * @param  array<int, int>  $assignmentIds
+     */
+    public function bulkUpdateStatus(array $assignmentIds, string $status, User $user): void
+    {
+        DB::transaction(function () use ($assignmentIds, $status, $user): void {
+            $assignments = VillageSurveyAssignment::query()
+                ->whereIn('id', $assignmentIds)
+                ->lockForUpdate()
+                ->get();
+
+            if ($assignments->count() !== count($assignmentIds)) {
+                throw ValidationException::withMessages([
+                    'assignment_ids' => 'Satu atau lebih assignment tidak tersedia atau sudah berada di trash.',
+                ]);
+            }
+
+            foreach ($assignments as $assignment) {
+                $fromStatus = $assignment->status;
+                $assignment->update(['status' => $status]);
+
+                $assignment->logs()->create([
+                    'actor_id' => $user->id,
+                    'action' => 'assignment_updated',
+                    'from_status' => $fromStatus,
+                    'to_status' => $status,
+                    'description' => 'Status survey assignment diperbarui secara bulk.',
+                    'metadata' => [
+                        'bulk' => true,
+                        'changed' => array_keys($assignment->getChanges()),
+                    ],
+                    'created_at' => now(),
+                ]);
+            }
+        });
+    }
+
     public function delete(VillageSurveyAssignment $assignment): void
     {
         DB::transaction(function () use ($assignment): void {

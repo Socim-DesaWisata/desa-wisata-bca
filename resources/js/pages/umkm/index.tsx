@@ -1,7 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     CreditCard,
-    Download,
     Eye,
     MoreHorizontal,
     RotateCcw,
@@ -246,13 +245,6 @@ export default function UmkmIndex({
                                     Trash
                                 </button>
                             </div>
-                            <button
-                                type="button"
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                            >
-                                <Download className="size-4" />
-                                Export Data
-                            </button>
                         </div>
                     </header>
 

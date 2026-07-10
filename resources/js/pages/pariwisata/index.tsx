@@ -2,7 +2,6 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     CheckCircle2,
     ClipboardCheck,
-    Download,
     Eye,
     MapPinned,
     MoreHorizontal,
@@ -213,7 +212,7 @@ export default function PariwisataIndex({
 
     return (
         <>
-            <Head title="Manajemen Pariwisata" />
+            <Head title="Manajemen Desa" />
             <main className="min-h-[calc(100dvh-60px)] bg-[#F7F7F7] px-4 py-4 text-[#303030] sm:px-5 lg:px-6">
                 <div className="mx-auto max-w-[1500px] space-y-4">
                     <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -228,7 +227,7 @@ export default function PariwisataIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Manajemen Pariwisata
+                                Manajemen Desa
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau destinasi pariwisata desa, kategori,
@@ -253,13 +252,6 @@ export default function PariwisataIndex({
                                     Trash
                                 </button>
                             </div>
-                            <button
-                                type="button"
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                            >
-                                <Download className="size-4" />
-                                Export Data
-                            </button>
                         </div>
                     </header>
 
@@ -387,7 +379,7 @@ export default function PariwisataIndex({
                     <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
                         <div className="border-b border-[#EFEFEF] px-5 py-4">
                             <h2 className="text-lg font-bold text-[#303030]">
-                                Daftar Pariwisata
+                                Daftar Desa
                             </h2>
                             <p className="mt-0.5 text-sm text-[#7C7C7C]">
                                 Data destinasi wisata desa dan progress
@@ -656,6 +648,6 @@ export default function PariwisataIndex({
 PariwisataIndex.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: dashboard() },
-        { title: 'Pariwisata', href: pariwisataRoute() },
+        { title: 'Desa', href: pariwisataRoute() },
     ],
 };

@@ -51,7 +51,9 @@ class TourismVillageService
             'province' => Arr::get($filters, 'province'),
             'view' => Arr::get($filters, 'view', 'active') === 'trash' ? 'trash' : 'active',
             'per_page' => (int) Arr::get($filters, 'per_page', 10),
-            'sort_by' => Arr::get($filters, 'sort_by') === 'total_score' ? 'total_score' : null,
+            'sort_by' => in_array(Arr::get($filters, 'sort_by'), ['total_score', 'istc_score'], true)
+                ? Arr::get($filters, 'sort_by')
+                : null,
             'sort_direction' => Arr::get($filters, 'sort_direction') === 'asc' ? 'asc' : 'desc',
         ];
 
@@ -82,7 +84,8 @@ class TourismVillageService
             ])
             ->with(['creator:id,name'])
             ->withCount(['enumeratorAssignments', 'media', 'profileItems'])
-            ->withSum('surveyAnswers as total_score', 'score');
+            ->withSum('surveyAnswers as total_score', 'score')
+            ->withSum('pariwisataSurveyAnswers as istc_score', 'score');
 
         if ($normalizedFilters['view'] === 'trash') {
             $query->onlyTrashed();
@@ -103,8 +106,10 @@ class TourismVillageService
             })
             ->when($normalizedFilters['status'], fn ($query, string $status) => $query->where('status', $status))
             ->when($normalizedFilters['province'], fn ($query, string $province) => $query->where('province', $province))
-            ->when($normalizedFilters['sort_by'] === 'total_score',
-                fn ($query) => $query->orderByRaw('COALESCE(total_score, 0) '.$normalizedFilters['sort_direction'])
+            ->when($normalizedFilters['sort_by'],
+                fn ($query) => $query->orderByRaw(
+                    'COALESCE('.$normalizedFilters['sort_by'].', 0) '.$normalizedFilters['sort_direction']
+                )
                     ->latest('updated_at')
                     ->orderByDesc('id'),
                 fn ($query) => $query->latest('updated_at')
@@ -509,10 +514,12 @@ class TourismVillageService
             'manager_email' => $village->manager_email,
             'status' => $village->status,
             'status_label' => $this->labelFor($village->status, $this->statusOptions()),
-            'category_label' => $this->categoryFor($progress),
+            'category_label' => $this->villageTypeFor((int) ($village->total_score ?? 0)),
             'enumerators' => $village->enumerator_assignments_count.' enumerator',
             'survey_progress' => $progress,
             'total_score' => $village->total_score ?? 0,
+            'istc_score' => $village->istc_score ?? 0,
+            'village_type' => $this->villageTypeFor((int) ($village->total_score ?? 0)),
             'score' => $progress >= 100 ? 'Siap review' : 'Belum final',
             'is_trashed' => $village->trashed(),
             'deleted_at' => $this->formatDate($village->deleted_at),
@@ -591,6 +598,7 @@ class TourismVillageService
             ->values()
             ->all();
     }
+
     /**
      * @return array<int, array{name: string, score: int, max_score: int, score_percent: float}>
      */
@@ -620,6 +628,7 @@ class TourismVillageService
             ->values()
             ->all();
     }
+
     /**
      * @return array<string, mixed>
      */
@@ -935,13 +944,14 @@ class TourismVillageService
         return collect($options)->firstWhere('value', $value)['label'] ?? Str::headline((string) $value);
     }
 
-    private function categoryFor(int $progress): string
+    private function villageTypeFor(int $score): string
     {
         return match (true) {
-            $progress >= 85 => 'Mandiri',
-            $progress >= 60 => 'Maju',
-            $progress >= 35 => 'Berkembang',
-            default => 'Rintisan',
+            $score >= 199 && $score <= 244 => 'Mandiri',
+            $score >= 153 && $score <= 198 => 'Maju',
+            $score >= 107 && $score <= 152 => 'Berkembang',
+            $score >= 61 && $score <= 106 => 'Rintisan',
+            default => '-',
         };
     }
 

@@ -50,10 +50,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/survey-assignments', [VillageSurveyAssignmentController::class, 'index'])->name('survey-assignments');
     Route::post('/survey-assignments', [VillageSurveyAssignmentController::class, 'store'])->name('survey-assignments.store');
+    Route::patch('/survey-assignments/bulk-status', [VillageSurveyAssignmentController::class, 'bulkUpdateStatus'])
+        ->middleware('role:admin')
+        ->name('survey-assignments.bulk-status');
 
     Route::delete('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'destroy'])->name('survey-assignments.destroy');
     Route::patch('/survey-assignments/{assignment}/restore', [VillageSurveyAssignmentController::class, 'restore'])->name('survey-assignments.restore');
-    
+
     Route::get('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'createUmkm'])
         ->name('survey-assignments.create-umkm');
     Route::post('/survey-assignments/{assignment}/create/umkm', [VillageSurveyAssignmentController::class, 'storeUmkm'])
@@ -96,7 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('survey-assignments.export');
     Route::patch('/survey-assignments/{assignment}/village-annual-data', [VillageSurveyAssignmentController::class, 'updateVillageAnnualData'])
         ->name('survey-assignments.village-annual-data.update');
-        
+
     Route::get('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'show'])
         ->name('survey-assignments.show');
     Route::patch('/survey-assignments/{assignment}', [VillageSurveyAssignmentController::class, 'update'])

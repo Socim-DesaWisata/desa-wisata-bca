@@ -148,9 +148,9 @@ class PariwisataService
     {
         return [
             [
-                'label' => 'Total Pariwisata',
+                'label' => 'Total Desa',
                 'value' => (string) PariwisataVillage::query()->count(),
-                'description' => 'Seluruh destinasi pariwisata',
+                'description' => 'Seluruh destinasi desa',
                 'icon' => 'map',
             ],
             [

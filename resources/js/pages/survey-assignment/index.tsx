@@ -22,6 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,6 +31,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+    bulkUpdateStatus,
     destroy as destroySurveyAssignment,
     restore as restoreSurveyAssignment,
 } from '@/actions/App/Http/Controllers/VillageSurveyAssignmentController';
@@ -125,6 +127,11 @@ type AssignmentForm = {
     started_at: string;
 };
 
+type BulkStatusForm = {
+    assignment_ids: number[];
+    status: string;
+};
+
 type AccessAction = 'detail' | 'take-survey';
 
 const statIcons = {
@@ -205,6 +212,10 @@ export default function SurveyAssignmentIndex({
     const { auth } = usePage().props;
     const isEnumerator = auth.user?.role === 'enumerator';
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false);
+    const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<
+        number[]
+    >([]);
     const [isAccessOpen, setIsAccessOpen] = useState(false);
     const [selectedAssignment, setSelectedAssignment] =
         useState<AssignmentRow | null>(null);
@@ -221,8 +232,25 @@ export default function SurveyAssignmentIndex({
         sort_by: filters.sort_by ?? '',
         sort_direction: filters.sort_direction ?? '',
     });
+    const canBulkUpdate = !isEnumerator && filterForm.view !== 'trash';
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm<AssignmentForm>(defaultForm);
+    const {
+        data: bulkData,
+        setData: setBulkData,
+        patch: patchBulkStatus,
+        processing: isBulkProcessing,
+        errors: bulkErrors,
+        reset: resetBulkData,
+        clearErrors: clearBulkErrors,
+    } = useForm<BulkStatusForm>({ assignment_ids: [], status: '' });
+
+    const visibleAssignmentIds = assignments.data.map(
+        (assignment) => assignment.id,
+    );
+    const isAllVisibleSelected =
+        visibleAssignmentIds.length > 0 &&
+        visibleAssignmentIds.every((id) => selectedAssignmentIds.includes(id));
 
     function filterQuery(overrides: Partial<typeof filterForm> = {}) {
         const next = { ...filterForm, ...overrides };
@@ -241,6 +269,8 @@ export default function SurveyAssignmentIndex({
     function submitFilters(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
+        setSelectedAssignmentIds([]);
+
         router.get(surveyAssignments.url(), filterQuery(), {
             preserveState: true,
             preserveScroll: true,
@@ -248,6 +278,7 @@ export default function SurveyAssignmentIndex({
     }
 
     function resetFilters() {
+        setSelectedAssignmentIds([]);
         setFilterForm({
             search: '',
             status: '',
@@ -262,6 +293,7 @@ export default function SurveyAssignmentIndex({
     }
 
     function changeView(view: 'active' | 'trash') {
+        setSelectedAssignmentIds([]);
         setFilterForm((current) => ({
             ...current,
             view,
@@ -274,6 +306,7 @@ export default function SurveyAssignmentIndex({
     }
 
     function toggleScoreSort() {
+        setSelectedAssignmentIds([]);
         const sort_direction =
             filterForm.sort_by === 'total_score' &&
             filterForm.sort_direction === 'desc'
@@ -353,6 +386,7 @@ export default function SurveyAssignmentIndex({
     }
 
     function changePerPage(perPage: string) {
+        setSelectedAssignmentIds([]);
         setFilterForm((current) => ({
             ...current,
             per_page: perPage,
@@ -366,6 +400,50 @@ export default function SurveyAssignmentIndex({
                 preserveScroll: true,
             },
         );
+    }
+
+    function toggleAssignmentSelection(assignmentId: number, checked: boolean) {
+        setSelectedAssignmentIds((current) =>
+            checked
+                ? [...new Set([...current, assignmentId])]
+                : current.filter((id) => id !== assignmentId),
+        );
+    }
+
+    function toggleVisibleSelection(checked: boolean) {
+        setSelectedAssignmentIds(checked ? visibleAssignmentIds : []);
+    }
+
+    function openBulkStatusModal() {
+        if (selectedAssignmentIds.length === 0) {
+            return;
+        }
+
+        resetBulkData();
+        clearBulkErrors();
+        setBulkData('assignment_ids', selectedAssignmentIds);
+        setIsBulkStatusOpen(true);
+    }
+
+    function closeBulkStatusModal(open: boolean) {
+        setIsBulkStatusOpen(open);
+
+        if (!open) {
+            resetBulkData();
+            clearBulkErrors();
+        }
+    }
+
+    function submitBulkStatus(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        patchBulkStatus(bulkUpdateStatus.url(), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedAssignmentIds([]);
+                closeBulkStatusModal(false);
+            },
+        });
     }
 
     function openAccessModal(assignment: AssignmentRow, action: AccessAction) {
@@ -607,20 +685,50 @@ export default function SurveyAssignmentIndex({
                     </form>
 
                     <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
-                        <div className="border-b border-[#EFEFEF] px-5 py-4">
-                            <h2 className="text-lg font-bold text-[#303030]">
-                                Daftar Survey Assignment
-                            </h2>
-                            <p className="mt-0.5 text-sm text-[#7C7C7C]">
-                                Ringkasan assignment survey desa wisata dan
-                                progress pengisiannya.
-                            </p>
+                        <div className="flex flex-col gap-3 border-b border-[#EFEFEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="text-lg font-bold text-[#303030]">
+                                    Daftar Survey Assignment
+                                </h2>
+                                <p className="mt-0.5 text-sm text-[#7C7C7C]">
+                                    Ringkasan assignment survey desa wisata dan
+                                    progress pengisiannya.
+                                </p>
+                            </div>
+                            {canBulkUpdate &&
+                                selectedAssignmentIds.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={openBulkStatusModal}
+                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                    >
+                                        Ubah Status (
+                                        {selectedAssignmentIds.length})
+                                    </button>
+                                )}
                         </div>
 
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                                 <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
                                     <tr>
+                                        {canBulkUpdate && (
+                                            <th className="w-12 px-3 py-3 text-center">
+                                                <Checkbox
+                                                    checked={
+                                                        isAllVisibleSelected
+                                                    }
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        toggleVisibleSelection(
+                                                            checked === true,
+                                                        )
+                                                    }
+                                                    aria-label="Pilih semua assignment pada halaman ini"
+                                                />
+                                            </th>
+                                        )}
                                         {[
                                             'ID',
                                             'Desa',
@@ -664,6 +772,25 @@ export default function SurveyAssignmentIndex({
                                             key={assignment.id}
                                             className="hover:bg-[#FAFCFF]"
                                         >
+                                            {canBulkUpdate && (
+                                                <td className="px-3 py-3 text-center">
+                                                    <Checkbox
+                                                        checked={selectedAssignmentIds.includes(
+                                                            assignment.id,
+                                                        )}
+                                                        onCheckedChange={(
+                                                            checked,
+                                                        ) =>
+                                                            toggleAssignmentSelection(
+                                                                assignment.id,
+                                                                checked ===
+                                                                    true,
+                                                            )
+                                                        }
+                                                        aria-label={`Pilih ${assignment.village_name}`}
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-3 py-3 font-bold text-[#0066AE]">
                                                 {isEnumerator
                                                     ? `#${assignment.id}`
@@ -853,10 +980,11 @@ export default function SurveyAssignmentIndex({
                                             disabled={!link.url}
                                             onClick={() =>
                                                 link.url &&
+                                                (setSelectedAssignmentIds([]),
                                                 router.visit(link.url, {
                                                     preserveScroll: true,
                                                     preserveState: true,
-                                                })
+                                                }))
                                             }
                                             className={classNames(
                                                 'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',
@@ -973,6 +1101,66 @@ export default function SurveyAssignmentIndex({
                                 {processing
                                     ? 'Menyimpan...'
                                     : 'Simpan Assignment'}
+                            </button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isBulkStatusOpen} onOpenChange={closeBulkStatusModal}>
+                <DialogContent className="rounded-2xl sm:max-w-[460px]">
+                    <DialogHeader>
+                        <DialogTitle>Ubah Status Survey</DialogTitle>
+                        <DialogDescription>
+                            Status baru akan diterapkan pada{' '}
+                            {selectedAssignmentIds.length} survey assignment
+                            yang dipilih.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={submitBulkStatus} className="space-y-4">
+                        <label className="space-y-1.5">
+                            <span className="text-sm font-bold text-[#303030]">
+                                Status Baru
+                            </span>
+                            <select
+                                value={bulkData.status}
+                                onChange={(event) =>
+                                    setBulkData('status', event.target.value)
+                                }
+                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm outline-none focus:border-[#2FA6FC]"
+                            >
+                                <option value="">Pilih status</option>
+                                {status_options.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={bulkErrors.status} />
+                        </label>
+                        <FieldError message={bulkErrors.assignment_ids} />
+
+                        <DialogFooter>
+                            <button
+                                type="button"
+                                onClick={() => closeBulkStatusModal(false)}
+                                className="h-11 rounded-lg border border-[#DDE4EC] bg-white px-5 text-sm font-bold text-[#303030]"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                disabled={
+                                    isBulkProcessing || bulkData.status === ''
+                                }
+                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:opacity-60"
+                            >
+                                {isBulkProcessing
+                                    ? 'Menyimpan...'
+                                    : 'Simpan Perubahan'}
                             </button>
                         </DialogFooter>
                     </form>

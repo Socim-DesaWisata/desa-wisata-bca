@@ -95,6 +95,18 @@ class TourismVillage extends Model
         );
     }
 
+    public function pariwisataSurveyAnswers(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            PariwisataSurveyAnswer::class,
+            VillageSurveyAssignment::class,
+            'village_id',
+            'village_survey_assignment_id',
+            'id',
+            'id'
+        );
+    }
+
     public function annualPopulationStats(): HasMany
     {
         return $this->hasMany(VillageAnnualPopulationStat::class, 'village_id');

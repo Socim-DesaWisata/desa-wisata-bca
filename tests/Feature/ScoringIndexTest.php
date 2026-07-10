@@ -403,3 +403,80 @@ test('village index sorts survey score across full backend result set', function
             ->where('villages.data.1.id', $highVillage->id)
         );
 });
+
+test('village index exposes and sorts ISTC score and classifies KEMENPAR score', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+    ]);
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'category_code' => 'A',
+        'category_name' => 'Kategori A',
+        'criteria_code' => 'A.1',
+        'criteria_name' => 'Kriteria A1',
+        'indicator_code' => 'A.1.a',
+        'indicator_name' => 'Indikator A',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 5,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 1,
+    ]);
+    $lowVillage = TourismVillage::factory()->create(['created_by' => $user->id, 'name' => 'Desa ISTC Rendah']);
+    $highVillage = TourismVillage::factory()->create(['created_by' => $user->id, 'name' => 'Desa ISTC Tinggi']);
+
+    foreach ([[$lowVillage, 61, 2], [$highVillage, 107, 5]] as [$village, $kemenparScore, $istcScore]) {
+        $assignment = VillageSurveyAssignment::factory()->create([
+            'village_id' => $village->id,
+            'survey_template_id' => $template->id,
+            'assigned_by' => $user->id,
+        ]);
+        $kemenparQuestion = SurveyQuestion::query()->create([
+            'survey_template_id' => $template->id,
+            'aspect' => 'Amenitas',
+            'code' => 'KEMENPAR-'.$village->id,
+            'question_text' => 'Pertanyaan KEMENPAR',
+            'sort_order' => 1,
+        ]);
+        $kemenparOption = SurveyQuestionOption::query()->create([
+            'survey_question_id' => $kemenparQuestion->id,
+            'score' => $kemenparScore,
+            'label' => 'Nilai',
+            'sort_order' => 1,
+        ]);
+        SurveyAnswer::query()->create([
+            'village_survey_assignment_id' => $assignment->id,
+            'survey_question_id' => $kemenparQuestion->id,
+            'survey_question_option_id' => $kemenparOption->id,
+            'score' => $kemenparScore,
+            'answered_by' => $user->id,
+            'last_edited_by' => $user->id,
+        ]);
+        PariwisataSurveyAnswer::query()->create([
+            'village_survey_assignment_id' => $assignment->id,
+            'pariwisata_survey_question_id' => $question->id,
+            'pariwisata_suvey_option_id' => $option->id,
+            'score' => $istcScore,
+            'answered_by' => $user->id,
+            'last_edited_by' => $user->id,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('villages', ['sort_by' => 'istc_score', 'sort_direction' => 'desc']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('villages.data.0.id', $highVillage->id)
+            ->where('villages.data.0.istc_score', 5)
+            ->where('villages.data.0.village_type', 'Berkembang')
+            ->where('villages.data.1.village_type', 'Rintisan')
+        );
+});
