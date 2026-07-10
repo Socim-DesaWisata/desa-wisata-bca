@@ -102,6 +102,60 @@ test('authenticated users can create survey assignments', function () {
     ]);
 });
 
+test('admin can bulk update survey assignment statuses and writes logs', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $admin->id,
+        'status' => 'published',
+    ]);
+    $villages = TourismVillage::factory()->count(3)->create(['created_by' => $admin->id]);
+    $assignments = $villages->map(fn (TourismVillage $village): VillageSurveyAssignment => VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $admin->id,
+        'status' => 'assigned',
+    ]));
+
+    $this->actingAs($admin)
+        ->patch(route('survey-assignments.bulk-status'), [
+            'assignment_ids' => [$assignments[0]->id, $assignments[1]->id],
+            'status' => 'approved',
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('village_survey_assignments', [
+        'id' => $assignments[0]->id,
+        'status' => 'approved',
+    ]);
+    $this->assertDatabaseHas('village_survey_assignments', [
+        'id' => $assignments[1]->id,
+        'status' => 'approved',
+    ]);
+    $this->assertDatabaseHas('village_survey_assignments', [
+        'id' => $assignments[2]->id,
+        'status' => 'assigned',
+    ]);
+    $this->assertDatabaseCount('village_survey_assignment_logs', 2);
+    $this->assertDatabaseHas('village_survey_assignment_logs', [
+        'village_survey_assignment_id' => $assignments[0]->id,
+        'actor_id' => $admin->id,
+        'from_status' => 'assigned',
+        'to_status' => 'approved',
+        'action' => 'assignment_updated',
+    ]);
+});
+
+test('enumerator cannot bulk update survey assignment statuses', function () {
+    $enumerator = User::factory()->create(['role' => 'enumerator']);
+
+    $this->actingAs($enumerator)
+        ->patch(route('survey-assignments.bulk-status'), [
+            'assignment_ids' => [1],
+            'status' => 'approved',
+        ])
+        ->assertForbidden();
+});
+
 test('survey assignment village must be unique', function () {
     $user = User::factory()->create();
     $template = SurveyTemplate::factory()->create([

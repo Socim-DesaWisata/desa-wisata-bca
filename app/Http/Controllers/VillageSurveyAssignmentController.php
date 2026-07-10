@@ -6,6 +6,7 @@ use App\Exports\PariwisataSurveyAssignmentExport;
 use App\Exports\PariwisataSurveyExport;
 use App\Exports\UmkmSurveyExport;
 use App\Exports\VillageSurveyAssignmentExport;
+use App\Http\Requests\VillageSurveyAssignments\BulkUpdateVillageSurveyAssignmentStatusRequest;
 use App\Http\Requests\VillageSurveyAssignments\IndexVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\StorePariwisataSurveyDraftRequest;
@@ -51,6 +52,16 @@ class VillageSurveyAssignmentController extends Controller
         $service->create($request->validated(), $request->user());
 
         return back()->with('success', 'Survey assignment berhasil dibuat.');
+    }
+
+    public function bulkUpdateStatus(
+        BulkUpdateVillageSurveyAssignmentStatusRequest $request,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $data = $request->validated();
+        $service->bulkUpdateStatus($data['assignment_ids'], $data['status'], $request->user());
+
+        return back()->with('success', 'Status survey assignment berhasil diperbarui.');
     }
 
     public function destroy(
@@ -120,7 +131,6 @@ class VillageSurveyAssignmentController extends Controller
             ? (string) $request->query('tab')
             : 'desa';
 
-        
         return Inertia::render('survey-assignment/show', $service->getShowData($assignment, $tab));
     }
 
