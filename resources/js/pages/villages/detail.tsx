@@ -1,5 +1,3 @@
-
-
 import { Head } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -230,8 +228,8 @@ function truncate(value: string | null | undefined, length = 140) {
     return !value
         ? '-'
         : value.length > length
-            ? `${value.slice(0, length).trim()}...`
-            : value;
+          ? `${value.slice(0, length).trim()}...`
+          : value;
 }
 function mediaUrl(item?: MediaItem | null) {
     return item?.url || fallbackImages.gallery1;
@@ -489,8 +487,8 @@ function UmkmCard({ item, index }: { item: UmkmItem; index: number }) {
                 <p className="text-[12px] leading-6 text-[#59564c]">
                     {truncate(
                         item.current_obstacles ||
-                        item.certifications ||
-                        'Belum ada catatan tambahan.',
+                            item.certifications ||
+                            'Belum ada catatan tambahan.',
                         120,
                     )}
                 </p>
@@ -820,15 +818,15 @@ export default function VillageShow({ village }: VillageShowProps) {
                             {(gallery.length > 0
                                 ? gallery
                                 : galleryFallbacks.map(
-                                    (url, index) =>
-                                        ({
-                                            id: index,
-                                            title: null,
-                                            caption: null,
-                                            url,
-                                            is_cover: index === 0,
-                                        }) as MediaItem,
-                                )
+                                      (url, index) =>
+                                          ({
+                                              id: index,
+                                              title: null,
+                                              caption: null,
+                                              url,
+                                              is_cover: index === 0,
+                                          }) as MediaItem,
+                                  )
                             ).map((image, index) => (
                                 <div
                                     key={`${image.id}-${index}`}

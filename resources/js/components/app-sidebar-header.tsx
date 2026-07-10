@@ -15,7 +15,7 @@ export function AppSidebarHeader({
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-[#d9dee7] bg-white px-3 sm:px-4 lg:h-[60px] lg:px-5 xl:px-6">
+        <header className="flex h-14 items-center justify-between gap-3 border-b border-[#d9dee7] bg-white px-3 sm:px-4 lg:h-[60px] lg:px-5 xl:px-6">
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
                 <SheetTrigger asChild>
                     <Button

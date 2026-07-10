@@ -16,7 +16,7 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
     }
 
     return (
-        <div className="min-h-[100dvh] overflow-x-hidden bg-[#f7f8fb] font-sans text-[#111827]">
+        <div className="min-h-[100dvh] bg-[#f7f8fb] font-sans text-[#111827]">
             {children}
         </div>
     );

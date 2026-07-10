@@ -110,9 +110,7 @@ function OmsetChartPanel({
                     <h2 className="text-sm font-bold text-[#303030]">
                         {title}
                     </h2>
-                    <p className="text-[10px] text-[#7C7C7C]">
-                        {description}
-                    </p>
+                    <p className="text-[10px] text-[#7C7C7C]">{description}</p>
                 </div>
             </div>
 

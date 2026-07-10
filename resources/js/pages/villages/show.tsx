@@ -150,7 +150,9 @@ const cx = (...c: Array<string | false | undefined>) =>
 const textOrFallback = (value: string | null | undefined, fallback: string) =>
     value && value !== '-' && value.trim() !== '' ? value : fallback;
 const truncateText = (value: string, maxLength = 96) =>
-    value.length > maxLength ? `${value.slice(0, maxLength).trim()}....` : value;
+    value.length > maxLength
+        ? `${value.slice(0, maxLength).trim()}....`
+        : value;
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '-');
 const firstMediaUrl = (media: MediaItem[] | undefined) =>
     media?.find((item) => item.is_cover)?.url || media?.[0]?.url || null;
@@ -158,11 +160,7 @@ const groupItems = (
     groups: ProfileGroup[] | undefined,
     matcher: (category: string) => boolean,
 ) => groups?.find((group) => matcher(normalize(group.category)))?.items ?? [];
-const profileProducts = (
-    items: ProfileItem[],
-    badge?: string,
-    tone?: string,
-) =>
+const profileProducts = (items: ProfileItem[], badge?: string, tone?: string) =>
     items.map((item) => ({
         title: item.name,
         image: firstMediaUrl(item.media),
@@ -235,7 +233,9 @@ function TopNav({ villages }: { villages: VillageLinkItem[] }) {
                     <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-2 rounded-lg bg-[#093967] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(0,102,174,0.18)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98] [&::-webkit-details-marker]:hidden">
                         <MapTrifold className="size-5" />
                         List Desa
-                        <span className="text-[11px] transition group-open:rotate-180">v</span>
+                        <span className="text-[11px] transition group-open:rotate-180">
+                            v
+                        </span>
                     </summary>
                     <div className="absolute right-0 z-30 mt-3 w-72 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
                         <div className="max-h-80 overflow-y-auto p-2">
@@ -316,11 +316,7 @@ function Heading({
     );
 }
 function Panel({ children }: { children: ReactNode }) {
-    return (
-        <section className="rounded-[18px] p-5">
-            {children}
-        </section>
-    );
+    return <section className="rounded-[18px] p-5">{children}</section>;
 }
 function EmptyState({ title }: { title: string }) {
     return (
@@ -329,9 +325,20 @@ function EmptyState({ title }: { title: string }) {
         </div>
     );
 }
-function ImagePlaceholder({ label, className }: { label: string; className?: string }) {
+function ImagePlaceholder({
+    label,
+    className,
+}: {
+    label: string;
+    className?: string;
+}) {
     return (
-        <div className={cx('grid h-full w-full place-items-center bg-[#EAF3FF] p-4 text-center text-[12px] font-extrabold text-[#7C7C7C]', className)}>
+        <div
+            className={cx(
+                'grid h-full w-full place-items-center bg-[#EAF3FF] p-4 text-center text-[12px] font-extrabold text-[#7C7C7C]',
+                className,
+            )}
+        >
             Tidak ada gambar {label}
         </div>
     );
@@ -370,7 +377,12 @@ function ProductCard({
                 isLarge ? 'rounded-[16px]' : 'rounded-[14px]',
             )}
         >
-            <div className={cx('relative overflow-hidden bg-[#F1F5F8]', isLarge ? 'aspect-[4/3]' : 'aspect-[16/9]')}>
+            <div
+                className={cx(
+                    'relative overflow-hidden bg-[#F1F5F8]',
+                    isLarge ? 'aspect-[4/3]' : 'aspect-[16/9]',
+                )}
+            >
                 {p.image ? (
                     <img
                         src={p.image}
@@ -391,26 +403,59 @@ function ProductCard({
                     </span>
                 ) : null}
             </div>
-            <div className={cx(isLarge ? 'p-5' : 'p-4', centered && 'text-center')}>
-                <h3 className={cx('font-extrabold text-[#303030]', isLarge ? 'text-[15px] leading-snug' : 'text-[13px] leading-snug')}>
+            <div
+                className={cx(
+                    isLarge ? 'p-5' : 'p-4',
+                    centered && 'text-center',
+                )}
+            >
+                <h3
+                    className={cx(
+                        'font-extrabold text-[#303030]',
+                        isLarge
+                            ? 'text-[15px] leading-snug'
+                            : 'text-[13px] leading-snug',
+                    )}
+                >
                     {p.title}
                 </h3>
                 {p.desc ? (
-                    <p className={cx('mt-2 line-clamp-2 font-semibold text-[#303030]', isLarge ? 'min-h-[38px] text-[12px] leading-[1.55]' : 'min-h-[34px] text-[11px] leading-[1.55]')}>
+                    <p
+                        className={cx(
+                            'mt-2 line-clamp-2 font-semibold text-[#303030]',
+                            isLarge
+                                ? 'min-h-[38px] text-[12px] leading-[1.55]'
+                                : 'min-h-[34px] text-[11px] leading-[1.55]',
+                        )}
+                    >
                         {truncateText(p.desc, isLarge ? 86 : 96)}
                     </p>
                 ) : null}
                 {p.meta && !p.price ? (
-                    <p className={cx('mt-3 inline-flex items-center gap-1 font-bold text-[#303030]', isLarge ? 'text-[12px]' : 'text-[11px]')}>
+                    <p
+                        className={cx(
+                            'mt-3 inline-flex items-center gap-1 font-bold text-[#303030]',
+                            isLarge ? 'text-[12px]' : 'text-[11px]',
+                        )}
+                    >
                         <MapPin
-                            className={isLarge ? 'size-4 text-[#0066AE]' : 'size-3.5 text-[#0066AE]'}
+                            className={
+                                isLarge
+                                    ? 'size-4 text-[#0066AE]'
+                                    : 'size-3.5 text-[#0066AE]'
+                            }
                             weight="fill"
                         />
                         {p.meta}
                     </p>
                 ) : null}
                 {p.price ? (
-                    <p className={cx('mt-3 font-extrabold text-[#0066AE]', isLarge ? 'text-[14px]' : 'text-[13px]')}>
+                    <p
+                        className={cx(
+                            'mt-3 font-extrabold text-[#0066AE]',
+                            isLarge ? 'text-[14px]' : 'text-[13px]',
+                        )}
+                    >
                         {p.price}{' '}
                         {p.meta ? (
                             <span className="font-bold text-[#7C7C7C]">
@@ -483,18 +528,18 @@ function ShowcaseProductCard({
                 >
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <p className="truncate whitespace-nowrap text-[9px] font-extrabold tracking-[0.06em] text-[#7C7C7C] uppercase">
+                            <p className="truncate text-[9px] font-extrabold tracking-[0.06em] whitespace-nowrap text-[#7C7C7C] uppercase">
                                 {isUmkm ? 'Omset Tahunan' : 'Harga Tiket'}
                             </p>
                             <p
-                                className="mt-0.5 truncate whitespace-nowrap text-[11px] leading-tight font-extrabold"
+                                className="mt-0.5 truncate text-[11px] leading-tight font-extrabold whitespace-nowrap"
                                 style={{ color: accent }}
                             >
                                 {p.price || 'Tidak ada data'}
                             </p>
                         </div>
                         <div>
-                            <p className="truncate whitespace-nowrap text-[9px] font-extrabold tracking-[0.06em] text-[#7C7C7C] uppercase">
+                            <p className="truncate text-[9px] font-extrabold tracking-[0.06em] whitespace-nowrap text-[#7C7C7C] uppercase">
                                 {isUmkm ? 'Kategori' : 'Jam Operasional'}
                             </p>
                             <p className="mt-0.5 inline-flex max-w-full items-center gap-1 overflow-hidden text-[10px] leading-tight font-extrabold text-[#303030]">
@@ -511,7 +556,11 @@ function ShowcaseProductCard({
                                         style={{ color: accent }}
                                     />
                                 )}
-                                <span className="truncate">{isUmkm ? p.desc || p.badge || 'Tidak ada data' : p.meta || 'Tidak ada data'}</span>
+                                <span className="truncate">
+                                    {isUmkm
+                                        ? p.desc || p.badge || 'Tidak ada data'
+                                        : p.meta || 'Tidak ada data'}
+                                </span>
                             </p>
                         </div>
                     </div>
@@ -519,11 +568,21 @@ function ShowcaseProductCard({
                 <div className="flex items-center justify-between gap-2 border-t border-[#EFEFEF] pt-2.5">
                     <p className="inline-flex min-w-0 items-center gap-1.5 truncate text-[11px] font-extrabold text-[#506169]">
                         {isUmkm ? (
-                            <Storefront className="size-3.5 shrink-0" weight="fill" />
+                            <Storefront
+                                className="size-3.5 shrink-0"
+                                weight="fill"
+                            />
                         ) : (
-                            <MapPin className="size-3.5 shrink-0" weight="fill" />
+                            <MapPin
+                                className="size-3.5 shrink-0"
+                                weight="fill"
+                            />
                         )}
-                        <span className="truncate">{isUmkm ? p.desc || 'Tidak ada data' : p.desc || 'Tidak ada data'}</span>
+                        <span className="truncate">
+                            {isUmkm
+                                ? p.desc || 'Tidak ada data'
+                                : p.desc || 'Tidak ada data'}
+                        </span>
                     </p>
                     <span
                         className="grid size-7 shrink-0 place-items-center rounded-full text-white"
@@ -627,9 +686,16 @@ function AspectScoreIcon({ className }: { className?: string }) {
     );
 }
 
-function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectScore[] }) {
+function KemenparAspectScoreCard({
+    aspects = [],
+}: {
+    aspects?: KemenparAspectScore[];
+}) {
     return (
-        <SidebarCard title="Skor Per Aspek (Kemenpar)" icon={AspectScoreIcon as unknown as Icon}>
+        <SidebarCard
+            title="Skor Per Aspek (Kemenpar)"
+            icon={AspectScoreIcon as unknown as Icon}
+        >
             <p className="mb-4 text-[12px] leading-5 font-semibold text-[#7C7C7C]">
                 Total skor aktual / skor maksimal per aspek.
             </p>
@@ -645,7 +711,7 @@ function KemenparAspectScoreCard({ aspects = [] }: { aspects?: KemenparAspectSco
                                 <p className="truncate text-[12px] font-extrabold text-[#303030]">
                                     {aspect.name}
                                 </p>
-                                <p className="shrink-0 text-[11px] font-black tabular-nums text-[#303030]">
+                                <p className="shrink-0 text-[11px] font-black text-[#303030] tabular-nums">
                                     {aspect.score}/{aspect.max_score}
                                 </p>
                             </div>
@@ -675,8 +741,10 @@ function GoogleMapPreview({
     latitude: string | number | null;
     longitude: string | number | null;
 }) {
-    const coordinateQuery = latitude && longitude ? `${latitude},${longitude}` : null;
-    const query = coordinateQuery || [villageName, location].filter(Boolean).join(', ');
+    const coordinateQuery =
+        latitude && longitude ? `${latitude},${longitude}` : null;
+    const query =
+        coordinateQuery || [villageName, location].filter(Boolean).join(', ');
     const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
 
     return (
@@ -821,8 +889,10 @@ export default function VillageDetail({
     const packageProfiles = groupItems(village.profile_items, (category) =>
         category.includes('paket'),
     );
-    const souvenirProfiles = groupItems(village.profile_items, (category) =>
-        category.includes('suvenir') || category.includes('souvenir'),
+    const souvenirProfiles = groupItems(
+        village.profile_items,
+        (category) =>
+            category.includes('suvenir') || category.includes('souvenir'),
     );
     const facilityIconPool = [
         Car,
@@ -844,18 +914,23 @@ export default function VillageDetail({
         'text-[#B96B1C]',
         'text-[#0066AE]',
     ];
-    const facilityItems = facilityProfiles.map((item, index) => [
-        facilityIconPool[index % facilityIconPool.length],
-        item.name,
-        facilityColors[index % facilityColors.length],
-    ] as const);
+    const facilityItems = facilityProfiles.map(
+        (item, index) =>
+            [
+                facilityIconPool[index % facilityIconPool.length],
+                item.name,
+                facilityColors[index % facilityColors.length],
+            ] as const,
+    );
     const attractionItems = village.pariwisata.length
         ? village.pariwisata.map((item) => ({
               title: item.name,
               image: item.image_url,
-              desc: item.address || item.entrance_ticket_description || undefined,
+              desc:
+                  item.address || item.entrance_ticket_description || undefined,
               price: item.entrance_ticket_price || undefined,
-              meta: item.operational_hours || item.operational_days || undefined,
+              meta:
+                  item.operational_hours || item.operational_days || undefined,
               badge: item.categories[0]?.label || item.status_label,
               tone: 'bg-[#0066AE]',
           }))
@@ -864,7 +939,10 @@ export default function VillageDetail({
         ? village.umkms.map((item) => ({
               title: item.brand_name || item.name,
               image: item.product_photo_url,
-              desc: item.product_category || item.business_owner_name || undefined,
+              desc:
+                  item.product_category ||
+                  item.business_owner_name ||
+                  undefined,
               price: item.annual_revenue || undefined,
               badge: item.categories[0]?.label,
               tone: 'bg-[#0066AE]',
@@ -878,8 +956,16 @@ export default function VillageDetail({
         href: showVillage.url(item.id),
     }));
     const villageInfoRows: Row[] = [
-        { icon: User, label: 'Village ID', value: village.code || 'Tidak ada data' },
-        { icon: Trophy, label: 'Status', value: village.status_label || 'Tidak ada data' },
+        {
+            icon: User,
+            label: 'Village ID',
+            value: village.code || 'Tidak ada data',
+        },
+        {
+            icon: Trophy,
+            label: 'Status',
+            value: village.status_label || 'Tidak ada data',
+        },
     ];
     const statisticRows: Row[] = [
         {
@@ -887,13 +973,31 @@ export default function VillageDetail({
             label: 'Media Gallery',
             value: `${village.media.length} Media`,
         },
-        { icon: Storefront, label: 'MSME Count', value: `${village.umkms.length} MSMEs` },
-        { icon: UsersThree, label: 'Tourism Product Count', value: `${village.pariwisata.length} Produk` },
-        { icon: Buildings, label: 'Village Category', value: village.category_label || 'Tidak ada data' },
+        {
+            icon: Storefront,
+            label: 'MSME Count',
+            value: `${village.umkms.length} MSMEs`,
+        },
+        {
+            icon: UsersThree,
+            label: 'Tourism Product Count',
+            value: `${village.pariwisata.length} Produk`,
+        },
+        {
+            icon: Buildings,
+            label: 'Village Category',
+            value: village.category_label || 'Tidak ada data',
+        },
     ];
     const managerName = textOrFallback(village.manager_name, 'Tidak ada data');
-    const managerPhone = textOrFallback(village.manager_phone, 'Tidak ada data');
-    const managerEmail = textOrFallback(village.manager_email, 'Tidak ada data');
+    const managerPhone = textOrFallback(
+        village.manager_phone,
+        'Tidak ada data',
+    );
+    const managerEmail = textOrFallback(
+        village.manager_email,
+        'Tidak ada data',
+    );
 
     return (
         <>
@@ -907,33 +1011,37 @@ export default function VillageDetail({
                     <div className="space-y-8">
                         <section id="profil">
                             <Panel>
-                            <Heading icon={User}>Profile</Heading>
-                            <div className="grid gap-6 md:grid-cols-[340px_1fr]">
-                                {profileImage ? (
-                                    <img
-                                        src={profileImage}
-                                        alt={`${villageName} profile`}
-                                        className="aspect-[16/9] w-full rounded-[12px] object-cover shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
-                                    />
-                                ) : (
-                                    <ImagePlaceholder
-                                        label="profil desa"
-                                        className="aspect-[16/9] rounded-[12px] shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
-                                    />
-                                )}
-                                <div className="space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
-                                    {village.description ? (
-                                        <>
-                                            <p>{village.description}</p>
-                                            {locationText !== 'Tidak ada data' ? (
-                                                <p>Desa ini berlokasi di {locationText}.</p>
-                                            ) : null}
-                                        </>
+                                <Heading icon={User}>Profile</Heading>
+                                <div className="grid gap-6 md:grid-cols-[340px_1fr]">
+                                    {profileImage ? (
+                                        <img
+                                            src={profileImage}
+                                            alt={`${villageName} profile`}
+                                            className="aspect-[16/9] w-full rounded-[12px] object-cover shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
+                                        />
                                     ) : (
-                                        <EmptyState title="Tidak ada data profil" />
+                                        <ImagePlaceholder
+                                            label="profil desa"
+                                            className="aspect-[16/9] rounded-[12px] shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
+                                        />
                                     )}
+                                    <div className="space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
+                                        {village.description ? (
+                                            <>
+                                                <p>{village.description}</p>
+                                                {locationText !==
+                                                'Tidak ada data' ? (
+                                                    <p>
+                                                        Desa ini berlokasi di{' '}
+                                                        {locationText}.
+                                                    </p>
+                                                ) : null}
+                                            </>
+                                        ) : (
+                                            <EmptyState title="Tidak ada data profil" />
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
                             </Panel>
                         </section>
                         <section id="pariwisata">
@@ -975,7 +1083,11 @@ export default function VillageDetail({
                             {nearbyItems.length ? (
                                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                                     {nearbyItems.slice(0, 6).map((p) => (
-                                        <ProductCard key={p.title} p={p} size="large" />
+                                        <ProductCard
+                                            key={p.title}
+                                            p={p}
+                                            size="large"
+                                        />
                                     ))}
                                 </div>
                             ) : (
@@ -985,7 +1097,9 @@ export default function VillageDetail({
                     </div>
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
                         {/* <QrBlock rows={villageInfoRows} villageName={villageName} /> */}
-                        <KemenparAspectScoreCard aspects={village.kemenpar_aspect_scores} />
+                        <KemenparAspectScoreCard
+                            aspects={village.kemenpar_aspect_scores}
+                        />
                         <SidebarCard title="Location Address" icon={MapPin}>
                             <p className="text-[12px] leading-6 font-semibold text-[#303030]">
                                 {locationText}
@@ -1031,7 +1145,6 @@ export default function VillageDetail({
                                     />
                                     {managerEmail}
                                 </p>
-
                             </div>
                         </SidebarCard>
                     </div>

@@ -59,10 +59,18 @@ export function DashboardCharts() {
     const statusSurvey = (props as any).status_survey || {};
     const filters = (props as any).filters || {};
 
-    const [generalReportFilter, setGeneralReportFilter] = useState(filters.general_report_filter || 'Bulan Ini');
-    const [programTypeFilter, setProgramTypeFilter] = useState(filters.program_type || 'Semua Program');
-    const [activityFilter, setActivityFilter] = useState(filters.activity_filter || '30 Hari Terakhir');
-    const [statusFilter, setStatusFilter] = useState(filters.status_filter || 'Tahun Ini');
+    const [generalReportFilter, setGeneralReportFilter] = useState(
+        filters.general_report_filter || 'Bulan Ini',
+    );
+    const [programTypeFilter, setProgramTypeFilter] = useState(
+        filters.program_type || 'Semua Program',
+    );
+    const [activityFilter, setActivityFilter] = useState(
+        filters.activity_filter || '30 Hari Terakhir',
+    );
+    const [statusFilter, setStatusFilter] = useState(
+        filters.status_filter || 'Tahun Ini',
+    );
 
     useEffect(() => {
         setGeneralReportFilter(filters.general_report_filter || 'Bulan Ini');
@@ -92,8 +100,13 @@ export function DashboardCharts() {
             {
                 preserveState: true,
                 preserveScroll: true,
-                only: ['general_report', 'aktivitas_survey', 'status_survey', 'filters'],
-            }
+                only: [
+                    'general_report',
+                    'aktivitas_survey',
+                    'status_survey',
+                    'filters',
+                ],
+            },
         );
     };
 
@@ -112,29 +125,118 @@ export function DashboardCharts() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                    {programTypeFilter} <ChevronDown className="size-3" />
+                                    {programTypeFilter}{' '}
+                                    <ChevronDown className="size-3" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[140px]">
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'Semua Program')}>Semua Program</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'KEMENPAR')}>KEMENPAR</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'UMKM')}>UMKM</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('program_type', 'ISTC')}>ISTC</DropdownMenuItem>
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-[140px]"
+                            >
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter(
+                                            'program_type',
+                                            'Semua Program',
+                                        )
+                                    }
+                                >
+                                    Semua Program
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter('program_type', 'KEMENPAR')
+                                    }
+                                >
+                                    KEMENPAR
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter('program_type', 'UMKM')
+                                    }
+                                >
+                                    UMKM
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter('program_type', 'ISTC')
+                                    }
+                                >
+                                    ISTC
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                    {generalReportFilter} <ChevronDown className="size-3" />
+                                    {generalReportFilter}{' '}
+                                    <ChevronDown className="size-3" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[130px]">
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', 'Hari Ini')}>Hari Ini</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', '2025')}>2025</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('general_report_filter', '2024')}>2024</DropdownMenuItem>
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-[130px]"
+                            >
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter(
+                                            'general_report_filter',
+                                            'Hari Ini',
+                                        )
+                                    }
+                                >
+                                    Hari Ini
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter(
+                                            'general_report_filter',
+                                            'Bulan Ini',
+                                        )
+                                    }
+                                >
+                                    Bulan Ini
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter(
+                                            'general_report_filter',
+                                            'Tahun Ini',
+                                        )
+                                    }
+                                >
+                                    Tahun Ini
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter(
+                                            'general_report_filter',
+                                            '2025',
+                                        )
+                                    }
+                                >
+                                    2025
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        updateFilter(
+                                            'general_report_filter',
+                                            '2024',
+                                        )
+                                    }
+                                >
+                                    2024
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -149,7 +251,9 @@ export function DashboardCharts() {
                                 Rata-rata Total Skor
                             </p>
                             <div className="mt-1 flex items-end gap-2">
-                                <span className="text-3xl leading-none font-bold text-[#303030]">{generalReport.average_score ?? 0}</span>
+                                <span className="text-3xl leading-none font-bold text-[#303030]">
+                                    {generalReport.average_score ?? 0}
+                                </span>
                                 <span className="pb-0.5 text-xs font-semibold text-[#7C7C7C]">
                                     / 100
                                 </span>
@@ -201,13 +305,18 @@ export function DashboardCharts() {
                             </ResponsiveContainer>
                         </div>
                         <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#00893D]">
-                            <ArrowUpRight className="size-3" /> {generalReport.trend ?? '+0%'}{' '}
+                            <ArrowUpRight className="size-3" />{' '}
+                            {generalReport.trend ?? '+0%'}{' '}
                             <span className="font-medium text-[#7C7C7C]">
                                 dibanding bulan lalu
                             </span>
                         </p>
-                        <Link href={surveyAssignments.url()} className="mt-4 flex justify-center w-full rounded-lg border border-[#0066AE] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
-                            Lihat Detail Laporan <ChevronRight className="inline size-3 ml-1" />
+                        <Link
+                            href={surveyAssignments.url()}
+                            className="mt-4 flex w-full justify-center rounded-lg border border-[#0066AE] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
+                        >
+                            Lihat Detail Laporan{' '}
+                            <ChevronRight className="ml-1 inline size-3" />
                         </Link>
                     </div>
 
@@ -234,7 +343,14 @@ export function DashboardCharts() {
                                     {generalReport.selesai ?? 0}
                                 </p>
                                 <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    {generalReport.total_assessment > 0 ? Math.round((generalReport.selesai / generalReport.total_assessment) * 100) : 0}%
+                                    {generalReport.total_assessment > 0
+                                        ? Math.round(
+                                              (generalReport.selesai /
+                                                  generalReport.total_assessment) *
+                                                  100,
+                                          )
+                                        : 0}
+                                    %
                                 </span>
                             </div>
                         </div>
@@ -247,7 +363,14 @@ export function DashboardCharts() {
                                     {generalReport.dalam_proses ?? 0}
                                 </p>
                                 <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    {generalReport.total_assessment > 0 ? Math.round((generalReport.dalam_proses / generalReport.total_assessment) * 100) : 0}%
+                                    {generalReport.total_assessment > 0
+                                        ? Math.round(
+                                              (generalReport.dalam_proses /
+                                                  generalReport.total_assessment) *
+                                                  100,
+                                          )
+                                        : 0}
+                                    %
                                 </span>
                             </div>
                         </div>
@@ -260,7 +383,14 @@ export function DashboardCharts() {
                                     {generalReport.belum_dimulai ?? 0}
                                 </p>
                                 <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    {generalReport.total_assessment > 0 ? Math.round((generalReport.belum_dimulai / generalReport.total_assessment) * 100) : 0}%
+                                    {generalReport.total_assessment > 0
+                                        ? Math.round(
+                                              (generalReport.belum_dimulai /
+                                                  generalReport.total_assessment) *
+                                                  100,
+                                          )
+                                        : 0}
+                                    %
                                 </span>
                             </div>
                         </div>
@@ -283,7 +413,10 @@ export function DashboardCharts() {
                             </p>
                             <div className="flex items-center justify-between">
                                 <p className="text-xs font-bold text-[#303030]">
-                                    Rp{(generalReport.total_anggaran ?? 0).toLocaleString('id-ID')}
+                                    Rp
+                                    {(
+                                        generalReport.total_anggaran ?? 0
+                                    ).toLocaleString('id-ID')}
                                 </p>
                             </div>
                             <span className="mt-0.5 flex items-center text-[10px] font-bold text-[#00893D]">
@@ -302,15 +435,57 @@ export function DashboardCharts() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                {activityFilter} <ChevronDown className="size-3" />
+                                {activityFilter}{' '}
+                                <ChevronDown className="size-3" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '7 Hari Terakhir')}>7 Hari Terakhir</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '30 Hari Terakhir')}>30 Hari Terakhir</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '2025')}>2025</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('activity_filter', '2024')}>2024</DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter(
+                                        'activity_filter',
+                                        '7 Hari Terakhir',
+                                    )
+                                }
+                            >
+                                7 Hari Terakhir
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter(
+                                        'activity_filter',
+                                        '30 Hari Terakhir',
+                                    )
+                                }
+                            >
+                                30 Hari Terakhir
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('activity_filter', 'Tahun Ini')
+                                }
+                            >
+                                Tahun Ini
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('activity_filter', '2025')
+                                }
+                            >
+                                2025
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('activity_filter', '2024')
+                                }
+                            >
+                                2024
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -381,9 +556,12 @@ export function DashboardCharts() {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <Link href={surveyAssignments.url()} className="mt-4 flex justify-center w-full rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]">
+                <Link
+                    href={surveyAssignments.url()}
+                    className="mt-4 flex w-full justify-center rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
+                >
                     Lihat Semua Aktivitas{' '}
-                    <ChevronRight className="inline size-3 ml-1" />
+                    <ChevronRight className="ml-1 inline size-3" />
                 </Link>
             </Panel>
 
@@ -395,14 +573,43 @@ export function DashboardCharts() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                {statusFilter} <ChevronDown className="size-3" />
+                                {statusFilter}{' '}
+                                <ChevronDown className="size-3" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', 'Bulan Ini')}>Bulan Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', 'Tahun Ini')}>Tahun Ini</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', '2025')}>2025</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-xs" onSelect={() => updateFilter('status_filter', '2024')}>2024</DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('status_filter', 'Bulan Ini')
+                                }
+                            >
+                                Bulan Ini
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('status_filter', 'Tahun Ini')
+                                }
+                            >
+                                Tahun Ini
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('status_filter', '2025')
+                                }
+                            >
+                                2025
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() =>
+                                    updateFilter('status_filter', '2024')
+                                }
+                            >
+                                2024
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -431,7 +638,9 @@ export function DashboardCharts() {
                             <span className="text-[10px] font-semibold text-[#7C7C7C]">
                                 Total
                             </span>
-                            <span className="text-2xl font-bold text-[#303030]">{statusSurvey.total ?? 0}</span>
+                            <span className="text-2xl font-bold text-[#303030]">
+                                {statusSurvey.total ?? 0}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -453,13 +662,21 @@ export function DashboardCharts() {
                             <div className="font-bold text-[#303030]">
                                 {item.value}{' '}
                                 <span className="font-medium text-[#7C7C7C]">
-                                    ({statusSurvey.total > 0 ? (item.value / statusSurvey.total) * 100 : 0}%)
+                                    (
+                                    {statusSurvey.total > 0
+                                        ? (item.value / statusSurvey.total) *
+                                          100
+                                        : 0}
+                                    %)
                                 </span>
                             </div>
                         </div>
                     ))}
                 </div>
-                <Link href={surveyAssignments.url()} className="mt-6 flex w-full items-center justify-between border-t border-[#EFEFEF] pt-3 text-xs font-bold text-[#0066AE] transition hover:text-[#093967]">
+                <Link
+                    href={surveyAssignments.url()}
+                    className="mt-6 flex w-full items-center justify-between border-t border-[#EFEFEF] pt-3 text-xs font-bold text-[#0066AE] transition hover:text-[#093967]"
+                >
                     Lihat Detail <ChevronRight className="size-4" />
                 </Link>
             </Panel>
@@ -476,16 +693,21 @@ export function AssessmentRadarChart({
 }) {
     if (!data || data.length === 0) {
         return (
-            <div className={`flex items-center justify-center text-xs font-medium text-[#7C7C7C] ${className}`}>
+            <div
+                className={`flex items-center justify-center text-xs font-medium text-[#7C7C7C] ${className}`}
+            >
                 Tidak ada data aspek
             </div>
         );
     }
 
     // Pad data to ensure at least 3 points for a proper polygon
-    let chartData = data.map(item => ({
+    let chartData = data.map((item) => ({
         ...item,
-        aspectLabel: item.aspect.length > 15 ? item.aspect.substring(0, 15) + '...' : item.aspect,
+        aspectLabel:
+            item.aspect.length > 15
+                ? item.aspect.substring(0, 15) + '...'
+                : item.aspect,
     }));
 
     if (chartData.length === 1) {
@@ -498,11 +720,20 @@ export function AssessmentRadarChart({
     return (
         <div className={`relative ${className}`}>
             <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
+                <RadarChart
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="70%"
+                    data={chartData}
+                >
                     <PolarGrid stroke="#EFEFEF" />
                     <PolarAngleAxis
                         dataKey="aspectLabel"
-                        tick={{ fill: '#7C7C7C', fontSize: 10, fontWeight: 600 }}
+                        tick={{
+                            fill: '#7C7C7C',
+                            fontSize: 10,
+                            fontWeight: 600,
+                        }}
                     />
                     <PolarRadiusAxis
                         angle={30}
