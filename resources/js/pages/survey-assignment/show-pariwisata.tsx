@@ -2692,14 +2692,14 @@ export default function ShowPariwisata({
         );
     }
 
-    const activePackageCount = edit_values.packages.filter(
+    const activePackageCount = (edit_values.packages || []).filter(
         (item) => item.is_active,
     ).length;
-    const latestTurnoverYear = edit_values.annual_turnovers
+    const latestTurnoverYear = (edit_values.annual_turnovers || [])
         .map((item) => Number(item.year))
         .filter((year) => Number.isFinite(year))
         .sort((left, right) => right - left)[0];
-    const latestVisitorYear = edit_values.annual_visitors
+    const latestVisitorYear = (edit_values.annual_visitors || [])
         .map((item) => Number(item.year))
         .filter((year) => Number.isFinite(year))
         .sort((left, right) => right - left)[0];
@@ -2899,12 +2899,12 @@ export default function ShowPariwisata({
                                     Paket Wisata
                                 </h3>
                                 <div className="mt-3 space-y-3">
-                                    {edit_values.packages.length === 0 && (
+                                    {(edit_values.packages || []).length === 0 && (
                                         <p className="text-sm font-semibold text-[#7C7C7C]">
                                             Belum ada paket wisata.
                                         </p>
                                     )}
-                                    {edit_values.packages.map((pkg, index) => (
+                                    {(edit_values.packages || []).map((pkg, index) => (
                                         <div
                                             key={`${pkg.name}-${index}`}
                                             className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]"
@@ -2950,7 +2950,7 @@ export default function ShowPariwisata({
                                             Statistik pekerja
                                         </p>
                                         <p className="mt-1 text-2xl font-bold text-[#303030]">
-                                            {edit_values.annual_worker_stats.length}
+                                            {(edit_values.annual_worker_stats || []).length}
                                         </p>
                                     </div>
                                     <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]">
@@ -2958,7 +2958,7 @@ export default function ShowPariwisata({
                                             Statistik pelatihan
                                         </p>
                                         <p className="mt-1 text-2xl font-bold text-[#303030]">
-                                            {edit_values.annual_worker_training_stats.length}
+                                            {(edit_values.annual_worker_training_stats || []).length}
                                         </p>
                                     </div>
                                     <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0] sm:col-span-2">

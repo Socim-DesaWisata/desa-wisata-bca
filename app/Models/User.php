@@ -37,6 +37,11 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
     public function createdCsrPrograms(): HasMany
     {
         return $this->hasMany(CsrProgram::class, 'created_by');

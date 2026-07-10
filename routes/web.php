@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardApiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PariwisataController;
 use App\Http\Controllers\SurveyQuestionController;
@@ -14,6 +15,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/detail', 'villages/detail');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
+    Route::prefix('api/dashboard')->group(function () {
+        Route::get('/desa', [DashboardApiController::class, 'getDesa'])->name('api.dashboard.desa');
+        Route::get('/desa/{code}/pariwisata', [DashboardApiController::class, 'getPariwisata'])->name('api.dashboard.pariwisata');
+    });
     Route::middleware('role:admin')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
