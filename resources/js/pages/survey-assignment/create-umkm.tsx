@@ -939,7 +939,7 @@ export default function CreateUmkmSurveyAssignment({
                                             className="mt-3 block w-full text-sm text-[#64748B] file:mr-3 file:h-9 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:text-sm file:font-bold file:text-white"
                                         />
                                         <p className="mt-2 text-xs text-[#64748B]">
-                                                Format gambar, maksimal 50 MB.
+                                            Format gambar, maksimal 50 MB.
                                         </p>
                                         <FieldError
                                             message={fieldError(

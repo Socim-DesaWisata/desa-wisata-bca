@@ -13,8 +13,10 @@ export default function AppSidebarLayout({
         <AppShell variant="sidebar">
             <AppSidebar />
             <AppContent variant="sidebar">
-                <GlobalSurveySelector />
-                <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                <div className="sticky top-0 z-[1050] flex flex-col">
+                    <GlobalSurveySelector />
+                    <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                </div>
                 {children}
             </AppContent>
         </AppShell>

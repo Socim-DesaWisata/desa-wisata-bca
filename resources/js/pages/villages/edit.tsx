@@ -31,7 +31,13 @@ import {
 } from 'lucide-react';
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import {
+    MapContainer,
+    Marker,
+    TileLayer,
+    useMap,
+    useMapEvents,
+} from 'react-leaflet';
 
 type Option = {
     value?: string;
@@ -54,7 +60,6 @@ type MediaForm = {
     is_cover: boolean;
     sort_order: number;
 };
-
 
 type VillageForm = {
     id: number;
@@ -187,7 +192,6 @@ function slugify(value: string) {
         .replace(/^-+|-+$/g, '');
 }
 
-
 function hasZeroCoordinates(latitude: string, longitude: string) {
     return Number(latitude) === 0 && Number(longitude) === 0;
 }
@@ -269,7 +273,6 @@ function parseCoordinates(latitude: string, longitude: string) {
 
     return { lat, lng };
 }
-
 
 function blankMedia(sortOrder = 0): MediaForm {
     return {
@@ -376,7 +379,9 @@ function VillageLocationPicker({
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+    const [searchResults, setSearchResults] = useState<
+        Array<{ display_name: string; lat: string; lon: string }>
+    >([]);
 
     async function handleSearch() {
         if (!searchQuery.trim()) {
@@ -403,7 +408,11 @@ function VillageLocationPicker({
         }
     }
 
-    function selectResult(result: { display_name: string; lat: string; lon: string }) {
+    function selectResult(result: {
+        display_name: string;
+        lat: string;
+        lon: string;
+    }) {
         onPick(Number(result.lat), Number(result.lon));
         setSearchResults([]);
         setSearchQuery(result.display_name);
@@ -417,7 +426,8 @@ function VillageLocationPicker({
                         Lokasi Pin Desa
                     </p>
                     <p className="text-xs leading-5 text-[#7C7C7C]">
-                        Klik peta, geser pin, atau cari lokasi untuk mengisi koordinat dan alamat administratif otomatis.
+                        Klik peta, geser pin, atau cari lokasi untuk mengisi
+                        koordinat dan alamat administratif otomatis.
                     </p>
                 </div>
                 {isResolvingAddress && (
@@ -433,14 +443,16 @@ function VillageLocationPicker({
                             type="text"
                             placeholder="Cari lokasi desa..."
                             value={searchQuery}
-                            onChange={(event) => setSearchQuery(event.target.value)}
+                            onChange={(event) =>
+                                setSearchQuery(event.target.value)
+                            }
                             onKeyDown={(event) => {
                                 if (event.key === 'Enter') {
                                     event.preventDefault();
                                     void handleSearch();
                                 }
                             }}
-                            className="h-10 w-full rounded-lg border-none bg-white/95 pr-10 pl-10 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] outline-none backdrop-blur placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
+                            className="h-10 w-full rounded-lg border-none bg-white/95 pr-10 pl-10 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] backdrop-blur outline-none placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
                         />
                         <Search className="absolute left-3.5 size-4 text-[#7C7C7C]" />
                         {isSearching && (
@@ -780,7 +792,8 @@ export default function VillageEdit({
                     throw new Error('Reverse geocode failed.');
                 }
 
-                const payload = (await response.json()) as ReverseGeocodeResponse;
+                const payload =
+                    (await response.json()) as ReverseGeocodeResponse;
                 const address = payload.address ?? {};
 
                 setData((current) => ({
@@ -1130,7 +1143,8 @@ export default function VillageEdit({
                                 Edit Desa Wisata
                             </h1>
                             <p className="mt-1 max-w-3xl text-sm leading-5 text-[#7C7C7C]">
-                                Kelola informasi utama, lokasi, kontak pengelola, dan media desa.
+                                Kelola informasi utama, lokasi, kontak
+                                pengelola, dan media desa.
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">
                                 <InfoBadge

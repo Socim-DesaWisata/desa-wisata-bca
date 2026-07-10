@@ -690,13 +690,16 @@ export default function CreatePariwisata({
                                                     onChange={(event) =>
                                                         setField(
                                                             'image',
-                                                            event.target.files?.[0] ?? null,
+                                                            event.target
+                                                                .files?.[0] ??
+                                                                null,
                                                         )
                                                     }
                                                     className="w-full text-sm font-semibold text-[#303030] file:mr-3 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
                                                 />
                                                 <p className="mt-1 truncate text-[11px] font-semibold text-[#7C7C7C]">
-                                                    {data.image?.name ?? 'JPG, PNG, atau WEBP maks. 50MB'}
+                                                    {data.image?.name ??
+                                                        'JPG, PNG, atau WEBP maks. 50MB'}
                                                 </p>
                                             </div>
                                         </div>

@@ -59,9 +59,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { dashboard, surveyAssignments } from '@/routes';
 import { show as showAssignment } from '@/routes/survey-assignments';
-import {
-    update as updatePariwisata,
-} from '@/routes/survey-assignments/pariwisata';
+import { update as updatePariwisata } from '@/routes/survey-assignments/pariwisata';
 
 type Assignment = {
     id: number;
@@ -1159,17 +1157,21 @@ function PariwisataEditSidebar({
                                             onChange={(event) =>
                                                 setData(
                                                     'image',
-                                                    event.target.files?.[0] ?? null,
+                                                    event.target.files?.[0] ??
+                                                        null,
                                                 )
                                             }
                                             className="w-full text-sm font-semibold text-[#303030] file:mr-3 file:rounded-lg file:border-0 file:bg-[#0066AE] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
                                         />
                                         <p className="mt-1 truncate text-[11px] font-semibold text-[#7C7C7C]">
-                                            {data.image?.name ?? 'Kosongkan jika tidak ingin mengganti gambar'}
+                                            {data.image?.name ??
+                                                'Kosongkan jika tidak ingin mengganti gambar'}
                                         </p>
                                     </div>
                                 </div>
-                                <FieldError message={fieldError(errors, 'image')} />
+                                <FieldError
+                                    message={fieldError(errors, 'image')}
+                                />
                             </label>
                             <div className="min-w-0">
                                 <div className="flex items-center justify-between gap-3">
@@ -1390,14 +1392,19 @@ function PariwisataEditSidebar({
                                         key={index}
                                         className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2"
                                     >
-                                        <div className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2">
                                             <TextInput
                                                 label="Tahun"
                                                 value={row.year}
                                                 onChange={(value) =>
-                                                    updateAnnualTurnover(index, {
-                                                        year: digitsOnly(value),
-                                                    })
+                                                    updateAnnualTurnover(
+                                                        index,
+                                                        {
+                                                            year: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1407,11 +1414,18 @@ function PariwisataEditSidebar({
                                             />
                                             <TextInput
                                                 label="Nilai Omset"
-                                                value={formatThousands(row.value)}
+                                                value={formatThousands(
+                                                    row.value,
+                                                )}
                                                 onChange={(value) =>
-                                                    updateAnnualTurnover(index, {
-                                                        value: digitsOnly(value),
-                                                    })
+                                                    updateAnnualTurnover(
+                                                        index,
+                                                        {
+                                                            value: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1420,15 +1434,18 @@ function PariwisataEditSidebar({
                                                 placeholder="Nominal rupiah"
                                             />
                                         </div>
-                                        <div className="sm:col-span-2 flex items-start gap-3">
+                                        <div className="flex items-start gap-3 sm:col-span-2">
                                             <div className="flex-1">
                                                 <TextInput
                                                     label="Catatan"
                                                     value={row.notes}
                                                     onChange={(value) =>
-                                                        updateAnnualTurnover(index, {
-                                                            notes: value,
-                                                        })
+                                                        updateAnnualTurnover(
+                                                            index,
+                                                            {
+                                                                notes: value,
+                                                            },
+                                                        )
                                                     }
                                                     error={fieldError(
                                                         errors,
@@ -1481,7 +1498,7 @@ function PariwisataEditSidebar({
                                         key={index}
                                         className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2"
                                     >
-                                        <div className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2">
                                             <TextInput
                                                 label="Tahun"
                                                 value={row.year}
@@ -1501,7 +1518,9 @@ function PariwisataEditSidebar({
                                                 value={row.value}
                                                 onChange={(value) =>
                                                     updateAnnualVisitor(index, {
-                                                        value: digitsOnly(value),
+                                                        value: digitsOnly(
+                                                            value,
+                                                        ),
                                                     })
                                                 }
                                                 error={fieldError(
@@ -1511,15 +1530,18 @@ function PariwisataEditSidebar({
                                                 placeholder="1250"
                                             />
                                         </div>
-                                        <div className="sm:col-span-2 flex items-start gap-3">
+                                        <div className="flex items-start gap-3 sm:col-span-2">
                                             <div className="flex-1">
                                                 <TextInput
                                                     label="Catatan"
                                                     value={row.notes}
                                                     onChange={(value) =>
-                                                        updateAnnualVisitor(index, {
-                                                            notes: value,
-                                                        })
+                                                        updateAnnualVisitor(
+                                                            index,
+                                                            {
+                                                                notes: value,
+                                                            },
+                                                        )
                                                     }
                                                     error={fieldError(
                                                         errors,
@@ -1572,14 +1594,19 @@ function PariwisataEditSidebar({
                                         key={index}
                                         className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2"
                                     >
-                                        <div className="sm:col-span-2 grid gap-3 sm:grid-cols-3">
+                                        <div className="grid gap-3 sm:col-span-2 sm:grid-cols-3">
                                             <TextInput
                                                 label="Tahun"
                                                 value={row.year}
                                                 onChange={(value) =>
-                                                    updateVisitorTypeAnnual(index, {
-                                                        year: digitsOnly(value),
-                                                    })
+                                                    updateVisitorTypeAnnual(
+                                                        index,
+                                                        {
+                                                            year: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1591,9 +1618,12 @@ function PariwisataEditSidebar({
                                                 label="Jenis Pengunjung"
                                                 value={row.visitor_type}
                                                 onChange={(value) =>
-                                                    updateVisitorTypeAnnual(index, {
-                                                        visitor_type: value,
-                                                    })
+                                                    updateVisitorTypeAnnual(
+                                                        index,
+                                                        {
+                                                            visitor_type: value,
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1605,9 +1635,14 @@ function PariwisataEditSidebar({
                                                 label="Jumlah"
                                                 value={row.value}
                                                 onChange={(value) =>
-                                                    updateVisitorTypeAnnual(index, {
-                                                        value: digitsOnly(value),
-                                                    })
+                                                    updateVisitorTypeAnnual(
+                                                        index,
+                                                        {
+                                                            value: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1616,15 +1651,18 @@ function PariwisataEditSidebar({
                                                 placeholder="500"
                                             />
                                         </div>
-                                        <div className="sm:col-span-2 flex items-start gap-3">
+                                        <div className="flex items-start gap-3 sm:col-span-2">
                                             <div className="flex-1">
                                                 <TextInput
                                                     label="Catatan"
                                                     value={row.notes}
                                                     onChange={(value) =>
-                                                        updateVisitorTypeAnnual(index, {
-                                                            notes: value,
-                                                        })
+                                                        updateVisitorTypeAnnual(
+                                                            index,
+                                                            {
+                                                                notes: value,
+                                                            },
+                                                        )
                                                     }
                                                     error={fieldError(
                                                         errors,
@@ -1636,7 +1674,9 @@ function PariwisataEditSidebar({
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    removeVisitorTypeAnnual(index)
+                                                    removeVisitorTypeAnnual(
+                                                        index,
+                                                    )
                                                 }
                                                 className="mt-[22px] inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#F2C7C7] bg-white px-3 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6]"
                                             >
@@ -1825,14 +1865,19 @@ function PariwisataEditSidebar({
                                         key={index}
                                         className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2"
                                     >
-                                        <div className="sm:col-span-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                        <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-4">
                                             <TextInput
                                                 label="Tahun"
                                                 value={row.year}
                                                 onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        year: digitsOnly(value),
-                                                    })
+                                                    updateAnnualWorkerStat(
+                                                        index,
+                                                        {
+                                                            year: digitsOnly(
+                                                                value,
+                                                            ),
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1844,9 +1889,12 @@ function PariwisataEditSidebar({
                                                 label="Dimensi"
                                                 value={row.dimension}
                                                 onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        dimension: value,
-                                                    })
+                                                    updateAnnualWorkerStat(
+                                                        index,
+                                                        {
+                                                            dimension: value,
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1858,9 +1906,13 @@ function PariwisataEditSidebar({
                                                 label="Kategori"
                                                 value={row.category_value}
                                                 onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        category_value: value,
-                                                    })
+                                                    updateAnnualWorkerStat(
+                                                        index,
+                                                        {
+                                                            category_value:
+                                                                value,
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1872,10 +1924,15 @@ function PariwisataEditSidebar({
                                                 label="Total Orang"
                                                 value={row.total_people}
                                                 onChange={(value) =>
-                                                    updateAnnualWorkerStat(index, {
-                                                        total_people:
-                                                            digitsOnly(value),
-                                                    })
+                                                    updateAnnualWorkerStat(
+                                                        index,
+                                                        {
+                                                            total_people:
+                                                                digitsOnly(
+                                                                    value,
+                                                                ),
+                                                        },
+                                                    )
                                                 }
                                                 error={fieldError(
                                                     errors,
@@ -1884,15 +1941,18 @@ function PariwisataEditSidebar({
                                                 placeholder="10"
                                             />
                                         </div>
-                                        <div className="sm:col-span-2 flex items-start gap-3">
+                                        <div className="flex items-start gap-3 sm:col-span-2">
                                             <div className="flex-1">
                                                 <TextInput
                                                     label="Catatan"
                                                     value={row.notes}
                                                     onChange={(value) =>
-                                                        updateAnnualWorkerStat(index, {
-                                                            notes: value,
-                                                        })
+                                                        updateAnnualWorkerStat(
+                                                            index,
+                                                            {
+                                                                notes: value,
+                                                            },
+                                                        )
                                                     }
                                                     error={fieldError(
                                                         errors,
@@ -1904,7 +1964,9 @@ function PariwisataEditSidebar({
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    removeAnnualWorkerStat(index)
+                                                    removeAnnualWorkerStat(
+                                                        index,
+                                                    )
                                                 }
                                                 className="mt-[22px] inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#F2C7C7] bg-white px-3 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6]"
                                             >
@@ -1947,7 +2009,7 @@ function PariwisataEditSidebar({
                                             key={index}
                                             className="grid gap-3 rounded-xl border border-[#DCE3EA] bg-[#F8FAFC] p-3 sm:grid-cols-2"
                                         >
-                                            <div className="sm:col-span-2 grid gap-3 sm:grid-cols-3">
+                                            <div className="grid gap-3 sm:col-span-2 sm:grid-cols-3">
                                                 <TextInput
                                                     label="Tahun"
                                                     value={row.year}
@@ -2006,7 +2068,7 @@ function PariwisataEditSidebar({
                                                     placeholder="15"
                                                 />
                                             </div>
-                                            <div className="sm:col-span-2 flex items-start gap-3">
+                                            <div className="flex items-start gap-3 sm:col-span-2">
                                                 <div className="flex-1">
                                                     <TextInput
                                                         label="Catatan"
@@ -2197,7 +2259,9 @@ function formatStatScore(value: number) {
 
 function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
     const [selectedVisitorYear, setSelectedVisitorYear] = useState('');
-    const [visibleSeries, setVisibleSeries] = useState<'all' | 'omset' | 'pengunjung'>('all');
+    const [visibleSeries, setVisibleSeries] = useState<
+        'all' | 'omset' | 'pengunjung'
+    >('all');
 
     const trendChartData = useMemo(() => buildTrendChartData(values), [values]);
     const visitorYears = useMemo(
@@ -2212,8 +2276,7 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
         [values.visitor_type_annuals],
     );
 
-    const activeVisitorYear =
-        selectedVisitorYear || visitorYears[0] || '';
+    const activeVisitorYear = selectedVisitorYear || visitorYears[0] || '';
 
     const pieChartData = useMemo(
         () =>
@@ -2252,7 +2315,8 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                             Omset & Pengunjung Tahunan
                         </h2>
                         <p className="text-sm font-semibold text-[#7C7C7C]">
-                            Perbandingan performa bisnis dan trafik pengunjung per tahun.
+                            Perbandingan performa bisnis dan trafik pengunjung
+                            per tahun.
                         </p>
                     </div>
                     <ToggleGroup
@@ -2283,19 +2347,54 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                             config={trendChartConfig}
                             className="h-[320px] w-full"
                         >
-                            <AreaChart data={trendChartData} margin={{ left: 12, right: 12, top: 8 }}>
+                            <AreaChart
+                                data={trendChartData}
+                                margin={{ left: 12, right: 12, top: 8 }}
+                            >
                                 <defs>
-                                    <linearGradient id="fillOmset" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--color-omset)" stopOpacity={0.32} />
-                                        <stop offset="95%" stopColor="var(--color-omset)" stopOpacity={0.04} />
+                                    <linearGradient
+                                        id="fillOmset"
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                    >
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-omset)"
+                                            stopOpacity={0.32}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-omset)"
+                                            stopOpacity={0.04}
+                                        />
                                     </linearGradient>
-                                    <linearGradient id="fillPengunjung" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--color-pengunjung)" stopOpacity={0.28} />
-                                        <stop offset="95%" stopColor="var(--color-pengunjung)" stopOpacity={0.04} />
+                                    <linearGradient
+                                        id="fillPengunjung"
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                    >
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-pengunjung)"
+                                            stopOpacity={0.28}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-pengunjung)"
+                                            stopOpacity={0.04}
+                                        />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid vertical={false} />
-                                <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                                <XAxis
+                                    dataKey="year"
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
                                 <YAxis
                                     tickLine={false}
                                     axisLine={false}
@@ -2310,7 +2409,9 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                     cursor={false}
                                     content={
                                         <ChartTooltipContent
-                                            labelFormatter={(label) => `Tahun ${label}`}
+                                            labelFormatter={(label) =>
+                                                `Tahun ${label}`
+                                            }
                                             valueFormatter={(value, key) =>
                                                 key === 'pengunjung'
                                                     ? formatVisitorCount(value)
@@ -2350,7 +2451,8 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                 Belum ada data omset atau pengunjung tahunan
                             </p>
                             <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                Isi data tahunan pada form pariwisata untuk menampilkan grafik ini.
+                                Isi data tahunan pada form pariwisata untuk
+                                menampilkan grafik ini.
                             </p>
                         </div>
                     </div>
@@ -2413,20 +2515,42 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                     outerRadius={96}
                                     paddingAngle={3}
                                     labelLine={false}
-                                    label={({ cx, cy, midAngle, outerRadius, percent, payload }) => {
+                                    label={({
+                                        cx,
+                                        cy,
+                                        midAngle,
+                                        outerRadius,
+                                        percent,
+                                        payload,
+                                    }) => {
                                         const RADIAN = Math.PI / 180;
                                         const safeMidAngle = midAngle ?? 0;
                                         const safePercent = percent ?? 0;
-                                        const radius = Number(outerRadius ?? 0) + 22;
-                                        const x = Number(cx ?? 0) + radius * Math.cos(-safeMidAngle * RADIAN);
-                                        const y = Number(cy ?? 0) + radius * Math.sin(-safeMidAngle * RADIAN);
+                                        const radius =
+                                            Number(outerRadius ?? 0) + 22;
+                                        const x =
+                                            Number(cx ?? 0) +
+                                            radius *
+                                                Math.cos(
+                                                    -safeMidAngle * RADIAN,
+                                                );
+                                        const y =
+                                            Number(cy ?? 0) +
+                                            radius *
+                                                Math.sin(
+                                                    -safeMidAngle * RADIAN,
+                                                );
 
                                         return (
                                             <text
                                                 x={x}
                                                 y={y}
                                                 fill={payload.fill}
-                                                textAnchor={x > Number(cx ?? 0) ? 'start' : 'end'}
+                                                textAnchor={
+                                                    x > Number(cx ?? 0)
+                                                        ? 'start'
+                                                        : 'end'
+                                                }
                                                 dominantBaseline="central"
                                                 className="text-[11px] font-bold"
                                             >
@@ -2436,13 +2560,18 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                     }}
                                 >
                                     {pieChartData.map((entry) => (
-                                        <Cell key={entry.type} fill={entry.fill} />
+                                        <Cell
+                                            key={entry.type}
+                                            fill={entry.fill}
+                                        />
                                     ))}
                                 </Pie>
                                 <ChartLegend
                                     verticalAlign="bottom"
                                     align="center"
-                                    content={<ChartLegendContent className="justify-center pt-4" />}
+                                    content={
+                                        <ChartLegendContent className="justify-center pt-4" />
+                                    }
                                 />
                             </PieChart>
                         </ChartContainer>
@@ -2454,7 +2583,8 @@ function PariwisataTrendCharts({ values }: { values: PariwisataEditValues }) {
                                 Belum ada data jenis pengunjung
                             </p>
                             <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                Pilih tahun lain atau isi data jenis pengunjung tahunan terlebih dahulu.
+                                Pilih tahun lain atau isi data jenis pengunjung
+                                tahunan terlebih dahulu.
                             </p>
                         </div>
                     </div>
@@ -2777,35 +2907,35 @@ export default function ShowPariwisata({
                                         />
                                     )}
                                     <div className="min-w-0">
-                                    <div className="flex flex-wrap gap-2">
-                                        <span
-                                            className={classNames(
-                                                'rounded-full px-3 py-1 text-xs font-bold',
-                                                pariwisata.is_active
-                                                    ? 'bg-[#EAF8F0] text-[#00893D]'
-                                                    : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                                        <div className="flex flex-wrap gap-2">
+                                            <span
+                                                className={classNames(
+                                                    'rounded-full px-3 py-1 text-xs font-bold',
+                                                    pariwisata.is_active
+                                                        ? 'bg-[#EAF8F0] text-[#00893D]'
+                                                        : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                                                )}
+                                            >
+                                                {pariwisata.status_label}
+                                            </span>
+                                            {pariwisata.categories.map(
+                                                (category) => (
+                                                    <span
+                                                        key={category.id}
+                                                        className="rounded-full bg-[#EAF3FF] px-3 py-1 text-xs font-bold text-[#0066AE]"
+                                                    >
+                                                        {category.label}
+                                                    </span>
+                                                ),
                                             )}
-                                        >
-                                            {pariwisata.status_label}
-                                        </span>
-                                        {pariwisata.categories.map(
-                                            (category) => (
-                                                <span
-                                                    key={category.id}
-                                                    className="rounded-full bg-[#EAF3FF] px-3 py-1 text-xs font-bold text-[#0066AE]"
-                                                >
-                                                    {category.label}
-                                                </span>
-                                            ),
-                                        )}
-                                    </div>
-                                    <h2 className="mt-3 text-xl font-bold text-[#303030]">
-                                        {pariwisata.name}
-                                    </h2>
-                                    <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
-                                        {assignment.village.name} ·{' '}
-                                        {assignment.village.location}
-                                    </p>
+                                        </div>
+                                        <h2 className="mt-3 text-xl font-bold text-[#303030]">
+                                            {pariwisata.name}
+                                        </h2>
+                                        <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
+                                            {assignment.village.name} ·{' '}
+                                            {assignment.village.location}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="rounded-xl bg-white px-4 py-3 text-right shadow-[0_8px_20px_rgba(9,57,103,0.08)]">
@@ -2899,44 +3029,57 @@ export default function ShowPariwisata({
                                     Paket Wisata
                                 </h3>
                                 <div className="mt-3 space-y-3">
-                                    {(edit_values.packages || []).length === 0 && (
+                                    {(edit_values.packages || []).length ===
+                                        0 && (
                                         <p className="text-sm font-semibold text-[#7C7C7C]">
                                             Belum ada paket wisata.
                                         </p>
                                     )}
-                                    {(edit_values.packages || []).map((pkg, index) => (
-                                        <div
-                                            key={`${pkg.name}-${index}`}
-                                            className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-[#303030]">
-                                                        {pkg.name || '-'}
-                                                    </p>
-                                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
-                                                        {pkg.package_type || 'Tanpa tipe'} · {pkg.duration || 'Durasi belum diisi'}
-                                                    </p>
+                                    {(edit_values.packages || []).map(
+                                        (pkg, index) => (
+                                            <div
+                                                key={`${pkg.name}-${index}`}
+                                                className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-[#303030]">
+                                                            {pkg.name || '-'}
+                                                        </p>
+                                                        <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                                            {pkg.package_type ||
+                                                                'Tanpa tipe'}{' '}
+                                                            ·{' '}
+                                                            {pkg.duration ||
+                                                                'Durasi belum diisi'}
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        className={classNames(
+                                                            'rounded-full px-2.5 py-1 text-[11px] font-bold',
+                                                            pkg.is_active
+                                                                ? 'bg-[#EAF8F0] text-[#00893D]'
+                                                                : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                                                        )}
+                                                    >
+                                                        {pkg.is_active
+                                                            ? 'Aktif'
+                                                            : 'Nonaktif'}
+                                                    </span>
                                                 </div>
-                                                <span
-                                                    className={classNames(
-                                                        'rounded-full px-2.5 py-1 text-[11px] font-bold',
-                                                        pkg.is_active
-                                                            ? 'bg-[#EAF8F0] text-[#00893D]'
-                                                            : 'bg-[#F1F5F8] text-[#7C7C7C]',
-                                                    )}
-                                                >
-                                                    {pkg.is_active ? 'Aktif' : 'Nonaktif'}
-                                                </span>
+                                                <p className="mt-2 text-sm font-semibold text-[#344256]">
+                                                    {pkg.description ||
+                                                        'Deskripsi belum diisi'}
+                                                </p>
+                                                <p className="mt-2 text-xs font-bold text-[#0066AE]">
+                                                    Harga:{' '}
+                                                    {pkg.price
+                                                        ? `Rp ${formatThousands(pkg.price)}`
+                                                        : '-'}
+                                                </p>
                                             </div>
-                                            <p className="mt-2 text-sm font-semibold text-[#344256]">
-                                                {pkg.description || 'Deskripsi belum diisi'}
-                                            </p>
-                                            <p className="mt-2 text-xs font-bold text-[#0066AE]">
-                                                Harga: {pkg.price ? `Rp ${formatThousands(pkg.price)}` : '-'}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        ),
+                                    )}
                                 </div>
                             </div>
 
@@ -2950,7 +3093,12 @@ export default function ShowPariwisata({
                                             Statistik pekerja
                                         </p>
                                         <p className="mt-1 text-2xl font-bold text-[#303030]">
-                                            {(edit_values.annual_worker_stats || []).length}
+                                            {
+                                                (
+                                                    edit_values.annual_worker_stats ||
+                                                    []
+                                                ).length
+                                            }
                                         </p>
                                     </div>
                                     <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0]">
@@ -2958,7 +3106,12 @@ export default function ShowPariwisata({
                                             Statistik pelatihan
                                         </p>
                                         <p className="mt-1 text-2xl font-bold text-[#303030]">
-                                            {(edit_values.annual_worker_training_stats || []).length}
+                                            {
+                                                (
+                                                    edit_values.annual_worker_training_stats ||
+                                                    []
+                                                ).length
+                                            }
                                         </p>
                                     </div>
                                     <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-[#E4EAF0] sm:col-span-2">
@@ -2966,7 +3119,8 @@ export default function ShowPariwisata({
                                             Alamat PIC
                                         </p>
                                         <p className="mt-1 text-sm font-bold text-[#303030]">
-                                            {pariwisata.person_in_charge_address ?? '-'}
+                                            {pariwisata.person_in_charge_address ??
+                                                '-'}
                                         </p>
                                     </div>
                                 </div>
@@ -2987,4 +3141,3 @@ export default function ShowPariwisata({
         </>
     );
 }
-

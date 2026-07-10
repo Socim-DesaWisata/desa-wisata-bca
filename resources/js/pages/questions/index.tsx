@@ -28,7 +28,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SurveyQuestionController from '@/actions/App/Http/Controllers/SurveyQuestionController';
 import { dashboard, questions as questionsRoute } from '@/routes';
-import { exportMethod as exportQuestionTemplate, show as showQuestionTemplate } from '@/routes/questions';
+import {
+    exportMethod as exportQuestionTemplate,
+    show as showQuestionTemplate,
+} from '@/routes/questions';
 
 type TemplateSummary = {
     id: number;
@@ -951,7 +954,7 @@ export default function QuestionsIndex({
                                                             <Edit3 className="size-4 text-[#0066AE]" />
                                                             Edit Pertanyaan
                                                         </DropdownMenuItem>
-{isVillageTemplate && (
+                                                        {isVillageTemplate && (
                                                             <>
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem className="gap-2 text-xs font-semibold text-[#D81313]">
@@ -2062,8 +2065,3 @@ QuestionsIndex.layout = {
         { title: 'Detail Template', href: '#' },
     ],
 };
-
-
-
-
-

@@ -409,7 +409,7 @@ export default function UmkmIndex({
                                                 key={head}
                                                 className={
                                                     head === 'Total Skor'
-                                                        ? 'px-5 py-4 font-bold whitespace-nowrap bg-[#EAF3FF] text-[#0066AE] text-sm text-center'
+                                                        ? 'bg-[#EAF3FF] px-5 py-4 text-center text-sm font-bold whitespace-nowrap text-[#0066AE]'
                                                         : 'px-3 py-3 font-bold whitespace-nowrap'
                                                 }
                                             >

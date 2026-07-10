@@ -169,7 +169,9 @@ function SurveyDraftProvider({
         Record<number, number>
     >(() => ({ ...initialSelectedOptions }));
     const [documents, setDocuments] = useState<Record<number, File[]>>({});
-    const [notes, setNotes] = useState<Record<number, string>>(() => ({ ...initialNotes }));
+    const [notes, setNotes] = useState<Record<number, string>>(() => ({
+        ...initialNotes,
+    }));
     const [dirtyQuestionIds, setDirtyQuestionIds] = useState<Set<number>>(
         () => new Set(),
     );
@@ -184,13 +186,16 @@ function SurveyDraftProvider({
         setDirtyQuestionIds((current) => new Set(current).add(questionId));
     }, []);
 
-    const updateQuestionNotes = useCallback((questionId: number, value: string) => {
-        setNotes((current) => ({
-            ...current,
-            [questionId]: value,
-        }));
-        setDirtyQuestionIds((current) => new Set(current).add(questionId));
-    }, []);
+    const updateQuestionNotes = useCallback(
+        (questionId: number, value: string) => {
+            setNotes((current) => ({
+                ...current,
+                [questionId]: value,
+            }));
+            setDirtyQuestionIds((current) => new Set(current).add(questionId));
+        },
+        [],
+    );
 
     const setQuestionFiles = useCallback(
         (questionId: number, files: File[]) => {
@@ -564,7 +569,7 @@ function QuestionCard({
                     onChange={(event) => onNotesChange(event.target.value)}
                     rows={4}
                     placeholder="Tulis catatan jawaban di sini"
-                    className="mt-3 w-full rounded-2xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-medium text-[#303030] outline-none transition placeholder:text-[#A0A0A0] focus:border-[#0066AE]"
+                    className="mt-3 w-full rounded-2xl border border-[#DDE4EC] bg-white px-4 py-3 text-sm font-medium text-[#303030] transition outline-none placeholder:text-[#A0A0A0] focus:border-[#0066AE]"
                 />
             </div>
 
@@ -804,7 +809,10 @@ function TakeSurveyContent({
                 `answers[${index}][survey_question_option_id]`,
                 String(selectedOptions[questionId]),
             );
-            formData.append(`answers[${index}][notes]`, notes[questionId] ?? '');
+            formData.append(
+                `answers[${index}][notes]`,
+                notes[questionId] ?? '',
+            );
 
             (documents[questionId] ?? []).forEach((file) => {
                 formData.append(`answers[${index}][documents][]`, file);
@@ -1086,4 +1094,3 @@ function TakeSurveyContent({
 }
 
 TakeSurvey.layout = null;
-

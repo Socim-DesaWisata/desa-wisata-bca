@@ -7,6 +7,7 @@ The system is not a minimal SaaS dashboard and not a generic travel landing page
 The page voice is practical and trustworthy. The top navigation feels official and functional, the hero photography creates emotional destination appeal, and the main content cards let users quickly scan tourism products and village metadata. Teal is the core interaction color, green signals sustainability and price/value, and amber is reserved for awards or ADWI-style achievement badges.
 
 **Key Characteristics:**
+
 - Bright white and near-white page canvas (`{colors.canvas}` / `{colors.surface-page}`) with teal identity accents and dark slate text.
 - A full-width scenic hero image with a dark green gradient overlay, large destination title, location row, award badge, and category pills.
 - A sticky-feeling horizontal section tab bar directly below the hero, using icons, compact labels, and a teal active underline.
@@ -20,6 +21,7 @@ The page voice is practical and trustworthy. The top navigation feels official a
 ## Colors
 
 ### Brand & Accent
+
 - **Primary Teal** (`{colors.primary}` — #006A73): Main brand color for active tabs, section icons, footer headers, and primary interaction states.
 - **Primary Dark** (`{colors.primary-dark}` — #004F5A): Used for the login button, deep footer strip, and high-contrast brand moments.
 - **Primary Soft** (`{colors.primary-soft}` — #E8F7F8): Soft teal background for active pills, subtle highlights, and low-emphasis icon surfaces.
@@ -32,6 +34,7 @@ The page voice is practical and trustworthy. The top navigation feels official a
 - **Social Blue** (`{colors.social-blue}` — #1877F2): Social sharing icon color when using brand-aware social buttons.
 
 ### Surface
+
 - **Canvas** (`{colors.canvas}` — #FFFFFF): Main card and navigation surface.
 - **Page Background** (`{colors.surface-page}` — #F7FAFA): The overall page floor behind cards.
 - **Surface Soft** (`{colors.surface-soft}` — #F2F7F7): Facility chips, subtle card panels, inactive icon backgrounds.
@@ -41,12 +44,14 @@ The page voice is practical and trustworthy. The top navigation feels official a
 - **Hero Scrim Strong** (`{colors.hero-scrim-strong}` — rgba(0, 20, 14, 0.74)): Stronger left-side gradient behind hero title and location text.
 
 ### Borders & Dividers
+
 - **Border** (`{colors.border}` — #DDE7E7): Default card border and tab divider.
 - **Border Soft** (`{colors.border-soft}` — #EAF0F0): Inner dividers, statistic rows, footer column separation.
 - **Border Strong** (`{colors.border-strong}` — #C8D8D8): Focused surfaces, selected filters, and active states.
 - **Hairline** (`{colors.hairline}` — #EEF3F3): 1px separators between rows and dense metadata groups.
 
 ### Text
+
 - **Ink** (`{colors.ink}` — #0F172A): Primary text for titles, card headings, and navigation.
 - **Ink Soft** (`{colors.ink-soft}` — #263238): Secondary strong text and descriptions.
 - **Body** (`{colors.body}` — #3F4F56): Default paragraph and card description color.
@@ -56,6 +61,7 @@ The page voice is practical and trustworthy. The top navigation feels official a
 - **On Dark Muted** (`{colors.on-dark-muted}` — #D7E6E6): Footer supporting copy and secondary hero text.
 
 ### Category Badge Colors
+
 - **Nature Badge** (`{colors.badge-nature}` — #0D8F55): Nature attraction labels.
 - **Creative Badge** (`{colors.badge-creative}` — #B96B1C): Creative attraction labels.
 - **Showcase Badge** (`{colors.badge-showcase}` — #047C8F): Village showcase labels.
@@ -73,24 +79,24 @@ Typography is functional and compact. Headlines are bold but not aggressive. Bod
 
 ### Hierarchy
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---:|---:|---:|---:|---|
-| `{typography.hero-title}` | 40px | 800 | 1.1 | -0.5px | Hero destination title |
-| `{typography.hero-location}` | 15px | 600 | 1.45 | 0 | Location row over hero |
-| `{typography.display-lg}` | 32px | 800 | 1.15 | -0.3px | Rare page-level headings |
-| `{typography.display-md}` | 26px | 800 | 1.2 | -0.2px | Section group headings on landing surfaces |
-| `{typography.section-title}` | 18px | 800 | 1.3 | 0 | Profile, Facilities, Attractions, sidebar card titles |
-| `{typography.title-lg}` | 16px | 800 | 1.35 | 0 | Product card title, footer brand name |
-| `{typography.title-md}` | 14px | 700 | 1.35 | 0 | Sidebar row labels, package titles |
-| `{typography.title-sm}` | 13px | 700 | 1.35 | 0 | Facility chip label, tab label |
-| `{typography.body-md}` | 14px | 500 | 1.65 | 0 | Profile paragraphs and long descriptions |
-| `{typography.body-sm}` | 12px | 500 | 1.55 | 0 | Product descriptions, sidebar helper copy |
-| `{typography.caption}` | 11px | 500 | 1.4 | 0 | Card metadata, small distance labels |
-| `{typography.badge}` | 12px | 800 | 1.1 | 0 | Hero pills, category badges |
-| `{typography.nav-link}` | 13px | 700 | 1.2 | 0 | Top navigation labels |
-| `{typography.button}` | 13px | 800 | 1 | 0 | Login and compact action buttons |
-| `{typography.price}` | 14px | 800 | 1.2 | 0 | Rupiah pricing |
-| `{typography.stat-value}` | 13px | 800 | 1.2 | 0 | Sidebar statistics values |
+| Token                        | Size | Weight | Line Height | Letter Spacing | Use                                                   |
+| ---------------------------- | ---: | -----: | ----------: | -------------: | ----------------------------------------------------- |
+| `{typography.hero-title}`    | 40px |    800 |         1.1 |         -0.5px | Hero destination title                                |
+| `{typography.hero-location}` | 15px |    600 |        1.45 |              0 | Location row over hero                                |
+| `{typography.display-lg}`    | 32px |    800 |        1.15 |         -0.3px | Rare page-level headings                              |
+| `{typography.display-md}`    | 26px |    800 |         1.2 |         -0.2px | Section group headings on landing surfaces            |
+| `{typography.section-title}` | 18px |    800 |         1.3 |              0 | Profile, Facilities, Attractions, sidebar card titles |
+| `{typography.title-lg}`      | 16px |    800 |        1.35 |              0 | Product card title, footer brand name                 |
+| `{typography.title-md}`      | 14px |    700 |        1.35 |              0 | Sidebar row labels, package titles                    |
+| `{typography.title-sm}`      | 13px |    700 |        1.35 |              0 | Facility chip label, tab label                        |
+| `{typography.body-md}`       | 14px |    500 |        1.65 |              0 | Profile paragraphs and long descriptions              |
+| `{typography.body-sm}`       | 12px |    500 |        1.55 |              0 | Product descriptions, sidebar helper copy             |
+| `{typography.caption}`       | 11px |    500 |         1.4 |              0 | Card metadata, small distance labels                  |
+| `{typography.badge}`         | 12px |    800 |         1.1 |              0 | Hero pills, category badges                           |
+| `{typography.nav-link}`      | 13px |    700 |         1.2 |              0 | Top navigation labels                                 |
+| `{typography.button}`        | 13px |    800 |           1 |              0 | Login and compact action buttons                      |
+| `{typography.price}`         | 14px |    800 |         1.2 |              0 | Rupiah pricing                                        |
+| `{typography.stat-value}`    | 13px |    800 |         1.2 |              0 | Sidebar statistics values                             |
 
 ### Principles
 
@@ -99,6 +105,7 @@ The design uses a dense but friendly hierarchy. Section titles combine a teal ic
 Hero typography is the only place where type becomes large and emotional. All other page typography prioritizes utility, scannability, and information density.
 
 ### Text Treatment
+
 - Hero title uses white text with subtle shadow against the dark green photo scrim.
 - Navigation labels use title case, not all caps.
 - Section titles use sentence case and are paired with leading icons.
@@ -107,11 +114,13 @@ Hero typography is the only place where type becomes large and emotional. All ot
 - Avoid long uppercase strings except for short badges or acronyms such as ADWI.
 
 ### Note on Font Substitutes
+
 If Plus Jakarta Sans is unavailable, use **Inter**. If the page needs a more rounded community look, use **Nunito Sans** for body and **Plus Jakarta Sans** for headings. Do not use overly decorative travel fonts; this is a trustworthy portal interface, not a brochure poster.
 
 ## Layout
 
 ### Spacing System
+
 - **Base unit:** 4px.
 - **Tokens:** `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 16px · `{spacing.lg}` 24px · `{spacing.xl}` 32px · `{spacing.xxl}` 48px · `{spacing.section}` 64px.
 - **Top nav height:** 64px desktop.
@@ -123,16 +132,17 @@ If Plus Jakarta Sans is unavailable, use **Inter**. If the page needs a more rou
 - **Section gap:** 32px between major content blocks in the main column.
 
 ### Grid & Container
+
 - **Max page width:** 1320–1360px centered.
 - **Desktop content grid:** 12 columns.
-  - Main column: 8 columns.
-  - Sidebar: 4 columns.
+    - Main column: 8 columns.
+    - Sidebar: 4 columns.
 - **Product grids:**
-  - Attractions: 4-up desktop, 2-up tablet, 1-up mobile.
-  - Homestays: 4-up desktop, 2-up tablet, 1-up mobile.
-  - Tour packages: 3-up desktop, 2-up tablet, 1-up mobile.
-  - Souvenirs: 4-up desktop, 2-up tablet, 1-up mobile.
-  - Nearby villages: 4-up desktop, 2-up tablet, 1-up mobile.
+    - Attractions: 4-up desktop, 2-up tablet, 1-up mobile.
+    - Homestays: 4-up desktop, 2-up tablet, 1-up mobile.
+    - Tour packages: 3-up desktop, 2-up tablet, 1-up mobile.
+    - Souvenirs: 4-up desktop, 2-up tablet, 1-up mobile.
+    - Nearby villages: 4-up desktop, 2-up tablet, 1-up mobile.
 - **Sidebar:** Stacks multiple cards vertically with 24px gaps. It should align to the top of the profile content and remain visually independent.
 
 ### Page Structure
@@ -141,20 +151,20 @@ If Plus Jakarta Sans is unavailable, use **Inter**. If the page needs a more rou
 2. `{component.hero-village-band}`
 3. `{component.section-tabs}`
 4. `{component.page-shell}`
-   - `{component.main-content-column}`
-     - Profile
-     - Facilities
-     - Tourist Attractions
-     - Homestay Rooms
-     - Tour Packages
-     - Souvenirs
-     - Nearby Tourism Villages
-   - `{component.sidebar-column}`
-     - Village QR Code
-     - Village Statistics
-     - Location Address
-     - Contact Person
-     - Share This Village
+    - `{component.main-content-column}`
+        - Profile
+        - Facilities
+        - Tourist Attractions
+        - Homestay Rooms
+        - Tour Packages
+        - Souvenirs
+        - Nearby Tourism Villages
+    - `{component.sidebar-column}`
+        - Village QR Code
+        - Village Statistics
+        - Location Address
+        - Contact Person
+        - Share This Village
 5. `{component.footer}`
 6. `{component.copyright-bar}`
 
@@ -164,15 +174,16 @@ Whitespace is compact and practical. The page contains many tourism entities, so
 
 ## Elevation & Depth
 
-| Level | Treatment | Use |
-|---|---|---|
-| Flat | No shadow, white background | Top navigation, tab bar, footer columns |
-| Hairline Card | 1px `{colors.border}` border, no visible shadow | Facility chips, statistic rows, map frames |
-| Soft Card | White background, 1px border, subtle shadow | Product cards, sidebar cards, profile image card |
-| Elevated Hero | Full-width photography with dark scrim and overlay text | Village hero band |
-| Footer Depth | Soft teal-tinted footer background plus deep teal bottom bar | Page closing system |
+| Level         | Treatment                                                    | Use                                              |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------ |
+| Flat          | No shadow, white background                                  | Top navigation, tab bar, footer columns          |
+| Hairline Card | 1px `{colors.border}` border, no visible shadow              | Facility chips, statistic rows, map frames       |
+| Soft Card     | White background, 1px border, subtle shadow                  | Product cards, sidebar cards, profile image card |
+| Elevated Hero | Full-width photography with dark scrim and overlay text      | Village hero band                                |
+| Footer Depth  | Soft teal-tinted footer background plus deep teal bottom bar | Page closing system                              |
 
 ### Shadow Tokens
+
 - **Card Shadow** (`{shadow.card}`): `0 8px 24px rgba(15, 23, 42, 0.05)`
 - **Card Shadow Hover** (`{shadow.card-hover}`): `0 12px 32px rgba(15, 23, 42, 0.08)`
 - **Nav Shadow** (`{shadow.nav}`): `0 1px 0 rgba(15, 23, 42, 0.08)`
@@ -181,6 +192,7 @@ Whitespace is compact and practical. The page contains many tourism entities, so
 The system avoids dramatic shadows. Depth should be perceived through separation, clean borders, and the contrast between image content and structured cards.
 
 ### Decorative Depth
+
 - **Hero photo scrim:** A left-heavy dark gradient makes the destination title readable while preserving the scenic photo.
 - **Soft card shadows:** Used only to lift cards from the near-white page floor.
 - **Map and QR panels:** Use low-contrast inner surfaces to visually separate utility elements from metadata.
@@ -190,19 +202,20 @@ The system avoids dramatic shadows. Depth should be perceived through separation
 
 ### Border Radius Scale
 
-| Token | Value | Use |
-|---|---:|---|
-| `{rounded.none}` | 0px | Full-width bands and structural separators |
-| `{rounded.xs}` | 4px | Tiny badges and status markers |
-| `{rounded.sm}` | 8px | Small chips, category badges, social buttons |
-| `{rounded.md}` | 10px | Product card images, map frame, QR panel |
-| `{rounded.lg}` | 14px | Product cards, facility chips, content cards |
-| `{rounded.xl}` | 18px | Sidebar cards and larger panels |
+| Token            |  Value | Use                                                   |
+| ---------------- | -----: | ----------------------------------------------------- |
+| `{rounded.none}` |    0px | Full-width bands and structural separators            |
+| `{rounded.xs}`   |    4px | Tiny badges and status markers                        |
+| `{rounded.sm}`   |    8px | Small chips, category badges, social buttons          |
+| `{rounded.md}`   |   10px | Product card images, map frame, QR panel              |
+| `{rounded.lg}`   |   14px | Product cards, facility chips, content cards          |
+| `{rounded.xl}`   |   18px | Sidebar cards and larger panels                       |
 | `{rounded.full}` | 9999px | Icon circles, social buttons, user avatar placeholder |
 
 The visual language is rounded but not playful. Cards use medium radii to feel modern and friendly, while hero and footer bands remain rectangular to preserve structure.
 
 ### Image Geometry
+
 - Hero image: full-width 21:6 to 16:5 cinematic crop.
 - Profile image: 16:9 rounded rectangle.
 - Product images: 16:9 thumbnails.
@@ -230,6 +243,7 @@ The visual language is rounded but not playful. Cards use medium radii to feel m
 **`hero-village-band`** — Full-width scenic photography band showing rural Indonesian landscape, rice terraces, village houses, hills, palm trees, and warm sunrise. The band uses `{colors.hero-scrim}` and `{colors.hero-scrim-strong}` overlays so text remains readable.
 
 **`hero-title-group`** — Left-aligned content block inside the hero with:
+
 - Large white village name
 - Amber award badge
 - Location row with pin icon
@@ -324,7 +338,9 @@ The visual language is rounded but not playful. Cards use medium radii to feel m
 ## Component Content Rules
 
 ### Naming & Labels
+
 Use clear English labels in the UI unless the product is localized. Suggested primary labels:
+
 - Village Tourism Portal
 - Explore Authentic Villages
 - Dewi Ngubalan Tourism Village
@@ -343,6 +359,7 @@ Use clear English labels in the UI unless the product is localized. Suggested pr
 - Share This Village
 
 ### Data Presentation
+
 - Village ID should be displayed as a short code, e.g. `#126049`.
 - ADWI history should use compact year + achievement format.
 - Statistics should use strong numbers and concise units, e.g. `12.450 Visitors`, `96 MSMEs`, `312 People`, `Rp 1,48 M`.
@@ -350,6 +367,7 @@ Use clear English labels in the UI unless the product is localized. Suggested pr
 - Distances should use a map pin icon and compact unit labels, e.g. `6.5 km`.
 
 ### Imagery Rules
+
 - Hero: scenic Indonesian rural landscape with warm golden-hour lighting.
 - Profile: people doing wood craft or local community activity.
 - Attractions: village rituals, rice field activities, craft workshops, UMKM exhibitions.
@@ -384,6 +402,7 @@ Although the detail page screenshot does not show form-heavy interactions, these
 ## Do's and Don'ts
 
 ### Do
+
 - Use scenic, warm Indonesian rural photography as the emotional anchor.
 - Keep the hero text left-aligned and readable with a dark green gradient overlay.
 - Use teal consistently for navigation, section icons, active states, and official portal identity.
@@ -396,6 +415,7 @@ Although the detail page screenshot does not show form-heavy interactions, these
 - Preserve the two-column desktop rhythm: content exploration on the left, operational data on the right.
 
 ### Don't
+
 - Don't make the page look like a luxury hotel website with excessive whitespace.
 - Don't use dark mode as the main surface; this system is bright and official.
 - Don't use random bright colors outside the tourism palette.
@@ -411,14 +431,15 @@ Although the detail page screenshot does not show form-heavy interactions, these
 
 ### Breakpoints
 
-| Name | Width | Key Changes |
-|---|---:|---|
-| Mobile | < 768px | Nav collapses; hero becomes taller with stacked text; tabs become horizontally scrollable; main/sidebar stack; all grids become 1-up |
-| Tablet | 768–1024px | Top nav may collapse secondary links; main/sidebar stack or use 7/5 split; product grids become 2-up |
-| Desktop | 1024–1440px | Full top nav; 8/4 content/sidebar split; product grids 3–4 columns |
-| Wide | > 1440px | Max-width container remains centered; hero image can breathe wider but content stays controlled |
+| Name    |       Width | Key Changes                                                                                                                          |
+| ------- | ----------: | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Mobile  |     < 768px | Nav collapses; hero becomes taller with stacked text; tabs become horizontally scrollable; main/sidebar stack; all grids become 1-up |
+| Tablet  |  768–1024px | Top nav may collapse secondary links; main/sidebar stack or use 7/5 split; product grids become 2-up                                 |
+| Desktop | 1024–1440px | Full top nav; 8/4 content/sidebar split; product grids 3–4 columns                                                                   |
+| Wide    |    > 1440px | Max-width container remains centered; hero image can breathe wider but content stays controlled                                      |
 
 ### Mobile Strategy
+
 - Top navigation collapses into a hamburger menu with logo and login action.
 - Hero content remains left-aligned but uses smaller typography.
 - Hero category pills wrap into two rows.
@@ -429,6 +450,7 @@ Although the detail page screenshot does not show form-heavy interactions, these
 - Footer columns stack into an accordion or single-column link list.
 
 ### Tablet Strategy
+
 - Navigation spacing tightens; dropdown labels may remain but reduce gaps.
 - Profile section stacks image above text if the main column is too narrow.
 - Facility grid becomes 4-up or 2-up.
@@ -436,12 +458,14 @@ Although the detail page screenshot does not show form-heavy interactions, these
 - Footer becomes 2-column link layout.
 
 ### Touch Targets
+
 - Top nav and tab items should have at least 44px height.
 - Product cards should have full-card click targets.
 - Share buttons should be 40–44px circles.
 - Facility chips should remain at least 72px wide on mobile to avoid cramped labels.
 
 ### Image Behavior
+
 - Hero crops from a wide landscape into a more vertical scenic composition on mobile.
 - Product thumbnails retain 16:9 ratio across breakpoints.
 - Map preview should keep a minimum height of 180px on mobile.

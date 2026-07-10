@@ -330,7 +330,7 @@ export function AdminSidebarContent({
                 ))}
             </nav>
 
-            <div className="relative z-10 mt-3 overflow-hidden rounded-[26px]  bg-[linear-gradient(180deg,rgba(14,76,138,0.26)_0%,rgba(14,76,138,0.16)_100%)] px-2 pt-4 pb-2 shadow-[0_18px_32px_rgba(3,17,32,0.18)] backdrop-blur-md">
+            <div className="relative z-10 mt-3 overflow-hidden rounded-[26px] bg-[linear-gradient(180deg,rgba(14,76,138,0.26)_0%,rgba(14,76,138,0.16)_100%)] px-2 pt-4 pb-2 shadow-[0_18px_32px_rgba(3,17,32,0.18)] backdrop-blur-md">
                 {' '}
                 <div className="relative px-2 text-[10px] font-semibold tracking-[0.08em] text-white/72 uppercase">
                     CSR Dashboard

@@ -7,7 +7,7 @@ import {
     MoreVertical,
     BarChart3,
     PieChart as PieChartIcon,
-    Table as TableIcon
+    Table as TableIcon,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import {
@@ -21,7 +21,7 @@ import {
     Tooltip,
     XAxis,
     YAxis,
-    Legend
+    Legend,
 } from 'recharts';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -56,10 +56,34 @@ const MOCK_PIE_DATA = [
 ];
 
 const MOCK_TABLE_DATA = [
-    { id: 1, desa: 'Desa Lontar', provinsi: 'Jawa Timur', status: 'Aktif', score: 85 },
-    { id: 2, desa: 'Desa Mulyosari', provinsi: 'Jawa Tengah', status: 'Draft', score: '-' },
-    { id: 3, desa: 'Desa Sukamaju', provinsi: 'Jawa Barat', status: 'Aktif', score: 92 },
-    { id: 4, desa: 'Desa Wisata Taro', provinsi: 'Bali', status: 'Aktif', score: 78 },
+    {
+        id: 1,
+        desa: 'Desa Lontar',
+        provinsi: 'Jawa Timur',
+        status: 'Aktif',
+        score: 85,
+    },
+    {
+        id: 2,
+        desa: 'Desa Mulyosari',
+        provinsi: 'Jawa Tengah',
+        status: 'Draft',
+        score: '-',
+    },
+    {
+        id: 3,
+        desa: 'Desa Sukamaju',
+        provinsi: 'Jawa Barat',
+        status: 'Aktif',
+        score: 92,
+    },
+    {
+        id: 4,
+        desa: 'Desa Wisata Taro',
+        provinsi: 'Bali',
+        status: 'Aktif',
+        score: 78,
+    },
 ];
 
 export default function Chatbot() {
@@ -68,7 +92,8 @@ export default function Chatbot() {
             id: '1',
             role: 'bot',
             type: 'text',
-            content: 'Halo! Saya asisten virtual SocialImpact BCA. Ada yang bisa saya bantu terkait data desa wisata, UMKM, atau pariwisata hari ini?',
+            content:
+                'Halo! Saya asisten virtual SocialImpact BCA. Ada yang bisa saya bantu terkait data desa wisata, UMKM, atau pariwisata hari ini?',
             timestamp: new Date(),
         },
     ]);
@@ -79,13 +104,14 @@ export default function Chatbot() {
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+            scrollAreaRef.current.scrollTop =
+                scrollAreaRef.current.scrollHeight;
         }
     }, [messages, isTyping]);
 
     const handleSend = (e?: React.FormEvent) => {
         e?.preventDefault();
-        
+
         if (!input.trim()) return;
 
         const userMessage: Message = {
@@ -101,47 +127,55 @@ export default function Chatbot() {
         setIsTyping(true);
 
         // Simulate network delay and logic
-        setTimeout(() => {
-            const userInput = userMessage.content.toLowerCase();
-            let botResponse: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'bot',
-                type: 'text',
-                content: 'Maaf, saya tidak mengerti. Coba tanyakan tentang "grafik omset", "persentase status survey", atau "tabel desa wisata".',
-                timestamp: new Date(),
-            };
+        setTimeout(
+            () => {
+                const userInput = userMessage.content.toLowerCase();
+                let botResponse: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'bot',
+                    type: 'text',
+                    content:
+                        'Maaf, saya tidak mengerti. Coba tanyakan tentang "grafik omset", "persentase status survey", atau "tabel desa wisata".',
+                    timestamp: new Date(),
+                };
 
-            if (userInput.match(/grafik|bar|chart|omset/)) {
-                botResponse = {
-                    ...botResponse,
-                    type: 'bar-chart',
-                    content: 'Berikut adalah grafik tren omset UMKM dalam 6 bulan terakhir:',
-                    payload: MOCK_BAR_DATA,
-                };
-            } else if (userInput.match(/pie|persentase|status/)) {
-                botResponse = {
-                    ...botResponse,
-                    type: 'pie-chart',
-                    content: 'Ini adalah persentase status penyelesaian survey saat ini:',
-                    payload: MOCK_PIE_DATA,
-                };
-            } else if (userInput.match(/tabel|data|daftar|desa/)) {
-                botResponse = {
-                    ...botResponse,
-                    type: 'table',
-                    content: 'Berikut adalah daftar sebagian desa wisata beserta status dan skornya:',
-                    payload: MOCK_TABLE_DATA,
-                };
-            } else if (userInput.match(/halo|hai|pagi|siang|sore|malam/)) {
-                botResponse = {
-                    ...botResponse,
-                    content: 'Halo! Ada yang ingin Anda ketahui tentang data SocialImpact hari ini?',
-                };
-            }
+                if (userInput.match(/grafik|bar|chart|omset/)) {
+                    botResponse = {
+                        ...botResponse,
+                        type: 'bar-chart',
+                        content:
+                            'Berikut adalah grafik tren omset UMKM dalam 6 bulan terakhir:',
+                        payload: MOCK_BAR_DATA,
+                    };
+                } else if (userInput.match(/pie|persentase|status/)) {
+                    botResponse = {
+                        ...botResponse,
+                        type: 'pie-chart',
+                        content:
+                            'Ini adalah persentase status penyelesaian survey saat ini:',
+                        payload: MOCK_PIE_DATA,
+                    };
+                } else if (userInput.match(/tabel|data|daftar|desa/)) {
+                    botResponse = {
+                        ...botResponse,
+                        type: 'table',
+                        content:
+                            'Berikut adalah daftar sebagian desa wisata beserta status dan skornya:',
+                        payload: MOCK_TABLE_DATA,
+                    };
+                } else if (userInput.match(/halo|hai|pagi|siang|sore|malam/)) {
+                    botResponse = {
+                        ...botResponse,
+                        content:
+                            'Halo! Ada yang ingin Anda ketahui tentang data SocialImpact hari ini?',
+                    };
+                }
 
-            setMessages((prev) => [...prev, botResponse]);
-            setIsTyping(false);
-        }, 1000 + Math.random() * 1000);
+                setMessages((prev) => [...prev, botResponse]);
+                setIsTyping(false);
+            },
+            1000 + Math.random() * 1000,
+        );
     };
 
     const renderChart = (message: Message) => {
@@ -157,21 +191,52 @@ export default function Chatbot() {
                     <CardContent className="p-4 pt-6">
                         <div className="h-[250px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={message.payload} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EFEFEF" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#7C7C7C' }} />
-                                    <YAxis 
-                                        axisLine={false} 
-                                        tickLine={false} 
+                                <BarChart
+                                    data={message.payload}
+                                    margin={{
+                                        top: 0,
+                                        right: 0,
+                                        left: -20,
+                                        bottom: 0,
+                                    }}
+                                >
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        vertical={false}
+                                        stroke="#EFEFEF"
+                                    />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
                                         tick={{ fontSize: 12, fill: '#7C7C7C' }}
-                                        tickFormatter={(val) => `Rp${val / 1000000}M`}
                                     />
-                                    <Tooltip 
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: '#7C7C7C' }}
+                                        tickFormatter={(val) =>
+                                            `Rp${val / 1000000}M`
+                                        }
+                                    />
+                                    <Tooltip
                                         cursor={{ fill: '#F8FBFE' }}
-                                        formatter={(value: number) => [`Rp ${new Intl.NumberFormat('id-ID').format(value)}`, 'Omset']}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 14px rgba(3,17,32,0.08)' }}
+                                        formatter={(value: number) => [
+                                            `Rp ${new Intl.NumberFormat('id-ID').format(value)}`,
+                                            'Omset',
+                                        ]}
+                                        contentStyle={{
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            boxShadow:
+                                                '0 4px 14px rgba(3,17,32,0.08)',
+                                        }}
                                     />
-                                    <Bar dataKey="omset" fill="#0066AE" radius={[4, 4, 0, 0]} />
+                                    <Bar
+                                        dataKey="omset"
+                                        fill="#0066AE"
+                                        radius={[4, 4, 0, 0]}
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -203,15 +268,31 @@ export default function Chatbot() {
                                         dataKey="value"
                                         stroke="none"
                                     >
-                                        {message.payload.map((entry: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
+                                        {message.payload.map(
+                                            (entry: any, index: number) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={entry.color}
+                                                />
+                                            ),
+                                        )}
                                     </Pie>
-                                    <Tooltip 
-                                        formatter={(value: number) => [`${value}%`, 'Persentase']}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 14px rgba(3,17,32,0.08)' }}
+                                    <Tooltip
+                                        formatter={(value: number) => [
+                                            `${value}%`,
+                                            'Persentase',
+                                        ]}
+                                        contentStyle={{
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            boxShadow:
+                                                '0 4px 14px rgba(3,17,32,0.08)',
+                                        }}
                                     />
-                                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                                    <Legend
+                                        iconType="circle"
+                                        wrapperStyle={{ fontSize: '12px' }}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -234,25 +315,46 @@ export default function Chatbot() {
                             <table className="w-full text-left text-sm">
                                 <thead className="border-b border-[#EFEFEF] bg-[#F7F7F7]">
                                     <tr>
-                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">Nama Desa</th>
-                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">Provinsi</th>
-                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">Status</th>
-                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">Skor</th>
+                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">
+                                            Nama Desa
+                                        </th>
+                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">
+                                            Provinsi
+                                        </th>
+                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">
+                                            Status
+                                        </th>
+                                        <th className="px-4 py-2 text-xs font-semibold text-[#7C7C7C]">
+                                            Skor
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#EFEFEF]">
                                     {message.payload.map((row: any) => (
-                                        <tr key={row.id} className="hover:bg-[#F8FBFE]">
-                                            <td className="px-4 py-2 font-medium text-[#303030]">{row.desa}</td>
-                                            <td className="px-4 py-2 text-[#7C7C7C]">{row.provinsi}</td>
+                                        <tr
+                                            key={row.id}
+                                            className="hover:bg-[#F8FBFE]"
+                                        >
+                                            <td className="px-4 py-2 font-medium text-[#303030]">
+                                                {row.desa}
+                                            </td>
+                                            <td className="px-4 py-2 text-[#7C7C7C]">
+                                                {row.provinsi}
+                                            </td>
                                             <td className="px-4 py-2">
-                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                                    row.status === 'Aktif' ? 'bg-[#EAF8F0] text-[#00893D]' : 'bg-[#F1F5F8] text-[#7C7C7C]'
-                                                }`}>
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                                        row.status === 'Aktif'
+                                                            ? 'bg-[#EAF8F0] text-[#00893D]'
+                                                            : 'bg-[#F1F5F8] text-[#7C7C7C]'
+                                                    }`}
+                                                >
                                                     {row.status}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-2 font-bold text-[#0066AE]">{row.score}</td>
+                                            <td className="px-4 py-2 font-bold text-[#0066AE]">
+                                                {row.score}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -280,7 +382,10 @@ export default function Chatbot() {
                 {/* Header */}
                 <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#EFEFEF] bg-white px-4 shadow-sm sm:px-6">
                     <div className="flex items-center gap-3">
-                        <Link href="/dashboard" className="flex size-8 items-center justify-center rounded-lg text-[#7C7C7C] hover:bg-[#F1F5F8]">
+                        <Link
+                            href="/dashboard"
+                            className="flex size-8 items-center justify-center rounded-lg text-[#7C7C7C] hover:bg-[#F1F5F8]"
+                        >
                             <ArrowLeft className="size-5" />
                         </Link>
                         <div className="flex items-center gap-3">
@@ -293,7 +398,9 @@ export default function Chatbot() {
                                 <span className="absolute right-0 bottom-0 size-3 rounded-full border-2 border-white bg-[#00893D]"></span>
                             </div>
                             <div>
-                                <h1 className="text-sm font-bold text-[#303030]">SocialImpact Bot</h1>
+                                <h1 className="text-sm font-bold text-[#303030]">
+                                    SocialImpact Bot
+                                </h1>
                                 <p className="text-xs text-[#00893D]">Online</p>
                             </div>
                         </div>
@@ -304,7 +411,7 @@ export default function Chatbot() {
                 </header>
 
                 {/* Chat Area */}
-                <div 
+                <div
                     ref={scrollAreaRef}
                     className="flex-1 overflow-y-auto p-4 sm:p-6"
                 >
@@ -314,26 +421,49 @@ export default function Chatbot() {
                             <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0066AE] to-[#2FA6FC] text-white shadow-lg">
                                 <Bot className="size-8" />
                             </div>
-                            <h2 className="text-xl font-bold text-[#303030]">Tanya Asisten AI</h2>
+                            <h2 className="text-xl font-bold text-[#303030]">
+                                Tanya Asisten AI
+                            </h2>
                             <p className="mt-2 max-w-md text-sm text-[#7C7C7C]">
-                                Dapatkan data real-time, grafik tren, dan laporan program CSR Desa Wisata BCA melalui percakapan.
+                                Dapatkan data real-time, grafik tren, dan
+                                laporan program CSR Desa Wisata BCA melalui
+                                percakapan.
                             </p>
-                            
+
                             <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                <button 
-                                    onClick={() => { setInput('Tampilkan grafik omset UMKM'); document.getElementById('chat-input')?.focus(); }}
+                                <button
+                                    onClick={() => {
+                                        setInput('Tampilkan grafik omset UMKM');
+                                        document
+                                            .getElementById('chat-input')
+                                            ?.focus();
+                                    }}
                                     className="rounded-lg border border-[#EFEFEF] bg-white p-3 text-xs font-semibold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
                                 >
                                     📊 Grafik Tren Omset
                                 </button>
-                                <button 
-                                    onClick={() => { setInput('Bagaimana persentase status survey?'); document.getElementById('chat-input')?.focus(); }}
+                                <button
+                                    onClick={() => {
+                                        setInput(
+                                            'Bagaimana persentase status survey?',
+                                        );
+                                        document
+                                            .getElementById('chat-input')
+                                            ?.focus();
+                                    }}
                                     className="rounded-lg border border-[#EFEFEF] bg-white p-3 text-xs font-semibold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
                                 >
                                     🥧 Status Survey
                                 </button>
-                                <button 
-                                    onClick={() => { setInput('Tampilkan data tabel desa wisata'); document.getElementById('chat-input')?.focus(); }}
+                                <button
+                                    onClick={() => {
+                                        setInput(
+                                            'Tampilkan data tabel desa wisata',
+                                        );
+                                        document
+                                            .getElementById('chat-input')
+                                            ?.focus();
+                                    }}
                                     className="rounded-lg border border-[#EFEFEF] bg-white p-3 text-xs font-semibold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
                                 >
                                     📋 Tabel Data Desa
@@ -343,8 +473,8 @@ export default function Chatbot() {
 
                         {/* Messages */}
                         {messages.map((message) => (
-                            <div 
-                                key={message.id} 
+                            <div
+                                key={message.id}
                                 className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
                             >
                                 <Avatar className="mt-1 size-8 shrink-0 border border-[#EFEFEF]">
@@ -359,30 +489,39 @@ export default function Chatbot() {
                                     )}
                                 </Avatar>
 
-                                <div className={`flex max-w-[85%] flex-col gap-1 sm:max-w-[75%] ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                <div
+                                    className={`flex max-w-[85%] flex-col gap-1 sm:max-w-[75%] ${message.role === 'user' ? 'items-end' : 'items-start'}`}
+                                >
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-semibold text-[#303030]">
-                                            {message.role === 'user' ? 'Anda' : 'SocialImpact Bot'}
+                                            {message.role === 'user'
+                                                ? 'Anda'
+                                                : 'SocialImpact Bot'}
                                         </span>
                                         <span className="text-[10px] text-[#A0A0A0]">
                                             {formatTime(message.timestamp)}
                                         </span>
                                     </div>
-                                    
-                                    <div className={`rounded-2xl px-4 py-2.5 text-sm ${
-                                        message.role === 'user' 
-                                            ? 'rounded-tr-sm bg-[#0066AE] text-white' 
-                                            : 'rounded-tl-sm border border-[#EFEFEF] bg-white text-[#303030] shadow-sm'
-                                    }`}>
-                                        <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+
+                                    <div
+                                        className={`rounded-2xl px-4 py-2.5 text-sm ${
+                                            message.role === 'user'
+                                                ? 'rounded-tr-sm bg-[#0066AE] text-white'
+                                                : 'rounded-tl-sm border border-[#EFEFEF] bg-white text-[#303030] shadow-sm'
+                                        }`}
+                                    >
+                                        <p className="leading-relaxed whitespace-pre-wrap">
+                                            {message.content}
+                                        </p>
                                     </div>
 
                                     {/* Rich Content (Charts/Tables) */}
-                                    {message.role === 'bot' && message.type !== 'text' && (
-                                        <div className="w-full max-w-2xl mt-1">
-                                            {renderChart(message)}
-                                        </div>
-                                    )}
+                                    {message.role === 'bot' &&
+                                        message.type !== 'text' && (
+                                            <div className="mt-1 w-full max-w-2xl">
+                                                {renderChart(message)}
+                                            </div>
+                                        )}
                                 </div>
                             </div>
                         ))}
@@ -398,9 +537,24 @@ export default function Chatbot() {
                                 <div className="flex items-end gap-1">
                                     <div className="flex items-center rounded-2xl rounded-tl-sm border border-[#EFEFEF] bg-white px-4 py-3 shadow-sm">
                                         <div className="flex gap-1">
-                                            <span className="size-1.5 animate-bounce rounded-full bg-[#A0A0A0]" style={{ animationDelay: '0ms' }}></span>
-                                            <span className="size-1.5 animate-bounce rounded-full bg-[#A0A0A0]" style={{ animationDelay: '150ms' }}></span>
-                                            <span className="size-1.5 animate-bounce rounded-full bg-[#A0A0A0]" style={{ animationDelay: '300ms' }}></span>
+                                            <span
+                                                className="size-1.5 animate-bounce rounded-full bg-[#A0A0A0]"
+                                                style={{
+                                                    animationDelay: '0ms',
+                                                }}
+                                            ></span>
+                                            <span
+                                                className="size-1.5 animate-bounce rounded-full bg-[#A0A0A0]"
+                                                style={{
+                                                    animationDelay: '150ms',
+                                                }}
+                                            ></span>
+                                            <span
+                                                className="size-1.5 animate-bounce rounded-full bg-[#A0A0A0]"
+                                                style={{
+                                                    animationDelay: '300ms',
+                                                }}
+                                            ></span>
                                         </div>
                                     </div>
                                 </div>
@@ -412,11 +566,11 @@ export default function Chatbot() {
                 {/* Input Area */}
                 <div className="shrink-0 bg-white p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] sm:px-6">
                     <div className="mx-auto max-w-4xl">
-                        <form 
+                        <form
                             onSubmit={handleSend}
                             className="relative flex items-end gap-2 rounded-2xl border border-[#DCE7F1] bg-[#F8FBFE] p-1.5 transition-colors focus-within:border-[#0066AE] focus-within:bg-white"
                         >
-                            <Input 
+                            <Input
                                 id="chat-input"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
@@ -425,16 +579,17 @@ export default function Chatbot() {
                                 disabled={isTyping}
                                 autoComplete="off"
                             />
-                            <Button 
-                                type="submit" 
+                            <Button
+                                type="submit"
                                 disabled={!input.trim() || isTyping}
-                                className="mb-0.5 mr-0.5 size-10 shrink-0 rounded-xl bg-[#0066AE] p-0 text-white hover:bg-[#093967] disabled:bg-[#DDE4EC] disabled:text-[#A0A0A0]"
+                                className="mr-0.5 mb-0.5 size-10 shrink-0 rounded-xl bg-[#0066AE] p-0 text-white hover:bg-[#093967] disabled:bg-[#DDE4EC] disabled:text-[#A0A0A0]"
                             >
                                 <Send className="size-4" />
                             </Button>
                         </form>
                         <p className="mt-2 text-center text-[10px] text-[#A0A0A0]">
-                            Chatbot ini adalah simulasi. Data yang ditampilkan hanyalah mock data.
+                            Chatbot ini adalah simulasi. Data yang ditampilkan
+                            hanyalah mock data.
                         </p>
                     </div>
                 </div>
