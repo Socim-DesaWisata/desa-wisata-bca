@@ -89,12 +89,12 @@ class VillageSurveyAssignmentService
                 'village:id,code,name,city,province',
                 'template:id,title,status',
                 'template.questions' => fn ($query) => $query
-                    ->select(['id', 'survey_template_id'])
+                    ->select(['id', 'survey_template_id', 'aspect'])
                     ->with(['options:id,survey_question_id,score']),
                 'assignedBy:id,name,email',
                 'submittedBy:id,name,email',
                 'reviewedBy:id,name,email',
-                'answers:id,village_survey_assignment_id,score',
+                'answers:id,village_survey_assignment_id,score,aspect_snapshot',
             ])
             ->selectRaw('COALESCE(template_scores.max_score, 0) as sortable_max_score')
             ->withCount(['answers', 'documents'])
@@ -128,6 +128,26 @@ class VillageSurveyAssignmentService
                 fn ($query) => $query->orderByRaw('(CASE WHEN COALESCE(sortable_max_score, 0) > 0 THEN (COALESCE(total_answer_score, 0) * 100.0 / sortable_max_score) ELSE 0 END) '.$normalizedFilters['sort_direction'])
                     ->latest('village_survey_assignments.updated_at')
                     ->orderByDesc('village_survey_assignments.id'),
+            )
+            ->when(Str::startsWith($normalizedFilters['sort_by'], 'aspect:'), function ($query) use ($normalizedFilters) {
+                $aspect = substr($normalizedFilters['sort_by'], 7);
+                return $query->withSum(['answers as sortable_aspect_score' => function ($q) use ($aspect) {
+                    $q->where('aspect_snapshot', $aspect);
+                }], 'score')->orderBy('sortable_aspect_score', $normalizedFilters['sort_direction'])
+                    ->latest('village_survey_assignments.updated_at')
+                    ->orderByDesc('village_survey_assignments.id');
+            })
+            ->when($normalizedFilters['sort_by'] === 'name',
+                fn ($query) => $query->whereHas('village', function ($q) use ($normalizedFilters) {
+                    $q->orderBy('name', $normalizedFilters['sort_direction']);
+                })->orderByDesc('village_survey_assignments.id')
+            )
+            ->when($normalizedFilters['sort_by'] === 'completion',
+                fn ($query) => $query->orderBy('answers_count', $normalizedFilters['sort_direction'])
+                    ->latest('village_survey_assignments.updated_at')
+                    ->orderByDesc('village_survey_assignments.id')
+            )
+            ->when(! in_array($normalizedFilters['sort_by'], ['total_score', 'name', 'completion']) && ! Str::startsWith($normalizedFilters['sort_by'], 'aspect:'),
                 fn ($query) => $query->latest('village_survey_assignments.updated_at')
             )
             ->paginate($normalizedFilters['per_page'])
@@ -1317,9 +1337,47 @@ class VillageSurveyAssignmentService
             'updated_at' => $this->formatDate($assignment->updated_at),
             'is_trashed' => $assignment->trashed(),
             'total_score' => $this->assignmentFinalScore($assignment),
+            'aspect_scores' => $this->assignmentAspectScores($assignment),
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
         ];
+    }
+
+    private function assignmentAspectScores(VillageSurveyAssignment $assignment): array
+    {
+        if (! $assignment->relationLoaded('answers') || ! $assignment->relationLoaded('template')) {
+            return [];
+        }
+
+        $questions = $assignment->template?->questions ?? collect();
+        if ($questions->isEmpty()) {
+            return [];
+        }
+
+        $maxScoresByAspect = $questions->groupBy('aspect')->map(function ($aspectQuestions) {
+            return $aspectQuestions->sum(fn ($q) => $q->options->max('score') ?? 0);
+        });
+
+        $answersByAspect = $assignment->answers->groupBy('aspect_snapshot');
+
+        $result = [];
+        foreach ($maxScoresByAspect as $aspect => $maxScore) {
+            $totalAspectScore = 0;
+            if ($answersByAspect->has($aspect)) {
+                $totalAspectScore = $answersByAspect->get($aspect)->sum('score');
+            }
+            
+            $percent = $maxScore > 0 ? round(($totalAspectScore / $maxScore) * 100, 1) : 0;
+            
+            $result[] = [
+                'aspect' => $aspect,
+                'score' => $percent,
+                'max_score' => $maxScore,
+                'raw_score' => $totalAspectScore,
+            ];
+        }
+
+        return $result;
     }
 
     private function assignmentFinalScore(VillageSurveyAssignment $assignment): float

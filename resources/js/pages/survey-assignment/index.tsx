@@ -11,7 +11,7 @@ import {
     Search,
     Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -39,6 +39,8 @@ import {
     store as storeSurveyAssignment,
     takeSurvey,
 } from '@/routes/survey-assignments';
+import { SurveyAspectList } from '@/components/survey-aspect-list';
+import { SortDropdown } from '@/components/sort-dropdown';
 
 type StatCard = {
     label: string;
@@ -74,6 +76,7 @@ type AssignmentRow = {
     updated_at: string;
     is_trashed: boolean;
     total_score: number;
+    aspect_scores?: { aspect: string; score: number; max_score: number; raw_score: number }[];
     answers_count: number;
     documents_count: number;
 };
@@ -224,6 +227,18 @@ export default function SurveyAssignmentIndex({
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm<AssignmentForm>(defaultForm);
 
+    const availableAspects = useMemo(() => {
+        const aspects = new Set<string>();
+        for (const assignment of assignments.data) {
+            if (assignment.aspect_scores) {
+                for (const aspect of assignment.aspect_scores) {
+                    aspects.add(aspect.aspect);
+                }
+            }
+        }
+        return Array.from(aspects);
+    }, [assignments.data]);
+
     function filterQuery(overrides: Partial<typeof filterForm> = {}) {
         const next = { ...filterForm, ...overrides };
 
@@ -273,35 +288,21 @@ export default function SurveyAssignmentIndex({
         });
     }
 
-    function toggleScoreSort() {
-        const sort_direction =
-            filterForm.sort_by === 'total_score' &&
-            filterForm.sort_direction === 'desc'
-                ? 'asc'
-                : 'desc';
-
+    function handleSort(sort_by: string, sort_direction: string) {
         setFilterForm((current) => ({
             ...current,
-            sort_by: 'total_score',
+            sort_by,
             sort_direction,
         }));
 
         router.get(
             surveyAssignments.url(),
-            filterQuery({ sort_by: 'total_score', sort_direction }),
+            filterQuery({ sort_by, sort_direction }),
             {
                 preserveState: true,
                 preserveScroll: true,
             },
         );
-    }
-
-    function scoreSortLabel() {
-        if (filterForm.sort_by !== 'total_score') {
-            return '↕';
-        }
-
-        return filterForm.sort_direction === 'asc' ? '↑' : '↓';
     }
     function handleDelete(assignment: AssignmentRow) {
         if (
@@ -606,214 +607,135 @@ export default function SurveyAssignmentIndex({
                         </div>
                     </form>
 
-                    <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
-                        <div className="border-b border-[#EFEFEF] px-5 py-4">
-                            <h2 className="text-lg font-bold text-[#303030]">
-                                Daftar Survey Assignment
-                            </h2>
-                            <p className="mt-0.5 text-sm text-[#7C7C7C]">
-                                Ringkasan assignment survey desa wisata dan
-                                progress pengisiannya.
-                            </p>
-                        </div>
+                    <div className="mb-4">
+                        <SortDropdown
+                            currentSort={filterForm.sort_by}
+                            currentDirection={filterForm.sort_direction}
+                            onSort={handleSort}
+                            aspects={availableAspects}
+                        />
+                    </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-                                <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
-                                    <tr>
-                                        {[
-                                            'ID',
-                                            'Desa',
-                                            'Status',
-                                            'Created At',
-                                            'Total Skor',
-                                            'Progress',
-                                            'Aksi',
-                                        ].map((head) => (
-                                            <th
-                                                key={head}
-                                                className={
-                                                    head === 'Total Skor'
-                                                        ? 'bg-[#EAF3FF] px-5 py-4 text-center text-sm font-bold whitespace-nowrap text-[#0066AE]'
-                                                        : 'px-3 py-3 font-bold whitespace-nowrap'
-                                                }
-                                            >
-                                                {head === 'Total Skor' ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={
-                                                            toggleScoreSort
-                                                        }
-                                                        className="inline-flex items-center justify-center gap-1 font-bold text-[#0066AE]"
-                                                    >
-                                                        {head}
-                                                        <span aria-hidden="true">
-                                                            {scoreSortLabel()}
-                                                        </span>
-                                                    </button>
-                                                ) : (
-                                                    head
-                                                )}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[#EFEFEF]">
-                                    {assignments.data.map((assignment) => (
-                                        <tr
-                                            key={assignment.id}
-                                            className="hover:bg-[#FAFCFF]"
-                                        >
-                                            <td className="px-3 py-3 font-bold text-[#0066AE]">
-                                                {isEnumerator
-                                                    ? `#${assignment.id}`
-                                                    : (assignment.code ??
-                                                      `#${assignment.id}`)}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-bold text-[#303030]">
+                    <div className="flex flex-col gap-4">
+                        {assignments.data.map((assignment) => (
+                            <section
+                                key={assignment.id}
+                                className="group relative overflow-hidden rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_16px_rgba(3,17,32,0.04)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(3,17,32,0.08)]"
+                            >
+                                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                                    {/* Left: Village Details */}
+                                    <div className="flex flex-1 flex-col gap-4">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    <span className="inline-flex items-center rounded bg-[#F1F5F8] px-2 py-0.5 text-xs font-bold text-[#0066AE]">
+                                                        {isEnumerator ? `#${assignment.id}` : (assignment.code ?? `#${assignment.id}`)}
+                                                    </span>
+                                                    <Badge className={statusClass(assignment.status)}>
+                                                        {assignment.status_label}
+                                                    </Badge>
+                                                </div>
+                                                <h3 className="text-lg font-black text-[#303030] group-hover:text-[#0066AE] transition-colors">
                                                     {assignment.village_name}
-                                                </span>
-                                                <span className="block text-[12px] leading-4 text-[#7C7C7C]">
-                                                    {
-                                                        assignment.village_location
-                                                    }
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <Badge
-                                                    className={statusClass(
-                                                        assignment.status,
+                                                </h3>
+                                                <p className="mt-0.5 text-[13px] font-medium text-[#7C7C7C]">
+                                                    {assignment.village_location}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-4 text-xs">
+                                            <div className="flex items-center gap-1.5 text-[#667085]">
+                                                <span className="font-semibold">Diperbarui:</span>
+                                                <span>{assignment.updated_at}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-[#667085]">
+                                                <span className="font-semibold">Dibuat:</span>
+                                                <span>{assignment.created_at}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Middle: Survey Aspects */}
+                                    <div className="w-full lg:w-[380px] shrink-0">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-[13px] font-bold text-[#303030]">Aspek Survey</span>
+                                            <span className="text-[12px] font-semibold text-[#0066AE] bg-[#EAF7FF] px-2 py-0.5 rounded-full">
+                                                {assignment.answers_count} Jawaban
+                                            </span>
+                                        </div>
+                                        <SurveyAspectList aspects={assignment.aspect_scores || []} />
+                                    </div>
+
+                                    {/* Right: Score & Actions */}
+                                    <div className="flex flex-row items-center justify-between gap-4 border-t border-[#EFEFEF] pt-4 lg:w-[200px] lg:shrink-0 lg:flex-col lg:items-end lg:justify-start lg:border-t-0 lg:border-l lg:pl-5 lg:pt-0">
+                                        <div className="flex flex-col lg:items-end">
+                                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#7C7C7C]">Total Skor</span>
+                                            <div className="mt-1 text-3xl font-black text-[#0066AE]">
+                                                {assignment.total_score.toFixed(1)}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 w-full mt-auto">
+                                            <button
+                                                onClick={() => openAccessModal(assignment, 'take-survey')}
+                                                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#0066AE] px-3 py-2 text-xs font-bold text-white shadow-[0_4px_10px_rgba(0,102,174,0.18)] transition-all hover:bg-[#093967] active:scale-95"
+                                            >
+                                                <ClipboardList className="size-4" />
+                                                Isi Survey
+                                            </button>
+                                            
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#DDE4EC] bg-white text-[#667085] hover:bg-[#F8FAFC] active:scale-95 transition-all">
+                                                        <MoreHorizontal className="size-4" />
+                                                    </button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]">
+                                                    <DropdownMenuItem className="gap-2 text-xs" onSelect={(e) => { e.preventDefault(); openAccessModal(assignment, 'detail'); }}>
+                                                        <Eye className="size-4 text-[#303030]" />
+                                                        Lihat Detail
+                                                    </DropdownMenuItem>
+                                                    {!isEnumerator && (
+                                                        <>
+                                                            <DropdownMenuSeparator />
+                                                            {assignment.is_trashed ? (
+                                                                <DropdownMenuItem className="gap-2 text-xs font-bold text-[#00893D]" onSelect={(e) => { e.preventDefault(); handleRestore(assignment); }}>
+                                                                    <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                    Pulihkan Assignment
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem className="gap-2 text-xs font-bold text-[#D81313]" onSelect={(e) => { e.preventDefault(); handleDelete(assignment); }}>
+                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                    Hapus Assignment
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                        </>
                                                     )}
-                                                >
-                                                    {assignment.status_label}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.created_at}
-                                            </td>
-                                            <td className="bg-[#F8FBFE] px-5 py-4 text-center text-sm font-black text-[#0066AE]">
-                                                {assignment.total_score.toFixed(
-                                                    1,
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-bold text-[#0066AE]">
-                                                    {assignment.answers_count}{' '}
-                                                    jawaban
-                                                </span>
-                                                <span className="block text-[12px] text-[#7C7C7C]">
-                                                    {assignment.documents_count}{' '}
-                                                    dokumen
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
-                                                            <MoreHorizontal className="size-4" />
-                                                        </button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            className="gap-2 text-xs"
-                                                            onSelect={(
-                                                                event,
-                                                            ) => {
-                                                                event.preventDefault();
-                                                                openAccessModal(
-                                                                    assignment,
-                                                                    'detail',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <Eye className="size-4 text-[#303030]" />
-                                                            Lihat Detail
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="gap-2 text-xs"
-                                                            onSelect={(
-                                                                event,
-                                                            ) => {
-                                                                event.preventDefault();
-                                                                openAccessModal(
-                                                                    assignment,
-                                                                    'take-survey',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <ClipboardList className="size-4 text-[#303030]" />
-                                                            Take Survey
-                                                        </DropdownMenuItem>
-                                                        {!isEnumerator && (
-                                                            <>
-                                                                <DropdownMenuSeparator />
-                                                                {assignment.is_trashed ? (
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                        onSelect={(
-                                                                            event,
-                                                                        ) => {
-                                                                            event.preventDefault();
-                                                                            handleRestore(
-                                                                                assignment,
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <ClipboardCheck className="size-4 text-[#00893D]" />
-                                                                        Pulihkan
-                                                                        Assignment
-                                                                    </DropdownMenuItem>
-                                                                ) : (
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                        onSelect={(
-                                                                            event,
-                                                                        ) => {
-                                                                            event.preventDefault();
-                                                                            handleDelete(
-                                                                                assignment,
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <Trash2 className="size-4 text-[#D81313]" />
-                                                                        Hapus
-                                                                        Assignment
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        ))}
 
                         {assignments.data.length === 0 && (
-                            <div className="flex flex-col items-center px-6 py-14 text-center">
-                                <span className="flex size-14 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
-                                    <ClipboardCheck className="size-7" />
+                            <div className="flex flex-col items-center rounded-xl border border-[#EFEFEF] bg-white px-6 py-14 text-center shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
+                                <span className="flex size-16 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                                    <ClipboardCheck className="size-8" />
                                 </span>
-                                <h3 className="mt-4 text-lg font-bold text-[#303030]">
+                                <h3 className="mt-5 text-lg font-bold text-[#303030]">
                                     Belum ada survey assignment
                                 </h3>
-                                <p className="mt-1 max-w-md text-sm leading-5 text-[#7C7C7C]">
-                                    Assignment survey desa yang dibuat akan
-                                    muncul di halaman ini.
+                                <p className="mt-1.5 max-w-md text-sm leading-5 text-[#7C7C7C]">
+                                    Assignment survey desa yang dibuat akan muncul di sini.
                                 </p>
                                 {!isEnumerator && (
                                     <button
                                         type="button"
                                         onClick={openCreateModal}
-                                        className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                        className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_14px_rgba(0,102,174,0.18)] hover:bg-[#093967] transition-all"
                                     >
                                         <Plus className="size-4" />
                                         Tambah Assignment
@@ -821,8 +743,9 @@ export default function SurveyAssignmentIndex({
                                 )}
                             </div>
                         )}
+                    </div>
 
-                        <div className="flex flex-col gap-3 border-t border-[#EFEFEF] px-5 py-4 text-sm text-[#303030] lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex flex-col gap-3 rounded-xl border border-[#EFEFEF] bg-white px-5 py-4 text-sm text-[#303030] lg:flex-row lg:items-center lg:justify-between shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
                             <span>
                                 Menampilkan {assignments.from ?? 0}-
                                 {assignments.to ?? 0} dari {assignments.total}{' '}
@@ -871,7 +794,6 @@ export default function SurveyAssignmentIndex({
                                 </div>
                             </div>
                         </div>
-                    </section>
                 </div>
             </main>
 
