@@ -1092,5 +1092,3 @@ function TakeSurveyContent({
         </>
     );
 }
-
-TakeSurvey.layout = null;

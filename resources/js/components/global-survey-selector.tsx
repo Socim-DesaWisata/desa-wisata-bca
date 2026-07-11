@@ -26,35 +26,49 @@ export function GlobalSurveySelector() {
 
     useEffect(() => {
         let isMounted = true;
-        if (desaList.length === 0) {
-            setLoadingDesa(true);
-            fetch('/api/dashboard/desa')
-                .then((res) => res.json())
-                .then((res) => {
-                    if (!res.ok) {
-                        throw new Error(`Dashboard desa request failed: ${res.status}`);
-                    }
+        setLoadingDesa(true);
+        fetch('/api/dashboard/desa')
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error(
+                        `Dashboard desa request failed: ${response.status}`,
+                    );
+                }
 
-                    return res.json();
-                })
-                .then((payload: unknown) => {
-                    const data = Array.isArray(payload)
-                        ? payload
-                        : payload &&
-                            typeof payload === 'object' &&
-                            Array.isArray((payload as { data?: unknown }).data)
-                          ? (payload as { data: unknown[] }).data
-                          : [];
+                return response.json() as Promise<unknown>;
+            })
+            .then((payload: unknown) => {
+                const rows = Array.isArray(payload)
+                    ? payload
+                    : payload &&
+                        typeof payload === 'object' &&
+                        Array.isArray((payload as { data?: unknown }).data)
+                      ? (payload as { data: unknown[] }).data
+                      : [];
+                const uniqueDesa = Array.from(
+                    new Map(
+                        rows
+                            .filter(
+                                (row): row is Desa =>
+                                    typeof row === 'object' &&
+                                    row !== null &&
+                                    typeof (row as Desa).code === 'string' &&
+                                    typeof (row as Desa).name === 'string',
+                            )
+                            .map((row) => [row.code, row]),
+                    ).values(),
+                );
 
-                    if (isMounted) {
-                        setDesaList(data as Desa[]);
-                        setLoadingDesa(false);
-                    }
-                })
-                .catch(() => {
-                    if (isMounted) setLoadingDesa(false);
-                });
-        }
+                if (isMounted) {
+                    setDesaList(uniqueDesa);
+                }
+            })
+            .catch(() => {
+                if (isMounted) setDesaList([]);
+            })
+            .finally(() => {
+                if (isMounted) setLoadingDesa(false);
+            });
         return () => {
             isMounted = false;
         };
