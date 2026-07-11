@@ -1,10 +1,15 @@
 <?php
 
+use App\Models\PariwisataSurveyAnswer;
+use App\Models\PariwisataSurveyQuestion;
+use App\Models\PariwisataSuveyOption;
+use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
 use App\Models\User;
 use App\Models\VillageMedia;
 use App\Models\VillageProfileItem;
 use App\Models\VillageProfileItemCategory;
+use App\Models\VillageSurveyAssignment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -22,6 +27,65 @@ test('authenticated users can view villages from database', function () {
         ->assertInertia(fn ($page) => $page
             ->component('villages/index')
             ->where('villages.data.0.name', $village->name)
+        );
+});
+
+test('village detail exposes ISTC aspect scores and assignment code', function () {
+    $user = User::factory()->create();
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignmentTemplate = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'status' => 'published',
+    ]);
+    $istcTemplate = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'type' => 'pariwisata',
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'KPT',
+        'village_id' => $village->id,
+        'survey_template_id' => $assignmentTemplate->id,
+        'assigned_by' => $user->id,
+    ]);
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $istcTemplate->id,
+        'category_code' => 'A',
+        'category_name' => 'Amenitas',
+        'criteria_code' => 'A.1',
+        'criteria_name' => 'Kriteria',
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Indikator',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 1,
+    ]);
+    PariwisataSurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $question->id,
+        'pariwisata_suvey_option_id' => $option->id,
+        'score' => 4,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('villages.show', $village))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('village.survey_assignment.code', 'KPT')
+            ->where('village.istc_aspect_scores.0.name', 'Amenitas')
+            ->where('village.istc_aspect_scores.0.score', 4)
+            ->where('village.istc_aspect_scores.0.max_score', 4)
         );
 });
 

@@ -19,7 +19,7 @@ class IndexUserRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:150'],
-            'role' => ['nullable', 'string', Rule::in(['admin', 'enumerator'])],
+            'role' => ['nullable', 'string', Rule::in(['admin', 'enumerator', 'viewer'])],
             'status' => ['nullable', 'string', Rule::in(['active', 'inactive', 'pending'])],
             'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
         ];

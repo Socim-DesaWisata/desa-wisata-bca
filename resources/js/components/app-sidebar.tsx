@@ -37,7 +37,7 @@ type SidebarNavItem = NavItem & {
     badge?: string;
     warning?: boolean;
     children?: Array<Pick<NavItem, 'title' | 'href' | 'icon'>>;
-    roles?: Array<'admin' | 'enumerator'>;
+    roles?: Array<'admin' | 'enumerator' | 'viewer'>;
 };
 
 type SidebarNavGroup = {
@@ -58,7 +58,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Desa',
                 href: villages(),
                 icon: MapPinned,
-                roles: ['admin'],
+                roles: ['admin', 'viewer'],
             },
         ],
     },
@@ -69,7 +69,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Laporan',
                 href: '#',
                 icon: BarChart3,
-                roles: ['admin'],
+                roles: ['admin', 'viewer'],
                 children: [
                     {
                         title: 'KEMENPAR',
@@ -90,7 +90,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Survey Assignment',
                 href: surveyAssignments(),
                 icon: ClipboardCheck,
-                roles: ['enumerator'],
+                roles: ['enumerator', 'viewer'],
             },
         ],
     },
@@ -125,7 +125,7 @@ export function AdminSidebarContent({
     const { auth } = usePage().props;
     const { isCurrentOrParentUrl, isCurrentUrl } = useCurrentUrl();
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-    const userRole = auth.user?.role === 'admin' ? 'admin' : 'enumerator';
+    const userRole = auth.user?.role === 'admin' ? 'admin' : auth.user?.role === 'viewer' ? 'viewer' : 'enumerator';
     const visibleNavGroups = navGroups
         .map((group) => ({
             ...group,

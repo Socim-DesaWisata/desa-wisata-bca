@@ -151,7 +151,9 @@ function Badge({
 function roleClass(role: string) {
     return role === 'admin'
         ? 'bg-[#EAF3FF] text-[#0066AE]'
-        : 'bg-[#E8FAFA] text-[#0B7778]';
+        : role === 'viewer'
+          ? 'bg-[#F1F5F8] text-[#5B6B7A]'
+          : 'bg-[#E8FAFA] text-[#0B7778]';
 }
 
 function statusClass(status: string) {
@@ -165,7 +167,9 @@ function statusClass(status: string) {
 function avatarClass(role: string) {
     return role === 'admin'
         ? 'bg-[#DDEBFF] text-[#0066AE]'
-        : 'bg-[#DDF8F9] text-[#0B7778]';
+        : role === 'viewer'
+          ? 'bg-[#E8EDF2] text-[#5B6B7A]'
+          : 'bg-[#DDF8F9] text-[#0B7778]';
 }
 
 function errorText(error?: string) {

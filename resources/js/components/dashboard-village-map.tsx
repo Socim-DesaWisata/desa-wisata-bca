@@ -405,18 +405,7 @@ export default function DashboardVillageMap({
                                         : '0'}
                                 </p>
                             </div>
-                            <div className="rounded-2xl border border-[#EFEFEF] bg-white p-4">
-                                <p className="text-xs font-semibold text-[#7C7C7C]">
-                                    Pariwisata
-                                </p>
-                                <p className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[#0066AE]">
-                                    {selectedVillage
-                                        ? formatCount(
-                                              selectedVillage.pariwisata_count,
-                                          )
-                                        : '0'}
-                                </p>
-                            </div>
+
                         </div>
 
                         <div className="rounded-2xl border border-[#EFEFEF] bg-white p-4">

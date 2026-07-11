@@ -1,5 +1,6 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { show as showVillage } from '@/routes/villages';
+import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 import {
     Bed,
     Buildings,
@@ -103,6 +104,7 @@ type KemenparAspectScore = {
     max_score: number;
     score_percent: number;
 };
+type IstcAspectScore = KemenparAspectScore;
 type VillageLinkItem = {
     id: number;
     name: string;
@@ -138,6 +140,8 @@ type VillageShowProps = {
         umkms: UmkmItem[];
         pariwisata: PariwisataItem[];
         kemenpar_aspect_scores: KemenparAspectScore[];
+        istc_aspect_scores: IstcAspectScore[];
+        survey_assignment: { code: string } | null;
     };
     village_options: VillageLinkItem[];
     nearby_villages: VillageLinkItem[];
@@ -686,22 +690,35 @@ function AspectScoreIcon({ className }: { className?: string }) {
     );
 }
 
-function KemenparAspectScoreCard({
+function AspectScoreCard({
+    title,
+    emptyLabel,
     aspects = [],
+    detailHref,
 }: {
+    title: string;
+    emptyLabel: string;
     aspects?: KemenparAspectScore[];
+    detailHref?: string;
 }) {
     return (
-        <SidebarCard
-            title="Skor Per Aspek (Kemenpar)"
-            icon={AspectScoreIcon as unknown as Icon}
-        >
-            <p className="mb-4 text-[12px] leading-5 font-semibold text-[#7C7C7C]">
-                Total skor aktual / skor maksimal per aspek.
-            </p>
+        <SidebarCard title={title} icon={AspectScoreIcon as unknown as Icon}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-[12px] leading-5 font-semibold text-[#7C7C7C]">
+                    Total skor aktual / skor maksimal per aspek.
+                </p>
+                {detailHref ? (
+                    <Link
+                        href={detailHref}
+                        className="shrink-0 text-[11px] font-extrabold text-[#0066AE] hover:text-[#093967]"
+                    >
+                        Lihat Detail
+                    </Link>
+                ) : null}
+            </div>
             {aspects.length === 0 ? (
                 <div className="flex h-40 items-center justify-center rounded-[14px] bg-[#F8FBFE] text-center text-[12px] font-bold text-[#7C7C7C]">
-                    Belum ada data skor Kemenpar
+                    {emptyLabel}
                 </div>
             ) : (
                 <div className="space-y-2.5">
@@ -1097,8 +1114,30 @@ export default function VillageDetail({
                     </div>
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
                         {/* <QrBlock rows={villageInfoRows} villageName={villageName} /> */}
-                        <KemenparAspectScoreCard
+                        <AspectScoreCard
+                            title="Skor Per Aspek (Kemenpar)"
+                            emptyLabel="Belum ada data skor Kemenpar"
                             aspects={village.kemenpar_aspect_scores}
+                            detailHref={
+                                village.survey_assignment
+                                    ? showSurveyAssignment.url(
+                                          village.survey_assignment.code,
+                                      )
+                                    : undefined
+                            }
+                        />
+                        <AspectScoreCard
+                            title="Skor Per Aspek (ISTC)"
+                            emptyLabel="Belum ada data skor ISTC"
+                            aspects={village.istc_aspect_scores}
+                            detailHref={
+                                village.survey_assignment
+                                    ? showSurveyAssignment.url(
+                                          village.survey_assignment.code,
+                                          { query: { tab: 'pariwisata' } },
+                                      )
+                                    : undefined
+                            }
                         />
                         <SidebarCard title="Location Address" icon={MapPin}>
                             <p className="text-[12px] leading-6 font-semibold text-[#303030]">

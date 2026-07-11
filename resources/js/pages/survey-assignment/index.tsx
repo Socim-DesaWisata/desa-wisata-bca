@@ -211,6 +211,7 @@ export default function SurveyAssignmentIndex({
 }: SurveyAssignmentIndexProps) {
     const { auth } = usePage().props;
     const isEnumerator = auth.user?.role === 'enumerator';
+    const isViewer = auth.user?.role === 'viewer';
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false);
     const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<
@@ -232,7 +233,7 @@ export default function SurveyAssignmentIndex({
         sort_by: filters.sort_by ?? '',
         sort_direction: filters.sort_direction ?? '',
     });
-    const canBulkUpdate = !isEnumerator && filterForm.view !== 'trash';
+    const canBulkUpdate = !isEnumerator && !isViewer && filterForm.view !== 'trash';
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm<AssignmentForm>(defaultForm);
     const {
@@ -551,7 +552,7 @@ export default function SurveyAssignmentIndex({
                                     Trash
                                 </button>
                             </div>
-                            {!isEnumerator && filterForm.view !== 'trash' && (
+                            {!isEnumerator && !isViewer && filterForm.view !== 'trash' && (
                                 <button
                                     type="button"
                                     onClick={openCreateModal}
@@ -877,7 +878,7 @@ export default function SurveyAssignmentIndex({
                                                             <ClipboardList className="size-4 text-[#303030]" />
                                                             Take Survey
                                                         </DropdownMenuItem>
-                                                        {!isEnumerator && (
+                                                        {!isEnumerator && !isViewer && (
                                                             <>
                                                                 <DropdownMenuSeparator />
                                                                 {assignment.is_trashed ? (
@@ -936,7 +937,7 @@ export default function SurveyAssignmentIndex({
                                     Assignment survey desa yang dibuat akan
                                     muncul di halaman ini.
                                 </p>
-                                {!isEnumerator && (
+                                {!isEnumerator && !isViewer && (
                                     <button
                                         type="button"
                                         onClick={openCreateModal}

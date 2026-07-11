@@ -97,6 +97,7 @@ class UserService
         return [
             ['value' => 'admin', 'label' => 'Admin'],
             ['value' => 'enumerator', 'label' => 'Enumerator'],
+            ['value' => 'viewer', 'label' => 'Viewer'],
         ];
     }
 
