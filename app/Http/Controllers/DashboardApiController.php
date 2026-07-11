@@ -9,17 +9,12 @@ use Illuminate\Http\Request;
 
 class DashboardApiController extends Controller
 {
-    public function getDesa(Request $request): JsonResponse
+    public function getDesa(): JsonResponse
     {
-        $user = $request->user();
-        
         $assignments = VillageSurveyAssignment::query()
             ->with('village:id,code,name')
-            ->when(!$user->hasRole('admin'), function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
             ->get()
-            ->map(function ($assignment) {
+            ->map(function ($assignment): array {
                 return [
                     'code' => $assignment->code,
                     'name' => $assignment->village ? $assignment->village->name : $assignment->code,
@@ -38,7 +33,7 @@ class DashboardApiController extends Controller
         $pariwisata = PariwisataVillage::where('village_id', $assignment->village_id)
             ->select('id', 'name')
             ->get()
-            ->map(function ($p) {
+            ->map(function ($p): array {
                 return [
                     'id' => $p->id,
                     'name' => $p->name,

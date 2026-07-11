@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     ArrowUpRight,
     ChevronRight,
@@ -10,10 +10,10 @@ import {
     MapPin,
     Store,
     Ticket,
-    Timer,
     TrendingUp,
     X,
     ArrowRight,
+    type LucideIcon,
 } from 'lucide-react';
 
 import {
@@ -29,6 +29,13 @@ import {
     AssessmentRadarChart,
 } from '@/components/dashboard-charts';
 import { DashboardOmsetCharts } from '@/components/dashboard-omset-charts';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 const colors = {
     blue100: '#F1F5F8',
@@ -97,6 +104,19 @@ type TopSurveyRow = {
     aspect_scores?: { aspect: string; score: number }[];
 };
 
+type VillageScoreTableData = {
+    aspects: string[];
+    rows: Array<{
+        id: number;
+        name: string;
+        location: string;
+        url: string;
+        total_score: number;
+        total_max_score: number;
+        aspect_scores: Record<string, { score: number; max_score: number }>;
+    }>;
+};
+
 type VillageMapPoint = {
     id: number;
     code: string;
@@ -117,11 +137,26 @@ type VillageMapPoint = {
     url: string;
 };
 
+type TurnoverDetail = {
+    id: number;
+    name: string;
+    village: string;
+    year: number;
+    value: number;
+};
+
+type TurnoverDetails = {
+    total: number;
+    rows: TurnoverDetail[];
+};
+
 type DashboardProps = {
     dashboard_mode?: 'admin' | 'enumerator';
     kpis?: Kpi[];
     village_map_points?: VillageMapPoint[];
     top_village_surveys?: TopSurveyRow[];
+    kemenpar_village_scores?: VillageScoreTableData;
+    istc_village_scores?: VillageScoreTableData;
     top_umkm_surveys?: TopSurveyRow[];
     top_pariwisata_surveys?: TopSurveyRow[];
     top_umkm_turnovers?: TopSurveyRow[];
@@ -130,6 +165,7 @@ type DashboardProps = {
     recent_assignments?: RecentAssignment[];
     priorities?: Priority[];
     activities?: Activity[];
+    turnover_details?: { umkm: TurnoverDetails; pariwisata: TurnoverDetails };
 };
 
 const kpiIcons = {
@@ -156,49 +192,53 @@ function statusClass(status: string) {
     return 'bg-[#F1F5F8] text-[#0066AE]';
 }
 
-function CurrentTimeCard() {
-    const [mounted, setMounted] = useState(false);
-    const [now, setNow] = useState(() => new Date());
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(value);
+}
 
-    useEffect(() => {
-        setMounted(true);
-        const timer = window.setInterval(() => setNow(new Date()), 1000);
-
-        return () => window.clearInterval(timer);
-    }, []);
-
-    const time = new Intl.DateTimeFormat('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-    }).format(mounted ? now : new Date('2026-06-10T09:17:49'));
-    const date = new Intl.DateTimeFormat('id-ID', {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }).format(mounted ? now : new Date('2026-06-10T09:17:49'));
-
+function TurnoverCard({
+    title,
+    details,
+    icon: Icon,
+    onClick,
+}: {
+    title: string;
+    details: TurnoverDetails;
+    icon: LucideIcon;
+    onClick: () => void;
+}) {
     return (
-        <section className="rounded-xl border border-[#0066AE] bg-[#0066AE] p-3.5 shadow-[0_4px_14px_rgba(0,102,174,0.3)] sm:p-4">
+        <button
+            type="button"
+            onClick={onClick}
+            className="w-full rounded-xl border border-[#EFEFEF] bg-white p-3.5 text-left shadow-[0_4px_14px_rgba(3,17,32,0.06)] transition hover:-translate-y-0.5 hover:border-[#AAD2F8] hover:shadow-[0_6px_18px_rgba(3,17,32,0.1)] sm:p-4"
+        >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-sm leading-5 font-semibold text-[#AAD2F8]">
-                        Jam Sekarang
+                    <p className="flex items-center gap-2 text-sm leading-5 font-bold text-[#303030]">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0066AE] text-white">
+                            <Icon className="size-4" strokeWidth={2} />
+                        </span>
+                        {title}
                     </p>
-                    <p className="mt-2 font-tight text-[22px] leading-7 font-bold tracking-[-0.02em] text-white sm:text-[28px] sm:leading-8">
-                        {time}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-[#EAF3FF]">
-                        {date}
+                    <p className="mt-3 text-[24px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[28px] sm:leading-8">
+                        {formatCurrency(details.total)}
                     </p>
                 </div>
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner sm:size-11">
-                    <Timer className="size-6" strokeWidth={1.9} />
-                </span>
+                <ArrowUpRight
+                    className="size-4 text-[#0066AE]"
+                    strokeWidth={2.2}
+                />
             </div>
-        </section>
+            <div className="mt-4 flex items-center justify-between text-xs">
+                <p className="font-medium text-[#7C7C7C]">Semua tahun</p>
+                <p className="font-bold text-[#0066AE]">Lihat detail</p>
+            </div>
+        </button>
     );
 }
 
@@ -395,22 +435,253 @@ function TopVillageSurveyTable({ rows }: { rows: TopSurveyRow[] }) {
         </Panel>
     );
 }
+
+function VillageScoreTable({
+    title,
+    data,
+    selectedAspects,
+    onToggleAspect,
+    theme,
+}: {
+    title: string;
+    data: VillageScoreTableData;
+    selectedAspects: string[];
+    onToggleAspect: (aspect: string) => void;
+    theme: 'kemenpar' | 'istc';
+}) {
+    const [sortKey, setSortKey] = useState<string>('total');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const visibleAspects = selectedAspects.length
+        ? data.aspects.filter((aspect) => selectedAspects.includes(aspect))
+        : data.aspects;
+    const activeSortKey =
+        sortKey === 'total' || visibleAspects.includes(sortKey)
+            ? sortKey
+            : 'total';
+    const isKemenpar = theme === 'kemenpar';
+    const scoreTone = isKemenpar
+        ? 'bg-[#EAF3FF] text-[#0066AE]'
+        : 'bg-[#EAF8F0] text-[#00893D]';
+    const scoreHoverTone = isKemenpar
+        ? 'hover:bg-[#DCEEFF]'
+        : 'hover:bg-[#DDF3E6]';
+    const sortedRows = [...data.rows].sort((left, right) => {
+        const leftScore =
+            activeSortKey === 'total'
+                ? left.total_score
+                : (left.aspect_scores[activeSortKey]?.score ?? 0);
+        const rightScore =
+            activeSortKey === 'total'
+                ? right.total_score
+                : (right.aspect_scores[activeSortKey]?.score ?? 0);
+
+        if (leftScore !== rightScore) {
+            return sortDirection === 'asc'
+                ? leftScore - rightScore
+                : rightScore - leftScore;
+        }
+
+        return left.name.localeCompare(right.name, 'id');
+    });
+
+    function toggleScoreSort(nextKey: string) {
+        setSortDirection((current) =>
+            activeSortKey === nextKey && current === 'desc' ? 'asc' : 'desc',
+        );
+        setSortKey(nextKey);
+    }
+
+    function scoreSortLabel(key: string) {
+        if (activeSortKey !== key) {
+            return '↕';
+        }
+
+        return sortDirection === 'asc' ? '↑' : '↓';
+    }
+
+    function ScoreHeader({
+        label,
+        sortKey: key,
+    }: {
+        label: string;
+        sortKey: string;
+    }) {
+        return (
+            <button
+                type="button"
+                onClick={() => toggleScoreSort(key)}
+                className="inline-flex items-center gap-1 font-bold"
+            >
+                {label}
+                <span aria-hidden="true">{scoreSortLabel(key)}</span>
+            </button>
+        );
+    }
+
+    return (
+        <Panel className="p-3.5 sm:p-4">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-base leading-6 font-bold text-[#303030]">
+                    {title}
+                </h2>
+                <details className="relative self-start sm:self-auto">
+                    <summary className="cursor-pointer list-none rounded-lg bg-[#F8FBFE] px-3 py-2 text-xs font-bold text-[#0066AE]">
+                        Filter Aspek
+                        {selectedAspects.length > 0
+                            ? ` (${selectedAspects.length})`
+                            : ''}
+                    </summary>
+                    <div className="absolute right-0 z-20 mt-2 max-h-64 min-w-56 overflow-y-auto rounded-xl border border-[#DDE4EC] bg-white p-3 shadow-[0_12px_30px_rgba(3,17,32,0.14)]">
+                        {data.aspects.length > 0 ? (
+                            data.aspects.map((aspect) => (
+                                <label
+                                    key={aspect}
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-xs font-semibold text-[#303030] hover:bg-[#F8FBFE]"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedAspects.includes(
+                                            aspect,
+                                        )}
+                                        onChange={() => onToggleAspect(aspect)}
+                                        className="size-4 accent-[#0066AE]"
+                                    />
+                                    {aspect}
+                                </label>
+                            ))
+                        ) : (
+                            <span className="text-xs font-semibold text-[#7C7C7C]">
+                                Belum ada aspek.
+                            </span>
+                        )}
+                    </div>
+                </details>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                    <thead className="border-b border-[#EFEFEF] text-[11px] font-bold tracking-wider text-[#7C7C7C] uppercase">
+                        <tr>
+                            <th className="h-10 min-w-64 px-2 font-bold whitespace-nowrap first:pl-0 sm:min-w-80">
+                                Desa Wisata
+                            </th>
+                            <th
+                                className={`h-10 px-2 font-bold whitespace-nowrap ${scoreTone}`}
+                            >
+                                <ScoreHeader
+                                    label="Total Skor"
+                                    sortKey="total"
+                                />
+                            </th>
+                            {visibleAspects.map((aspect) => (
+                                <th
+                                    key={aspect}
+                                    className="h-10 px-2 font-bold whitespace-nowrap"
+                                >
+                                    <ScoreHeader
+                                        label={aspect}
+                                        sortKey={aspect}
+                                    />
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EFEFEF] bg-white">
+                        {sortedRows.length > 0 ? (
+                            sortedRows.map((row) => (
+                                <tr
+                                    key={row.id}
+                                    className="h-14 transition-colors hover:bg-[#F8FBFE]"
+                                >
+                                    <td className="min-w-64 px-2 py-2 first:pl-0 sm:min-w-80">
+                                        <Link
+                                            href={row.url}
+                                            className="font-bold text-[#0066AE] hover:text-[#093967]"
+                                        >
+                                            {row.name}
+                                        </Link>
+                                    </td>
+                                    <td
+                                        className={`px-2 py-2 font-black whitespace-nowrap ${scoreTone} ${scoreHoverTone}`}
+                                    >
+                                        {row.total_score}/{row.total_max_score}
+                                    </td>
+                                    {visibleAspects.map((aspect) => {
+                                        const score = row.aspect_scores[
+                                            aspect
+                                        ] ?? {
+                                            score: 0,
+                                            max_score: 0,
+                                        };
+
+                                        return (
+                                            <td
+                                                key={aspect}
+                                                className="px-2 py-2 font-semibold whitespace-nowrap text-[#303030]"
+                                            >
+                                                {score.score}/{score.max_score}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td
+                                    colSpan={2 + visibleAspects.length}
+                                    className="px-2 py-8 text-center text-sm font-semibold text-[#7C7C7C]"
+                                >
+                                    Belum ada data desa.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </Panel>
+    );
+}
+
 export default function Dashboard({
     dashboard_mode = 'admin',
     kpis = [],
     village_map_points = [],
     top_village_surveys = [],
+    kemenpar_village_scores = { aspects: [], rows: [] },
+    istc_village_scores = { aspects: [], rows: [] },
     top_umkm_surveys = [],
     top_pariwisata_surveys = [],
     top_umkm_turnovers = [],
     top_pariwisata_turnovers = [],
     top_umkm_categories = [],
     recent_assignments = [],
+    turnover_details = {
+        umkm: { total: 0, rows: [] },
+        pariwisata: { total: 0, rows: [] },
+    },
     filters = {},
 }: DashboardProps & { filters?: Record<string, string | null> }) {
     const { auth } = usePage().props;
 
     const programType = filters.program_type || 'Semua Program';
+    const [selectedKemenparAspects, setSelectedKemenparAspects] = useState<
+        string[]
+    >([]);
+    const [selectedIstcAspects, setSelectedIstcAspects] = useState<string[]>(
+        [],
+    );
+
+    function toggleAspect(
+        aspect: string,
+        selected: string[],
+        setSelected: (value: string[]) => void,
+    ) {
+        setSelected(
+            selected.includes(aspect)
+                ? selected.filter((item) => item !== aspect)
+                : [...selected, aspect],
+        );
+    }
 
     if (dashboard_mode === 'enumerator') {
         return (
@@ -479,6 +750,16 @@ export default function Dashboard({
     }
 
     const [showBanner, setShowBanner] = useState(true);
+    const [turnoverModal, setTurnoverModal] = useState<
+        'umkm' | 'pariwisata' | null
+    >(null);
+    const selectedTurnover = turnoverModal
+        ? turnover_details[turnoverModal]
+        : null;
+    const selectedTurnoverTitle =
+        turnoverModal === 'umkm'
+            ? 'Total Omset UMKM'
+            : 'Total Omset Pariwisata';
 
     return (
         <>
@@ -522,18 +803,7 @@ export default function Dashboard({
                     )}
 
                     <section className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        {[
-                            { type: 'time' },
-                            ...kpis
-                                .slice(0, 3)
-                                .map((kpi) => ({ type: 'kpi', data: kpi })),
-                        ].map((item, index) => {
-                            if (item.type === 'time') {
-                                return <CurrentTimeCard key="time" />;
-                            }
-
-                            if (!('data' in item) || !item.data) return null;
-                            const kpi = item.data;
+                        {kpis.slice(0, 2).map((kpi) => {
                             const Icon = kpiIcons[kpi.icon];
                             if (!Icon) return null;
                             const trendColor =
@@ -576,7 +846,99 @@ export default function Dashboard({
                                 </Panel>
                             );
                         })}
+                        <TurnoverCard
+                            title="Total Omset UMKM"
+                            details={turnover_details.umkm}
+                            icon={Store}
+                            onClick={() => setTurnoverModal('umkm')}
+                        />
+                        <TurnoverCard
+                            title="Total Omset Pariwisata"
+                            details={turnover_details.pariwisata}
+                            icon={MapPin}
+                            onClick={() => setTurnoverModal('pariwisata')}
+                        />
                     </section>
+
+                    <Dialog
+                        open={turnoverModal !== null}
+                        onOpenChange={(open) => !open && setTurnoverModal(null)}
+                    >
+                        <DialogContent className="max-w-12xl max-h-[85vh] w-[98vw] overflow-hidden rounded-xl border-[#EFEFEF] bg-white p-0">
+                            <DialogHeader className="border-b border-[#EFEFEF] px-5 py-4">
+                                <DialogTitle className="text-lg font-bold text-[#303030]">
+                                    {selectedTurnoverTitle}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Rincian omset dari seluruh tahun yang
+                                    tersedia.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="overflow-auto px-5 py-4 sm:px-6">
+                                <div className="mb-4 rounded-lg bg-[#F1F5F8] p-3">
+                                    <p className="text-xs font-semibold text-[#7C7C7C]">
+                                        Total seluruh tahun
+                                    </p>
+                                    <p className="mt-1 text-xl font-bold text-[#0066AE]">
+                                        {formatCurrency(
+                                            selectedTurnover?.total ?? 0,
+                                        )}
+                                    </p>
+                                </div>
+                                {selectedTurnover?.rows.length ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full min-w-[560px] text-left text-sm">
+                                            <thead className="border-b border-[#EFEFEF] text-xs text-[#7C7C7C]">
+                                                <tr>
+                                                    <th className="px-3 py-3 font-semibold">
+                                                        Nama
+                                                    </th>
+                                                    <th className="px-3 py-3 font-semibold">
+                                                        Desa
+                                                    </th>
+                                                    <th className="px-3 py-3 font-semibold">
+                                                        Tahun
+                                                    </th>
+                                                    <th className="px-3 py-3 text-right font-semibold">
+                                                        Omset
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {selectedTurnover.rows.map(
+                                                    (row) => (
+                                                        <tr
+                                                            key={row.id}
+                                                            className="border-b border-[#F1F1F1] last:border-0"
+                                                        >
+                                                            <td className="px-3 py-3 font-semibold text-[#303030]">
+                                                                {row.name}
+                                                            </td>
+                                                            <td className="px-3 py-3 text-[#7C7C7C]">
+                                                                {row.village}
+                                                            </td>
+                                                            <td className="px-3 py-3 text-[#7C7C7C]">
+                                                                {row.year}
+                                                            </td>
+                                                            <td className="px-3 py-3 text-right font-semibold text-[#303030]">
+                                                                {formatCurrency(
+                                                                    row.value,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="py-8 text-center text-sm font-semibold text-[#7C7C7C]">
+                                        Belum ada data omset.
+                                    </p>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
 
                     <DashboardCharts />
 
@@ -655,96 +1017,31 @@ export default function Dashboard({
                     </div>
 
                     <div className="mb-4 space-y-4">
-                        <Panel className="p-3.5 sm:p-4">
-                            <div className="mb-3 flex items-center justify-between gap-4">
-                                <h2 className="text-base leading-6 font-bold text-[#303030]">
-                                    Assignment Survey Terbaru
-                                </h2>
-                                <Link
-                                    href={surveyAssignments.url()}
-                                    className="inline-flex h-8 items-center justify-center rounded-lg bg-[#F8FBFE] px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#EAF3FF]"
-                                >
-                                    Lihat Semua
-                                </Link>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[880px] border-collapse text-left text-sm">
-                                    <thead className="border-b border-[#EFEFEF] text-[11px] font-bold tracking-wider text-[#7C7C7C] uppercase">
-                                        <tr>
-                                            {[
-                                                'Desa Wisata',
-                                                'Lokasi',
-                                                'Status',
-                                                'Update Terakhir',
-                                                'Aksi',
-                                            ].map((head) => (
-                                                <th
-                                                    key={head}
-                                                    className="h-10 px-2 font-bold whitespace-nowrap first:pl-0 last:pr-0"
-                                                >
-                                                    {head}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#EFEFEF] bg-white">
-                                        {recent_assignments.map((row) => (
-                                            <tr
-                                                key={row.id}
-                                                className="h-14 transition-colors hover:bg-[#F8FBFE]"
-                                            >
-                                                <td className="px-2 py-2 whitespace-nowrap first:pl-0">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-8 shrink-0 overflow-hidden rounded-lg bg-gray-200">
-                                                            <img
-                                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(row.village)}&background=random`}
-                                                                alt={
-                                                                    row.village
-                                                                }
-                                                                className="h-full w-full object-cover"
-                                                            />
-                                                        </div>
-                                                        <span className="font-bold text-[#303030]">
-                                                            {row.village}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-2 py-2 whitespace-nowrap">
-                                                    <p className="text-xs text-[#303030]">
-                                                        {row.location}
-                                                    </p>
-                                                </td>
-                                                <td className="px-2 py-2">
-                                                    <span
-                                                        className={`inline-flex h-6 min-w-20 items-center justify-center rounded-md px-2 text-[10px] font-bold ${statusClass(row.status)}`}
-                                                    >
-                                                        {row.status_label}
-                                                    </span>
-                                                </td>
-                                                <td className="px-2 py-2 text-xs whitespace-nowrap text-[#303030]">
-                                                    {row.updated_at}
-                                                </td>
-                                                <td className="px-2 py-2 text-center last:pr-0">
-                                                    <Link
-                                                        href={showSurveyAssignment.url(
-                                                            row.code,
-                                                        )}
-                                                        className="inline-flex size-8 items-center justify-center rounded-lg text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                                                        aria-label={`Detail ${row.village}`}
-                                                    >
-                                                        <Eye className="size-4" />
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Panel>
-
-                        <TopVillageSurveyTable
-                            rows={top_village_surveys.slice(0, 5)}
+                        <VillageScoreTable
+                            title="Skor Desa KEMENPAR"
+                            data={kemenpar_village_scores}
+                            selectedAspects={selectedKemenparAspects}
+                            onToggleAspect={(aspect) =>
+                                toggleAspect(
+                                    aspect,
+                                    selectedKemenparAspects,
+                                    setSelectedKemenparAspects,
+                                )
+                            }
+                            theme="kemenpar"
+                        />
+                        <VillageScoreTable
+                            title="Skor Desa ISTC"
+                            data={istc_village_scores}
+                            selectedAspects={selectedIstcAspects}
+                            onToggleAspect={(aspect) =>
+                                toggleAspect(
+                                    aspect,
+                                    selectedIstcAspects,
+                                    setSelectedIstcAspects,
+                                )
+                            }
+                            theme="istc"
                         />
 
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -787,9 +1084,9 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                    <div className="mt-2 mb-4">
+                    {/* <div className="mt-2 mb-4">
                         <DashboardOmsetCharts />
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </>

@@ -7,6 +7,7 @@ use App\Models\CsrProgram;
 use App\Models\PariwisataSurveyQuestion;
 use App\Models\PariwisataVillage;
 use App\Models\SurveyAnswer;
+use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
 use App\Models\UmkmSurveyAnswer;
 use App\Models\VillageSurveyAssignment;
@@ -16,6 +17,8 @@ use Illuminate\Support\Str;
 
 class DashboardService
 {
+    public function __construct(private ActiveSurveyTemplateResolver $templateResolver) {}
+
     /**
      * @return array<string, mixed>
      */
@@ -26,10 +29,16 @@ class DashboardService
             'kpis' => $this->kpis(),
             'village_map_points' => $this->villageMapPoints(),
             'top_village_surveys' => $this->topVillageSurveys(),
+            'kemenpar_village_scores' => $this->villageScoreTable('kemenpar'),
+            'istc_village_scores' => $this->villageScoreTable('istc'),
             'top_umkm_surveys' => $this->topUmkmSurveys(),
             'top_pariwisata_surveys' => $this->topPariwisataSurveys(),
             'top_umkm_turnovers' => $this->topUmkmTurnovers(),
             'top_pariwisata_turnovers' => $this->topPariwisataTurnovers(),
+            'turnover_details' => [
+                'umkm' => $this->turnoverDetailsFor('umkm'),
+                'pariwisata' => $this->turnoverDetailsFor('pariwisata'),
+            ],
             'top_umkm_categories' => $this->topUmkmCategories(),
             'recent_assignments' => $this->recentAssignments(),
             'priorities' => $this->priorities(),
@@ -38,9 +47,102 @@ class DashboardService
             'aktivitas_survey' => $this->aktivitasSurveyData($filters['activity_filter'] ?? '30 Hari Terakhir'),
             'status_survey' => $this->statusSurveyData($filters['status_filter'] ?? 'Tahun Ini'),
             'omset_charts' => [
-                'umkm' => $this->omsetChartsDataFor('umkm'),
-                'wisata' => $this->omsetChartsDataFor('pariwisata'),
+                'umkm' => $this->omsetChartsDataFor('umkm', $filters['umkm_year'] ?? null),
+                'wisata' => $this->omsetChartsDataFor('pariwisata', $filters['wisata_year'] ?? null),
             ],
+        ];
+    }
+
+    /**
+     * @return array{aspects: array<int, string>, rows: array<int, array<string, mixed>>}
+     */
+    private function villageScoreTable(string $type): array
+    {
+        $isIstc = $type === 'istc';
+        $template = $this->templateResolver->resolve($isIstc ? 'pariwisata' : 'village', [
+            $isIstc ? 'pariwisataSurveyQuestions.options' : 'questions.options',
+        ]);
+        $templateQuestions = $isIstc
+            ? ($template?->pariwisataSurveyQuestions ?? collect())
+            : ($template?->questions ?? collect());
+
+        $villages = TourismVillage::query()
+            ->select(['id', 'name', 'city', 'province'])
+            ->with([
+                'surveyAssignment' => fn ($query) => $query->select(['id', 'village_id']),
+                'surveyAssignment.answers:id,village_survey_assignment_id,survey_question_id,score',
+                'surveyAssignment.pariwisataSurveyAnswers:id,village_survey_assignment_id,pariwisata_survey_question_id,score',
+                'surveyAssignment.template.questions.options',
+            ])
+            ->orderBy('name')
+            ->get();
+
+        $aspectDefinitions = $templateQuestions
+            ->groupBy(fn ($question): string => $isIstc
+                ? ($question->category_name ?: 'Lainnya')
+                : ($question->aspect ?: 'Umum'))
+            ->map(fn ($questions, string $name): array => [
+                'name' => $name,
+                'max_score' => (int) $questions->sum(fn ($question): int => (int) $question->options->max('score')),
+            ]);
+
+        foreach ($villages as $village) {
+            $questions = $isIstc
+                ? $templateQuestions
+                : ($village->surveyAssignment?->template?->questions ?? $templateQuestions);
+
+            foreach ($questions->groupBy(fn ($question): string => $isIstc
+                ? ($question->category_name ?: 'Lainnya')
+                : ($question->aspect ?: 'Umum')) as $name => $aspectQuestions) {
+                $aspectDefinitions[$name] ??= [
+                    'name' => $name,
+                    'max_score' => 0,
+                ];
+                $definition = $aspectDefinitions->get($name);
+                $definition['max_score'] = max(
+                    $definition['max_score'],
+                    (int) $aspectQuestions->sum(fn ($question): int => (int) $question->options->max('score')),
+                );
+                $aspectDefinitions->put($name, $definition);
+            }
+        }
+
+        $aspects = $aspectDefinitions->sortKeys()->values();
+        $rows = $villages->map(function (TourismVillage $village) use ($isIstc, $templateQuestions, $aspects): array {
+            $questions = $isIstc
+                ? $templateQuestions
+                : ($village->surveyAssignment?->template?->questions ?? $templateQuestions);
+            $answers = $isIstc
+                ? ($village->surveyAssignment?->pariwisataSurveyAnswers ?? collect())->keyBy('pariwisata_survey_question_id')
+                : ($village->surveyAssignment?->answers ?? collect())->keyBy('survey_question_id');
+            $scores = $questions
+                ->groupBy(fn ($question): string => $isIstc
+                    ? ($question->category_name ?: 'Lainnya')
+                    : ($question->aspect ?: 'Umum'))
+                ->map(fn ($aspectQuestions, string $name): array => [
+                    'score' => (int) $aspectQuestions->sum(fn ($question): int => (int) ($answers->get($question->id)?->score ?? 0)),
+                    'max_score' => (int) $aspectQuestions->sum(fn ($question): int => (int) $question->options->max('score')),
+                ]);
+
+            return [
+                'id' => $village->id,
+                'name' => $village->name,
+                'location' => collect([$village->city, $village->province])->filter()->implode(', ') ?: '-',
+                'url' => route('villages.show', $village),
+                'total_score' => (int) $scores->sum('score'),
+                'total_max_score' => (int) $scores->sum('max_score'),
+                'aspect_scores' => $aspects->mapWithKeys(fn (array $aspect): array => [
+                    $aspect['name'] => $scores->get($aspect['name'], [
+                        'score' => 0,
+                        'max_score' => $aspect['max_score'],
+                    ]),
+                ])->all(),
+            ];
+        })->sortByDesc('total_score')->values()->all();
+
+        return [
+            'aspects' => $aspects->pluck('name')->all(),
+            'rows' => $rows,
         ];
     }
 
@@ -55,10 +157,6 @@ class DashboardService
             ->count();
         $totalUmkms = VillageUmkm::query()->count();
         $currentMonthUmkms = VillageUmkm::query()
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->count();
-        $totalPariwisata = PariwisataVillage::query()->count();
-        $currentMonthPariwisata = PariwisataVillage::query()
             ->where('created_at', '>=', now()->startOfMonth())
             ->count();
 
@@ -78,14 +176,6 @@ class DashboardService
                 'trend' => '+'.$currentMonthUmkms.' bulan ini',
                 'icon' => 'store',
                 'tone' => 'success',
-            ],
-            [
-                'title' => 'Total Pariwisata',
-                'value' => (string) $totalPariwisata,
-                'desc' => 'Master ISTC terdaftar',
-                'trend' => '+'.$currentMonthPariwisata.' bulan ini',
-                'icon' => 'ticket',
-                'tone' => 'warning',
             ],
         ];
     }
@@ -668,7 +758,45 @@ class DashboardService
         ];
     }
 
-    private function omsetChartsDataFor(string $type): array
+    /**
+     * @return array{total: float, rows: array<int, array{id: int, name: string, village: string, year: int, value: float}>}
+     */
+    private function turnoverDetailsFor(string $type): array
+    {
+        $relation = $type === 'umkm' ? 'umkm' : 'pariwisata';
+
+        $turnovers = AnnualTurnover::query()
+            ->where('entity_type', $type)
+            ->with([
+                'umkm:id,village_id,name',
+                'umkm.village:id,name',
+                'pariwisata:id,village_id,name',
+                'pariwisata.village:id,name',
+            ])
+            ->orderByDesc('year')
+            ->orderByDesc('value')
+            ->get();
+
+        return [
+            'total' => (float) $turnovers->sum('value'),
+            'rows' => $turnovers
+                ->map(function (AnnualTurnover $turnover) use ($relation): array {
+                    $entity = $turnover->{$relation};
+
+                    return [
+                        'id' => $turnover->id,
+                        'name' => $entity?->name ?? '-',
+                        'village' => $entity?->village?->name ?? '-',
+                        'year' => $turnover->year,
+                        'value' => (float) $turnover->value,
+                    ];
+                })
+                ->values()
+                ->all(),
+        ];
+    }
+
+    private function omsetChartsDataFor(string $type, int|string|null $selectedYear = null): array
     {
         $column = $type === 'umkm' ? 'umkm_id' : 'pariwisata_id';
 
@@ -679,6 +807,7 @@ class DashboardService
             ->orderBy('year')
             ->pluck('total_omset', 'year');
 
+        $selectedYear = $selectedYear !== null ? (int) $selectedYear : (int) $turnovers->keys()->last();
         $data = $turnovers
             ->map(fn ($total, int|string $year): array => [
                 'year' => (string) $year,
@@ -694,7 +823,9 @@ class DashboardService
         return [
             'data' => $data,
             'trend' => $latestTotals->count() >= 2 ? $this->trendFromTotals($curr, $prev) : '+0%',
-            'total' => (float) $turnovers->sum(),
+            'total' => (float) ($turnovers->get($selectedYear) ?? 0),
+            'current_year' => $selectedYear,
+            'available_years' => $turnovers->keys()->sortDesc()->values()->all(),
         ];
     }
 

@@ -8,10 +8,6 @@ import {
     ResponsiveContainer,
     BarChart,
     Bar,
-    Legend,
-    PieChart,
-    Pie,
-    Cell,
     Radar,
     RadarChart,
     PolarGrid,
@@ -52,11 +48,115 @@ function Panel({
     );
 }
 
+type VillageScoreBarDatum = { name: string; score: number; maxScore: number };
+
+function VillageScoreBarChart({
+    title,
+    subtitle,
+    data,
+    color,
+    emptyMessage,
+}: {
+    title: string;
+    subtitle: string;
+    data: VillageScoreBarDatum[];
+    color: string;
+    emptyMessage: string;
+}) {
+    if (data.length === 0) {
+        return (
+            <Panel className="flex min-h-[280px] flex-col p-4">
+                <h2 className="text-sm font-bold text-[#303030]">{title}</h2>
+                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                    {subtitle}
+                </p>
+                <p className="flex flex-1 items-center justify-center text-center text-sm font-semibold text-[#7C7C7C]">
+                    {emptyMessage}
+                </p>
+            </Panel>
+        );
+    }
+    return (
+        <Panel className="flex min-w-0 flex-col p-4">
+            <div className="mb-4">
+                <h2 className="text-sm font-bold text-[#303030]">{title}</h2>
+                <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-[#7C7C7C]">
+                    <span
+                        className="size-2 rounded-full"
+                        style={{ backgroundColor: color }}
+                    />
+                    {subtitle}
+                </div>
+            </div>
+            <div className="min-h-[210px] overflow-x-auto">
+                <div
+                    className="h-[210px] min-w-[320px]"
+                    style={{ width: Math.max(data.length * 96, 320) }}
+                >
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={data}
+                            margin={{ top: 4, right: 8, left: -22, bottom: 28 }}
+                        >
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                vertical={false}
+                                stroke="#EFEFEF"
+                            />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 10, fill: '#7C7C7C' }}
+                                angle={-32}
+                                textAnchor="end"
+                                interval={0}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 10, fill: '#7C7C7C' }}
+                            />
+                            <Tooltip
+                                cursor={{ fill: '#F8FBFE' }}
+                                formatter={(value, _name, item) => [
+                                    String(value ?? 0) +
+                                        '/' +
+                                        String(item.payload.maxScore ?? 0),
+                                    'Total Skor',
+                                ]}
+                                contentStyle={{
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    boxShadow: '0 4px 14px rgba(3,17,32,0.08)',
+                                    color: '#303030',
+                                    fontSize: '12px',
+                                }}
+                            />
+                            <Bar
+                                dataKey="score"
+                                fill={color}
+                                radius={[3, 3, 0, 0]}
+                                barSize={18}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+            <Link
+                href={surveyAssignments.url()}
+                className="mt-4 flex w-full justify-center rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
+            >
+                Lihat Semua Survey{' '}
+                <ChevronRight className="ml-1 inline size-3" />
+            </Link>
+        </Panel>
+    );
+}
+
 export function DashboardCharts() {
     const { props } = usePage();
     const generalReport = (props as any).general_report || {};
-    const aktivitasSurvey = (props as any).aktivitas_survey || {};
-    const statusSurvey = (props as any).status_survey || {};
     const filters = (props as any).filters || {};
 
     const [generalReportFilter, setGeneralReportFilter] = useState(
@@ -65,30 +165,15 @@ export function DashboardCharts() {
     const [programTypeFilter, setProgramTypeFilter] = useState(
         filters.program_type || 'Semua Program',
     );
-    const [activityFilter, setActivityFilter] = useState(
-        filters.activity_filter || '30 Hari Terakhir',
-    );
-    const [statusFilter, setStatusFilter] = useState(
-        filters.status_filter || 'Tahun Ini',
-    );
 
     useEffect(() => {
         setGeneralReportFilter(filters.general_report_filter || 'Bulan Ini');
         setProgramTypeFilter(filters.program_type || 'Semua Program');
-        setActivityFilter(filters.activity_filter || '30 Hari Terakhir');
-        setStatusFilter(filters.status_filter || 'Tahun Ini');
-    }, [
-        filters.activity_filter,
-        filters.general_report_filter,
-        filters.program_type,
-        filters.status_filter,
-    ]);
+    }, [filters.general_report_filter, filters.program_type]);
 
     const updateFilter = (key: string, value: string) => {
         if (key === 'general_report_filter') setGeneralReportFilter(value);
         if (key === 'program_type') setProgramTypeFilter(value);
-        if (key === 'activity_filter') setActivityFilter(value);
-        if (key === 'status_filter') setStatusFilter(value);
 
         router.get(
             // @ts-ignore
@@ -100,19 +185,26 @@ export function DashboardCharts() {
             {
                 preserveState: true,
                 preserveScroll: true,
-                only: [
-                    'general_report',
-                    'aktivitas_survey',
-                    'status_survey',
-                    'filters',
-                ],
+                only: ['general_report', 'filters'],
             },
         );
     };
 
     const areaData = generalReport.area_data || [];
-    const barData = aktivitasSurvey.bar_data || [];
-    const pieData = statusSurvey.pie_data || [];
+    const kemenparVillageScores = (
+        (props as any).kemenpar_village_scores?.rows ?? []
+    ).map((row: any) => ({
+        name: row.name,
+        score: row.total_score ?? 0,
+        maxScore: row.total_max_score ?? 0,
+    }));
+    const istcVillageScores = (
+        (props as any).istc_village_scores?.rows ?? []
+    ).map((row: any) => ({
+        name: row.name,
+        score: row.total_score ?? 0,
+        maxScore: row.total_max_score ?? 0,
+    }));
 
     return (
         <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -427,259 +519,20 @@ export function DashboardCharts() {
                 </div>
             </Panel>
 
-            <Panel className="flex flex-col p-4">
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-[#303030]">
-                        Aktivitas Survey
-                    </h2>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                {activityFilter}{' '}
-                                <ChevronDown className="size-3" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter(
-                                        'activity_filter',
-                                        '7 Hari Terakhir',
-                                    )
-                                }
-                            >
-                                7 Hari Terakhir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter(
-                                        'activity_filter',
-                                        '30 Hari Terakhir',
-                                    )
-                                }
-                            >
-                                30 Hari Terakhir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('activity_filter', 'Tahun Ini')
-                                }
-                            >
-                                Tahun Ini
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('activity_filter', '2025')
-                                }
-                            >
-                                2025
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('activity_filter', '2024')
-                                }
-                            >
-                                2024
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <div className="mb-4 flex items-center gap-4 text-[10px] font-semibold text-[#7C7C7C]">
-                    <div className="flex items-center gap-1.5">
-                        <span className="size-2 rounded-full bg-[#0066AE]" />{' '}
-                        Selesai
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="size-2 rounded-full bg-[#2FA6FC]" />{' '}
-                        Dalam Proses
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="size-2 rounded-full bg-[#DCE3EA]" />{' '}
-                        Belum Dimulai
-                    </div>
-                </div>
-                <div className="min-h-[180px] flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                            data={barData}
-                            margin={{ top: 0, right: 0, left: -25, bottom: 0 }}
-                        >
-                            <CartesianGrid
-                                strokeDasharray="3 3"
-                                vertical={false}
-                                stroke="#EFEFEF"
-                            />
-                            <XAxis
-                                dataKey="name"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fontSize: 10, fill: '#7C7C7C' }}
-                                dy={10}
-                            />
-                            <YAxis
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fontSize: 10, fill: '#7C7C7C' }}
-                            />
-                            <Tooltip
-                                cursor={{ fill: '#F8FBFE' }}
-                                contentStyle={{
-                                    borderRadius: '8px',
-                                    border: 'none',
-                                    boxShadow: '0 4px 14px rgba(3,17,32,0.08)',
-                                    fontSize: '12px',
-                                }}
-                            />
-                            <Bar
-                                dataKey="selesai"
-                                fill="#0066AE"
-                                radius={[2, 2, 0, 0]}
-                                barSize={8}
-                            />
-                            <Bar
-                                dataKey="proses"
-                                fill="#2FA6FC"
-                                radius={[2, 2, 0, 0]}
-                                barSize={8}
-                            />
-                            <Bar
-                                dataKey="belum"
-                                fill="#DCE3EA"
-                                radius={[2, 2, 0, 0]}
-                                barSize={8}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-                <Link
-                    href={surveyAssignments.url()}
-                    className="mt-4 flex w-full justify-center rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
-                >
-                    Lihat Semua Aktivitas{' '}
-                    <ChevronRight className="ml-1 inline size-3" />
-                </Link>
-            </Panel>
-
-            <Panel className="flex flex-col p-4">
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-[#303030]">
-                        Status Survey
-                    </h2>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                {statusFilter}{' '}
-                                <ChevronDown className="size-3" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('status_filter', 'Bulan Ini')
-                                }
-                            >
-                                Bulan Ini
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('status_filter', 'Tahun Ini')
-                                }
-                            >
-                                Tahun Ini
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('status_filter', '2025')
-                                }
-                            >
-                                2025
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() =>
-                                    updateFilter('status_filter', '2024')
-                                }
-                            >
-                                2024
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <div className="relative flex flex-1 flex-col items-center justify-center">
-                    <div className="relative flex h-[140px] w-[140px] items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={pieData}
-                                    innerRadius={50}
-                                    outerRadius={70}
-                                    paddingAngle={2}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {pieData.map((entry: any, index: any) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={entry.color}
-                                        />
-                                    ))}
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                Total
-                            </span>
-                            <span className="text-2xl font-bold text-[#303030]">
-                                {statusSurvey.total ?? 0}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-6 space-y-3">
-                    {pieData.map((item: any) => (
-                        <div
-                            key={item.name}
-                            className="flex items-center justify-between text-xs"
-                        >
-                            <div className="flex items-center gap-2">
-                                <span
-                                    className="size-2.5 rounded-full"
-                                    style={{ backgroundColor: item.color }}
-                                />
-                                <span className="font-semibold text-[#7C7C7C]">
-                                    {item.name}
-                                </span>
-                            </div>
-                            <div className="font-bold text-[#303030]">
-                                {item.value}{' '}
-                                <span className="font-medium text-[#7C7C7C]">
-                                    (
-                                    {statusSurvey.total > 0
-                                        ? (item.value / statusSurvey.total) *
-                                          100
-                                        : 0}
-                                    %)
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                <Link
-                    href={surveyAssignments.url()}
-                    className="mt-6 flex w-full items-center justify-between border-t border-[#EFEFEF] pt-3 text-xs font-bold text-[#0066AE] transition hover:text-[#093967]"
-                >
-                    Lihat Detail <ChevronRight className="size-4" />
-                </Link>
-            </Panel>
+            <VillageScoreBarChart
+                title="Aktivitas Survey"
+                subtitle="Skor KEMENPAR per desa"
+                data={kemenparVillageScores}
+                color="#0066AE"
+                emptyMessage="Belum ada skor KEMENPAR desa."
+            />
+            <VillageScoreBarChart
+                title="Status Survey"
+                subtitle="Skor ISTC per desa"
+                data={istcVillageScores}
+                color="#00893D"
+                emptyMessage="Belum ada skor ISTC desa."
+            />
         </div>
     );
 }

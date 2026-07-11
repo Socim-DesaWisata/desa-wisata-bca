@@ -39,6 +39,8 @@ use Illuminate\Support\Str;
 
 class TourismVillageService
 {
+    public function __construct(private ActiveSurveyTemplateResolver $templateResolver) {}
+
     /**
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
@@ -173,6 +175,7 @@ class TourismVillageService
             'surveyAssignment.submittedBy:id,name',
             'surveyAssignment.reviewedBy:id,name',
             'surveyAssignment.answers:id,village_survey_assignment_id,survey_question_id,score',
+            'surveyAssignment.pariwisataSurveyAnswers:id,village_survey_assignment_id,pariwisata_survey_question_id,score',
             'enumerators:id,name,email',
             'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
             'pariwisataVillages.categories:id,pariwisata_village_id,category',
@@ -563,6 +566,7 @@ class TourismVillageService
                 ? $this->formatSurveyAssignment($village->surveyAssignment)
                 : null,
             'kemenpar_aspect_scores' => $this->formatKemenparAspectScores($village->surveyAssignment),
+            'istc_aspect_scores' => $this->formatIstcAspectScores($village->surveyAssignment),
             'enumerator_list' => $village->enumerators
                 ->map(fn (User $user): array => [
                     'id' => $user->id,
@@ -613,6 +617,49 @@ class TourismVillageService
 
         return $questions
             ->groupBy('aspect')
+            ->map(function ($aspectQuestions, string $aspect) use ($answersByQuestion): array {
+                $score = $aspectQuestions->sum(fn ($question): int => (int) ($answersByQuestion->get($question->id)?->score ?? 0));
+                $maxScore = $aspectQuestions->sum(fn ($question): int => (int) $question->options->max('score'));
+                $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 1) : 0.0;
+
+                return [
+                    'name' => $aspect,
+                    'score' => $score,
+                    'max_score' => $maxScore,
+                    'score_percent' => $percent,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{name: string, score: int, max_score: int, score_percent: float}>
+     */
+    private function formatIstcAspectScores(?VillageSurveyAssignment $assignment): array
+    {
+        if (! $assignment) {
+            return [];
+        }
+
+        $template = $this->templateResolver->resolve('pariwisata', [
+            'pariwisataSurveyQuestions' => fn ($query) => $query
+                ->where('is_active', true)
+                ->orderBy('sort_order'),
+            'pariwisataSurveyQuestions.options' => fn ($query) => $query
+                ->orderBy('sort_order'),
+        ]);
+        $questions = $template?->pariwisataSurveyQuestions ?? collect();
+
+        if ($questions->isEmpty()) {
+            return [];
+        }
+
+        $answersByQuestion = ($assignment->pariwisataSurveyAnswers ?? collect())
+            ->keyBy('pariwisata_survey_question_id');
+
+        return $questions
+            ->groupBy(fn ($question): string => $question->category_name ?: 'Lainnya')
             ->map(function ($aspectQuestions, string $aspect) use ($answersByQuestion): array {
                 $score = $aspectQuestions->sum(fn ($question): int => (int) ($answersByQuestion->get($question->id)?->score ?? 0));
                 $maxScore = $aspectQuestions->sum(fn ($question): int => (int) $question->options->max('score'));
@@ -925,6 +972,7 @@ class TourismVillageService
     {
         return [
             'id' => $assignment->id,
+            'code' => $assignment->code,
             'status' => $assignment->status,
             'template' => $assignment->template?->title ?? '-',
             'assigned_by' => $assignment->assignedBy?->name ?? '-',
