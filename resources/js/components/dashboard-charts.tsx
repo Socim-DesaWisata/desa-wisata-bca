@@ -88,15 +88,15 @@ function VillageScoreBarChart({
                     {subtitle}
                 </div>
             </div>
-            <div className="min-h-[210px] overflow-x-auto">
+            <div className="min-h-[280px] overflow-x-auto">
                 <div
-                    className="h-[210px] min-w-[320px]"
-                    style={{ width: Math.max(data.length * 96, 320) }}
+                    className="h-[280px] min-w-[480px]"
+                    style={{ width: Math.max(data.length * 132, 480) }}
                 >
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={data}
-                            margin={{ top: 4, right: 8, left: -22, bottom: 28 }}
+                            margin={{ top: 8, right: 8, left: -22, bottom: 42 }}
                         >
                             <CartesianGrid
                                 strokeDasharray="3 3"
@@ -108,9 +108,9 @@ function VillageScoreBarChart({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fontSize: 10, fill: '#7C7C7C' }}
-                                angle={-32}
-                                textAnchor="end"
+                                textAnchor="middle"
                                 interval={0}
+                                dy={12}
                             />
                             <YAxis
                                 axisLine={false}
@@ -137,7 +137,7 @@ function VillageScoreBarChart({
                                 dataKey="score"
                                 fill={color}
                                 radius={[3, 3, 0, 0]}
-                                barSize={18}
+                                barSize={24}
                             />
                         </BarChart>
                     </ResponsiveContainer>
@@ -191,6 +191,7 @@ export function DashboardCharts() {
     };
 
     const areaData = generalReport.area_data || [];
+    const showGeneralReport = false;
     const kemenparVillageScores = (
         (props as any).kemenpar_village_scores?.rows ?? []
     ).map((row: any) => ({
@@ -207,327 +208,332 @@ export function DashboardCharts() {
     }));
 
     return (
-        <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <Panel className="flex flex-col p-4">
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-[#303030]">
-                        General Report
-                    </h2>
-                    <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                    {programTypeFilter}{' '}
-                                    <ChevronDown className="size-3" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className="w-[140px]"
-                            >
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter(
-                                            'program_type',
-                                            'Semua Program',
-                                        )
-                                    }
+        <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {showGeneralReport && (
+                <Panel className="flex flex-col p-4">
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-sm font-bold text-[#303030]">
+                            General Report
+                        </h2>
+                        <div className="flex items-center gap-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
+                                        {programTypeFilter}{' '}
+                                        <ChevronDown className="size-3" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-[140px]"
                                 >
-                                    Semua Program
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter('program_type', 'KEMENPAR')
-                                    }
-                                >
-                                    KEMENPAR
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter('program_type', 'UMKM')
-                                    }
-                                >
-                                    UMKM
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter('program_type', 'ISTC')
-                                    }
-                                >
-                                    ISTC
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'program_type',
+                                                'Semua Program',
+                                            )
+                                        }
+                                    >
+                                        Semua Program
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'program_type',
+                                                'KEMENPAR',
+                                            )
+                                        }
+                                    >
+                                        KEMENPAR
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter('program_type', 'UMKM')
+                                        }
+                                    >
+                                        UMKM
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter('program_type', 'ISTC')
+                                        }
+                                    >
+                                        ISTC
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
-                                    {generalReportFilter}{' '}
-                                    <ChevronDown className="size-3" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className="w-[130px]"
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#0066AE] bg-[#0066AE] px-2 py-1 text-xs font-semibold text-white outline-none hover:bg-[#005a9c]">
+                                        {generalReportFilter}{' '}
+                                        <ChevronDown className="size-3" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-[130px]"
+                                >
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'general_report_filter',
+                                                'Hari Ini',
+                                            )
+                                        }
+                                    >
+                                        Hari Ini
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'general_report_filter',
+                                                'Bulan Ini',
+                                            )
+                                        }
+                                    >
+                                        Bulan Ini
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'general_report_filter',
+                                                'Tahun Ini',
+                                            )
+                                        }
+                                    >
+                                        Tahun Ini
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'general_report_filter',
+                                                '2025',
+                                            )
+                                        }
+                                    >
+                                        2025
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            updateFilter(
+                                                'general_report_filter',
+                                                '2024',
+                                            )
+                                        }
+                                    >
+                                        2024
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+                    <div className="flex flex-1 gap-4">
+                        <div className="flex flex-1 flex-col justify-between">
+                            <div>
+                                <p className="mb-1 text-xs font-semibold text-[#303030]">
+                                    Ringkasan Assessment
+                                </p>
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Rata-rata Total Skor
+                                </p>
+                                <div className="mt-1 flex items-end gap-2">
+                                    <span className="text-3xl leading-none font-bold text-[#303030]">
+                                        {generalReport.average_score ?? 0}
+                                    </span>
+                                    <span className="pb-0.5 text-xs font-semibold text-[#7C7C7C]">
+                                        / 100
+                                    </span>
+                                    <span className="ml-1 rounded bg-[#EAF8F0] px-1.5 py-0.5 text-[10px] font-bold text-[#00893D]">
+                                        Baik
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="mt-2 h-24 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart
+                                        data={areaData}
+                                        margin={{
+                                            top: 5,
+                                            right: 0,
+                                            left: 0,
+                                            bottom: 0,
+                                        }}
+                                    >
+                                        <defs>
+                                            <linearGradient
+                                                id="colorScore"
+                                                x1="0"
+                                                y1="0"
+                                                x2="0"
+                                                y2="1"
+                                            >
+                                                <stop
+                                                    offset="5%"
+                                                    stopColor="#0066AE"
+                                                    stopOpacity={0.3}
+                                                />
+                                                <stop
+                                                    offset="95%"
+                                                    stopColor="#0066AE"
+                                                    stopOpacity={0}
+                                                />
+                                            </linearGradient>
+                                        </defs>
+                                        <Area
+                                            type="monotone"
+                                            dataKey="score"
+                                            stroke="#0066AE"
+                                            strokeWidth={2}
+                                            fillOpacity={1}
+                                            fill="url(#colorScore)"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#00893D]">
+                                <ArrowUpRight className="size-3" />{' '}
+                                {generalReport.trend ?? '+0%'}{' '}
+                                <span className="font-medium text-[#7C7C7C]">
+                                    dibanding bulan lalu
+                                </span>
+                            </p>
+                            <Link
+                                href={surveyAssignments.url()}
+                                className="mt-4 flex w-full justify-center rounded-lg border border-[#0066AE] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
                             >
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter(
-                                            'general_report_filter',
-                                            'Hari Ini',
-                                        )
-                                    }
-                                >
-                                    Hari Ini
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter(
-                                            'general_report_filter',
-                                            'Bulan Ini',
-                                        )
-                                    }
-                                >
-                                    Bulan Ini
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter(
-                                            'general_report_filter',
-                                            'Tahun Ini',
-                                        )
-                                    }
-                                >
-                                    Tahun Ini
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter(
-                                            'general_report_filter',
-                                            '2025',
-                                        )
-                                    }
-                                >
-                                    2025
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-xs"
-                                    onSelect={() =>
-                                        updateFilter(
-                                            'general_report_filter',
-                                            '2024',
-                                        )
-                                    }
-                                >
-                                    2024
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-                <div className="flex flex-1 gap-4">
-                    <div className="flex flex-1 flex-col justify-between">
-                        <div>
-                            <p className="mb-1 text-xs font-semibold text-[#303030]">
-                                Ringkasan Assessment
-                            </p>
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Rata-rata Total Skor
-                            </p>
-                            <div className="mt-1 flex items-end gap-2">
-                                <span className="text-3xl leading-none font-bold text-[#303030]">
-                                    {generalReport.average_score ?? 0}
-                                </span>
-                                <span className="pb-0.5 text-xs font-semibold text-[#7C7C7C]">
-                                    / 100
-                                </span>
-                                <span className="ml-1 rounded bg-[#EAF8F0] px-1.5 py-0.5 text-[10px] font-bold text-[#00893D]">
-                                    Baik
-                                </span>
-                            </div>
+                                Lihat Detail Laporan{' '}
+                                <ChevronRight className="ml-1 inline size-3" />
+                            </Link>
                         </div>
-                        <div className="mt-2 h-24 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart
-                                    data={areaData}
-                                    margin={{
-                                        top: 5,
-                                        right: 0,
-                                        left: 0,
-                                        bottom: 0,
-                                    }}
-                                >
-                                    <defs>
-                                        <linearGradient
-                                            id="colorScore"
-                                            x1="0"
-                                            y1="0"
-                                            x2="0"
-                                            y2="1"
-                                        >
-                                            <stop
-                                                offset="5%"
-                                                stopColor="#0066AE"
-                                                stopOpacity={0.3}
-                                            />
-                                            <stop
-                                                offset="95%"
-                                                stopColor="#0066AE"
-                                                stopOpacity={0}
-                                            />
-                                        </linearGradient>
-                                    </defs>
-                                    <Area
-                                        type="monotone"
-                                        dataKey="score"
-                                        stroke="#0066AE"
-                                        strokeWidth={2}
-                                        fillOpacity={1}
-                                        fill="url(#colorScore)"
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#00893D]">
-                            <ArrowUpRight className="size-3" />{' '}
-                            {generalReport.trend ?? '+0%'}{' '}
-                            <span className="font-medium text-[#7C7C7C]">
-                                dibanding bulan lalu
-                            </span>
-                        </p>
-                        <Link
-                            href={surveyAssignments.url()}
-                            className="mt-4 flex w-full justify-center rounded-lg border border-[#0066AE] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
-                        >
-                            Lihat Detail Laporan{' '}
-                            <ChevronRight className="ml-1 inline size-3" />
-                        </Link>
-                    </div>
 
-                    <div className="flex w-[130px] flex-col justify-between border-l border-[#EFEFEF] py-1 pl-4">
-                        <div>
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Total Assessment
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    {generalReport.total_assessment ?? 0}
+                        <div className="flex w-[130px] flex-col justify-between border-l border-[#EFEFEF] py-1 pl-4">
+                            <div>
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Total Assessment
                                 </p>
-                                <span className="flex items-center text-[10px] font-bold text-[#00893D]">
-                                    <ArrowUpRight className="size-2.5" /> 2
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-[#303030]">
+                                        {generalReport.total_assessment ?? 0}
+                                    </p>
+                                    <span className="flex items-center text-[10px] font-bold text-[#00893D]">
+                                        <ArrowUpRight className="size-2.5" /> 2
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Selesai
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-[#303030]">
+                                        {generalReport.selesai ?? 0}
+                                    </p>
+                                    <span className="text-[10px] font-semibold text-[#7C7C7C]">
+                                        {generalReport.total_assessment > 0
+                                            ? Math.round(
+                                                  (generalReport.selesai /
+                                                      generalReport.total_assessment) *
+                                                      100,
+                                              )
+                                            : 0}
+                                        %
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Dalam Proses
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-[#303030]">
+                                        {generalReport.dalam_proses ?? 0}
+                                    </p>
+                                    <span className="text-[10px] font-semibold text-[#7C7C7C]">
+                                        {generalReport.total_assessment > 0
+                                            ? Math.round(
+                                                  (generalReport.dalam_proses /
+                                                      generalReport.total_assessment) *
+                                                      100,
+                                              )
+                                            : 0}
+                                        %
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Belum Dimulai
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-[#303030]">
+                                        {generalReport.belum_dimulai ?? 0}
+                                    </p>
+                                    <span className="text-[10px] font-semibold text-[#7C7C7C]">
+                                        {generalReport.total_assessment > 0
+                                            ? Math.round(
+                                                  (generalReport.belum_dimulai /
+                                                      generalReport.total_assessment) *
+                                                      100,
+                                              )
+                                            : 0}
+                                        %
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="border-t border-[#EFEFEF] pt-2">
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Total Program CSR
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-[#303030]">
+                                        {generalReport.total_program_csr ?? 0}
+                                    </p>
+                                    <span className="flex items-center text-[10px] font-bold text-[#00893D]">
+                                        <ArrowUpRight className="size-2.5" /> 1
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-[#7C7C7C]">
+                                    Total Anggaran
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-bold text-[#303030]">
+                                        Rp
+                                        {(
+                                            generalReport.total_anggaran ?? 0
+                                        ).toLocaleString('id-ID')}
+                                    </p>
+                                </div>
+                                <span className="mt-0.5 flex items-center text-[10px] font-bold text-[#00893D]">
+                                    <ArrowUpRight className="size-2.5" /> 15%
                                 </span>
                             </div>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Selesai
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    {generalReport.selesai ?? 0}
-                                </p>
-                                <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    {generalReport.total_assessment > 0
-                                        ? Math.round(
-                                              (generalReport.selesai /
-                                                  generalReport.total_assessment) *
-                                                  100,
-                                          )
-                                        : 0}
-                                    %
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Dalam Proses
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    {generalReport.dalam_proses ?? 0}
-                                </p>
-                                <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    {generalReport.total_assessment > 0
-                                        ? Math.round(
-                                              (generalReport.dalam_proses /
-                                                  generalReport.total_assessment) *
-                                                  100,
-                                          )
-                                        : 0}
-                                    %
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Belum Dimulai
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    {generalReport.belum_dimulai ?? 0}
-                                </p>
-                                <span className="text-[10px] font-semibold text-[#7C7C7C]">
-                                    {generalReport.total_assessment > 0
-                                        ? Math.round(
-                                              (generalReport.belum_dimulai /
-                                                  generalReport.total_assessment) *
-                                                  100,
-                                          )
-                                        : 0}
-                                    %
-                                </span>
-                            </div>
-                        </div>
-                        <div className="border-t border-[#EFEFEF] pt-2">
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Total Program CSR
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-[#303030]">
-                                    {generalReport.total_program_csr ?? 0}
-                                </p>
-                                <span className="flex items-center text-[10px] font-bold text-[#00893D]">
-                                    <ArrowUpRight className="size-2.5" /> 1
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-[#7C7C7C]">
-                                Total Anggaran
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold text-[#303030]">
-                                    Rp
-                                    {(
-                                        generalReport.total_anggaran ?? 0
-                                    ).toLocaleString('id-ID')}
-                                </p>
-                            </div>
-                            <span className="mt-0.5 flex items-center text-[10px] font-bold text-[#00893D]">
-                                <ArrowUpRight className="size-2.5" /> 15%
-                            </span>
                         </div>
                     </div>
-                </div>
-            </Panel>
+                </Panel>
+            )}
 
             <VillageScoreBarChart
-                title="Aktivitas Survey"
+                title="Survey KEMENPAR"
                 subtitle="Skor KEMENPAR per desa"
                 data={kemenparVillageScores}
                 color="#0066AE"
                 emptyMessage="Belum ada skor KEMENPAR desa."
             />
             <VillageScoreBarChart
-                title="Status Survey"
+                title="Survey ISTC"
                 subtitle="Skor ISTC per desa"
                 data={istcVillageScores}
                 color="#00893D"

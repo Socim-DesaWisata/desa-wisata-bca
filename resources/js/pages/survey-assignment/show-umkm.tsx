@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeDollarSign,
@@ -1172,14 +1172,21 @@ function QuestionRow({
     number,
     onViewDetail,
     onEditAnswer,
+    isViewer,
 }: {
     answer: UmkmSurveyAnswer;
     number: number;
     onViewDetail: (answer: UmkmSurveyAnswer) => void;
     onEditAnswer: (answer: UmkmSurveyAnswer) => void;
+    isViewer: boolean;
 }) {
     return (
-        <div className="grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0 xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px_118px_180px]">
+        <div className={classNames(
+            'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+            isViewer
+                ? 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px]'
+                : 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px_118px_180px]',
+        )}>
             <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
                 {String(number).padStart(2, '0')}
             </div>
@@ -1207,7 +1214,7 @@ function QuestionRow({
                     </p>
                 </div>
             </div>
-            <div className="flex items-center text-xs">
+            {!isViewer && <div className="flex items-center text-xs">
                 <div>
                     <p className="font-semibold text-[#7C7C7C]">
                         Terakhir diedit
@@ -1216,8 +1223,8 @@ function QuestionRow({
                         {answer.last_edited_at}
                     </p>
                 </div>
-            </div>
-            <div className="flex items-center justify-end gap-2">
+            </div>}
+            {!isViewer && <div className="flex items-center justify-end gap-2">
                 <button
                     type="button"
                     onClick={() => onViewDetail(answer)}
@@ -1234,7 +1241,7 @@ function QuestionRow({
                     <Pencil size={14} />
                     Edit
                 </button>
-            </div>
+            </div>}
         </div>
     );
 }
@@ -2659,6 +2666,8 @@ export default function ShowUmkm({
     survey_groups,
     edit_values,
 }: ShowUmkmProps) {
+    const { auth } = usePage().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [search, setSearch] = useState('');
     const [groupFilter, setGroupFilter] = useState('all');
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
@@ -2909,14 +2918,16 @@ export default function ShowUmkm({
                                 <Download size={16} />
                                 Export Excel
                             </a>
-                            <button
-                                type="button"
-                                onClick={() => setIsEditOpen(true)}
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]"
-                            >
-                                <Pencil size={16} />
-                                Edit Data UMKM
-                            </button>
+                            {!isViewer && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditOpen(true)}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white shadow-[0_8px_16px_rgba(0,102,174,0.18)] transition hover:bg-[#093967]"
+                                >
+                                    <Pencil size={16} />
+                                    Edit Data UMKM
+                                </button>
+                            )}
                             <Link href={showAssignment.url(assignment.code)}>
                                 <span className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-4 text-sm font-bold text-[#303030] transition hover:bg-[#F1F5F8]">
                                     <ArrowLeft size={16} />
@@ -3068,14 +3079,16 @@ export default function ShowUmkm({
                                     />
                                     Dokumen Pendukung
                                 </h2>
-                                <button
-                                    type="button"
-                                    onClick={openCreateDocument}
-                                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#0066AE] px-2.5 text-xs font-bold text-white transition hover:bg-[#093967]"
-                                >
-                                    <Plus size={14} />
-                                    Tambah
-                                </button>
+                                {!isViewer && (
+                                    <button
+                                        type="button"
+                                        onClick={openCreateDocument}
+                                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#0066AE] px-2.5 text-xs font-bold text-white transition hover:bg-[#093967]"
+                                    >
+                                        <Plus size={14} />
+                                        Tambah
+                                    </button>
+                                )}
                             </div>
 
                             <div className="mt-4 space-y-3">
@@ -3356,6 +3369,7 @@ export default function ShowUmkm({
                                                             onEditAnswer={
                                                                 openAnswerEdit
                                                             }
+                                                            isViewer={isViewer}
                                                         />
                                                     ),
                                                 )}
