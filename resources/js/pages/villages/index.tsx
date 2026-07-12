@@ -1082,9 +1082,14 @@ export default function VillagesIndex({
                                                             <Building2 className="size-5" />
                                                         </span>
                                                         <span>
-                                                            <span className="block font-bold text-[#303030]">
+                                                            <Link
+                                                                href={showVillage.url({
+                                                                    village: village.id,
+                                                                })}
+                                                                className="block font-bold text-[#0066AE] transition hover:text-[#093967]"
+                                                            >
                                                                 {village.name}
-                                                            </span>
+                                                            </Link>
                                                             <span className="block text-[12px] leading-4 text-[#093967]">
                                                                 {village.code}
                                                             </span>
@@ -1119,10 +1124,10 @@ export default function VillagesIndex({
                                                         </Badge>
                                                     </td>
                                                 )}
-                                                <td className="px-3 py-3 font-medium text-[#303030]">
+                                                <td className="bg-[#EAF3FF] px-3 py-3 font-bold text-[#0066AE]">
                                                     {village.total_score}
                                                 </td>
-                                                <td className="px-3 py-3 font-medium text-[#303030]">
+                                                <td className="bg-[#EAF8F0] px-3 py-3 font-bold text-[#00893D]">
                                                     {village.istc_score}
                                                 </td>
                                                 <td className="px-3 py-3 font-medium text-[#303030]">

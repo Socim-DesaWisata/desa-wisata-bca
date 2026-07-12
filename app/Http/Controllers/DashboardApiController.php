@@ -14,10 +14,12 @@ class DashboardApiController extends Controller
         $assignments = VillageSurveyAssignment::query()
             ->with('village:id,code,name')
             ->get()
+            ->filter(fn ($assignment): bool => $assignment->village !== null)
             ->map(function ($assignment): array {
                 return [
+                    'id' => $assignment->village->id,
                     'code' => $assignment->code,
-                    'name' => $assignment->village ? $assignment->village->name : $assignment->code,
+                    'name' => $assignment->village->name,
                 ];
             })
             ->sortBy('name')
