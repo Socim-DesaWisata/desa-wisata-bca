@@ -11,8 +11,10 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { router, usePage } from '@inertiajs/react';
 import { Loader2, MapPin, Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { show as showVillage } from '@/routes/villages';
 
 type Desa = {
+    id: number;
     code: string;
     name: string;
 };
@@ -52,6 +54,7 @@ export function GlobalSurveySelector() {
                                 (row): row is Desa =>
                                     typeof row === 'object' &&
                                     row !== null &&
+                                    typeof (row as Desa).id === 'number' &&
                                     typeof (row as Desa).code === 'string' &&
                                     typeof (row as Desa).name === 'string',
                             )
@@ -89,10 +92,16 @@ export function GlobalSurveySelector() {
     }, [url, desaList.length]);
 
     const handleDesaChange = (code: string) => {
+        const desa = desaList.find((item) => item.code === code);
+
+        if (!desa) {
+            return;
+        }
+
         setSelectedDesa(code);
         localStorage.setItem('selected_desa_code', code);
 
-        router.visit(`/survey-assignments/${code}`);
+        router.visit(showVillage.url({ village: desa.id }));
     };
 
     return (

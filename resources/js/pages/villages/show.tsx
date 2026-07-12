@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { dashboard } from '@/routes';
 import { show as showVillage } from '@/routes/villages';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 import {
@@ -233,33 +234,42 @@ function TopNav({ villages }: { villages: VillageLinkItem[] }) {
                         </a>
                     ))}
                 </nav>
-                <details className="group relative">
-                    <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-2 rounded-lg bg-[#093967] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(0,102,174,0.18)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98] [&::-webkit-details-marker]:hidden">
-                        <MapTrifold className="size-5" />
-                        List Desa
-                        <span className="text-[11px] transition group-open:rotate-180">
-                            v
-                        </span>
-                    </summary>
-                    <div className="absolute right-0 z-30 mt-3 w-72 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
-                        <div className="max-h-80 overflow-y-auto p-2">
-                            {villages.map((item) => (
-                                <a
-                                    key={item.id}
-                                    href={showVillage.url(item.id)}
-                                    className="block rounded-xl px-3 py-2.5 text-left transition hover:bg-[#EAF3FF]"
-                                >
-                                    <span className="block text-[13px] font-extrabold text-[#093967]">
-                                        {item.name}
-                                    </span>
-                                    <span className="mt-0.5 block text-[11px] font-semibold text-[#64748B]">
-                                        {item.location}
-                                    </span>
-                                </a>
-                            ))}
+                <div className="flex items-center gap-2">
+                    <Link
+                        href={dashboard.url()}
+                        className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#D5E3F1] bg-white px-4 text-[13px] font-extrabold text-[#093967] shadow-[0_8px_18px_rgba(15,23,42,0.08)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-[#F1F7FD] active:scale-[0.98]"
+                    >
+                        <SquaresFour className="size-5" />
+                        Dashboard
+                    </Link>
+                    <details className="group relative">
+                        <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-2 rounded-lg bg-[#093967] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(0,102,174,0.18)] transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.98] [&::-webkit-details-marker]:hidden">
+                            <MapTrifold className="size-5" />
+                            List Desa
+                            <span className="text-[11px] transition group-open:rotate-180">
+                                v
+                            </span>
+                        </summary>
+                        <div className="absolute right-0 z-30 mt-3 w-72 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+                            <div className="max-h-80 overflow-y-auto p-2">
+                                {villages.map((item) => (
+                                    <a
+                                        key={item.id}
+                                        href={showVillage.url(item.id)}
+                                        className="block rounded-xl px-3 py-2.5 text-left transition hover:bg-[#EAF3FF]"
+                                    >
+                                        <span className="block text-[13px] font-extrabold text-[#093967]">
+                                            {item.name}
+                                        </span>
+                                        <span className="mt-0.5 block text-[11px] font-semibold text-[#64748B]">
+                                            {item.location}
+                                        </span>
+                                    </a>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </details>
+                    </details>
+                </div>
             </div>
         </header>
     );
@@ -1062,7 +1072,7 @@ export default function VillageDetail({
                             </Panel>
                         </section>
                         <section id="pariwisata">
-                            <Heading icon={Star}>Tourist Attractions</Heading>
+                            <Heading icon={Star}>Pariwisata</Heading>
                             {attractionItems.length ? (
                                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                     {attractionItems.map((p) => (
@@ -1095,7 +1105,7 @@ export default function VillageDetail({
                         </section>
                         <section>
                             <Heading icon={MapPin}>
-                                Nearby Tourism Villages
+                                Desa Wisata Lainnya
                             </Heading>
                             {nearbyItems.length ? (
                                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
