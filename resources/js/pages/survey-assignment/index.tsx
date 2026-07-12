@@ -863,21 +863,23 @@ export default function SurveyAssignmentIndex({
                                                             <Eye className="size-4 text-[#303030]" />
                                                             Lihat Detail
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="gap-2 text-xs"
-                                                            onSelect={(
-                                                                event,
-                                                            ) => {
-                                                                event.preventDefault();
-                                                                openAccessModal(
-                                                                    assignment,
-                                                                    'take-survey',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <ClipboardList className="size-4 text-[#303030]" />
-                                                            Take Survey
-                                                        </DropdownMenuItem>
+                                                        {!isViewer && (
+                                                            <DropdownMenuItem
+                                                                className="gap-2 text-xs"
+                                                                onSelect={(
+                                                                    event,
+                                                                ) => {
+                                                                    event.preventDefault();
+                                                                    openAccessModal(
+                                                                        assignment,
+                                                                        'take-survey',
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <ClipboardList className="size-4 text-[#303030]" />
+                                                                Take Survey
+                                                            </DropdownMenuItem>
+                                                        )}
                                                         {!isEnumerator && !isViewer && (
                                                             <>
                                                                 <DropdownMenuSeparator />

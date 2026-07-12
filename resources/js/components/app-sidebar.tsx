@@ -69,7 +69,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Laporan',
                 href: '#',
                 icon: BarChart3,
-                roles: ['admin', 'viewer'],
+                roles: ['admin'],
                 children: [
                     {
                         title: 'KEMENPAR',
@@ -90,7 +90,7 @@ const navGroups: SidebarNavGroup[] = [
                 title: 'Survey Assignment',
                 href: surveyAssignments(),
                 icon: ClipboardCheck,
-                roles: ['enumerator', 'viewer'],
+                roles: ['enumerator'],
             },
         ],
     },
@@ -125,7 +125,12 @@ export function AdminSidebarContent({
     const { auth } = usePage().props;
     const { isCurrentOrParentUrl, isCurrentUrl } = useCurrentUrl();
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-    const userRole = auth.user?.role === 'admin' ? 'admin' : auth.user?.role === 'viewer' ? 'viewer' : 'enumerator';
+    const userRole =
+        auth.user?.role === 'admin'
+            ? 'admin'
+            : auth.user?.role === 'viewer'
+              ? 'viewer'
+              : 'enumerator';
     const visibleNavGroups = navGroups
         .map((group) => ({
             ...group,

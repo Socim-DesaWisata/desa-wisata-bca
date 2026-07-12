@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -1264,17 +1264,24 @@ function QuestionRow({
     onViewDetail,
     onViewHistory,
     onEditData,
+    isViewer,
 }: {
     question: SurveyQuestion;
     number: number;
     onViewDetail: (question: SurveyQuestion) => void;
     onViewHistory: (question: SurveyQuestion) => void;
     onEditData: (question: SurveyQuestion) => void;
+    isViewer: boolean;
 }) {
     const answered = Boolean(question.answer);
 
     return (
-        <div className="grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0 xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]">
+        <div className={classNames(
+            'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+            isViewer
+                ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
+                : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
+        )}>
             <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
                 {String(number).padStart(2, '0')}
             </div>
@@ -1325,7 +1332,7 @@ function QuestionRow({
                 </div>
             </div>
 
-            <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
                 <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
                     <UserRound size={14} className="text-[#0066AE]" />
                     Dijawab oleh
@@ -1333,9 +1340,9 @@ function QuestionRow({
                 <p className="mt-1 font-bold text-[#303030]">
                     {question.answer?.answered_by.name ?? '-'}
                 </p>
-            </div>
+            </div>}
 
-            <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
                 <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
                     <Clock3 size={14} className="text-[#0066AE]" />
                     Terakhir diedit
@@ -1343,9 +1350,9 @@ function QuestionRow({
                 <p className="mt-1 font-bold text-[#303030]">
                     {question.answer?.last_edited_at ?? '-'}
                 </p>
-            </div>
+            </div>}
 
-            <div className="flex items-center justify-center">
+            {!isViewer && <div className="flex items-center justify-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button
@@ -1383,7 +1390,7 @@ function QuestionRow({
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-            </div>
+            </div>}
         </div>
     );
 }
@@ -1393,11 +1400,13 @@ function PariwisataQuestionRow({
     number,
     onViewDetail,
     onEditData,
+    isViewer,
 }: {
     question: PariwisataSurveyQuestion;
     number: number;
     onViewDetail: (question: PariwisataSurveyQuestion) => void;
     onEditData: (question: PariwisataSurveyQuestion) => void;
+    isViewer: boolean;
 }) {
     const answered = Boolean(question.answer);
     const title = question.indicator_name ?? question.criteria_name ?? '-';
@@ -1409,7 +1418,12 @@ function PariwisataQuestionRow({
     ].filter(Boolean);
 
     return (
-        <div className="grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0 xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]">
+        <div className={classNames(
+            'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+            isViewer
+                ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
+                : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
+        )}>
             <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
                 {String(number).padStart(2, '0')}
             </div>
@@ -1466,7 +1480,7 @@ function PariwisataQuestionRow({
                 </div>
             </div>
 
-            <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
                 <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
                     <UserRound size={14} className="text-[#0066AE]" />
                     Dijawab oleh
@@ -1474,9 +1488,9 @@ function PariwisataQuestionRow({
                 <p className="mt-1 font-bold text-[#303030]">
                     {question.answer?.answered_by.name ?? '-'}
                 </p>
-            </div>
+            </div>}
 
-            <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
                 <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
                     <Clock3 size={14} className="text-[#0066AE]" />
                     Terakhir diedit
@@ -1484,9 +1498,9 @@ function PariwisataQuestionRow({
                 <p className="mt-1 font-bold text-[#303030]">
                     {question.answer?.last_edited_at ?? '-'}
                 </p>
-            </div>
+            </div>}
 
-            <div className="flex items-center justify-center">
+            {!isViewer && <div className="flex items-center justify-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button
@@ -1517,7 +1531,7 @@ function PariwisataQuestionRow({
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-            </div>
+            </div>}
         </div>
     );
 }
@@ -2102,9 +2116,11 @@ function DetailPair({
 function UmkmTab({
     umkms,
     assignmentCode,
+    isViewer,
 }: {
     umkms: UmkmData[];
     assignmentCode: string;
+    isViewer: boolean;
 }) {
     const averageScore = umkms.length
         ? Math.round(
@@ -2136,12 +2152,14 @@ function UmkmTab({
                         assessment 0-100.
                     </p>
                 </div>
-                <Link href={createUmkm.url(assignmentCode)}>
-                    <Button variant="primary">
-                        <ClipboardCheck size={16} />
-                        Tambah UMKM
-                    </Button>
-                </Link>
+                {!isViewer && (
+                    <Link href={createUmkm.url(assignmentCode)}>
+                        <Button variant="primary">
+                            <ClipboardCheck size={16} />
+                            Tambah UMKM
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -2291,11 +2309,13 @@ function PariwisataTab({
     assignmentCode,
     surveySummary,
     surveyGroups,
+    isViewer,
 }: {
     pariwisata: PariwisataData[];
     assignmentCode: string;
     surveySummary: SurveyAssignmentShowProps['pariwisata_survey_summary'];
     surveyGroups: SurveyAssignmentShowProps['pariwisata_survey_groups'];
+    isViewer: boolean;
 }) {
     const [search, setSearch] = useState('');
     const [aspectFilter, setAspectFilter] = useState('all');
@@ -2375,22 +2395,26 @@ function PariwisataTab({
                     </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Link
-                        href={takePariwisataSurvey.url({
-                            assignment: assignmentCode,
-                        })}
-                    >
-                        <Button variant="primary">
-                            <ClipboardList size={16} />
-                            Isi Survey Pariwisata
-                        </Button>
-                    </Link>
-                    <Link href={createPariwisata.url(assignmentCode)}>
-                        <Button>
-                            <MapPin size={16} />
-                            Tambah ISTC
-                        </Button>
-                    </Link>
+                    {!isViewer && (
+                        <>
+                            <Link
+                                href={takePariwisataSurvey.url({
+                                    assignment: assignmentCode,
+                                })}
+                            >
+                                <Button variant="primary">
+                                    <ClipboardList size={16} />
+                                    Isi Survey Pariwisata
+                                </Button>
+                            </Link>
+                            <Link href={createPariwisata.url(assignmentCode)}>
+                                <Button>
+                                    <MapPin size={16} />
+                                    Tambah ISTC
+                                </Button>
+                            </Link>
+                        </>
+                    )}
                     <a
                         href={exportPariwisataSurvey.url({
                             assignment: assignmentCode,
@@ -2615,6 +2639,7 @@ function PariwisataTab({
                                         number={index + 1}
                                         onViewDetail={setDetailQuestion}
                                         onEditData={setEditingQuestion}
+                                        isViewer={isViewer}
                                     />
                                 ))}
                         </div>
@@ -3330,6 +3355,8 @@ export default function SurveyAssignmentShow({
     village_annual_edit_values,
 }: SurveyAssignmentShowProps) {
     const activeTab = active_tab;
+    const { auth } = usePage().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [search, setSearch] = useState('');
     const [aspectFilter, setAspectFilter] = useState('all');
     const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(
@@ -3491,14 +3518,7 @@ export default function SurveyAssignmentShow({
                                     Dashboard
                                 </Link>
                                 <span className="text-[#B0B0B0]">/</span>
-                                <Link
-                                    href={surveyAssignments.url()}
-                                    className="text-[#0066AE]"
-                                >
-                                    Survey Assignment
-                                </Link>
-                                <span className="text-[#B0B0B0]">/</span>
-                                <span className="text-[#7C7C7C]">Detail</span>
+                                <span className="text-[#7C7C7C]">Survey Detail</span>
                             </div>
                             <h1 className="mt-2 text-2xl leading-tight font-bold text-[#303030] sm:text-[28px]">
                                 Detail Survey Assignment
@@ -3516,21 +3536,28 @@ export default function SurveyAssignmentShow({
                                     Kembali
                                 </Button>
                             </Link>
-                            <button type="button" onClick={openEditSidebar}>
-                                <Button>
-                                    <PanelRightOpen size={16} />
-                                    Edit Assignment
-                                </Button>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={openVillageAnnualSidebar}
-                            >
-                                <Button>
-                                    <PanelRightOpen size={16} />
-                                    Edit Data Desa
-                                </Button>
-                            </button>
+                            {!isViewer && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={openEditSidebar}
+                                    >
+                                        <Button>
+                                            <PanelRightOpen size={16} />
+                                            Edit Assignment
+                                        </Button>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={openVillageAnnualSidebar}
+                                    >
+                                        <Button>
+                                            <PanelRightOpen size={16} />
+                                            Edit Data Desa
+                                        </Button>
+                                    </button>
+                                </>
+                            )}
                             <a
                                 href={exportSurveyAssignment.url(
                                     assignment.code,
@@ -3541,12 +3568,14 @@ export default function SurveyAssignmentShow({
                                     Export Excel
                                 </Button>
                             </a>
-                            <Link href={takeSurvey.url(assignment.code)}>
-                                <Button variant="primary">
-                                    <ClipboardList size={16} />
-                                    Take Survey
-                                </Button>
-                            </Link>
+                            {!isViewer && (
+                                <Link href={takeSurvey.url(assignment.code)}>
+                                    <Button variant="primary">
+                                        <ClipboardList size={16} />
+                                        Take Survey
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </div>
 
@@ -3903,6 +3932,7 @@ export default function SurveyAssignmentShow({
                                                             onEditData={
                                                                 setEditingQuestion
                                                             }
+                                                            isViewer={isViewer}
                                                         />
                                                     ),
                                                 )}
@@ -4121,6 +4151,7 @@ export default function SurveyAssignmentShow({
                             <UmkmTab
                                 umkms={umkms}
                                 assignmentCode={assignment.code}
+                                isViewer={isViewer}
                             />
                         </div>
                     )}
@@ -4132,6 +4163,7 @@ export default function SurveyAssignmentShow({
                                 assignmentCode={assignment.code}
                                 surveySummary={pariwisata_survey_summary}
                                 surveyGroups={pariwisata_survey_groups}
+                                isViewer={isViewer}
                             />
                         </div>
                     )}

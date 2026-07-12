@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import {
@@ -599,6 +599,8 @@ export default function VillagesIndex({
     province_options,
     per_page_options,
 }: VillagesIndexProps) {
+    const { auth } = usePage().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [filterForm, setFilterForm] = useState({
         search: filters.search ?? '',
@@ -856,34 +858,36 @@ export default function VillagesIndex({
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                            <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => changeView('active')}
-                                    className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
-                                >
-                                    Data Aktif
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => changeView('trash')}
-                                    className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
-                                >
-                                    Trash
-                                </button>
+                        {!isViewer && (
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => changeView('active')}
+                                        className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
+                                    >
+                                        Data Aktif
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => changeView('trash')}
+                                        className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
+                                    >
+                                        Trash
+                                    </button>
+                                </div>
+                                {filterForm.view !== 'trash' && (
+                                    <button
+                                        type="button"
+                                        onClick={openCreateModal}
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Desa
+                                    </button>
+                                )}
                             </div>
-                            {filterForm.view !== 'trash' && (
-                                <button
-                                    type="button"
-                                    onClick={openCreateModal}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
-                                >
-                                    <Plus className="size-4" />
-                                    Tambah Desa
-                                </button>
-                            )}
-                        </div>
+                        )}
                     </header>
 
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -937,31 +941,33 @@ export default function VillagesIndex({
                                 />
                             </label>
 
-                            <label className="space-y-1">
-                                <span className="block text-[11px] font-semibold text-[#7C7C7C]">
-                                    Status
-                                </span>
-                                <select
-                                    value={filterForm.status}
-                                    onChange={(event) =>
-                                        setFilterForm((current) => ({
-                                            ...current,
-                                            status: event.target.value,
-                                        }))
-                                    }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
-                                >
-                                    <option value="">Semua Status</option>
-                                    {status_options.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
+                            {!isViewer && (
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] font-semibold text-[#7C7C7C]">
+                                        Status
+                                    </span>
+                                    <select
+                                        value={filterForm.status}
+                                        onChange={(event) =>
+                                            setFilterForm((current) => ({
+                                                ...current,
+                                                status: event.target.value,
+                                            }))
+                                        }
+                                        className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
+                                    >
+                                        <option value="">Semua Status</option>
+                                        {status_options.map((option) => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            )}
 
                             <label className="space-y-1">
                                 <span className="block text-[11px] font-semibold text-[#7C7C7C]">
@@ -1018,11 +1024,15 @@ export default function VillagesIndex({
                                             {[
                                                 'Desa Wisata',
                                                 'Pengelola',
-                                                'Status',
+                                                ...(!isViewer
+                                                    ? ['Status']
+                                                    : []),
                                                 'Skor KEMENPAR',
                                                 'Skor ISTC',
                                                 'Jenis Desa',
-                                                'Dibuat Oleh',
+                                                ...(!isViewer
+                                                    ? ['Dibuat Oleh']
+                                                    : []),
                                                 'Aksi',
                                             ].map((head) => (
                                                 <th
@@ -1096,15 +1106,19 @@ export default function VillagesIndex({
                                                             '-'}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-3">
-                                                    <Badge
-                                                        className={statusClass(
-                                                            village.status,
-                                                        )}
-                                                    >
-                                                        {village.status_label}
-                                                    </Badge>
-                                                </td>
+                                                {!isViewer && (
+                                                    <td className="px-3 py-3">
+                                                        <Badge
+                                                            className={statusClass(
+                                                                village.status,
+                                                            )}
+                                                        >
+                                                            {
+                                                                village.status_label
+                                                            }
+                                                        </Badge>
+                                                    </td>
+                                                )}
                                                 <td className="px-3 py-3 font-medium text-[#303030]">
                                                     {village.total_score}
                                                 </td>
@@ -1114,9 +1128,11 @@ export default function VillagesIndex({
                                                 <td className="px-3 py-3 font-medium text-[#303030]">
                                                     {village.village_type}
                                                 </td>
-                                                <td className="px-3 py-3 font-medium text-[#303030]">
-                                                    {village.created_by}
-                                                </td>
+                                                {!isViewer && (
+                                                    <td className="px-3 py-3 font-medium text-[#303030]">
+                                                        {village.created_by}
+                                                    </td>
+                                                )}
                                                 <td className="px-3 py-3">
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
@@ -1130,8 +1146,9 @@ export default function VillagesIndex({
                                                             align="end"
                                                             className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                         >
-                                                            {filterForm.view ===
-                                                            'trash' ? (
+                                                            {!isViewer &&
+                                                            filterForm.view ===
+                                                                'trash' ? (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#00893D]"
                                                                     onSelect={(
@@ -1163,36 +1180,40 @@ export default function VillagesIndex({
                                                                             Detail
                                                                         </Link>
                                                                     </DropdownMenuItem>
-                                                                    <DropdownMenuItem
-                                                                        asChild
-                                                                        className="gap-2 text-xs"
-                                                                    >
-                                                                        <Link
-                                                                            href={editVillage(
-                                                                                village.id,
-                                                                            )}
-                                                                        >
-                                                                            <Pencil className="size-4 text-[#303030]" />
-                                                                            Edit
-                                                                            Desa
-                                                                        </Link>
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                        onSelect={(
-                                                                            event,
-                                                                        ) => {
-                                                                            event.preventDefault();
-                                                                            handleDelete(
-                                                                                village,
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <Trash2 className="size-4 text-[#D81313]" />
-                                                                        Hapus
-                                                                        Desa
-                                                                    </DropdownMenuItem>
+                                                                    {!isViewer && (
+                                                                        <>
+                                                                            <DropdownMenuItem
+                                                                                asChild
+                                                                                className="gap-2 text-xs"
+                                                                            >
+                                                                                <Link
+                                                                                    href={editVillage(
+                                                                                        village.id,
+                                                                                    )}
+                                                                                >
+                                                                                    <Pencil className="size-4 text-[#303030]" />
+                                                                                    Edit
+                                                                                    Desa
+                                                                                </Link>
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuSeparator />
+                                                                            <DropdownMenuItem
+                                                                                className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                                onSelect={(
+                                                                                    event,
+                                                                                ) => {
+                                                                                    event.preventDefault();
+                                                                                    handleDelete(
+                                                                                        village,
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                <Trash2 className="size-4 text-[#D81313]" />
+                                                                                Hapus
+                                                                                Desa
+                                                                            </DropdownMenuItem>
+                                                                        </>
+                                                                    )}
                                                                 </>
                                                             )}
                                                         </DropdownMenuContent>
@@ -1219,16 +1240,17 @@ export default function VillagesIndex({
                                             ? 'Desa wisata yang dipindahkan ke trash akan muncul di sini.'
                                             : 'Tambahkan desa wisata pertama untuk mulai mengelola program CSR dan survey assessment.'}
                                     </p>
-                                    {filterForm.view !== 'trash' && (
-                                        <button
-                                            type="button"
-                                            onClick={openCreateModal}
-                                            className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
-                                        >
-                                            <Plus className="size-4" />
-                                            Tambah Desa
-                                        </button>
-                                    )}
+                                    {!isViewer &&
+                                        filterForm.view !== 'trash' && (
+                                            <button
+                                                type="button"
+                                                onClick={openCreateModal}
+                                                className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                            >
+                                                <Plus className="size-4" />
+                                                Tambah Desa
+                                            </button>
+                                        )}
                                 </div>
                             )}
 
