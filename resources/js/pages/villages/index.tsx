@@ -761,7 +761,7 @@ export default function VillagesIndex({
     function toggleScoreSort(sortBy: 'total_score' | 'istc_score') {
         const sort_direction =
             filterForm.sort_by === sortBy &&
-            filterForm.sort_direction === 'desc'
+                filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
@@ -849,7 +849,7 @@ export default function VillagesIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Manajemen Desa Wisata
+                                Assesment Desa Wisata
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Kelola data desa wisata binaan, status
@@ -1040,7 +1040,7 @@ export default function VillagesIndex({
                                                     className="px-3 py-3 font-bold whitespace-nowrap"
                                                 >
                                                     {head === 'Skor KEMENPAR' ||
-                                                    head === 'Skor ISTC' ? (
+                                                        head === 'Skor ISTC' ? (
                                                         <button
                                                             type="button"
                                                             onClick={() =>
@@ -1155,7 +1155,7 @@ export default function VillagesIndex({
                                                             className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                         >
                                                             {!isViewer &&
-                                                            filterForm.view ===
+                                                                filterForm.view ===
                                                                 'trash' ? (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#00893D]"
