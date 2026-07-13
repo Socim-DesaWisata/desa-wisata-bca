@@ -811,7 +811,11 @@ export default function Dashboard({
 
                             return (
                                 <Link
-                                    href={villagesRoute.url()}
+                                    href={`${villagesRoute.url()}?jenis_desa=${kpi.title
+                                        .replace('Total Desa', '')
+                                        .trim()
+                                        .toLowerCase()
+                                        .replace(/\s+/g, '-')}`}
                                     key={kpi.title}
                                     className="group block"
                                 >

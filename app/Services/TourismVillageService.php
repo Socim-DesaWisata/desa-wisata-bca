@@ -57,6 +57,7 @@ class TourismVillageService
                 ? Arr::get($filters, 'sort_by')
                 : null,
             'sort_direction' => Arr::get($filters, 'sort_direction') === 'asc' ? 'asc' : 'desc',
+            'jenis_desa' => Arr::get($filters, 'jenis_desa'),
         ];
 
         $query = TourismVillage::query()
@@ -108,6 +109,19 @@ class TourismVillageService
             })
             ->when($normalizedFilters['status'], fn ($query, string $status) => $query->where('status', $status))
             ->when($normalizedFilters['province'], fn ($query, string $province) => $query->where('province', $province))
+            ->when($normalizedFilters['jenis_desa'], function ($query, string $jenis_desa) {
+                $range = match (strtolower($jenis_desa)) {
+                    'mandiri' => [199, 244],
+                    'maju' => [153, 198],
+                    'berkembang' => [107, 152],
+                    'rintisan' => [61, 106],
+                    default => null,
+                };
+                if ($range) {
+                    $query->having('total_score', '>=', $range[0])
+                          ->having('total_score', '<=', $range[1]);
+                }
+            })
             ->when($normalizedFilters['sort_by'],
                 fn ($query) => $query->orderByRaw(
                     'COALESCE('.$normalizedFilters['sort_by'].', 0) '.$normalizedFilters['sort_direction']
