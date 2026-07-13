@@ -835,6 +835,9 @@ export default function Dashboard({
                                                     {kpi.value}
                                                 </p>
                                             </div>
+                                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F5F8FA] text-[#7C7C7C] transition-colors group-hover:bg-[#0066AE] group-hover:text-white">
+                                                <ArrowUpRight className="size-4" />
+                                            </div>
                                         </div>
                                     </Panel>
                                 </Link>

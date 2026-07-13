@@ -10,6 +10,7 @@ import {
     Plus,
     Search,
     Trash2,
+    ExternalLink,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -41,6 +42,7 @@ import {
     store as storeSurveyAssignment,
     takeSurvey,
 } from '@/routes/survey-assignments';
+import { show as showVillage } from '@/routes/villages';
 
 type StatCard = {
     label: string;
@@ -108,6 +110,7 @@ type AssignmentFilters = {
     per_page: number;
     sort_by?: 'total_score' | null;
     sort_direction?: 'asc' | 'desc' | null;
+    jenis_desa?: string | null;
 };
 
 type SurveyAssignmentIndexProps = {
@@ -212,6 +215,7 @@ export default function SurveyAssignmentIndex({
     const { auth } = usePage().props;
     const isEnumerator = auth.user?.role === 'enumerator';
     const isViewer = auth.user?.role === 'viewer';
+    console.log(isViewer)
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false);
     const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<
@@ -232,6 +236,7 @@ export default function SurveyAssignmentIndex({
         per_page: String(filters.per_page ?? 10),
         sort_by: filters.sort_by ?? '',
         sort_direction: filters.sort_direction ?? '',
+        jenis_desa: filters.jenis_desa ?? '',
     });
     const canBulkUpdate =
         !isEnumerator && !isViewer && filterForm.view !== 'trash';
@@ -265,6 +270,7 @@ export default function SurveyAssignmentIndex({
             per_page: next.per_page || undefined,
             sort_by: next.sort_by || undefined,
             sort_direction: next.sort_direction || undefined,
+            jenis_desa: next.jenis_desa || undefined,
         };
     }
 
@@ -289,6 +295,7 @@ export default function SurveyAssignmentIndex({
             per_page: '10',
             sort_by: '',
             sort_direction: '',
+            jenis_desa: '',
         });
 
         router.get(surveyAssignments.url(), {}, { preserveScroll: true });
@@ -618,62 +625,91 @@ export default function SurveyAssignmentIndex({
                                     placeholder={
                                         isEnumerator
                                             ? 'Cari desa, kode desa, atau template...'
-                                            : 'Cari ID assignment, desa, kode desa, atau template...'
+                                            : isViewer
+                                                ? 'Nama, ID, Kode desa wisata..'
+                                                : 'Cari ID assignment, desa, kode desa, atau template...'
                                     }
                                 />
                             </label>
 
-                            <label className="space-y-1">
-                                <span className="block text-[11px] font-semibold text-[#7C7C7C]">
-                                    Status
-                                </span>
-                                <select
-                                    value={filterForm.status}
-                                    onChange={(event) =>
-                                        setFilterForm((current) => ({
-                                            ...current,
-                                            status: event.target.value,
-                                        }))
-                                    }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
-                                >
-                                    <option value="">Semua Status</option>
-                                    {status_options.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
+                            {!isViewer && (
+                                <>
+                                    <label className="space-y-1">
+                                        <span className="block text-[11px] font-semibold text-[#7C7C7C]">
+                                            Status
+                                        </span>
+                                        <select
+                                            value={filterForm.status}
+                                            onChange={(event) =>
+                                                setFilterForm((current) => ({
+                                                    ...current,
+                                                    status: event.target.value,
+                                                }))
+                                            }
+                                            className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
                                         >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
+                                            <option value="">Semua Status</option>
+                                            {status_options.map((option) => (
+                                                <option
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
 
-                            <label className="space-y-1">
-                                <span className="block text-[11px] font-semibold text-[#7C7C7C]">
-                                    Template Survey
-                                </span>
-                                <select
-                                    value={filterForm.template_id}
-                                    onChange={(event) =>
-                                        setFilterForm((current) => ({
-                                            ...current,
-                                            template_id: event.target.value,
-                                        }))
-                                    }
-                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
-                                >
-                                    <option value="">Semua Template</option>
-                                    {template_options.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
+                                    <label className="space-y-1">
+                                        <span className="block text-[11px] font-semibold text-[#7C7C7C]">
+                                            Template Survey
+                                        </span>
+                                        <select
+                                            value={filterForm.template_id}
+                                            onChange={(event) =>
+                                                setFilterForm((current) => ({
+                                                    ...current,
+                                                    template_id: event.target.value,
+                                                }))
+                                            }
+                                            className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
                                         >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
+                                            <option value="">Semua Template</option>
+                                            {template_options.map((option) => (
+                                                <option
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </>
+                            )}
+                            {isViewer && (
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] font-semibold text-[#7C7C7C]">
+                                        Kategori Desa
+                                    </span>
+                                    <select
+                                        value={filterForm.jenis_desa}
+                                        onChange={(event) =>
+                                            setFilterForm((current) => ({
+                                                ...current,
+                                                jenis_desa: event.target.value,
+                                            }))
+                                        }
+                                        className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
+                                    >
+                                        <option value="">Semua Kategori</option>
+                                        <option value="mandiri">Mandiri</option>
+                                        <option value="maju">Maju</option>
+                                        <option value="berkembang">Berkembang</option>
+                                        <option value="rintisan">Rintisan</option>
+                                    </select>
+                                </label>
+                            )}
 
                             <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan
@@ -736,11 +772,9 @@ export default function SurveyAssignmentIndex({
                                         {[
                                             'ID',
                                             'Desa',
-                                            'Status',
-                                            'Created At',
+                                            ...(!isViewer ? ['Status', 'Created At'] : []),
                                             'Total Skor',
-                                            'Progress',
-                                            'Aksi',
+                                            ...(!isViewer ? ['Progress', 'Aksi'] : []),
                                         ].map((head) => (
                                             <th
                                                 key={head}
@@ -774,7 +808,12 @@ export default function SurveyAssignmentIndex({
                                     {assignments.data.map((assignment) => (
                                         <tr
                                             key={assignment.id}
-                                            className="hover:bg-[#FAFCFF]"
+                                            onClick={() => {
+                                                if (isViewer) {
+                                                    router.visit(showVillage.url({ village: assignment.village_id }));
+                                                }
+                                            }}
+                                            className={classNames("hover:bg-[#FAFCFF]", isViewer && "cursor-pointer")}
                                         >
                                             {canBulkUpdate && (
                                                 <td className="px-3 py-3 text-center">
@@ -802,8 +841,9 @@ export default function SurveyAssignmentIndex({
                                                         `#${assignment.id}`)}
                                             </td>
                                             <td className="px-3 py-3">
-                                                <span className="block font-bold text-[#303030]">
+                                                <span className="flex items-center gap-2 font-bold text-[#303030]">
                                                     {assignment.village_name}
+                                                    {isViewer && <ExternalLink className="size-3 text-[#0066AE]" />}
                                                 </span>
                                                 <span className="block text-[12px] leading-4 text-[#7C7C7C]">
                                                     {
@@ -811,120 +851,128 @@ export default function SurveyAssignmentIndex({
                                                     }
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <Badge
-                                                    className={statusClass(
-                                                        assignment.status,
-                                                    )}
-                                                >
-                                                    {assignment.status_label}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-3 py-3 font-medium text-[#303030]">
-                                                {assignment.created_at}
-                                            </td>
+                                            {!isViewer && (
+                                                <>
+                                                    <td className="px-3 py-3">
+                                                        <Badge
+                                                            className={statusClass(
+                                                                assignment.status,
+                                                            )}
+                                                        >
+                                                            {assignment.status_label}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-3 py-3 font-medium text-[#303030]">
+                                                        {assignment.created_at}
+                                                    </td>
+                                                </>
+                                            )}
                                             <td className="bg-[#F8FBFE] px-5 py-4 text-center text-sm font-black text-[#0066AE]">
                                                 {assignment.total_score.toFixed(
                                                     1,
                                                 )}
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <span className="block font-bold text-[#0066AE]">
-                                                    {assignment.answers_count}{' '}
-                                                    jawaban
-                                                </span>
-                                                <span className="block text-[12px] text-[#7C7C7C]">
-                                                    {assignment.documents_count}{' '}
-                                                    dokumen
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
-                                                            <MoreHorizontal className="size-4" />
-                                                        </button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            className="gap-2 text-xs"
-                                                            onSelect={(
-                                                                event,
-                                                            ) => {
-                                                                event.preventDefault();
-                                                                openAccessModal(
-                                                                    assignment,
-                                                                    'detail',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <Eye className="size-4 text-[#303030]" />
-                                                            Lihat Detail
-                                                        </DropdownMenuItem>
-                                                        {!isViewer && (
-                                                            <DropdownMenuItem
-                                                                className="gap-2 text-xs"
-                                                                onSelect={(
-                                                                    event,
-                                                                ) => {
-                                                                    event.preventDefault();
-                                                                    openAccessModal(
-                                                                        assignment,
-                                                                        'take-survey',
-                                                                    );
-                                                                }}
+                                            {!isViewer && (
+                                                <>
+                                                    <td className="px-3 py-3">
+                                                        <span className="block font-bold text-[#0066AE]">
+                                                            {assignment.answers_count}{' '}
+                                                            jawaban
+                                                        </span>
+                                                        <span className="block text-[12px] text-[#7C7C7C]">
+                                                            {assignment.documents_count}{' '}
+                                                            dokumen
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
                                                             >
-                                                                <ClipboardList className="size-4 text-[#303030]" />
-                                                                Take Survey
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        {!isEnumerator &&
-                                                            !isViewer && (
-                                                                <>
-                                                                    <DropdownMenuSeparator />
-                                                                    {assignment.is_trashed ? (
-                                                                        <DropdownMenuItem
-                                                                            className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                            onSelect={(
-                                                                                event,
-                                                                            ) => {
-                                                                                event.preventDefault();
-                                                                                handleRestore(
-                                                                                    assignment,
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            <ClipboardCheck className="size-4 text-[#00893D]" />
-                                                                            Pulihkan
-                                                                            Assignment
-                                                                        </DropdownMenuItem>
-                                                                    ) : (
-                                                                        <DropdownMenuItem
-                                                                            className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                            onSelect={(
-                                                                                event,
-                                                                            ) => {
-                                                                                event.preventDefault();
-                                                                                handleDelete(
-                                                                                    assignment,
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            <Trash2 className="size-4 text-[#D81313]" />
-                                                                            Hapus
-                                                                            Assignment
-                                                                        </DropdownMenuItem>
+                                                                <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
+                                                                    <MoreHorizontal className="size-4" />
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent
+                                                                align="end"
+                                                                className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
+                                                            >
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs"
+                                                                    onSelect={(
+                                                                        event,
+                                                                    ) => {
+                                                                        event.preventDefault();
+                                                                        openAccessModal(
+                                                                            assignment,
+                                                                            'detail',
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <Eye className="size-4 text-[#303030]" />
+                                                                    Lihat Detail
+                                                                </DropdownMenuItem>
+                                                                {!isViewer && (
+                                                                    <DropdownMenuItem
+                                                                        className="gap-2 text-xs"
+                                                                        onSelect={(
+                                                                            event,
+                                                                        ) => {
+                                                                            event.preventDefault();
+                                                                            openAccessModal(
+                                                                                assignment,
+                                                                                'take-survey',
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        <ClipboardList className="size-4 text-[#303030]" />
+                                                                        Take Survey
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                                {!isEnumerator &&
+                                                                    !isViewer && (
+                                                                        <>
+                                                                            <DropdownMenuSeparator />
+                                                                            {assignment.is_trashed ? (
+                                                                                <DropdownMenuItem
+                                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                                    onSelect={(
+                                                                                        event,
+                                                                                    ) => {
+                                                                                        event.preventDefault();
+                                                                                        handleRestore(
+                                                                                            assignment,
+                                                                                        );
+                                                                                    }}
+                                                                                >
+                                                                                    <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                                    Pulihkan
+                                                                                    Assignment
+                                                                                </DropdownMenuItem>
+                                                                            ) : (
+                                                                                <DropdownMenuItem
+                                                                                    className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                                    onSelect={(
+                                                                                        event,
+                                                                                    ) => {
+                                                                                        event.preventDefault();
+                                                                                        handleDelete(
+                                                                                            assignment,
+                                                                                        );
+                                                                                    }}
+                                                                                >
+                                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                                    Hapus
+                                                                                    Assignment
+                                                                                </DropdownMenuItem>
+                                                                            )}
+                                                                        </>
                                                                     )}
-                                                                </>
-                                                            )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </td>
+                                                </>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
