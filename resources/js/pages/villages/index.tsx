@@ -728,9 +728,9 @@ export default function VillagesIndex({
             status: '',
             province: '',
             view: 'active',
-            per_page: '10',
-            sort_by: '',
-            sort_direction: '',
+            per_page: 10,
+            sort_by: null,
+            sort_direction: null,
             jenis_desa: '',
         });
 
@@ -1307,7 +1307,7 @@ export default function VillagesIndex({
 
                                                 setFilterForm((current) => ({
                                                     ...current,
-                                                    per_page: perPage,
+                                                    per_page: Number(perPage),
                                                 }));
 
                                                 router.get(

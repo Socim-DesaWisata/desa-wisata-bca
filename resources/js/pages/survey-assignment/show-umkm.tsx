@@ -1182,10 +1182,11 @@ function QuestionRow({
 }) {
     return (
         <div
+            onClick={isViewer ? () => onViewDetail(answer) : undefined}
             className={classNames(
                 'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
                 isViewer
-                    ? 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px]'
+                    ? 'cursor-pointer hover:bg-[#F8FBFE] xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px]'
                     : 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px_118px_180px]',
             )}
         >
@@ -3132,39 +3133,46 @@ export default function ShowUmkm({
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="mt-3 grid grid-cols-3 gap-2">
+                                        <div className={classNames("mt-3 grid gap-2", isViewer ? "grid-cols-1" : "grid-cols-3")}>
                                             <a
                                                 href={document.file_url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                                                className={classNames(
+                                                    "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]",
+                                                    isViewer ? "w-full" : ""
+                                                )}
                                             >
                                                 <Download size={13} />
                                                 Lihat
                                             </a>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    openEditDocument(document)
-                                                }
-                                                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
-                                            >
-                                                <Pencil size={13} />
-                                                Edit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    deleteDocument(document)
-                                                }
-                                                disabled={
-                                                    documentDeleteForm.processing
-                                                }
-                                                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#F2C7C7] bg-white px-2 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6] disabled:opacity-60"
-                                            >
-                                                <Trash2 size={13} />
-                                                Hapus
-                                            </button>
+                                            {!isViewer && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openEditDocument(document)
+                                                        }
+                                                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
+                                                    >
+                                                        <Pencil size={13} />
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            deleteDocument(document)
+                                                        }
+                                                        disabled={
+                                                            documentDeleteForm.processing
+                                                        }
+                                                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#F2C7C7] bg-white px-2 text-xs font-bold text-[#D81313] transition hover:bg-[#FFF6F6] disabled:opacity-60"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                        Hapus
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

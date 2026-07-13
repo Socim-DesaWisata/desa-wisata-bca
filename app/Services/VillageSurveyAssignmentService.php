@@ -49,6 +49,7 @@ class VillageSurveyAssignmentService
             'per_page' => (int) Arr::get($filters, 'per_page', 10),
             'sort_by' => Arr::get($filters, 'sort_by') === 'total_score' ? 'total_score' : null,
             'sort_direction' => Arr::get($filters, 'sort_direction') === 'asc' ? 'asc' : 'desc',
+            'jenis_desa' => Arr::get($filters, 'jenis_desa'),
         ];
 
         $questionMaxScores = SurveyQuestion::query()
@@ -130,6 +131,20 @@ class VillageSurveyAssignmentService
                     ->orderByDesc('village_survey_assignments.id'),
                 fn ($query) => $query->latest('village_survey_assignments.updated_at')
             )
+            ->when($normalizedFilters['jenis_desa'], function ($query, string $jenis_desa) {
+                $range = match (strtolower($jenis_desa)) {
+                    'mandiri' => [199, 244],
+                    'maju' => [153, 198],
+                    'berkembang' => [107, 152],
+                    'rintisan' => [61, 106],
+                    default => null,
+                };
+                if ($range) {
+                    $query->whereHas('village', function ($query) use ($range) {
+                        $query->whereRaw('(SELECT COALESCE(SUM(score), 0) FROM survey_answers INNER JOIN village_survey_assignments ON survey_answers.village_survey_assignment_id = village_survey_assignments.id WHERE village_survey_assignments.village_id = tourism_villages.id AND survey_answers.deleted_at IS NULL AND village_survey_assignments.deleted_at IS NULL) BETWEEN ? AND ?', $range);
+                    });
+                }
+            })
             ->paginate($normalizedFilters['per_page'])
             ->withQueryString();
 
