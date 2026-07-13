@@ -933,11 +933,44 @@ export default function Dashboard({
                     </Dialog>
 
                     <DashboardCharts />
-
-                    <div className="mb-2">
-                        <DashboardVillageMap points={village_map_points} />
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                        <TopStatisticList
+                            title="Top 3 Omset UMKM"
+                            icon={Store}
+                            data={top_umkm_turnovers
+                                .slice(0, 3)
+                                .map((item) => ({
+                                    label: item.name,
+                                    value: `Rp${Number(item.score).toLocaleString('id-ID')}`,
+                                }))}
+                            linkHref={umkm.url()}
+                            linkLabel="Lihat Semua UMKM"
+                        />
+                        <TopStatisticList
+                            title="Top 3 Omset Wisata"
+                            icon={MapPin}
+                            data={top_pariwisata_turnovers
+                                .slice(0, 3)
+                                .map((item) => ({
+                                    label: item.name,
+                                    value: `Rp${Number(item.score).toLocaleString('id-ID')}`,
+                                }))}
+                            linkHref={villagesRoute.url()}
+                            linkLabel="Lihat Semua Wisata"
+                        />
+                        <TopStatisticList
+                            title="Top 3 Kategori UMKM"
+                            icon={Store}
+                            data={top_umkm_categories
+                                .slice(0, 3)
+                                .map((c) => ({
+                                    label: c.label,
+                                    value: c.total,
+                                }))}
+                            linkHref={umkm.url()}
+                            linkLabel="Lihat Semua Kategori"
+                        />
                     </div>
-
                     <div className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Panel
                             className="flex items-center overflow-hidden border-none p-0"
@@ -1007,7 +1040,6 @@ export default function Dashboard({
                             </div>
                         </Panel>
                     </div>
-
                     <div className="mb-4 space-y-4">
                         <VillageScoreTable
                             title="Skor Desa KEMENPAR"
@@ -1036,44 +1068,11 @@ export default function Dashboard({
                             theme="istc"
                         />
 
-                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-                            <TopStatisticList
-                                title="Top 3 Omset UMKM"
-                                icon={Store}
-                                data={top_umkm_turnovers
-                                    .slice(0, 3)
-                                    .map((item) => ({
-                                        label: item.name,
-                                        value: `Rp${Number(item.score).toLocaleString('id-ID')}`,
-                                    }))}
-                                linkHref={umkm.url()}
-                                linkLabel="Lihat Semua UMKM"
-                            />
-                            <TopStatisticList
-                                title="Top 3 Omset Wisata"
-                                icon={MapPin}
-                                data={top_pariwisata_turnovers
-                                    .slice(0, 3)
-                                    .map((item) => ({
-                                        label: item.name,
-                                        value: `Rp${Number(item.score).toLocaleString('id-ID')}`,
-                                    }))}
-                                linkHref={villagesRoute.url()}
-                                linkLabel="Lihat Semua Wisata"
-                            />
-                            <TopStatisticList
-                                title="Top 3 Kategori UMKM"
-                                icon={Store}
-                                data={top_umkm_categories
-                                    .slice(0, 3)
-                                    .map((c) => ({
-                                        label: c.label,
-                                        value: c.total,
-                                    }))}
-                                linkHref={umkm.url()}
-                                linkLabel="Lihat Semua Kategori"
-                            />
-                        </div>
+
+                    </div>
+
+                    <div className="mb-2">
+                        <DashboardVillageMap points={village_map_points} />
                     </div>
 
                     {/* <div className="mt-2 mb-4">

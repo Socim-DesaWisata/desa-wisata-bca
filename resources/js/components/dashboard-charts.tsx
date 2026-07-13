@@ -22,7 +22,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { surveyAssignments } from '@/routes';
+import { surveyAssignments, pariwisata } from '@/routes';
 import {
     ArrowUpRight,
     ArrowDownRight,
@@ -57,6 +57,7 @@ function VillageScoreBarChart({
     rows,
     color,
     emptyMessage,
+    href,
 }: {
     title: string;
     subtitle: string;
@@ -64,6 +65,7 @@ function VillageScoreBarChart({
     rows: any[];
     color: string;
     emptyMessage: string;
+    href: string;
 }) {
     const [selectedAspect, setSelectedAspect] = useState<string>('Total Skor');
 
@@ -113,36 +115,40 @@ function VillageScoreBarChart({
                         {subtitle}
                     </div>
                 </div>
-                {aspects.length > 0 && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
-                                {selectedAspect}{' '}
-                                <ChevronDown className="size-3" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            className="max-h-[300px] w-[200px] overflow-auto"
-                        >
-                            <DropdownMenuItem
-                                className="cursor-pointer text-xs"
-                                onSelect={() => setSelectedAspect('Total Skor')}
-                            >
-                                Total Skor
-                            </DropdownMenuItem>
-                            {aspects.map((aspect) => (
+                <div className="flex items-center gap-2">
+                    {aspects.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
+                                    {selectedAspect} <ChevronDown className="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="max-h-[300px] w-[200px] overflow-auto">
                                 <DropdownMenuItem
-                                    key={aspect}
                                     className="cursor-pointer text-xs"
-                                    onSelect={() => setSelectedAspect(aspect)}
+                                    onSelect={() => setSelectedAspect('Total Skor')}
                                 >
-                                    {aspect}
+                                    Total Skor
                                 </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
+                                {aspects.map((aspect) => (
+                                    <DropdownMenuItem
+                                        key={aspect}
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() => setSelectedAspect(aspect)}
+                                    >
+                                        {aspect}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                    <Link
+                        href={href}
+                        className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-bold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
+                    >
+                        Detail Survey <ArrowUpRight className="size-3" strokeWidth={2.2} />
+                    </Link>
+                </div>
             </div>
             <div className="min-h-[280px] overflow-x-auto">
                 <div
@@ -200,13 +206,6 @@ function VillageScoreBarChart({
                     </ResponsiveContainer>
                 </div>
             </div>
-            <Link
-                href={surveyAssignments.url()}
-                className="mt-4 flex w-full justify-center rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
-            >
-                Lihat Semua Survey{' '}
-                <ChevronRight className="ml-1 inline size-3" />
-            </Link>
         </Panel>
     );
 }
@@ -577,6 +576,7 @@ export function DashboardCharts() {
                 rows={kemenparVillageScores?.rows ?? []}
                 color="#0066AE"
                 emptyMessage="Belum ada skor KEMENPAR desa."
+                href={surveyAssignments.url()}
             />
             <VillageScoreBarChart
                 title="Survey ISTC"
@@ -585,6 +585,7 @@ export function DashboardCharts() {
                 rows={istcVillageScores?.rows ?? []}
                 color="#00893D"
                 emptyMessage="Belum ada skor ISTC desa."
+                href={pariwisata.url()}
             />
         </div>
     );
