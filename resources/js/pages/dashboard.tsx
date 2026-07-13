@@ -162,6 +162,7 @@ type DashboardProps = {
     top_umkm_turnovers?: TopSurveyRow[];
     top_pariwisata_turnovers?: TopSurveyRow[];
     top_umkm_categories?: TopUmkmCategory[];
+    village_status_kpis?: Kpi[];
     recent_assignments?: RecentAssignment[];
     priorities?: Priority[];
     activities?: Activity[];
@@ -654,6 +655,7 @@ export default function Dashboard({
     top_umkm_turnovers = [],
     top_pariwisata_turnovers = [],
     top_umkm_categories = [],
+    village_status_kpis = [],
     recent_assignments = [],
     turnover_details = {
         umkm: { total: 0, rows: [] },
@@ -803,49 +805,39 @@ export default function Dashboard({
                     )}
 
                     <section className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        {kpis.slice(0, 2).map((kpi) => {
+                        {village_status_kpis?.map((kpi) => {
                             const Icon = kpiIcons[kpi.icon];
                             if (!Icon) return null;
-                            const trendColor =
-                                kpi.tone === 'success'
-                                    ? 'text-[#00893D]'
-                                    : 'text-[#FF944C]';
 
                             return (
-                                <Panel key={kpi.title} className="p-3.5 sm:p-4">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className="flex items-center gap-2 text-sm leading-5 font-bold text-[#303030]">
-                                                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0066AE] text-white">
-                                                    <Icon
-                                                        className="size-4"
-                                                        strokeWidth={2}
-                                                    />
-                                                </span>
-                                                {kpi.title}
-                                            </p>
-                                            <p className="mt-3 text-[28px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[32px] sm:leading-8">
-                                                {kpi.value}
-                                            </p>
+                                <Link
+                                    href={villagesRoute.url()}
+                                    key={kpi.title}
+                                    className="group block"
+                                >
+                                    <Panel className="h-full p-3.5 transition group-hover:border-[#0066AE] group-hover:shadow-md sm:p-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="flex items-center gap-2 text-sm leading-5 font-bold text-[#303030]">
+                                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0066AE] text-white">
+                                                        <Icon
+                                                            className="size-4"
+                                                            strokeWidth={2}
+                                                        />
+                                                    </span>
+                                                    {kpi.title}
+                                                </p>
+                                                <p className="mt-3 text-[28px] leading-7 font-bold tracking-[-0.02em] text-[#303030] sm:text-[32px] sm:leading-8">
+                                                    {kpi.value}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="mt-4 flex items-center justify-between text-xs">
-                                        <p className="font-medium text-[#7C7C7C]">
-                                            {kpi.desc}
-                                        </p>
-                                        <p
-                                            className={`flex items-center gap-1 font-bold ${trendColor}`}
-                                        >
-                                            <ArrowUpRight
-                                                className="size-3.5"
-                                                strokeWidth={2.2}
-                                            />
-                                            {kpi.trend}
-                                        </p>
-                                    </div>
-                                </Panel>
+                                    </Panel>
+                                </Link>
                             );
                         })}
+                    </section>
+                    <section className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
                         <TurnoverCard
                             title="Total Omset UMKM"
                             details={turnover_details.umkm}

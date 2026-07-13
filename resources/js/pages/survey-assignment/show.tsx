@@ -1276,12 +1276,14 @@ function QuestionRow({
     const answered = Boolean(question.answer);
 
     return (
-        <div className={classNames(
-            'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
-            isViewer
-                ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
-                : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
-        )}>
+        <div
+            className={classNames(
+                'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+                isViewer
+                    ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
+                    : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
+            )}
+        >
             <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
                 {String(number).padStart(2, '0')}
             </div>
@@ -1332,65 +1334,71 @@ function QuestionRow({
                 </div>
             </div>
 
-            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
-                <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
-                    <UserRound size={14} className="text-[#0066AE]" />
-                    Dijawab oleh
-                </p>
-                <p className="mt-1 font-bold text-[#303030]">
-                    {question.answer?.answered_by.name ?? '-'}
-                </p>
-            </div>}
+            {!isViewer && (
+                <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                    <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
+                        <UserRound size={14} className="text-[#0066AE]" />
+                        Dijawab oleh
+                    </p>
+                    <p className="mt-1 font-bold text-[#303030]">
+                        {question.answer?.answered_by.name ?? '-'}
+                    </p>
+                </div>
+            )}
 
-            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
-                <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
-                    <Clock3 size={14} className="text-[#0066AE]" />
-                    Terakhir diedit
-                </p>
-                <p className="mt-1 font-bold text-[#303030]">
-                    {question.answer?.last_edited_at ?? '-'}
-                </p>
-            </div>}
+            {!isViewer && (
+                <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                    <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
+                        <Clock3 size={14} className="text-[#0066AE]" />
+                        Terakhir diedit
+                    </p>
+                    <p className="mt-1 font-bold text-[#303030]">
+                        {question.answer?.last_edited_at ?? '-'}
+                    </p>
+                </div>
+            )}
 
-            {!isViewer && <div className="flex items-center justify-center">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            type="button"
-                            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+            {!isViewer && (
+                <div className="flex items-center justify-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                            >
+                                Action
+                                <ChevronDown size={14} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                         >
-                            Action
-                            <ChevronDown size={14} />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                    >
-                        <DropdownMenuItem
-                            className="gap-2 text-xs"
-                            onClick={() => onViewDetail(question)}
-                        >
-                            <Eye className="size-4 text-[#303030]" />
-                            Lihat Detail
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="gap-2 text-xs"
-                            onClick={() => onEditData(question)}
-                        >
-                            <PanelRightOpen className="size-4 text-[#303030]" />
-                            Edit Jawaban
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="gap-2 text-xs"
-                            onClick={() => onViewHistory(question)}
-                        >
-                            <Clock3 className="size-4 text-[#303030]" />
-                            Lihat Riwayat
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>}
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onViewDetail(question)}
+                            >
+                                <Eye className="size-4 text-[#303030]" />
+                                Lihat Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onEditData(question)}
+                            >
+                                <PanelRightOpen className="size-4 text-[#303030]" />
+                                Edit Jawaban
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onViewHistory(question)}
+                            >
+                                <Clock3 className="size-4 text-[#303030]" />
+                                Lihat Riwayat
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )}
         </div>
     );
 }
@@ -1418,12 +1426,14 @@ function PariwisataQuestionRow({
     ].filter(Boolean);
 
     return (
-        <div className={classNames(
-            'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
-            isViewer
-                ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
-                : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
-        )}>
+        <div
+            className={classNames(
+                'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+                isViewer
+                    ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
+                    : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
+            )}
+        >
             <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
                 {String(number).padStart(2, '0')}
             </div>
@@ -1480,58 +1490,64 @@ function PariwisataQuestionRow({
                 </div>
             </div>
 
-            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
-                <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
-                    <UserRound size={14} className="text-[#0066AE]" />
-                    Dijawab oleh
-                </p>
-                <p className="mt-1 font-bold text-[#303030]">
-                    {question.answer?.answered_by.name ?? '-'}
-                </p>
-            </div>}
+            {!isViewer && (
+                <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                    <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
+                        <UserRound size={14} className="text-[#0066AE]" />
+                        Dijawab oleh
+                    </p>
+                    <p className="mt-1 font-bold text-[#303030]">
+                        {question.answer?.answered_by.name ?? '-'}
+                    </p>
+                </div>
+            )}
 
-            {!isViewer && <div className="flex min-w-0 flex-col justify-center text-center text-xs">
-                <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
-                    <Clock3 size={14} className="text-[#0066AE]" />
-                    Terakhir diedit
-                </p>
-                <p className="mt-1 font-bold text-[#303030]">
-                    {question.answer?.last_edited_at ?? '-'}
-                </p>
-            </div>}
+            {!isViewer && (
+                <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                    <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
+                        <Clock3 size={14} className="text-[#0066AE]" />
+                        Terakhir diedit
+                    </p>
+                    <p className="mt-1 font-bold text-[#303030]">
+                        {question.answer?.last_edited_at ?? '-'}
+                    </p>
+                </div>
+            )}
 
-            {!isViewer && <div className="flex items-center justify-center">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            type="button"
-                            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+            {!isViewer && (
+                <div className="flex items-center justify-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                            >
+                                Action
+                                <ChevronDown size={14} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                         >
-                            Action
-                            <ChevronDown size={14} />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                    >
-                        <DropdownMenuItem
-                            className="gap-2 text-xs"
-                            onClick={() => onViewDetail(question)}
-                        >
-                            <Eye className="size-4 text-[#303030]" />
-                            Lihat Detail
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="gap-2 text-xs"
-                            onClick={() => onEditData(question)}
-                        >
-                            <PanelRightOpen className="size-4 text-[#303030]" />
-                            Edit Jawaban
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>}
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onViewDetail(question)}
+                            >
+                                <Eye className="size-4 text-[#303030]" />
+                                Lihat Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onEditData(question)}
+                            >
+                                <PanelRightOpen className="size-4 text-[#303030]" />
+                                Edit Jawaban
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )}
         </div>
     );
 }
@@ -3518,7 +3534,9 @@ export default function SurveyAssignmentShow({
                                     Dashboard
                                 </Link>
                                 <span className="text-[#B0B0B0]">/</span>
-                                <span className="text-[#7C7C7C]">Survey Detail</span>
+                                <span className="text-[#7C7C7C]">
+                                    Survey Detail
+                                </span>
                             </div>
                             <h1 className="mt-2 text-2xl leading-tight font-bold text-[#303030] sm:text-[28px]">
                                 Detail Survey Assignment

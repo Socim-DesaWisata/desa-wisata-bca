@@ -66,7 +66,7 @@ const navGroups: SidebarNavGroup[] = [
         label: 'Program',
         items: [
             {
-                title: 'Laporan',
+                title: 'Assessment',
                 href: '#',
                 icon: BarChart3,
                 roles: ['admin'],
