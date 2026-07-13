@@ -311,7 +311,7 @@ export default function SurveyAssignmentIndex({
         setSelectedAssignmentIds([]);
         const sort_direction =
             filterForm.sort_by === 'total_score' &&
-            filterForm.sort_direction === 'desc'
+                filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
@@ -523,11 +523,11 @@ export default function SurveyAssignmentIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Survey KEMENPAR
+                                    Assesment KEMENPAR
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Manajemen Survey KEMENPAR
+                                Assesment KEMENPAR
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau KEMENPAR survey desa wisata, status
@@ -788,7 +788,7 @@ export default function SurveyAssignmentIndex({
                                                             toggleAssignmentSelection(
                                                                 assignment.id,
                                                                 checked ===
-                                                                    true,
+                                                                true,
                                                             )
                                                         }
                                                         aria-label={`Pilih ${assignment.village_name}`}
@@ -799,7 +799,7 @@ export default function SurveyAssignmentIndex({
                                                 {isEnumerator
                                                     ? `#${assignment.id}`
                                                     : (assignment.code ??
-                                                      `#${assignment.id}`)}
+                                                        `#${assignment.id}`)}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <span className="block font-bold text-[#303030]">
@@ -988,10 +988,10 @@ export default function SurveyAssignmentIndex({
                                             onClick={() =>
                                                 link.url &&
                                                 (setSelectedAssignmentIds([]),
-                                                router.visit(link.url, {
-                                                    preserveScroll: true,
-                                                    preserveState: true,
-                                                }))
+                                                    router.visit(link.url, {
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                    }))
                                             }
                                             className={classNames(
                                                 'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',

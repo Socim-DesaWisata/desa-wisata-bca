@@ -219,7 +219,7 @@ export default function UmkmIndex({
                                 <span className="text-[#7C7C7C]">UMKM</span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Manajemen UMKM
+                                Assesment UMKM
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau data pelaku UMKM, kategori produk,

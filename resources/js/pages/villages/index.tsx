@@ -114,6 +114,7 @@ type VillageFilters = {
     per_page: number;
     sort_by?: 'total_score' | 'istc_score' | null;
     sort_direction?: 'asc' | 'desc' | null;
+    jenis_desa?: string | null;
 };
 
 type VillageForm = {
@@ -606,10 +607,11 @@ export default function VillagesIndex({
         search: filters.search ?? '',
         status: filters.status ?? '',
         province: filters.province ?? '',
-        view: filters.view ?? 'active',
-        per_page: String(filters.per_page ?? 10),
-        sort_by: filters.sort_by ?? '',
-        sort_direction: filters.sort_direction ?? '',
+        view: filters?.view ?? 'active',
+        per_page: filters?.per_page ?? 10,
+        sort_by: filters?.sort_by ?? null,
+        sort_direction: filters?.sort_direction ?? null,
+        jenis_desa: filters?.jenis_desa ?? '',
     });
     const [isResolvingAddress, setIsResolvingAddress] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
@@ -707,6 +709,7 @@ export default function VillagesIndex({
             per_page: next.per_page || undefined,
             sort_by: next.sort_by || undefined,
             sort_direction: next.sort_direction || undefined,
+            jenis_desa: next.jenis_desa || undefined,
         };
     }
 
@@ -728,6 +731,7 @@ export default function VillagesIndex({
             per_page: '10',
             sort_by: '',
             sort_direction: '',
+            jenis_desa: '',
         });
 
         router.get(villagesRoute.url(), {}, { preserveScroll: true });
@@ -761,7 +765,7 @@ export default function VillagesIndex({
     function toggleScoreSort(sortBy: 'total_score' | 'istc_score') {
         const sort_direction =
             filterForm.sort_by === sortBy &&
-            filterForm.sort_direction === 'desc'
+                filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
@@ -849,7 +853,7 @@ export default function VillagesIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Manajemen Desa Wisata
+                                Assesment Desa Wisata
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Kelola data desa wisata binaan, status
@@ -992,6 +996,28 @@ export default function VillagesIndex({
                                 </select>
                             </label>
 
+                            <label className="space-y-1">
+                                <span className="block text-[11px] font-semibold text-[#7C7C7C]">
+                                    Jenis Desa
+                                </span>
+                                <select
+                                    value={filterForm.jenis_desa || ''}
+                                    onChange={(event) =>
+                                        setFilterForm((current) => ({
+                                            ...current,
+                                            jenis_desa: event.target.value,
+                                        }))
+                                    }
+                                    className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
+                                >
+                                    <option value="">Semua Jenis</option>
+                                    <option value="rintisan">Rintisan</option>
+                                    <option value="berkembang">Berkembang</option>
+                                    <option value="maju">Maju</option>
+                                    <option value="mandiri">Mandiri</option>
+                                </select>
+                            </label>
+
                             <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan
                             </button>
@@ -1040,7 +1066,7 @@ export default function VillagesIndex({
                                                     className="px-3 py-3 font-bold whitespace-nowrap"
                                                 >
                                                     {head === 'Skor KEMENPAR' ||
-                                                    head === 'Skor ISTC' ? (
+                                                        head === 'Skor ISTC' ? (
                                                         <button
                                                             type="button"
                                                             onClick={() =>
@@ -1155,7 +1181,7 @@ export default function VillagesIndex({
                                                             className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                         >
                                                             {!isViewer &&
-                                                            filterForm.view ===
+                                                                filterForm.view ===
                                                                 'trash' ? (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#00893D]"

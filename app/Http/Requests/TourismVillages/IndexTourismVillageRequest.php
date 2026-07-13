@@ -25,6 +25,7 @@ class IndexTourismVillageRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
             'sort_by' => ['nullable', 'string', Rule::in(['total_score', 'istc_score'])],
             'sort_direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
+            'jenis_desa' => ['nullable', 'string', Rule::in(['rintisan', 'berkembang', 'maju', 'mandiri'])],
         ];
     }
 }
