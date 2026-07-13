@@ -13,6 +13,7 @@ class DashboardController extends Controller
         if (auth()->user()?->role === 'enumerator') {
             return Inertia::render('dashboard', [
                 'dashboard_mode' => 'enumerator',
+                ...$service->getVillageStatusData(),
             ]);
         }
 

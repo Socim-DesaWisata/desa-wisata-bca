@@ -3539,7 +3539,7 @@ export default function SurveyAssignmentShow({
                                 </span>
                             </div>
                             <h1 className="mt-2 text-2xl leading-tight font-bold text-[#303030] sm:text-[28px]">
-                                Detail Survey Assignment
+                                Detail Assessment KEMENPAR
                             </h1>
                             <p className="mt-1 text-sm text-[#7C7C7C]">
                                 Data assignment, jawaban, skor, dokumen, dan
@@ -3663,16 +3663,18 @@ export default function SurveyAssignmentShow({
                                                         }
                                                     </p>
                                                 </div>
-                                                <span
-                                                    className={classNames(
-                                                        'inline-flex h-8 w-fit items-center rounded-full px-4 text-xs font-bold',
-                                                        statusClass(
-                                                            assignment.status,
-                                                        ),
-                                                    )}
-                                                >
-                                                    {assignment.status_label}
-                                                </span>
+                                                {!isViewer && (
+                                                    <span
+                                                        className={classNames(
+                                                            'inline-flex h-8 w-fit items-center rounded-full px-4 text-xs font-bold',
+                                                            statusClass(
+                                                                assignment.status,
+                                                            ),
+                                                        )}
+                                                    >
+                                                        {assignment.status_label}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             <div className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -3685,18 +3687,22 @@ export default function SurveyAssignmentShow({
                                                     label="Kode Assignment"
                                                     value={assignment.code}
                                                 />
-                                                <InfoItem
-                                                    icon={<Flag size={18} />}
-                                                    label="Status"
-                                                    value={
-                                                        assignment.status_label
-                                                    }
-                                                />
+                                                {!isViewer && (
+                                                    <InfoItem
+                                                        icon={
+                                                            <Flag size={18} />
+                                                        }
+                                                        label="Status"
+                                                        value={
+                                                            assignment.status_label
+                                                        }
+                                                    />
+                                                )}
                                                 <InfoItem
                                                     icon={
                                                         <UserRound size={18} />
                                                     }
-                                                    label="Assigned By"
+                                                    label="Social Impact ID"
                                                     value={
                                                         assignment
                                                             .assigned_by_user
@@ -3711,17 +3717,19 @@ export default function SurveyAssignmentShow({
                                                             .location
                                                     }
                                                 />
-                                                <InfoItem
-                                                    icon={
-                                                        <CalendarDays
-                                                            size={18}
-                                                        />
-                                                    }
-                                                    label="Last Saved"
-                                                    value={
-                                                        assignment.last_saved_at
-                                                    }
-                                                />
+                                                {!isViewer && (
+                                                    <InfoItem
+                                                        icon={
+                                                            <CalendarDays
+                                                                size={18}
+                                                            />
+                                                        }
+                                                        label="Last Saved"
+                                                        value={
+                                                            assignment.last_saved_at
+                                                        }
+                                                    />
+                                                )}
                                                 <InfoItem
                                                     icon={<Folder size={18} />}
                                                     label="Dokumen Pendukung"
@@ -3745,7 +3753,8 @@ export default function SurveyAssignmentShow({
                                         tone="blue"
                                         compact
                                     />
-                                    <MetricCard
+                                    {!isViewer && (
+                                        <MetricCard
                                         label="Survey Terjawab"
                                         value={`${summary.answered_questions}/${summary.total_questions}`}
                                         helper=""
@@ -3756,7 +3765,8 @@ export default function SurveyAssignmentShow({
                                         }
                                         tone="blue"
                                         compact
-                                    />
+                                        />
+                                    )}
                                     <MetricCard
                                         label="Aspek Tertinggi"
                                         value={

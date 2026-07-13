@@ -853,7 +853,7 @@ export default function VillagesIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment Desa Wisata
+                                Assessment Desa Wisata
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Kelola data desa wisata binaan, status

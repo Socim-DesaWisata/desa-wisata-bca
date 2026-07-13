@@ -3041,6 +3041,7 @@ export default function ShowUmkm({
                         </div>
                     </Card>
 
+                    {!isViewer && (
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <MetricCard
                             label="Jawaban"
@@ -3071,6 +3072,7 @@ export default function ShowUmkm({
                             compact
                         />
                     </div>
+                    )}
 
                     <UmkmAnnualCharts values={edit_values} />
 
@@ -3179,6 +3181,7 @@ export default function ShowUmkm({
                             </div>
                         </Card>
 
+                        {!isViewer && (
                         <Card className="p-4">
                             <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
                                 <Store size={16} className="text-[#0066AE]" />
@@ -3204,6 +3207,7 @@ export default function ShowUmkm({
                             </div>
                         </Card>
 
+                        )}
                         <Card className="p-4">
                             <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
                                 <MapPin size={16} className="text-[#0066AE]" />
