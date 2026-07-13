@@ -22,7 +22,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { surveyAssignments } from '@/routes';
+import { surveyAssignments, pariwisata } from '@/routes';
 import {
     ArrowUpRight,
     ArrowDownRight,
@@ -53,16 +53,40 @@ type VillageScoreBarDatum = { name: string; score: number; maxScore: number };
 function VillageScoreBarChart({
     title,
     subtitle,
-    data,
+    aspects,
+    rows,
     color,
     emptyMessage,
+    href,
 }: {
     title: string;
     subtitle: string;
-    data: VillageScoreBarDatum[];
+    aspects: string[];
+    rows: any[];
     color: string;
     emptyMessage: string;
+    href: string;
 }) {
+    const [selectedAspect, setSelectedAspect] = useState<string>('Total Skor');
+
+    const data = rows
+        .map((row) => {
+            if (selectedAspect === 'Total Skor') {
+                return {
+                    name: row.name,
+                    score: row.total_score ?? 0,
+                    maxScore: row.total_max_score ?? 0,
+                };
+            } else {
+                const aspectData = row.aspect_scores?.[selectedAspect];
+                return {
+                    name: row.name,
+                    score: aspectData?.score ?? 0,
+                    maxScore: aspectData?.max_score ?? 0,
+                };
+            }
+        })
+        .sort((a, b) => b.score - a.score);
     if (data.length === 0) {
         return (
             <Panel className="flex min-h-[280px] flex-col p-4">
@@ -78,44 +102,83 @@ function VillageScoreBarChart({
     }
     return (
         <Panel className="flex min-w-0 flex-col p-4">
-            <div className="mb-4">
-                <h2 className="text-sm font-bold text-[#303030]">{title}</h2>
-                <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-[#7C7C7C]">
-                    <span
-                        className="size-2 rounded-full"
-                        style={{ backgroundColor: color }}
-                    />
-                    {subtitle}
+            <div className="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <div>
+                    <h2 className="text-sm font-bold text-[#303030]">
+                        {title}
+                    </h2>
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-[#7C7C7C]">
+                        <span
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: color }}
+                        />
+                        {subtitle}
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {aspects.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
+                                    {selectedAspect} <ChevronDown className="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="max-h-[300px] w-[200px] overflow-auto">
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() => setSelectedAspect('Total Skor')}
+                                >
+                                    Total Skor
+                                </DropdownMenuItem>
+                                {aspects.map((aspect) => (
+                                    <DropdownMenuItem
+                                        key={aspect}
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() => setSelectedAspect(aspect)}
+                                    >
+                                        {aspect}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                    <Link
+                        href={href}
+                        className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-bold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
+                    >
+                        Detail Survey <ArrowUpRight className="size-3" strokeWidth={2.2} />
+                    </Link>
                 </div>
             </div>
             <div className="min-h-[280px] overflow-x-auto">
                 <div
                     className="h-[280px] min-w-[480px]"
-                    style={{ width: Math.max(data.length * 132, 480) }}
+                    style={{ height: Math.max(data.length * 40, 280) }}
                 >
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={data}
-                            margin={{ top: 8, right: 8, left: -22, bottom: 42 }}
+                            layout="vertical"
+                            margin={{ top: 8, right: 24, left: 0, bottom: 0 }}
                         >
                             <CartesianGrid
                                 strokeDasharray="3 3"
-                                vertical={false}
+                                horizontal={false}
                                 stroke="#EFEFEF"
                             />
                             <XAxis
-                                dataKey="name"
+                                type="number"
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fontSize: 10, fill: '#7C7C7C' }}
-                                textAnchor="middle"
-                                interval={0}
-                                dy={12}
                             />
                             <YAxis
+                                dataKey="name"
+                                type="category"
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fontSize: 10, fill: '#7C7C7C' }}
+                                width={120}
                             />
                             <Tooltip
                                 cursor={{ fill: '#F8FBFE' }}
@@ -123,7 +186,7 @@ function VillageScoreBarChart({
                                     String(value ?? 0) +
                                         '/' +
                                         String(item.payload.maxScore ?? 0),
-                                    'Total Skor',
+                                    selectedAspect,
                                 ]}
                                 contentStyle={{
                                     borderRadius: '8px',
@@ -136,20 +199,13 @@ function VillageScoreBarChart({
                             <Bar
                                 dataKey="score"
                                 fill={color}
-                                radius={[3, 3, 0, 0]}
-                                barSize={24}
+                                radius={[0, 3, 3, 0]}
+                                barSize={20}
                             />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
-            <Link
-                href={surveyAssignments.url()}
-                className="mt-4 flex w-full justify-center rounded-lg border border-[#EFEFEF] py-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F8FBFE]"
-            >
-                Lihat Semua Survey{' '}
-                <ChevronRight className="ml-1 inline size-3" />
-            </Link>
         </Panel>
     );
 }
@@ -192,20 +248,8 @@ export function DashboardCharts() {
 
     const areaData = generalReport.area_data || [];
     const showGeneralReport = false;
-    const kemenparVillageScores = (
-        (props as any).kemenpar_village_scores?.rows ?? []
-    ).map((row: any) => ({
-        name: row.name,
-        score: row.total_score ?? 0,
-        maxScore: row.total_max_score ?? 0,
-    }));
-    const istcVillageScores = (
-        (props as any).istc_village_scores?.rows ?? []
-    ).map((row: any) => ({
-        name: row.name,
-        score: row.total_score ?? 0,
-        maxScore: row.total_max_score ?? 0,
-    }));
+    const kemenparVillageScores = (props as any).kemenpar_village_scores;
+    const istcVillageScores = (props as any).istc_village_scores;
 
     return (
         <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -528,16 +572,20 @@ export function DashboardCharts() {
             <VillageScoreBarChart
                 title="Survey KEMENPAR"
                 subtitle="Skor KEMENPAR per desa"
-                data={kemenparVillageScores}
+                aspects={kemenparVillageScores?.aspects ?? []}
+                rows={kemenparVillageScores?.rows ?? []}
                 color="#0066AE"
                 emptyMessage="Belum ada skor KEMENPAR desa."
+                href={surveyAssignments.url()}
             />
             <VillageScoreBarChart
                 title="Survey ISTC"
                 subtitle="Skor ISTC per desa"
-                data={istcVillageScores}
+                aspects={istcVillageScores?.aspects ?? []}
+                rows={istcVillageScores?.rows ?? []}
                 color="#00893D"
                 emptyMessage="Belum ada skor ISTC desa."
+                href={pariwisata.url()}
             />
         </div>
     );

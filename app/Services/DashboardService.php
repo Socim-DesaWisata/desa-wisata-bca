@@ -42,6 +42,7 @@ class DashboardService
             'top_umkm_categories' => $this->topUmkmCategories(),
             'recent_assignments' => $this->recentAssignments(),
             'priorities' => $this->priorities(),
+            'village_status_kpis' => $this->villageStatusKpis(),
             'activities' => $this->activities(),
             'general_report' => $this->generalReportData($filters['general_report_filter'] ?? 'Bulan Ini', $filters['program_type'] ?? 'Semua Program'),
             'aktivitas_survey' => $this->aktivitasSurveyData($filters['activity_filter'] ?? '30 Hari Terakhir'),
@@ -176,6 +177,61 @@ class DashboardService
                 'trend' => '+'.$currentMonthUmkms.' bulan ini',
                 'icon' => 'store',
                 'tone' => 'success',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function villageStatusKpis(): array
+    {
+        $villages = TourismVillage::query()
+            ->select(['id'])
+            ->withSum('surveyAnswers as total_score', 'score')
+            ->get();
+
+        $counts = [
+            'Mandiri' => 0,
+            'Maju' => 0,
+            'Berkembang' => 0,
+            'Rintisan' => 0,
+        ];
+
+        foreach ($villages as $village) {
+            $score = (int) ($village->total_score ?? 0);
+            $type = match (true) {
+                $score >= 199 && $score <= 244 => 'Mandiri',
+                $score >= 153 && $score <= 198 => 'Maju',
+                $score >= 107 && $score <= 152 => 'Berkembang',
+                $score >= 61 && $score <= 106 => 'Rintisan',
+                default => '-',
+            };
+            if (isset($counts[$type])) {
+                $counts[$type]++;
+            }
+        }
+
+        return [
+            [
+                'title' => 'Total Desa Mandiri',
+                'value' => (string) $counts['Mandiri'],
+                'icon' => 'map',
+            ],
+            [
+                'title' => 'Total Desa Maju',
+                'value' => (string) $counts['Maju'],
+                'icon' => 'map',
+            ],
+            [
+                'title' => 'Total Desa Berkembang',
+                'value' => (string) $counts['Berkembang'],
+                'icon' => 'map',
+            ],
+            [
+                'title' => 'Total Desa Rintisan',
+                'value' => (string) $counts['Rintisan'],
+                'icon' => 'map',
             ],
         ];
     }

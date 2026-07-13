@@ -1181,12 +1181,14 @@ function QuestionRow({
     isViewer: boolean;
 }) {
     return (
-        <div className={classNames(
-            'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
-            isViewer
-                ? 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px]'
-                : 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px_118px_180px]',
-        )}>
+        <div
+            className={classNames(
+                'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+                isViewer
+                    ? 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px]'
+                    : 'xl:grid-cols-[38px_minmax(260px,1fr)_104px_78px_118px_180px]',
+            )}
+        >
             <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
                 {String(number).padStart(2, '0')}
             </div>
@@ -1214,34 +1216,38 @@ function QuestionRow({
                     </p>
                 </div>
             </div>
-            {!isViewer && <div className="flex items-center text-xs">
-                <div>
-                    <p className="font-semibold text-[#7C7C7C]">
-                        Terakhir diedit
-                    </p>
-                    <p className="mt-1 font-bold text-[#303030]">
-                        {answer.last_edited_at}
-                    </p>
+            {!isViewer && (
+                <div className="flex items-center text-xs">
+                    <div>
+                        <p className="font-semibold text-[#7C7C7C]">
+                            Terakhir diedit
+                        </p>
+                        <p className="mt-1 font-bold text-[#303030]">
+                            {answer.last_edited_at}
+                        </p>
+                    </div>
                 </div>
-            </div>}
-            {!isViewer && <div className="flex items-center justify-end gap-2">
-                <button
-                    type="button"
-                    onClick={() => onViewDetail(answer)}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
-                >
-                    <Eye size={14} />
-                    Detail
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onEditAnswer(answer)}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white transition hover:bg-[#093967]"
-                >
-                    <Pencil size={14} />
-                    Edit
-                </button>
-            </div>}
+            )}
+            {!isViewer && (
+                <div className="flex items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onViewDetail(answer)}
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                    >
+                        <Eye size={14} />
+                        Detail
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onEditAnswer(answer)}
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-3 text-xs font-bold text-white transition hover:bg-[#093967]"
+                    >
+                        <Pencil size={14} />
+                        Edit
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

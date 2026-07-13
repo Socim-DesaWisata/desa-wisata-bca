@@ -1104,9 +1104,7 @@ export default function VillageDetail({
                             )}
                         </section>
                         <section>
-                            <Heading icon={MapPin}>
-                                Desa Wisata Lainnya
-                            </Heading>
+                            <Heading icon={MapPin}>Desa Wisata Lainnya</Heading>
                             {nearbyItems.length ? (
                                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                                     {nearbyItems.slice(0, 6).map((p) => (

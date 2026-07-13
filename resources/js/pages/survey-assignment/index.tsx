@@ -233,7 +233,8 @@ export default function SurveyAssignmentIndex({
         sort_by: filters.sort_by ?? '',
         sort_direction: filters.sort_direction ?? '',
     });
-    const canBulkUpdate = !isEnumerator && !isViewer && filterForm.view !== 'trash';
+    const canBulkUpdate =
+        !isEnumerator && !isViewer && filterForm.view !== 'trash';
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm<AssignmentForm>(defaultForm);
     const {
@@ -552,16 +553,18 @@ export default function SurveyAssignmentIndex({
                                     Trash
                                 </button>
                             </div>
-                            {!isEnumerator && !isViewer && filterForm.view !== 'trash' && (
-                                <button
-                                    type="button"
-                                    onClick={openCreateModal}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
-                                >
-                                    <Plus className="size-4" />
-                                    Tambah Assignment
-                                </button>
-                            )}
+                            {!isEnumerator &&
+                                !isViewer &&
+                                filterForm.view !== 'trash' && (
+                                    <button
+                                        type="button"
+                                        onClick={openCreateModal}
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Assignment
+                                    </button>
+                                )}
                         </div>
                     </header>
 
@@ -880,44 +883,45 @@ export default function SurveyAssignmentIndex({
                                                                 Take Survey
                                                             </DropdownMenuItem>
                                                         )}
-                                                        {!isEnumerator && !isViewer && (
-                                                            <>
-                                                                <DropdownMenuSeparator />
-                                                                {assignment.is_trashed ? (
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                        onSelect={(
-                                                                            event,
-                                                                        ) => {
-                                                                            event.preventDefault();
-                                                                            handleRestore(
-                                                                                assignment,
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <ClipboardCheck className="size-4 text-[#00893D]" />
-                                                                        Pulihkan
-                                                                        Assignment
-                                                                    </DropdownMenuItem>
-                                                                ) : (
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                        onSelect={(
-                                                                            event,
-                                                                        ) => {
-                                                                            event.preventDefault();
-                                                                            handleDelete(
-                                                                                assignment,
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <Trash2 className="size-4 text-[#D81313]" />
-                                                                        Hapus
-                                                                        Assignment
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                            </>
-                                                        )}
+                                                        {!isEnumerator &&
+                                                            !isViewer && (
+                                                                <>
+                                                                    <DropdownMenuSeparator />
+                                                                    {assignment.is_trashed ? (
+                                                                        <DropdownMenuItem
+                                                                            className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                            onSelect={(
+                                                                                event,
+                                                                            ) => {
+                                                                                event.preventDefault();
+                                                                                handleRestore(
+                                                                                    assignment,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                            Pulihkan
+                                                                            Assignment
+                                                                        </DropdownMenuItem>
+                                                                    ) : (
+                                                                        <DropdownMenuItem
+                                                                            className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                            onSelect={(
+                                                                                event,
+                                                                            ) => {
+                                                                                event.preventDefault();
+                                                                                handleDelete(
+                                                                                    assignment,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <Trash2 className="size-4 text-[#D81313]" />
+                                                                            Hapus
+                                                                            Assignment
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                </>
+                                                            )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </td>

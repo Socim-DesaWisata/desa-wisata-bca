@@ -405,7 +405,6 @@ export default function DashboardVillageMap({
                                         : '0'}
                                 </p>
                             </div>
-
                         </div>
 
                         <div className="rounded-2xl border border-[#EFEFEF] bg-white p-4">

@@ -1083,9 +1083,12 @@ export default function VillagesIndex({
                                                         </span>
                                                         <span>
                                                             <Link
-                                                                href={showVillage.url({
-                                                                    village: village.id,
-                                                                })}
+                                                                href={showVillage.url(
+                                                                    {
+                                                                        village:
+                                                                            village.id,
+                                                                    },
+                                                                )}
                                                                 className="block font-bold text-[#0066AE] transition hover:text-[#093967]"
                                                             >
                                                                 {village.name}
