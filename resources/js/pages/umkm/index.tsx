@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CreditCard,
     Eye,
@@ -145,6 +145,8 @@ export default function UmkmIndex({
     export_options,
     per_page_options,
 }: UmkmIndexProps) {
+    const { auth } = usePage().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [search, setSearch] = useState(filters.search ?? '');
     const [category, setCategory] = useState(filters.product_category ?? '');
     const [hasExported, setHasExported] = useState(filters.has_exported ?? '');
@@ -219,7 +221,7 @@ export default function UmkmIndex({
                                 <span className="text-[#7C7C7C]">UMKM</span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment UMKM
+                                Assessment UMKM
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau data pelaku UMKM, kategori produk,
@@ -393,8 +395,9 @@ export default function UmkmIndex({
                                             'Total Skor',
                                             'Payment',
                                             'Export',
-                                            'Dokumen',
-                                            'Updated At',
+                                            ...(!isViewer
+                                                ? ['Dokumen', 'Updated At']
+                                                : []),
                                             'Aksi',
                                         ].map((head) => (
                                             <th
@@ -414,7 +417,7 @@ export default function UmkmIndex({
                                     {umkms.data.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={9}
+                                                colSpan={isViewer ? 7 : 9}
                                                 className="px-4 py-10 text-center text-sm font-semibold text-[#7C7C7C]"
                                             >
                                                 Belum ada UMKM yang sesuai
@@ -445,9 +448,20 @@ export default function UmkmIndex({
                                                             )}
                                                         </span>
                                                         <span className="min-w-0">
-                                                            <span className="block font-bold text-[#303030]">
-                                                                {umkm.name}
-                                                            </span>
+                                                            {umkm.detail_url ? (
+                                                                <Link
+                                                                    href={
+                                                                        umkm.detail_url
+                                                                    }
+                                                                    className="block font-bold text-[#0066AE] hover:text-[#093967]"
+                                                                >
+                                                                    {umkm.name}
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="block font-bold text-[#303030]">
+                                                                    {umkm.name}
+                                                                </span>
+                                                            )}
                                                             <span className="block text-[12px] text-[#7C7C7C]">
                                                                 Pemilik:{' '}
                                                                 {
@@ -502,18 +516,22 @@ export default function UmkmIndex({
                                                         {umkm.export_label}
                                                     </Badge>
                                                 </td>
-                                                <td className="px-3 py-3 text-xs font-semibold text-[#303030]">
-                                                    {umkm.documents_count}{' '}
-                                                    dokumen
-                                                    <br />
-                                                    {
-                                                        umkm.survey_answers_count
-                                                    }{' '}
-                                                    jawaban
-                                                </td>
-                                                <td className="px-3 py-3 text-xs font-semibold text-[#7C7C7C]">
-                                                    {umkm.updated_at}
-                                                </td>
+                                                {!isViewer && (
+                                                    <>
+                                                        <td className="px-3 py-3 text-xs font-semibold text-[#303030]">
+                                                            {umkm.documents_count}{' '}
+                                                            dokumen
+                                                            <br />
+                                                            {
+                                                                umkm.survey_answers_count
+                                                            }{' '}
+                                                            jawaban
+                                                        </td>
+                                                        <td className="px-3 py-3 text-xs font-semibold text-[#7C7C7C]">
+                                                            {umkm.updated_at}
+                                                        </td>
+                                                    </>
+                                                )}
                                                 <td className="px-3 py-3">
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg border border-[#DDE4EC] bg-white text-[#303030] hover:bg-[#F1F5F8]">
@@ -562,7 +580,7 @@ export default function UmkmIndex({
                                                                     <RotateCcw className="size-4 text-[#00893D]" />
                                                                     Pulihkan
                                                                 </DropdownMenuItem>
-                                                            ) : (
+                                                            ) : !isViewer ? (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#D81313]"
                                                                     onSelect={(
@@ -577,7 +595,7 @@ export default function UmkmIndex({
                                                                     <Trash2 className="size-4 text-[#D81313]" />
                                                                     Hapus
                                                                 </DropdownMenuItem>
-                                                            )}
+                                                            ) : null}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>

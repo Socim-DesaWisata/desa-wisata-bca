@@ -42,7 +42,6 @@ import {
     store as storeSurveyAssignment,
     takeSurvey,
 } from '@/routes/survey-assignments';
-import { show as showVillage } from '@/routes/villages';
 
 type StatCard = {
     label: string;
@@ -530,11 +529,11 @@ export default function SurveyAssignmentIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Assesment KEMENPAR
+                                    Assessment KEMENPAR
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment KEMENPAR
+                                Assessment KEMENPAR
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau KEMENPAR survey desa wisata, status
@@ -728,7 +727,7 @@ export default function SurveyAssignmentIndex({
                         <div className="flex flex-col gap-3 border-b border-[#EFEFEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="text-lg font-bold text-[#303030]">
-                                    Daftar Survey Assignment
+                                    Daftar Desa Wisata Tools Assessment Kemenpar
                                 </h2>
                                 <p className="mt-0.5 text-sm text-[#7C7C7C]">
                                     Ringkasan assignment survey desa wisata dan
@@ -808,12 +807,7 @@ export default function SurveyAssignmentIndex({
                                     {assignments.data.map((assignment) => (
                                         <tr
                                             key={assignment.id}
-                                            onClick={() => {
-                                                if (isViewer) {
-                                                    router.visit(showVillage.url({ village: assignment.village_id }));
-                                                }
-                                            }}
-                                            className={classNames("hover:bg-[#FAFCFF]", isViewer && "cursor-pointer")}
+                                            className="hover:bg-[#FAFCFF]"
                                         >
                                             {canBulkUpdate && (
                                                 <td className="px-3 py-3 text-center">
@@ -841,10 +835,19 @@ export default function SurveyAssignmentIndex({
                                                         `#${assignment.id}`)}
                                             </td>
                                             <td className="px-3 py-3">
-                                                <span className="flex items-center gap-2 font-bold text-[#303030]">
+                                                <Link
+                                                    href={
+                                                        assignment.code
+                                                            ? showSurveyAssignment.url(
+                                                                assignment.code,
+                                                            )
+                                                            : '#'
+                                                    }
+                                                    className="flex items-center gap-2 font-bold text-[#0066AE] hover:text-[#093967]"
+                                                >
                                                     {assignment.village_name}
                                                     {isViewer && <ExternalLink className="size-3 text-[#0066AE]" />}
-                                                </span>
+                                                </Link>
                                                 <span className="block text-[12px] leading-4 text-[#7C7C7C]">
                                                     {
                                                         assignment.village_location
@@ -985,12 +988,8 @@ export default function SurveyAssignmentIndex({
                                     <ClipboardCheck className="size-7" />
                                 </span>
                                 <h3 className="mt-4 text-lg font-bold text-[#303030]">
-                                    Belum ada survey assignment
+                                    Belum ada desa dengan pencarian / kategori tersebut
                                 </h3>
-                                <p className="mt-1 max-w-md text-sm leading-5 text-[#7C7C7C]">
-                                    Assignment survey desa yang dibuat akan
-                                    muncul di halaman ini.
-                                </p>
                                 {!isEnumerator && !isViewer && (
                                     <button
                                         type="button"

@@ -43,6 +43,7 @@ class DashboardService
             'recent_assignments' => $this->recentAssignments(),
             'priorities' => $this->priorities(),
             'village_status_kpis' => $this->villageStatusKpis(),
+            'village_status_details' => $this->villageStatusDetails(),
             'activities' => $this->activities(),
             'general_report' => $this->generalReportData($filters['general_report_filter'] ?? 'Bulan Ini', $filters['program_type'] ?? 'Semua Program'),
             'aktivitas_survey' => $this->aktivitasSurveyData($filters['activity_filter'] ?? '30 Hari Terakhir'),
@@ -180,10 +181,59 @@ class DashboardService
             ],
         ];
     }
+    /**
+     * @return array<string, array<int, array{id: int, name: string, type: string, kemenpar_score: int, istc_score: int}>>
+     */
+    public function getVillageStatusData(): array
+    {
+        return [
+            'village_status_kpis' => $this->villageStatusKpis(),
+            'village_status_details' => $this->villageStatusDetails(),
+        ];
+    }
 
     /**
-     * @return array<int, array<string, string>>
+     * @return array<string, array<int, array{id: int, name: string, type: string, kemenpar_score: int}>>
      */
+    private function villageStatusDetails(): array
+    {
+        $details = [
+            'Mandiri' => [],
+            'Maju' => [],
+            'Berkembang' => [],
+            'Rintisan' => [],
+        ];
+
+        $villages = TourismVillage::query()
+            ->select(['id', 'name'])
+            ->withSum('surveyAnswers as total_score', 'score')
+            ->withSum('pariwisataSurveyAnswers as istc_score', 'score')
+            ->orderBy('name')
+            ->get();
+
+        foreach ($villages as $village) {
+            $score = (int) ($village->total_score ?? 0);
+            $type = match (true) {
+                $score >= 199 && $score <= 244 => 'Mandiri',
+                $score >= 153 && $score <= 198 => 'Maju',
+                $score >= 107 && $score <= 152 => 'Berkembang',
+                $score >= 61 && $score <= 106 => 'Rintisan',
+                default => null,
+            };
+
+            if ($type !== null) {
+                $details[$type][] = [
+                    'id' => (int) $village->id,
+                    'name' => (string) $village->name,
+                    'type' => $type,
+                    'kemenpar_score' => $score,
+                    'istc_score' => (int) ($village->istc_score ?? 0),
+                ];
+            }
+        }
+
+        return $details;
+    }
     private function villageStatusKpis(): array
     {
         $villages = TourismVillage::query()

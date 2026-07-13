@@ -24,10 +24,19 @@ import type { FormEvent, ReactNode } from 'react';
 import {
     Area,
     AreaChart,
+    Bar,
+    BarChart,
     CartesianGrid,
     Cell,
     Pie,
     PieChart,
+    PolarAngleAxis,
+    PolarGrid,
+    PolarRadiusAxis,
+    Radar,
+    RadarChart,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts';
@@ -179,7 +188,22 @@ type ShowPariwisataProps = {
     assignment: Assignment;
     pariwisata: Pariwisata;
     category_options: CategoryOption[];
+    pariwisata_survey_summary: PariwisataSurveySummary;
     edit_values: PariwisataEditValues;
+};
+
+type PariwisataSurveySummary = {
+    total_score: number;
+    max_score: number;
+    final_score: number;
+    highest_aspect: { name: string; score_percent: number } | null;
+    lowest_aspect: { name: string; score_percent: number } | null;
+    aspects: Array<{
+        name: string;
+        score: number;
+        max_score: number;
+        score_percent: number;
+    }>;
 };
 
 type CategoryOption = {
@@ -2792,10 +2816,107 @@ function SurveyStatistics({ groups }: { groups: SurveyGroup[] }) {
     );
 }
 
+function PariwisataSurveyScoreCharts({
+    summary,
+}: {
+    summary: PariwisataSurveySummary;
+}) {
+    const aspects = summary.aspects;
+    const radarData = aspects.map((aspect) => ({
+        name:
+            aspect.name.length > 18
+                ? aspect.name.slice(0, 18) + '...'
+                : aspect.name,
+        fullName: aspect.name,
+        score: aspect.score_percent,
+    }));
+
+    if (radarData.length === 1) {
+        radarData.push({ name: ' ', fullName: ' ', score: 0 });
+        radarData.push({ name: '  ', fullName: '  ', score: 0 });
+    } else if (radarData.length === 2) {
+        radarData.push({ name: ' ', fullName: ' ', score: 0 });
+    }
+
+    return (
+        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.25fr_1fr]">
+            <Card className="min-h-[360px] p-6">
+                <h2 className="text-base font-bold text-[#111827]">Skor Akhir Survey</h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Nilai kesiapan keseluruhan</p>
+                <div className="mt-9 flex flex-col items-center">
+                    <div
+                        className="grid size-48 place-items-center rounded-full"
+                        style={{ background: 'conic-gradient(#0066AE ' + clampScore(summary.final_score) + '%, #EAF3FF 0)' }}
+                    >
+                        <div className="grid size-40 place-items-center rounded-full bg-white text-center">
+                            <p className="text-4xl font-black text-[#093967]">{formatStatScore(summary.final_score)}</p>
+                            <p className="text-xs font-bold text-[#7C7C7C]">dari 100</p>
+                        </div>
+                    </div>
+                    <p className="mt-5 text-sm font-bold text-[#303030]">
+                        {summary.total_score} / {summary.max_score} poin
+                    </p>
+                </div>
+            </Card>
+
+            <Card className="min-h-[360px] p-6">
+                <h2 className="text-base font-bold text-[#111827]">Skor per Aspek</h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Total skor per aspek</p>
+                <div className="mt-6 h-[260px]">
+                    {aspects.length === 0 ? (
+                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">Belum ada data aspek</div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={aspects} layout="vertical" margin={{ left: 8, right: 24 }}>
+                                <CartesianGrid horizontal={false} stroke="#EAF0F6" />
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis dataKey="name" type="category" width={110} tick={{ fill: '#667085', fontSize: 11, fontWeight: 700 }} />
+                                <Tooltip
+                                    formatter={(value, _name, item) => [
+                                        Number(value).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '% (' + item.payload.score + '/' + item.payload.max_score + ')',
+                                        'Skor',
+                                    ]}
+                                    contentStyle={{ border: '1px solid #E5EDF6', borderRadius: '12px', fontSize: '12px' }}
+                                />
+                                <Bar dataKey="score_percent" fill="#0066AE" radius={[0, 6, 6, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </Card>
+
+            <Card className="min-h-[360px] p-6">
+                <h2 className="text-base font-bold text-[#111827]">Perbandingan Aspek (Radar)</h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Visualisasi nilai antar aspek</p>
+                <div className="mt-5 h-[260px]">
+                    {aspects.length === 0 ? (
+                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">Belum ada data aspek</div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart data={radarData} outerRadius="66%">
+                                <PolarGrid stroke="#E4EAF2" />
+                                <PolarAngleAxis dataKey="name" tick={{ fill: '#667085', fontSize: 10, fontWeight: 700 }} />
+                                <PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#98A2B3', fontSize: 9 }} axisLine={false} />
+                                <Radar dataKey="score" stroke="#0066AE" strokeWidth={2} fill="#0066AE" fillOpacity={0.22} />
+                                <Tooltip
+                                    formatter={(value) => [formatStatScore(Number(value)) + '%', 'Skor']}
+                                    labelFormatter={(label) => radarData.find((item) => item.name === label)?.fullName ?? label}
+                                    contentStyle={{ border: '1px solid #E5EDF6', borderRadius: '12px', fontSize: '12px' }}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </Card>
+        </div>
+    );
+}
+
 export default function ShowPariwisata({
     assignment,
     pariwisata,
     category_options,
+    pariwisata_survey_summary,
     edit_values,
 }: ShowPariwisataProps) {
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -2822,17 +2943,6 @@ export default function ShowPariwisata({
         );
     }
 
-    const activePackageCount = (edit_values.packages || []).filter(
-        (item) => item.is_active,
-    ).length;
-    const latestTurnoverYear = (edit_values.annual_turnovers || [])
-        .map((item) => Number(item.year))
-        .filter((year) => Number.isFinite(year))
-        .sort((left, right) => right - left)[0];
-    const latestVisitorYear = (edit_values.annual_visitors || [])
-        .map((item) => Number(item.year))
-        .filter((year) => Number.isFinite(year))
-        .sort((left, right) => right - left)[0];
 
     return (
         <>
@@ -2938,14 +3048,6 @@ export default function ShowPariwisata({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="rounded-xl bg-white px-4 py-3 text-right shadow-[0_8px_20px_rgba(9,57,103,0.08)]">
-                                    <p className="text-[11px] font-black tracking-[0.06em] text-[#0066AE] uppercase">
-                                        Assignment
-                                    </p>
-                                    <p className="text-lg font-bold text-[#093967]">
-                                        {assignment.code}
-                                    </p>
-                                </div>
                             </div>
                         </div>
 
@@ -2983,21 +3085,23 @@ export default function ShowPariwisata({
                         </div>
                     </Card>
 
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
                         {[
-                            ['Kategori', String(pariwisata.categories.length)],
-                            ['Paket Aktif', String(activePackageCount)],
                             [
-                                'Tahun Omset Terbaru',
-                                latestTurnoverYear
-                                    ? String(latestTurnoverYear)
-                                    : '-',
+                                'Total Skor',
+                                pariwisata_survey_summary.total_score +
+                                    ' / ' +
+                                    pariwisata_survey_summary.max_score,
                             ],
                             [
-                                'Tahun Pengunjung Terbaru',
-                                latestVisitorYear
-                                    ? String(latestVisitorYear)
-                                    : '-',
+                                'Aspek Tertinggi',
+                                pariwisata_survey_summary.highest_aspect
+                                    ?.name ?? '-',
+                            ],
+                            [
+                                'Aspek Terendah',
+                                pariwisata_survey_summary.lowest_aspect
+                                    ?.name ?? '-',
                             ],
                         ].map(([label, value]) => (
                             <Card key={label} className="p-4">
@@ -3010,6 +3114,10 @@ export default function ShowPariwisata({
                             </Card>
                         ))}
                     </div>
+
+                    <PariwisataSurveyScoreCharts
+                        summary={pariwisata_survey_summary}
+                    />
 
                     <PariwisataTrendCharts values={edit_values} />
 

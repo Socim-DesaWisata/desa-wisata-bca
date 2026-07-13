@@ -838,6 +838,20 @@ class VillageSurveyAssignmentService
             'annualWorkerTrainingStats:id,pariwisata_id,year,training_name,total_people,notes',
         ]);
 
+        $pariwisataQuestions = $this->pariwisataQuestionsForSummary();
+        $pariwisataAnswers = $assignment->pariwisataSurveyAnswers()
+            ->with([
+                'answeredBy:id,name,email',
+                'lastEditedBy:id,name,email',
+                'option:id,score,label,description',
+                'documents:id,pariwisata_survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,created_at',
+                'documents.uploadedBy:id,name,email',
+            ])
+            ->get()
+            ->keyBy('pariwisata_survey_question_id');
+        $pariwisataSurveyGroups = $this->formatPariwisataSurveyGroups($pariwisataQuestions, $pariwisataAnswers);
+        $pariwisataSurveySummary = $this->buildPariwisataSurveySummary($pariwisataQuestions, $pariwisataAnswers, $pariwisataSurveyGroups);
+
         return [
             'assignment' => [
                 ...$this->formatAssignment($assignment),
@@ -857,6 +871,8 @@ class VillageSurveyAssignmentService
             ],
             'pariwisata' => $this->formatPariwisataForAssignment($assignment, $pariwisata),
             'category_options' => $this->pariwisataCategoryOptions(),
+            'pariwisata_survey_summary' => $pariwisataSurveySummary,
+            'pariwisata_survey_groups' => $pariwisataSurveyGroups,
             'edit_values' => $this->formatPariwisataEditValues($pariwisata),
         ];
     }

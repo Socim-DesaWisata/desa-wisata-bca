@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     ClipboardCheck,
@@ -145,6 +145,8 @@ export default function PariwisataIndex({
     status_options,
     per_page_options,
 }: PariwisataIndexProps) {
+    const { auth } = usePage().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [search, setSearch] = useState(filters.search ?? '');
     const [category, setCategory] = useState(filters.category ?? '');
     const [status, setStatus] = useState(filters.is_active ?? '');
@@ -227,7 +229,7 @@ export default function PariwisataIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment ISTC
+                                Assessment ISTC
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau destinasi pariwisata desa, kategori,
@@ -334,7 +336,8 @@ export default function PariwisataIndex({
                                 </Select>
                             </label>
 
-                            <label className="space-y-1">
+                            {!isViewer && (
+                                <label className="space-y-1">
                                 <span className="block text-[11px] font-semibold text-[#7C7C7C]">
                                     Status
                                 </span>
@@ -361,7 +364,8 @@ export default function PariwisataIndex({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                            </label>
+                                </label>
+                            )}
 
                             <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan Filter
@@ -398,9 +402,9 @@ export default function PariwisataIndex({
                                             'Operasional',
                                             'Harga Tiket',
                                             'PIC',
-                                            'Status',
-                                            'Updated At',
-                                            'Aksi',
+                                            ...(!isViewer
+                                                ? ['Status', 'Updated At', 'Aksi']
+                                                : []),
                                         ].map((head) => (
                                             <th
                                                 key={head}
@@ -419,7 +423,7 @@ export default function PariwisataIndex({
                                     {pariwisata.data.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={9}
+                                                colSpan={isViewer ? 6 : 9}
                                                 className="px-4 py-10 text-center text-sm font-semibold text-[#7C7C7C]"
                                             >
                                                 Belum ada pariwisata yang sesuai
@@ -438,9 +442,20 @@ export default function PariwisataIndex({
                                                             <MapPinned className="size-5" />
                                                         </span>
                                                         <span className="min-w-0">
-                                                            <span className="block font-bold text-[#303030]">
-                                                                {item.name}
-                                                            </span>
+                                                            {item.detail_url ? (
+                                                                <Link
+                                                                    href={
+                                                                        item.detail_url
+                                                                    }
+                                                                    className="block font-bold text-[#0066AE] hover:text-[#093967]"
+                                                                >
+                                                                    {item.name}
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="block font-bold text-[#303030]">
+                                                                    {item.name}
+                                                                </span>
+                                                            )}
                                                             <span className="block text-[12px] text-[#7C7C7C]">
                                                                 {item.address}
                                                             </span>
@@ -500,6 +515,8 @@ export default function PariwisataIndex({
                                                         }
                                                     </span>
                                                 </td>
+                                                {!isViewer && (
+                                                    <>
                                                 <td className="px-3 py-3">
                                                     <Badge
                                                         className={statusClass(
@@ -579,6 +596,8 @@ export default function PariwisataIndex({
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>
+                                                    </>
+                                                )}
                                             </tr>
                                         ))
                                     )}
