@@ -8,6 +8,7 @@ import {
     ResponsiveContainer,
     BarChart,
     Bar,
+    LabelList,
     Radar,
     RadarChart,
     PolarGrid,
@@ -48,7 +49,12 @@ function Panel({
     );
 }
 
-type VillageScoreBarDatum = { name: string; score: number; maxScore: number };
+type VillageScoreBarDatum = {
+    name: string;
+    score: number;
+    maxScore: number;
+    percentage: number;
+};
 
 function VillageScoreBarChart({
     title,
@@ -69,20 +75,26 @@ function VillageScoreBarChart({
 }) {
     const [selectedAspect, setSelectedAspect] = useState<string>('Total Skor');
 
-    const data = rows
+    const data: VillageScoreBarDatum[] = rows
         .map((row) => {
             if (selectedAspect === 'Total Skor') {
+                const score = row.total_score ?? 0;
+                const maxScore = row.total_max_score ?? 0;
                 return {
                     name: row.name,
-                    score: row.total_score ?? 0,
-                    maxScore: row.total_max_score ?? 0,
+                    score,
+                    maxScore,
+                    percentage: maxScore > 0 ? (score / maxScore) * 100 : 0,
                 };
             } else {
                 const aspectData = row.aspect_scores?.[selectedAspect];
+                const score = aspectData?.score ?? 0;
+                const maxScore = aspectData?.max_score ?? 0;
                 return {
                     name: row.name,
-                    score: aspectData?.score ?? 0,
-                    maxScore: aspectData?.max_score ?? 0,
+                    score,
+                    maxScore,
+                    percentage: maxScore > 0 ? (score / maxScore) * 100 : 0,
                 };
             }
         })
@@ -185,7 +197,10 @@ function VillageScoreBarChart({
                                 formatter={(value, _name, item) => [
                                     String(value ?? 0) +
                                         '/' +
-                                        String(item.payload.maxScore ?? 0),
+                                        String(item.payload.maxScore ?? 0) +
+                                        ' (' +
+                                        String(Math.round(item.payload.percentage ?? 0)) +
+                                        '%)',
                                     selectedAspect,
                                 ]}
                                 contentStyle={{
@@ -201,7 +216,19 @@ function VillageScoreBarChart({
                                 fill={color}
                                 radius={[0, 3, 3, 0]}
                                 barSize={20}
-                            />
+                            >
+                                <LabelList
+                                    dataKey="percentage"
+                                    position="right"
+                                    formatter={(value: number | string | undefined) =>
+                                        String(Math.round(Number(value ?? 0))) +
+                                        '%'
+                                    }
+                                    fill="#303030"
+                                    fontSize={10}
+                                    fontWeight={700}
+                                />
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -570,7 +597,7 @@ export function DashboardCharts() {
             )}
 
             <VillageScoreBarChart
-                title="Survey KEMENPAR"
+                title="Assessment KEMENPAR"
                 subtitle="Skor KEMENPAR per desa"
                 aspects={kemenparVillageScores?.aspects ?? []}
                 rows={kemenparVillageScores?.rows ?? []}
@@ -579,7 +606,7 @@ export function DashboardCharts() {
                 href={surveyAssignments.url()}
             />
             <VillageScoreBarChart
-                title="Survey ISTC"
+                title="Assessment ISTC"
                 subtitle="Skor ISTC per desa"
                 aspects={istcVillageScores?.aspects ?? []}
                 rows={istcVillageScores?.rows ?? []}

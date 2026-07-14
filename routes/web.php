@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::get('/villages', [TourismVillageController::class, 'index'])->name('villages');
+    Route::get('/villages/export', [TourismVillageController::class, 'export'])->name('villages.export');
     Route::post('/villages', [TourismVillageController::class, 'store'])->middleware('role:admin,enumerator')->name('villages.store');
     Route::get('/villages/{village}', [TourismVillageController::class, 'show'])->name('villages.show');
     Route::get('/villages/{village}/edit', [TourismVillageController::class, 'edit'])->middleware('role:admin,enumerator')->name('villages.edit');
