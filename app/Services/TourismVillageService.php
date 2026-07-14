@@ -473,34 +473,35 @@ class TourismVillageService
      */
     private function getStats(): array
     {
+        $counts = ['Mandiri' => 0, 'Maju' => 0, 'Berkembang' => 0, 'Rintisan' => 0];
+
+        TourismVillage::query()
+            ->select(['id'])
+            ->withSum('surveyAnswers as total_score', 'score')
+            ->get()
+            ->each(function (TourismVillage $village) use (&$counts): void {
+                $score = (int) ($village->total_score ?? 0);
+                $type = match (true) {
+                    $score >= 199 && $score <= 244 => 'Mandiri',
+                    $score >= 153 && $score <= 198 => 'Maju',
+                    $score >= 107 && $score <= 152 => 'Berkembang',
+                    $score >= 61 && $score <= 106 => 'Rintisan',
+                    default => null,
+                };
+
+                if ($type !== null) {
+                    $counts[$type]++;
+                }
+            });
+
         return [
-            [
-                'label' => 'Total Desa Wisata',
-                'value' => (string) TourismVillage::query()->count(),
-                'description' => 'Desa binaan terdaftar',
-                'icon' => 'map',
-            ],
-            [
-                'label' => 'Desa Aktif',
-                'value' => (string) TourismVillage::query()->where('status', 'active')->count(),
-                'description' => 'Siap diproses assessment',
-                'icon' => 'clipboard',
-            ],
-            [
-                'label' => 'Sudah Terverifikasi',
-                'value' => (string) TourismVillage::query()->where('status', 'verified')->count(),
-                'description' => 'Data profil lengkap',
-                'icon' => 'check',
-            ],
-            [
-                'label' => 'Perlu Review',
-                'value' => (string) TourismVillage::query()->where('status', 'review')->count(),
-                'description' => 'Menunggu tindak lanjut',
-                'icon' => 'file',
-            ],
+            ['label' => 'Total Semua Desa', 'value' => (string) TourismVillage::query()->count(), 'description' => 'Seluruh desa binaan', 'icon' => 'map'],
+            ['label' => 'Total Desa Mandiri', 'value' => (string) $counts['Mandiri'], 'description' => 'Skor KEMENPAR 199–244', 'icon' => 'check'],
+            ['label' => 'Total Desa Maju', 'value' => (string) $counts['Maju'], 'description' => 'Skor KEMENPAR 153–198', 'icon' => 'clipboard'],
+            ['label' => 'Total Desa Berkembang', 'value' => (string) $counts['Berkembang'], 'description' => 'Skor KEMENPAR 107–152', 'icon' => 'clipboard'],
+            ['label' => 'Total Desa Rintisan', 'value' => (string) $counts['Rintisan'], 'description' => 'Skor KEMENPAR 61–106', 'icon' => 'file'],
         ];
     }
-
     /**
      * @return array<string, mixed>
      */
