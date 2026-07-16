@@ -260,6 +260,60 @@ test('pariwisata index score uses total answer score divided by active template 
         );
 });
 
+test('pariwisata index exposes village type from kemenpar score for viewer', function () {
+    $viewer = User::factory()->create(['role' => 'viewer']);
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $viewer->id,
+        'status' => 'published',
+    ]);
+    $village = TourismVillage::factory()->create(['created_by' => $viewer->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-VILLAGE-TYPE-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $viewer->id,
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Kelembagaan',
+        'code' => 'TYPE-001',
+        'question_text' => 'Pertanyaan kategori desa',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 110,
+        'label' => 'Berkembang',
+        'sort_order' => 1,
+    ]);
+    SurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'survey_question_id' => $question->id,
+        'survey_question_option_id' => $option->id,
+        'score' => 110,
+        'answered_by' => $viewer->id,
+        'last_edited_by' => $viewer->id,
+    ]);
+    $pariwisata = PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'Wisata Desa Berkembang',
+        'operational_days' => 'Senin-Minggu',
+        'operational_hours' => '08.00-17.00',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($viewer)
+        ->get(route('pariwisata'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('pariwisata/index')
+            ->where('pariwisata.data.0.id', $pariwisata->id)
+            ->where('pariwisata.data.0.village_type', 'Berkembang')
+            ->where('pariwisata.data.0.operational_days', 'Senin-Minggu')
+            ->where('pariwisata.data.0.operational_hours', '08.00-17.00')
+        );
+});
+
 test('survey assignment index sorts total score across full backend result set', function () {
     $user = User::factory()->create();
     $template = SurveyTemplate::factory()->create([

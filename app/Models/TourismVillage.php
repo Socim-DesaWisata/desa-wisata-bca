@@ -121,4 +121,29 @@ class TourismVillage extends Model
     {
         return $this->hasMany(VillageActiveGroupAnnual::class, 'village_id');
     }
+
+    public function workers(): HasMany
+    {
+        return $this->hasMany(VillageWorker::class, 'village_id');
+    }
+
+    public function administrators(): HasMany
+    {
+        return $this->hasMany(VillageAdministrator::class, 'village_id');
+    }
+
+    public function administratorLanguages(): HasMany
+    {
+        return $this->hasMany(VillageAdministratorLanguage::class, 'village_id');
+    }
+
+    public function stakeholders(): HasMany
+    {
+        return $this->hasMany(VillageStakeholder::class, 'village_id');
+    }
+
+    public function institutionals(): HasMany
+    {
+        return $this->hasMany(VillageInstitutional::class, 'village_id');
+    }
 }

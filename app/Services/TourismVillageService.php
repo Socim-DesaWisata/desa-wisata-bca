@@ -18,24 +18,30 @@ use App\Models\TourismVillage;
 use App\Models\UmkmSurveyAnswer;
 use App\Models\User;
 use App\Models\VillageActiveGroupAnnual;
+use App\Models\VillageAdministrator;
+use App\Models\VillageAdministratorLanguage;
 use App\Models\VillageAnnualPopulationStat;
 use App\Models\VillageEnumeratorAssignment;
+use App\Models\VillageInstitutional;
 use App\Models\VillageMedia;
 use App\Models\VillageProfileItem;
 use App\Models\VillageProfileItemCategory;
 use App\Models\VillageProfileItemMedia;
+use App\Models\VillageStakeholder;
 use App\Models\VillageSurveyAssignment;
 use App\Models\VillageSurveyAssignmentLog;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
 use App\Models\VillageUmkmDocument;
 use App\Models\VillageVulnerableGroupAnnual;
+use App\Models\VillageWorker;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class TourismVillageService
 {
@@ -119,7 +125,7 @@ class TourismVillageService
                 };
                 if ($range) {
                     $query->having('total_score', '>=', $range[0])
-                          ->having('total_score', '<=', $range[1]);
+                        ->having('total_score', '<=', $range[1]);
                 }
             })
             ->when($normalizedFilters['sort_by'],
@@ -193,6 +199,11 @@ class TourismVillageService
             'enumerators:id,name,email',
             'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
             'pariwisataVillages.categories:id,pariwisata_village_id,category',
+            'workers' => fn ($query) => $query->orderBy('type')->orderBy('gender')->orderBy('age_min')->orderBy('id'),
+            'administrators' => fn ($query) => $query->orderBy('education')->orderBy('id'),
+            'administratorLanguages' => fn ($query) => $query->orderBy('language_name')->orderBy('proficiency_level')->orderBy('id'),
+            'stakeholders' => fn ($query) => $query->orderBy('name')->orderBy('id'),
+            'institutionals' => fn ($query) => $query->orderBy('id'),
         ])->loadCount(['enumeratorAssignments', 'media', 'profileItems']);
 
         return [
@@ -210,6 +221,11 @@ class TourismVillageService
             'profileItems' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
             'profileItems.category:id,name,slug',
             'profileItems.media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
+            'workers' => fn ($query) => $query->orderBy('type')->orderBy('id'),
+            'administrators' => fn ($query) => $query->orderBy('education')->orderBy('id'),
+            'administratorLanguages' => fn ($query) => $query->orderBy('language_name')->orderBy('proficiency_level')->orderBy('id'),
+            'stakeholders' => fn ($query) => $query->orderBy('name')->orderBy('id'),
+            'institutionals' => fn ($query) => $query->orderBy('id'),
         ]);
 
         return [
@@ -250,6 +266,26 @@ class TourismVillageService
 
             if (array_key_exists('profile_items', $data)) {
                 $this->syncProfileItems($village, $data['profile_items'] ?? [], $actor);
+            }
+
+            if (array_key_exists('workers', $data)) {
+                $this->syncVillageWorkers($village, $data['workers'] ?? []);
+            }
+
+            if (array_key_exists('administrators', $data)) {
+                $this->syncVillageAdministrators($village, $data['administrators'] ?? []);
+            }
+
+            if (array_key_exists('administrator_languages', $data)) {
+                $this->syncVillageAdministratorLanguages($village, $data['administrator_languages'] ?? []);
+            }
+
+            if (array_key_exists('stakeholders', $data)) {
+                $this->syncVillageStakeholders($village, $data['stakeholders'] ?? []);
+            }
+
+            if (array_key_exists('institutionals', $data)) {
+                $this->syncVillageInstitutionals($village, $data['institutionals'] ?? []);
             }
         });
 
@@ -502,6 +538,7 @@ class TourismVillageService
             ['label' => 'Total Desa Rintisan', 'value' => (string) $counts['Rintisan'], 'description' => 'Skor KEMENPAR 61–106', 'icon' => 'file'],
         ];
     }
+
     /**
      * @return array<string, mixed>
      */
@@ -589,6 +626,37 @@ class TourismVillageService
                     'email' => $user->email,
                 ])
                 ->values(),
+            'workers' => $village->workers->map(fn (VillageWorker $worker): array => [
+                'id' => $worker->id,
+                'type' => $worker->type,
+                'gender' => $worker->gender,
+                'age_min' => $worker->age_min,
+                'age_max' => $worker->age_max,
+                'amount' => $worker->amount,
+                'notes' => $worker->notes,
+            ])->values(),
+            'administrators' => $village->administrators->map(fn (VillageAdministrator $administrator): array => [
+                'id' => $administrator->id,
+                'education' => $administrator->education,
+                'amount' => $administrator->amount,
+            ])->values(),
+            'administrator_languages' => $village->administratorLanguages->map(fn (VillageAdministratorLanguage $language): array => [
+                'id' => $language->id,
+                'language_name' => $language->language_name,
+                'proficiency_level' => $language->proficiency_level,
+                'amount' => $language->amount,
+                'notes' => $language->notes,
+            ])->values(),
+            'stakeholders' => $village->stakeholders->map(fn (VillageStakeholder $stakeholder): array => [
+                'id' => $stakeholder->id,
+                'name' => $stakeholder->name,
+                'position' => $stakeholder->position,
+            ])->values(),
+            'institutionals' => $village->institutionals->map(fn (VillageInstitutional $institutional): array => [
+                'id' => $institutional->id,
+                'title' => $institutional->title,
+                'description' => $institutional->description,
+            ])->values(),
         ];
     }
 
@@ -719,7 +787,193 @@ class TourismVillageService
             'updated_at' => $this->formatDate($village->updated_at),
             'media' => $village->media->map(fn (VillageMedia $media): array => $this->formatMedia($media))->values(),
             'profile_items' => $village->profileItems->map(fn (VillageProfileItem $item): array => $this->formatProfileItemForForm($item))->values(),
+            'workers' => $village->workers->map(fn (VillageWorker $worker): array => [
+                'id' => $worker->id,
+                'type' => $worker->type,
+                'gender' => $worker->gender,
+                'age_min' => $worker->age_min,
+                'age_max' => $worker->age_max,
+                'amount' => $worker->amount,
+                'notes' => $worker->notes,
+            ])->values(),
+            'administrators' => $village->administrators->map(fn (VillageAdministrator $administrator): array => [
+                'id' => $administrator->id,
+                'education' => $administrator->education,
+                'amount' => $administrator->amount,
+            ])->values(),
+            'administrator_languages' => $village->administratorLanguages->map(fn (VillageAdministratorLanguage $language): array => [
+                'id' => $language->id,
+                'language_name' => $language->language_name,
+                'proficiency_level' => $language->proficiency_level,
+                'amount' => $language->amount,
+                'notes' => $language->notes,
+            ])->values(),
+            'stakeholders' => $village->stakeholders->map(fn (VillageStakeholder $stakeholder): array => [
+                'id' => $stakeholder->id,
+                'name' => $stakeholder->name,
+                'position' => $stakeholder->position,
+            ])->values(),
+            'institutionals' => $village->institutionals->map(fn (VillageInstitutional $institutional): array => [
+                'id' => $institutional->id,
+                'title' => $institutional->title,
+                'description' => $institutional->description,
+            ])->values(),
         ];
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function syncVillageWorkers(TourismVillage $village, array $items): void
+    {
+        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+        $keptIds = $village->workers()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['workers' => 'Data tenaga kerja tidak valid.']);
+        }
+
+        $village->workers()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($items as $item) {
+            $payload = [
+                'type' => $item['type'],
+                'gender' => $item['gender'],
+                'age_min' => $item['age_min'] ?? null,
+                'age_max' => $item['age_max'] ?? null,
+                'amount' => $item['amount'],
+                'notes' => $item['notes'] ?? null,
+            ];
+
+            if (! empty($item['id'])) {
+                $village->workers()->whereKey($item['id'])->update($payload);
+
+                continue;
+            }
+
+            $village->workers()->create($payload);
+        }
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function syncVillageAdministrators(TourismVillage $village, array $items): void
+    {
+        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+        $keptIds = $village->administrators()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['administrators' => 'Data pengelola tidak valid.']);
+        }
+
+        $village->administrators()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($items as $item) {
+            $payload = ['education' => $item['education'], 'amount' => $item['amount']];
+
+            if (! empty($item['id'])) {
+                $village->administrators()->whereKey($item['id'])->update($payload);
+
+                continue;
+            }
+
+            $village->administrators()->create($payload);
+        }
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function syncVillageAdministratorLanguages(TourismVillage $village, array $items): void
+    {
+        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+        $keptIds = $village->administratorLanguages()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['administrator_languages' => 'Data bahasa pengurus tidak valid.']);
+        }
+
+        $village->administratorLanguages()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($items as $item) {
+            $payload = [
+                'language_name' => trim($item['language_name']),
+                'proficiency_level' => $item['proficiency_level'],
+                'amount' => $item['amount'],
+                'notes' => $item['notes'] ?? null,
+            ];
+
+            if (! empty($item['id'])) {
+                $village->administratorLanguages()->whereKey($item['id'])->update($payload);
+
+                continue;
+            }
+
+            $village->administratorLanguages()->create($payload);
+        }
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function syncVillageStakeholders(TourismVillage $village, array $items): void
+    {
+        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+        $keptIds = $village->stakeholders()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['stakeholders' => 'Data stakeholder tidak valid.']);
+        }
+
+        $village->stakeholders()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($items as $item) {
+            $payload = [
+                'name' => $item['name'],
+                'position' => $item['position'],
+            ];
+
+            if (! empty($item['id'])) {
+                $village->stakeholders()->whereKey($item['id'])->update($payload);
+
+                continue;
+            }
+
+            $village->stakeholders()->create($payload);
+        }
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function syncVillageInstitutionals(TourismVillage $village, array $items): void
+    {
+        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
+        $keptIds = $village->institutionals()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['institutionals' => 'Data kelembagaan tidak valid.']);
+        }
+
+        $village->institutionals()
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
+            ->when($keptIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($items as $item) {
+            $payload = ['title' => $item['title'], 'description' => $item['description']];
+
+            if (! empty($item['id'])) {
+                $village->institutionals()->whereKey($item['id'])->update($payload);
+
+                continue;
+            }
+
+            $village->institutionals()->create($payload);
+        }
     }
 
     /**

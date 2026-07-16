@@ -11,8 +11,9 @@ import {
     Search,
     Trash2,
     ExternalLink,
+    ArrowRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -79,6 +80,14 @@ type AssignmentRow = {
     total_score: number;
     answers_count: number;
     documents_count: number;
+    village_description: string | null;
+    village_image_url: string | null;
+    village_score_total: number;
+    village_score_max: number;
+    village_score_percent: number;
+    village_category: string;
+    village_category_label: string;
+    village_category_description: string;
 };
 
 type PaginationLink = {
@@ -202,6 +211,172 @@ function FieldError({ message }: { message?: string }) {
     );
 }
 
+function ViewerVillageCarousel({
+    assignments,
+}: {
+    assignments: AssignmentRow[];
+}) {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const villages = assignments.filter((assignment) => !assignment.is_trashed);
+
+    useEffect(() => {
+        if (villages.length <= 1 || isPaused) return;
+        const timer = window.setInterval(() => {
+            setActiveIndex((current) => (current + 1) % villages.length);
+        }, 5000);
+        return () => window.clearInterval(timer);
+    }, [isPaused, villages.length]);
+
+    useEffect(() => {
+        if (activeIndex >= villages.length && villages.length > 0) {
+            setActiveIndex(0);
+        }
+    }, [activeIndex, villages.length]);
+
+    if (villages.length === 0) {
+        return (
+            <section className="flex min-h-[220px] items-center rounded-2xl border border-[#E1E7EE] bg-white px-6 shadow-[0_10px_24px_rgba(3,17,32,0.06)]">
+                <div>
+                    <p className="text-sm font-bold text-[#303030]">
+                        Belum ada data desa wisata.
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        Data desa akan tampil setelah assignment tersedia.
+                    </p>
+                </div>
+            </section>
+        );
+    }
+
+    return (
+        <section
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            className="relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
+        >
+            <div className="overflow-hidden">
+                <div
+                    className="flex transition-transform duration-700 ease-out"
+                    style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+                >
+                    {villages.map((assignment) => {
+                        const progress = Math.min(
+                            Math.max(assignment.village_score_percent, 0),
+                            100,
+                        );
+
+                        return (
+                            <article
+                                key={assignment.id}
+                                className="grid min-h-[220px] min-w-full lg:grid-cols-[44%_56%]"
+                            >
+                                <div className="relative min-h-[220px] overflow-hidden bg-[radial-gradient(circle_at_30%_20%,#D9EAF7,#8AA5B8_55%,#17324F)]">
+                                    {assignment.village_image_url && (
+                                        <img
+                                            src={assignment.village_image_url}
+                                            alt={assignment.village_name}
+                                            className="absolute inset-0 size-full object-cover"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#071C32]/65 via-[#071C32]/10 to-transparent" />
+                                    <span className="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-[#006F67] px-4 py-2 text-xs font-bold text-white shadow-lg">
+                                        <span className="text-base">✦</span>{' '}
+                                        Desa Wisata
+                                    </span>
+                                </div>
+                                <div className="flex min-w-0 flex-col justify-between p-5 sm:p-6">
+                                    <div>
+                                        <h2 className="truncate text-2xl leading-tight font-bold tracking-[-0.02em] text-[#102A43] sm:text-3xl">
+                                            {assignment.village_name}
+                                        </h2>
+                                        <div className="mt-4 grid gap-5 sm:grid-cols-[1.2fr_.8fr]">
+                                            <div>
+                                                <p className="text-xs font-bold text-[#526174]">
+                                                    Skor Assessment Kemenpar
+                                                </p>
+                                                <p className="mt-2 text-4xl leading-none font-bold text-[#102A43]">
+                                                    {
+                                                        assignment.village_score_total
+                                                    }
+                                                    <span className="text-xl text-[#7C8795]">
+                                                        {' '}
+                                                        /{' '}
+                                                        {
+                                                            assignment.village_score_max
+                                                        }
+                                                    </span>
+                                                </p>
+                                                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[#E1E6EB]">
+                                                    <div
+                                                        className="h-full rounded-full bg-[#149B75]"
+                                                        style={{
+                                                            width: `${progress}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p className="mt-2 text-xs font-bold text-[#149B75]">
+                                                    {progress}% dari skor
+                                                    maksimum
+                                                </p>
+                                                <Link
+                                                    href={
+                                                        assignment.code
+                                                            ? showSurveyAssignment.url(
+                                                                  assignment.code,
+                                                              )
+                                                            : '#'
+                                                    }
+                                                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#102A43] px-5 text-xs font-bold text-white transition hover:bg-[#173E61]"
+                                                >
+                                                    Lihat Detail{' '}
+                                                    <ArrowRight className="size-4" />
+                                                </Link>
+                                            </div>
+                                            <div className="border-l border-[#E4E8ED] pl-5">
+                                                <p className="text-xs font-bold text-[#526174]">
+                                                    Kategori
+                                                </p>
+                                                <span className="mt-3 inline-flex rounded-lg bg-[#149B75] px-4 py-2 text-sm font-bold text-white">
+                                                    {
+                                                        assignment.village_category_label
+                                                    }
+                                                </span>
+                                                <p className="mt-3 text-xs leading-5 text-[#526174]">
+                                                    {
+                                                        assignment.village_category_description
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        );
+                    })}
+                </div>
+            </div>
+            {villages.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                    {villages.map((village, index) => (
+                        <button
+                            key={village.id}
+                            type="button"
+                            aria-label={`Tampilkan ${village.village_name}`}
+                            onClick={() => setActiveIndex(index)}
+                            className={classNames(
+                                'h-1.5 rounded-full transition-all',
+                                index === activeIndex
+                                    ? 'w-6 bg-white'
+                                    : 'w-1.5 bg-white/60',
+                            )}
+                        />
+                    ))}
+                </div>
+            )}
+        </section>
+    );
+}
 export default function SurveyAssignmentIndex({
     stats,
     assignments,
@@ -214,7 +389,7 @@ export default function SurveyAssignmentIndex({
     const { auth } = usePage().props;
     const isEnumerator = auth.user?.role === 'enumerator';
     const isViewer = auth.user?.role === 'viewer';
-    console.log(isViewer)
+    console.log(isViewer);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false);
     const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<
@@ -317,7 +492,7 @@ export default function SurveyAssignmentIndex({
         setSelectedAssignmentIds([]);
         const sort_direction =
             filterForm.sort_by === 'total_score' &&
-                filterForm.sort_direction === 'desc'
+            filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
@@ -565,7 +740,7 @@ export default function SurveyAssignmentIndex({
                                     <button
                                         type="button"
                                         onClick={openCreateModal}
-                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
                                     >
                                         <Plus className="size-4" />
                                         Tambah Assignment
@@ -574,36 +749,40 @@ export default function SurveyAssignmentIndex({
                         </div>
                     </header>
 
-                    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        {stats.map((stat) => {
-                            const Icon = statIcons[stat.icon];
+                    {isViewer ? (
+                        <ViewerVillageCarousel assignments={assignments.data} />
+                    ) : (
+                        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            {stats.map((stat) => {
+                                const Icon = statIcons[stat.icon];
 
-                            return (
-                                <article
-                                    key={stat.label}
-                                    className="flex min-h-[116px] items-center gap-4 rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_12px_rgba(3,17,32,0.06)]"
-                                >
-                                    <div className="flex size-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#EAF3FF] text-[#0066AE]">
-                                        <Icon
-                                            className="size-8"
-                                            strokeWidth={1.9}
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-[#303030]">
-                                            {stat.label}
-                                        </p>
-                                        <p className="text-[32px] leading-9 font-bold text-[#0066AE]">
-                                            {stat.value}
-                                        </p>
-                                        <p className="text-xs leading-4 text-[#7C7C7C]">
-                                            {stat.description}
-                                        </p>
-                                    </div>
-                                </article>
-                            );
-                        })}
-                    </section>
+                                return (
+                                    <article
+                                        key={stat.label}
+                                        className="flex min-h-[116px] items-center gap-4 rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_12px_rgba(3,17,32,0.06)]"
+                                    >
+                                        <div className="flex size-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#EAF3FF] text-[#0066AE]">
+                                            <Icon
+                                                className="size-8"
+                                                strokeWidth={1.9}
+                                            />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-[#303030]">
+                                                {stat.label}
+                                            </p>
+                                            <p className="text-[32px] leading-9 font-bold text-[#0066AE]">
+                                                {stat.value}
+                                            </p>
+                                            <p className="text-xs leading-4 text-[#7C7C7C]">
+                                                {stat.description}
+                                            </p>
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </section>
+                    )}
 
                     <form
                         onSubmit={submitFilters}
@@ -625,8 +804,8 @@ export default function SurveyAssignmentIndex({
                                         isEnumerator
                                             ? 'Cari desa, kode desa, atau template...'
                                             : isViewer
-                                                ? 'Nama, ID, Kode desa wisata..'
-                                                : 'Cari ID assignment, desa, kode desa, atau template...'
+                                              ? 'Nama, ID, Kode desa wisata..'
+                                              : 'Cari ID assignment, desa, kode desa, atau template...'
                                     }
                                 />
                             </label>
@@ -647,7 +826,9 @@ export default function SurveyAssignmentIndex({
                                             }
                                             className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
                                         >
-                                            <option value="">Semua Status</option>
+                                            <option value="">
+                                                Semua Status
+                                            </option>
                                             {status_options.map((option) => (
                                                 <option
                                                     key={option.value}
@@ -668,12 +849,15 @@ export default function SurveyAssignmentIndex({
                                             onChange={(event) =>
                                                 setFilterForm((current) => ({
                                                     ...current,
-                                                    template_id: event.target.value,
+                                                    template_id:
+                                                        event.target.value,
                                                 }))
                                             }
                                             className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
                                         >
-                                            <option value="">Semua Template</option>
+                                            <option value="">
+                                                Semua Template
+                                            </option>
                                             {template_options.map((option) => (
                                                 <option
                                                     key={option.value}
@@ -704,13 +888,17 @@ export default function SurveyAssignmentIndex({
                                         <option value="">Semua Kategori</option>
                                         <option value="mandiri">Mandiri</option>
                                         <option value="maju">Maju</option>
-                                        <option value="berkembang">Berkembang</option>
-                                        <option value="rintisan">Rintisan</option>
+                                        <option value="berkembang">
+                                            Berkembang
+                                        </option>
+                                        <option value="rintisan">
+                                            Rintisan
+                                        </option>
                                     </select>
                                 </label>
                             )}
 
-                            <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
+                            <button className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan
                             </button>
                             <button
@@ -771,9 +959,13 @@ export default function SurveyAssignmentIndex({
                                         {[
                                             'ID',
                                             'Desa',
-                                            ...(!isViewer ? ['Status', 'Created At'] : []),
+                                            ...(!isViewer
+                                                ? ['Status', 'Created At']
+                                                : []),
                                             'Total Skor',
-                                            ...(!isViewer ? ['Progress', 'Aksi'] : []),
+                                            ...(!isViewer
+                                                ? ['Progress', 'Aksi']
+                                                : []),
                                         ].map((head) => (
                                             <th
                                                 key={head}
@@ -821,7 +1013,7 @@ export default function SurveyAssignmentIndex({
                                                             toggleAssignmentSelection(
                                                                 assignment.id,
                                                                 checked ===
-                                                                true,
+                                                                    true,
                                                             )
                                                         }
                                                         aria-label={`Pilih ${assignment.village_name}`}
@@ -832,21 +1024,23 @@ export default function SurveyAssignmentIndex({
                                                 {isEnumerator
                                                     ? `#${assignment.id}`
                                                     : (assignment.code ??
-                                                        `#${assignment.id}`)}
+                                                      `#${assignment.id}`)}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Link
                                                     href={
                                                         assignment.code
                                                             ? showSurveyAssignment.url(
-                                                                assignment.code,
-                                                            )
+                                                                  assignment.code,
+                                                              )
                                                             : '#'
                                                     }
                                                     className="flex items-center gap-2 font-bold text-[#0066AE] hover:text-[#093967]"
                                                 >
                                                     {assignment.village_name}
-                                                    {isViewer && <ExternalLink className="size-3 text-[#0066AE]" />}
+                                                    {isViewer && (
+                                                        <ExternalLink className="size-3 text-[#0066AE]" />
+                                                    )}
                                                 </Link>
                                                 <span className="block text-[12px] leading-4 text-[#7C7C7C]">
                                                     {
@@ -862,7 +1056,9 @@ export default function SurveyAssignmentIndex({
                                                                 assignment.status,
                                                             )}
                                                         >
-                                                            {assignment.status_label}
+                                                            {
+                                                                assignment.status_label
+                                                            }
                                                         </Badge>
                                                     </td>
                                                     <td className="px-3 py-3 font-medium text-[#303030]">
@@ -879,11 +1075,15 @@ export default function SurveyAssignmentIndex({
                                                 <>
                                                     <td className="px-3 py-3">
                                                         <span className="block font-bold text-[#0066AE]">
-                                                            {assignment.answers_count}{' '}
+                                                            {
+                                                                assignment.answers_count
+                                                            }{' '}
                                                             jawaban
                                                         </span>
                                                         <span className="block text-[12px] text-[#7C7C7C]">
-                                                            {assignment.documents_count}{' '}
+                                                            {
+                                                                assignment.documents_count
+                                                            }{' '}
                                                             dokumen
                                                         </span>
                                                     </td>
@@ -929,7 +1129,8 @@ export default function SurveyAssignmentIndex({
                                                                         }}
                                                                     >
                                                                         <ClipboardList className="size-4 text-[#303030]" />
-                                                                        Take Survey
+                                                                        Take
+                                                                        Survey
                                                                     </DropdownMenuItem>
                                                                 )}
                                                                 {!isEnumerator &&
@@ -988,7 +1189,8 @@ export default function SurveyAssignmentIndex({
                                     <ClipboardCheck className="size-7" />
                                 </span>
                                 <h3 className="mt-4 text-lg font-bold text-[#303030]">
-                                    Belum ada desa dengan pencarian / kategori tersebut
+                                    Belum ada desa dengan pencarian / kategori
+                                    tersebut
                                 </h3>
                                 {!isEnumerator && !isViewer && (
                                     <button
@@ -1035,10 +1237,10 @@ export default function SurveyAssignmentIndex({
                                             onClick={() =>
                                                 link.url &&
                                                 (setSelectedAssignmentIds([]),
-                                                    router.visit(link.url, {
-                                                        preserveScroll: true,
-                                                        preserveState: true,
-                                                    }))
+                                                router.visit(link.url, {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                }))
                                             }
                                             className={classNames(
                                                 'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',
@@ -1150,7 +1352,7 @@ export default function SurveyAssignmentIndex({
                             </button>
                             <button
                                 disabled={processing}
-                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:opacity-60"
+                                className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white disabled:opacity-60"
                             >
                                 {processing
                                     ? 'Menyimpan...'
@@ -1210,7 +1412,7 @@ export default function SurveyAssignmentIndex({
                                 disabled={
                                     isBulkProcessing || bulkData.status === ''
                                 }
-                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:opacity-60"
+                                className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white disabled:opacity-60"
                             >
                                 {isBulkProcessing
                                     ? 'Menyimpan...'
@@ -1278,7 +1480,7 @@ export default function SurveyAssignmentIndex({
                             </button>
                             <button
                                 disabled={accessCode.trim() === ''}
-                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Masuk
                             </button>
