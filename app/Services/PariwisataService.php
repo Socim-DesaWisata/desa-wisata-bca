@@ -62,6 +62,7 @@ class PariwisataService
             ->with([
                 'village:id,code,name,city,province',
                 'village.surveyAssignment:id,code,village_id',
+                'village.surveyAssignment.answers:id,village_survey_assignment_id,score',
                 'village.surveyAssignment.pariwisataSurveyAnswers:id,village_survey_assignment_id,score',
                 'categories:id,pariwisata_village_id,category',
             ]);
@@ -226,6 +227,9 @@ class PariwisataService
             'village_name' => $pariwisata->village?->name ?? '-',
             'village_code' => $pariwisata->village?->code ?? '-',
             'village_location' => collect([$pariwisata->village?->city, $pariwisata->village?->province])->filter()->implode(', ') ?: '-',
+            'village_type' => $this->villageTypeFor(
+                (int) ($pariwisata->village?->surveyAssignment?->answers?->sum('score') ?? 0),
+            ),
             'survey_answers_count' => $pariwisata->village?->surveyAssignment?->pariwisataSurveyAnswers?->count() ?? 0,
             'updated_at' => $this->formatDate($pariwisata->updated_at),
             'is_trashed' => $pariwisata->trashed(),
@@ -244,6 +248,17 @@ class PariwisataService
         $maxScore = $questions->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
 
         return $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 1) : 0.0;
+    }
+
+    private function villageTypeFor(int $score): string
+    {
+        return match (true) {
+            $score >= 199 && $score <= 244 => 'Mandiri',
+            $score >= 153 && $score <= 198 => 'Maju',
+            $score >= 107 && $score <= 152 => 'Berkembang',
+            $score >= 61 && $score <= 106 => 'Rintisan',
+            default => '-',
+        };
     }
 
     /**

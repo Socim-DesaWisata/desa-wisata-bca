@@ -4,12 +4,17 @@ use App\Models\PariwisataVillage;
 use App\Models\PariwisataVillageCategory;
 use App\Models\TourismVillage;
 use App\Models\User;
+use App\Models\VillageAdministrator;
+use App\Models\VillageAdministratorLanguage;
+use App\Models\VillageInstitutional;
 use App\Models\VillageMedia;
 use App\Models\VillageProfileItem;
 use App\Models\VillageProfileItemCategory;
 use App\Models\VillageProfileItemMedia;
+use App\Models\VillageStakeholder;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
+use App\Models\VillageWorker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -102,6 +107,42 @@ test('village detail page exposes real backend profile media umkm and pariwisata
         'category' => 'alam',
     ]);
 
+    VillageWorker::query()->create([
+        'village_id' => $village->id,
+        'type' => 'full-time',
+        'gender' => 'female',
+        'age_min' => 21,
+        'age_max' => 35,
+        'amount' => 8,
+        'notes' => 'Pemandu wisata',
+    ]);
+
+    VillageAdministrator::query()->create([
+        'village_id' => $village->id,
+        'education' => 's1/d4',
+        'amount' => 3,
+    ]);
+
+    VillageAdministratorLanguage::query()->create([
+        'village_id' => $village->id,
+        'language_name' => 'Inggris',
+        'proficiency_level' => 'advanced',
+        'amount' => 2,
+        'notes' => 'Pemandu tamu asing',
+    ]);
+
+    VillageStakeholder::query()->create([
+        'village_id' => $village->id,
+        'name' => 'Siti Aminah',
+        'position' => 'Ketua Pokdarwis',
+    ]);
+
+    VillageInstitutional::query()->create([
+        'village_id' => $village->id,
+        'title' => 'BUMDes Nyata',
+        'description' => 'Mengelola unit usaha desa.',
+    ]);
+
     $this->actingAs($user)
         ->get(route('villages.show', $village))
         ->assertOk()
@@ -115,5 +156,11 @@ test('village detail page exposes real backend profile media umkm and pariwisata
             ->where('village.umkms.0.categories.0.label', 'Makanan Minuman')
             ->where('village.pariwisata.0.name', 'Spot Bukit Desa')
             ->where('village.pariwisata.0.categories.0.label', 'Nature')
+            ->where('village.workers.0.amount', 8)
+            ->where('village.administrators.0.education', 's1/d4')
+            ->where('village.administrator_languages.0.language_name', 'Inggris')
+            ->where('village.stakeholders.0.name', 'Siti Aminah')
+            ->missing('village.stakeholders.0.organization')
+            ->where('village.institutionals.0.title', 'BUMDes Nyata')
         );
 });
