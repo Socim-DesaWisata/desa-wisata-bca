@@ -12,6 +12,8 @@ import {
     Trash2,
     ExternalLink,
     ArrowRight,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -253,8 +255,24 @@ function ViewerVillageCarousel({
         <section
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
+            className="group relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
         >
+            {villages.length > 1 && (
+                <>
+                    <button
+                        onClick={() => setActiveIndex((prev) => (prev > 0 ? prev - 1 : villages.length - 1))}
+                        className="absolute left-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                    >
+                        <ChevronLeft className="size-5" />
+                    </button>
+                    <button
+                        onClick={() => setActiveIndex((prev) => (prev < villages.length - 1 ? prev + 1 : 0))}
+                        className="absolute right-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                    >
+                        <ChevronRight className="size-5" />
+                    </button>
+                </>
+            )}
             <div className="overflow-hidden">
                 <div
                     className="flex transition-transform duration-700 ease-out"
