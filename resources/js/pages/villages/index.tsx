@@ -711,7 +711,7 @@ function ViewerVillageCarousel({
                                                     maksimum
                                                 </p>
                                                 <Link
-                                                    href={showVillage.url(village.id)}
+                                                    href={showVillage.url({ village: village.id })}
                                                     className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#102A43] px-5 text-xs font-bold text-white transition hover:bg-[#173E61]"
                                                 >
                                                     Lihat Detail{' '}
@@ -1101,6 +1101,10 @@ export default function VillagesIndex({
                         })}
                     </section>
 
+                    {isViewer && (
+                        <ViewerVillageCarousel villages={villages.data} />
+                    )}
+
                     <form
                         onSubmit={submitFilters}
                         className="rounded-xl border border-[#EFEFEF] bg-white p-4 shadow-[0_4px_12px_rgba(3,17,32,0.05)]"
@@ -1220,7 +1224,6 @@ export default function VillagesIndex({
                             </div>
 
                             <div className="overflow-x-auto">
-                                {!isViewer ? (
                                 <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                                     <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
                                         <tr>
@@ -1345,6 +1348,15 @@ export default function VillagesIndex({
                                                     </td>
                                                 )}
                                                 <td className="px-3 py-3">
+                                                    {isViewer ? (
+                                                        <Link
+                                                            href={showVillage.url({ village: village.id })}
+                                                            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#303030] shadow-[0_2px_4px_rgba(3,17,32,0.04)] transition hover:bg-[#F8FBFE] hover:text-[#0066AE]"
+                                                        >
+                                                            <Eye className="size-3.5" />
+                                                            Lihat Detail
+                                                        </Link>
+                                                    ) : (
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
                                                             asChild
@@ -1357,8 +1369,7 @@ export default function VillagesIndex({
                                                             align="end"
                                                             className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
                                                         >
-                                                            {!isViewer &&
-                                                                filterForm.view ===
+                                                            {filterForm.view ===
                                                                 'trash' ? (
                                                                 <DropdownMenuItem
                                                                     className="gap-2 text-xs font-bold text-[#00893D]"
@@ -1382,63 +1393,51 @@ export default function VillagesIndex({
                                                                         className="gap-2 text-xs"
                                                                     >
                                                                         <Link
-                                                                            href={showVillage(
-                                                                                village.id,
-                                                                            )}
+                                                                            href={showVillage.url({ village: village.id })}
                                                                         >
                                                                             <Eye className="size-4 text-[#303030]" />
                                                                             Lihat
                                                                             Detail
                                                                         </Link>
                                                                     </DropdownMenuItem>
-                                                                    {!isViewer && (
-                                                                        <>
-                                                                            <DropdownMenuItem
-                                                                                asChild
-                                                                                className="gap-2 text-xs"
-                                                                            >
-                                                                                <Link
-                                                                                    href={editVillage(
-                                                                                        village.id,
-                                                                                    )}
-                                                                                >
-                                                                                    <Pencil className="size-4 text-[#303030]" />
-                                                                                    Edit
-                                                                                    Desa
-                                                                                </Link>
-                                                                            </DropdownMenuItem>
-                                                                            <DropdownMenuSeparator />
-                                                                            <DropdownMenuItem
-                                                                                className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                                onSelect={(
-                                                                                    event,
-                                                                                ) => {
-                                                                                    event.preventDefault();
-                                                                                    handleDelete(
-                                                                                        village,
-                                                                                    );
-                                                                                }}
-                                                                            >
-                                                                                <Trash2 className="size-4 text-[#D81313]" />
-                                                                                Hapus
-                                                                                Desa
-                                                                            </DropdownMenuItem>
-                                                                        </>
-                                                                    )}
+                                                                    <DropdownMenuItem
+                                                                        asChild
+                                                                        className="gap-2 text-xs"
+                                                                    >
+                                                                        <Link
+                                                                            href={editVillage.url({ village: village.id })}
+                                                                        >
+                                                                            <Pencil className="size-4 text-[#303030]" />
+                                                                            Edit
+                                                                            Desa
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                        onSelect={(
+                                                                            event,
+                                                                        ) => {
+                                                                            event.preventDefault();
+                                                                            handleDelete(
+                                                                                village,
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="size-4 text-[#D81313]" />
+                                                                        Hapus
+                                                                        Desa
+                                                                    </DropdownMenuItem>
                                                                 </>
                                                             )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
-                                ) : (
-                                    <div className="p-4 sm:p-5">
-                                        <ViewerVillageCarousel villages={villages.data} />
-                                    </div>
-                                )}
                             </div>
 
                             {villages.data.length === 0 && (
