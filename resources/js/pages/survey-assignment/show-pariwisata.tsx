@@ -1,7 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     CalendarDays,
+    ChevronDown,
+    Clock3,
     ClipboardList,
     Download,
     Eye,
@@ -12,22 +14,32 @@ import {
     RefreshCcw,
     Save,
     Search,
+    ShieldCheck,
     Ticket,
     UserRound,
     X,
     Plus,
     Trash2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 import {
     Area,
     AreaChart,
+    Bar,
+    BarChart,
     CartesianGrid,
     Cell,
     Pie,
     PieChart,
+    PolarAngleAxis,
+    PolarGrid,
+    PolarRadiusAxis,
+    Radar,
+    RadarChart,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts';
@@ -49,6 +61,12 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -60,6 +78,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { dashboard, surveyAssignments } from '@/routes';
 import { show as showAssignment } from '@/routes/survey-assignments';
 import { update as updatePariwisata } from '@/routes/survey-assignments/pariwisata';
+import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
 
 type Assignment = {
     id: number;
@@ -179,7 +198,23 @@ type ShowPariwisataProps = {
     assignment: Assignment;
     pariwisata: Pariwisata;
     category_options: CategoryOption[];
+    pariwisata_survey_summary: PariwisataSurveySummary;
+    pariwisata_survey_groups: SurveyGroup[];
     edit_values: PariwisataEditValues;
+};
+
+type PariwisataSurveySummary = {
+    total_score: number;
+    max_score: number;
+    final_score: number;
+    highest_aspect: { name: string; score_percent: number } | null;
+    lowest_aspect: { name: string; score_percent: number } | null;
+    aspects: Array<{
+        name: string;
+        score: number;
+        max_score: number;
+        score_percent: number;
+    }>;
 };
 
 type CategoryOption = {
@@ -811,6 +846,238 @@ function AnswerDetailModal({
     );
 }
 
+function IstcQuestionRow({
+    question,
+    number,
+    isViewer,
+    onViewDetail,
+    onEditData,
+}: {
+    question: SurveyQuestion;
+    number: number;
+    isViewer: boolean;
+    onViewDetail: (question: SurveyQuestion) => void;
+    onEditData: (question: SurveyQuestion) => void;
+}) {
+    const answered = Boolean(question.answer);
+
+    return (
+        <div
+            className={classNames(
+                'grid gap-3 border-b border-[#EFEFEF] px-4 py-4 last:border-b-0',
+                isViewer
+                    ? 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)]'
+                    : 'xl:grid-cols-[38px_minmax(220px,1.25fr)_170px_minmax(240px,.95fr)_130px_130px_112px]',
+            )}
+        >
+            <div className="flex size-8 items-center justify-center rounded-full border border-[#CAD7E6] text-xs font-bold text-[#7C7C7C]">
+                {String(number).padStart(2, '0')}
+            </div>
+            <div className="min-w-0">
+                <p className="text-sm leading-5 font-semibold text-[#303030]">
+                    {question.indicator_name}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-[#0066AE]">
+                    {[question.criteria_code, question.criteria_name, question.indicator_code]
+                        .filter(Boolean)
+                        .join(' · ')}
+                </p>
+                {(question.indicator_description || question.document_hint) && (
+                    <p className="mt-2 text-xs font-semibold text-[#7C7C7C]">
+                        {question.indicator_description ?? question.document_hint}
+                    </p>
+                )}
+            </div>
+            <div className="flex items-center">
+                <div
+                    className={classNames(
+                        'w-full rounded-lg px-4 py-3 text-center shadow-[0_6px_12px_rgba(0,102,174,0.10)]',
+                        answered ? 'bg-[#0066AE] text-white' : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                    )}
+                >
+                    <p className="text-sm font-bold">
+                        Skor {question.answer?.score ?? '-'} / {question.max_score || '-'}
+                    </p>
+                    <p className="line-clamp-2 text-[11px] font-semibold opacity-80">
+                        {question.answer?.score_label ?? 'Belum dijawab'}
+                    </p>
+                </div>
+            </div>
+            <div className="flex min-w-0 flex-col justify-center text-center">
+                <p className="mb-2 text-xs font-bold text-[#303030]">
+                    Dokumen Pendukung ({question.answer?.documents.length ?? 0})
+                </p>
+                <div className="space-y-2">
+                    {question.answer?.documents.map((document) => (
+                        <DocumentBadge key={document.id} document={document} />
+                    ))}
+                    {(question.answer?.documents.length ?? 0) === 0 && (
+                        <p className="rounded-lg bg-[#F7F7F7] px-3 py-2 text-xs font-semibold text-[#7C7C7C]">
+                            Tidak ada dokumen
+                        </p>
+                    )}
+                </div>
+            </div>
+            {!isViewer && (
+                <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                    <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
+                        <UserRound size={14} className="text-[#0066AE]" /> Dijawab oleh
+                    </p>
+                    <p className="mt-1 font-bold text-[#303030]">
+                        {question.answer?.answered_by.name ?? '-'}
+                    </p>
+                </div>
+            )}
+            {!isViewer && (
+                <div className="flex min-w-0 flex-col justify-center text-center text-xs">
+                    <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
+                        <Clock3 size={14} className="text-[#0066AE]" /> Terakhir diedit
+                    </p>
+                    <p className="mt-1 font-bold text-[#303030]">
+                        {question.answer?.last_edited_at ?? '-'}
+                    </p>
+                </div>
+            )}
+            {!isViewer && (
+                <div className="flex items-center justify-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button type="button" className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]">
+                                Action <ChevronDown size={14} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs">
+                            <DropdownMenuItem className="gap-2 text-xs" onClick={() => onViewDetail(question)}>
+                                <Eye className="size-4" /> Lihat Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 text-xs" onClick={() => onEditData(question)}>
+                                <Pencil className="size-4" /> Edit Data
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )}
+        </div>
+    );
+}
+
+type IstcAnswerEditForm = {
+    answers: Array<{
+        question_id: number;
+        pariwisata_suvey_option_id: string;
+        notes: string;
+        documents: File[];
+    }>;
+};
+
+function IstcAnswerEditModal({
+    assignmentCode,
+    question,
+    open,
+    onOpenChange,
+}: {
+    assignmentCode: string;
+    question: SurveyQuestion | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const { data, setData, post, processing, errors, clearErrors } = useForm<IstcAnswerEditForm>({
+        answers: [],
+    });
+
+    useEffect(() => {
+        if (!open || !question) return;
+
+        setData('answers', [{
+            question_id: question.id,
+            pariwisata_suvey_option_id: question.answer
+                ? String(question.answer.pariwisata_suvey_option_id)
+                : '',
+            notes: question.answer?.notes ?? '',
+            documents: [],
+        }]);
+        clearErrors();
+    }, [clearErrors, open, question, setData]);
+
+    if (!question) return null;
+
+    const answer = data.answers[0];
+    const errorBag = errors as Record<string, string | undefined>;
+
+    function submit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        post(storePariwisataSurveyDraft.url({ assignment: assignmentCode }), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => onOpenChange(false),
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Edit Jawaban Survey ISTC</DialogTitle>
+                    <DialogDescription>Ubah jawaban, catatan, atau tambahkan dokumen pendukung.</DialogDescription>
+                </DialogHeader>
+                <form className="space-y-5" onSubmit={submit}>
+                    <div className="rounded-xl bg-[#F8FBFF] p-4">
+                        <p className="text-xs font-bold text-[#0066AE]">{question.indicator_code}</p>
+                        <h3 className="mt-2 text-base font-bold text-[#303030]">{question.indicator_name}</h3>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="text-sm font-bold text-[#303030]">Opsi Jawaban</p>
+                        {question.options.map((option) => (
+                            <label key={option.id} className={classNames('flex cursor-pointer gap-3 rounded-xl border p-3', answer?.pariwisata_suvey_option_id === String(option.id) ? 'border-[#0066AE] bg-[#EAF3FF]' : 'border-[#E5E7EB]')}>
+                                <input type="radio" name="option" checked={answer?.pariwisata_suvey_option_id === String(option.id)} onChange={() => setData('answers', [{ ...answer, question_id: question.id, pariwisata_suvey_option_id: String(option.id), notes: answer?.notes ?? '', documents: answer?.documents ?? [] }])} />
+                                <span><span className="block text-sm font-bold text-[#303030]">Skor {option.score} · {option.label}</span><span className="mt-1 block text-xs text-[#7C7C7C]">{option.description}</span></span>
+                            </label>
+                        ))}
+                        {errorBag['answers.0.pariwisata_suvey_option_id'] && <p className="text-xs font-semibold text-red-600">{errorBag['answers.0.pariwisata_suvey_option_id']}</p>}
+                    </div>
+                    <label className="block text-sm font-bold text-[#303030]">Catatan<textarea value={answer?.notes ?? ''} onChange={(event) => setData('answers', [{ ...answer, question_id: question.id, pariwisata_suvey_option_id: answer?.pariwisata_suvey_option_id ?? '', notes: event.target.value, documents: answer?.documents ?? [] }])} className="mt-2 min-h-24 w-full rounded-xl border border-[#DCE3EA] p-3 text-sm font-medium" /></label>
+                    <label className="block text-sm font-bold text-[#303030]">Dokumen Pendukung<input type="file" multiple onChange={(event) => setData('answers', [{ ...answer, question_id: question.id, pariwisata_suvey_option_id: answer?.pariwisata_suvey_option_id ?? '', notes: answer?.notes ?? '', documents: [...(answer?.documents ?? []), ...Array.from(event.target.files ?? [])] }])} className="mt-2 block w-full text-sm" /></label>
+                    <div className="flex justify-end gap-2"><button type="button" onClick={() => onOpenChange(false)} className="h-10 rounded-lg border border-[#DDE4EC] px-4 text-sm font-bold">Batal</button><button type="submit" disabled={processing} className="h-10 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white disabled:opacity-60">Simpan Jawaban</button></div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function IstcSurveyTable({
+    assignmentCode,
+    groups,
+    isViewer,
+}: {
+    assignmentCode: string;
+    groups: SurveyGroup[];
+    isViewer: boolean;
+}) {
+    const [search, setSearch] = useState('');
+    const [aspect, setAspect] = useState('all');
+    const [closed, setClosed] = useState<Record<string, boolean>>({});
+    const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(null);
+    const [editingQuestion, setEditingQuestion] = useState<SurveyQuestion | null>(null);
+    const filteredGroups = useMemo(() => groups.filter((group) => aspect === 'all' || group.category_name === aspect).map((group) => ({ ...group, questions: group.questions.filter((question) => [group.category_name, question.criteria_name, question.indicator_code, question.indicator_name, question.answer?.score_label].filter(Boolean).some((value) => String(value).toLowerCase().includes(search.toLowerCase()))) })).filter((group) => group.questions.length > 0), [aspect, groups, search]);
+
+    return (
+        <Card className="overflow-hidden">
+            <div className="border-b border-[#EFEFEF] p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div><h2 className="text-base font-bold text-[#303030]">Jawaban Survey ISTC</h2><p className="mt-1 text-sm font-semibold text-[#7C7C7C]">Pertanyaan, skor, catatan, dan dokumen pendukung survey pariwisata.</p></div>
+                    <div className="flex flex-col gap-2 sm:flex-row"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari pertanyaan..." className="h-10 rounded-lg border border-[#DDE4EC] px-3 text-sm" /><select value={aspect} onChange={(event) => setAspect(event.target.value)} className="h-10 rounded-lg border border-[#DDE4EC] px-3 text-sm"><option value="all">Semua Aspek</option>{groups.map((group) => <option key={group.category_name} value={group.category_name}>{group.category_name}</option>)}</select></div>
+                </div>
+            </div>
+            {filteredGroups.map((group) => {
+                const percent = group.max_score > 0 ? (group.score / group.max_score) * 100 : 0;
+                return <div key={group.category_name} className="border-b border-[#EFEFEF] last:border-b-0"><button type="button" onClick={() => setClosed((current) => ({ ...current, [group.category_name]: !current[group.category_name] }))} className="flex w-full flex-col gap-3 bg-[#F8FBFE] p-4 text-left lg:flex-row lg:items-center lg:justify-between"><div className="flex items-center gap-3"><span className="flex size-8 items-center justify-center rounded-lg bg-white text-[#0066AE]"><ShieldCheck size={18} /></span><div><h3 className="text-sm font-bold text-[#303030]">{group.category_name}</h3><p className="mt-1 text-xs font-semibold text-[#7C7C7C]">{group.question_count} pertanyaan · {group.answered_count} terjawab · {group.documents_count} dokumen · {group.score} / {group.max_score} poin</p></div></div><div className="flex min-w-[220px] items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-white"><div className="h-full bg-[#0066AE]" style={{ width: `${Math.min(percent, 100)}%` }} /></div><ChevronDown size={18} className={classNames('text-[#0066AE] transition-transform', closed[group.category_name] && '-rotate-90')} /></div></button>{!closed[group.category_name] && group.questions.map((question, index) => <IstcQuestionRow key={question.id} question={question} number={index + 1} isViewer={isViewer} onViewDetail={setDetailQuestion} onEditData={setEditingQuestion} />)}</div>;
+            })}
+            {filteredGroups.length === 0 && <div className="p-12 text-center"><p className="text-sm font-bold text-[#303030]">Data tidak ditemukan</p><p className="mt-1 text-xs font-semibold text-[#7C7C7C]">Ubah pencarian atau filter aspek.</p></div>}
+            <AnswerDetailModal question={detailQuestion} open={Boolean(detailQuestion)} onOpenChange={(open) => { if (!open) setDetailQuestion(null); }} />
+            {!isViewer && <IstcAnswerEditModal assignmentCode={assignmentCode} question={editingQuestion} open={Boolean(editingQuestion)} onOpenChange={(open) => { if (!open) setEditingQuestion(null); }} />}
+        </Card>
+    );
+}
 function SelectInput({
     label,
     value,
@@ -2792,12 +3059,112 @@ function SurveyStatistics({ groups }: { groups: SurveyGroup[] }) {
     );
 }
 
+function PariwisataSurveyScoreCharts({
+    summary,
+}: {
+    summary: PariwisataSurveySummary;
+}) {
+    const aspects = summary.aspects;
+    const radarData = aspects.map((aspect) => ({
+        name:
+            aspect.name.length > 18
+                ? aspect.name.slice(0, 18) + '...'
+                : aspect.name,
+        fullName: aspect.name,
+        score: aspect.score_percent,
+    }));
+
+    if (radarData.length === 1) {
+        radarData.push({ name: ' ', fullName: ' ', score: 0 });
+        radarData.push({ name: '  ', fullName: '  ', score: 0 });
+    } else if (radarData.length === 2) {
+        radarData.push({ name: ' ', fullName: ' ', score: 0 });
+    }
+
+    return (
+        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.25fr_1fr]">
+            <Card className="min-h-[360px] p-6">
+                <h2 className="text-base font-bold text-[#111827]">Skor Akhir Survey</h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Nilai kesiapan keseluruhan</p>
+                <div className="mt-9 flex flex-col items-center">
+                    <div
+                        className="grid size-48 place-items-center rounded-full"
+                        style={{ background: 'conic-gradient(#0066AE ' + clampScore(summary.final_score) + '%, #EAF3FF 0)' }}
+                    >
+                        <div className="grid size-40 place-items-center rounded-full bg-white text-center">
+                            <p className="text-4xl font-black text-[#093967]">{formatStatScore(summary.final_score)}</p>
+                            <p className="text-xs font-bold text-[#7C7C7C]">dari 100</p>
+                        </div>
+                    </div>
+                    <p className="mt-5 text-sm font-bold text-[#303030]">
+                        {summary.total_score} / {summary.max_score} poin
+                    </p>
+                </div>
+            </Card>
+
+            <Card className="min-h-[360px] p-6">
+                <h2 className="text-base font-bold text-[#111827]">Skor per Aspek</h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Total skor per aspek</p>
+                <div className="mt-6 h-[260px]">
+                    {aspects.length === 0 ? (
+                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">Belum ada data aspek</div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={aspects} layout="vertical" margin={{ left: 8, right: 24 }}>
+                                <CartesianGrid horizontal={false} stroke="#EAF0F6" />
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis dataKey="name" type="category" width={110} tick={{ fill: '#667085', fontSize: 11, fontWeight: 700 }} />
+                                <Tooltip
+                                    formatter={(value, _name, item) => [
+                                        Number(value).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '% (' + item.payload.score + '/' + item.payload.max_score + ')',
+                                        'Skor',
+                                    ]}
+                                    contentStyle={{ border: '1px solid #E5EDF6', borderRadius: '12px', fontSize: '12px' }}
+                                />
+                                <Bar dataKey="score_percent" fill="#0066AE" radius={[0, 6, 6, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </Card>
+
+            <Card className="min-h-[360px] p-6">
+                <h2 className="text-base font-bold text-[#111827]">Perbandingan Aspek (Radar)</h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Visualisasi nilai antar aspek</p>
+                <div className="mt-5 h-[260px]">
+                    {aspects.length === 0 ? (
+                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">Belum ada data aspek</div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart data={radarData} outerRadius="66%">
+                                <PolarGrid stroke="#E4EAF2" />
+                                <PolarAngleAxis dataKey="name" tick={{ fill: '#667085', fontSize: 10, fontWeight: 700 }} />
+                                <PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#98A2B3', fontSize: 9 }} axisLine={false} />
+                                <Radar dataKey="score" stroke="#0066AE" strokeWidth={2} fill="#0066AE" fillOpacity={0.22} />
+                                <Tooltip
+                                    formatter={(value) => [formatStatScore(Number(value)) + '%', 'Skor']}
+                                    labelFormatter={(label) => radarData.find((item) => item.name === label)?.fullName ?? label}
+                                    contentStyle={{ border: '1px solid #E5EDF6', borderRadius: '12px', fontSize: '12px' }}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </Card>
+        </div>
+    );
+}
+
 export default function ShowPariwisata({
     assignment,
     pariwisata,
     category_options,
+    pariwisata_survey_summary,
+    pariwisata_survey_groups,
     edit_values,
 }: ShowPariwisataProps) {
+    const { auth } = usePage<{ auth: { user?: { role?: string } } }>().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [isEditOpen, setIsEditOpen] = useState(false);
     const editForm = useForm<PariwisataEditForm>(initialEditForm(edit_values));
 
@@ -2822,17 +3189,6 @@ export default function ShowPariwisata({
         );
     }
 
-    const activePackageCount = (edit_values.packages || []).filter(
-        (item) => item.is_active,
-    ).length;
-    const latestTurnoverYear = (edit_values.annual_turnovers || [])
-        .map((item) => Number(item.year))
-        .filter((year) => Number.isFinite(year))
-        .sort((left, right) => right - left)[0];
-    const latestVisitorYear = (edit_values.annual_visitors || [])
-        .map((item) => Number(item.year))
-        .filter((year) => Number.isFinite(year))
-        .sort((left, right) => right - left)[0];
 
     return (
         <>
@@ -2938,14 +3294,6 @@ export default function ShowPariwisata({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="rounded-xl bg-white px-4 py-3 text-right shadow-[0_8px_20px_rgba(9,57,103,0.08)]">
-                                    <p className="text-[11px] font-black tracking-[0.06em] text-[#0066AE] uppercase">
-                                        Assignment
-                                    </p>
-                                    <p className="text-lg font-bold text-[#093967]">
-                                        {assignment.code}
-                                    </p>
-                                </div>
                             </div>
                         </div>
 
@@ -2983,21 +3331,23 @@ export default function ShowPariwisata({
                         </div>
                     </Card>
 
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
                         {[
-                            ['Kategori', String(pariwisata.categories.length)],
-                            ['Paket Aktif', String(activePackageCount)],
                             [
-                                'Tahun Omset Terbaru',
-                                latestTurnoverYear
-                                    ? String(latestTurnoverYear)
-                                    : '-',
+                                'Total Skor',
+                                pariwisata_survey_summary.total_score +
+                                    ' / ' +
+                                    pariwisata_survey_summary.max_score,
                             ],
                             [
-                                'Tahun Pengunjung Terbaru',
-                                latestVisitorYear
-                                    ? String(latestVisitorYear)
-                                    : '-',
+                                'Aspek Tertinggi',
+                                pariwisata_survey_summary.highest_aspect
+                                    ?.name ?? '-',
+                            ],
+                            [
+                                'Aspek Terendah',
+                                pariwisata_survey_summary.lowest_aspect
+                                    ?.name ?? '-',
                             ],
                         ].map(([label, value]) => (
                             <Card key={label} className="p-4">
@@ -3011,7 +3361,17 @@ export default function ShowPariwisata({
                         ))}
                     </div>
 
+                    <PariwisataSurveyScoreCharts
+                        summary={pariwisata_survey_summary}
+                    />
+
                     <PariwisataTrendCharts values={edit_values} />
+
+                    <IstcSurveyTable
+                        assignmentCode={assignment.code}
+                        groups={pariwisata_survey_groups}
+                        isViewer={isViewer}
+                    />
 
                     <Card className="overflow-hidden">
                         <div className="border-b border-[#EFEFEF] p-4">

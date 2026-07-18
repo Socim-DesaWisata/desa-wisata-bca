@@ -87,7 +87,12 @@ class VillageSurveyAssignmentService
                 'village_survey_assignments.deleted_at',
             ])
             ->with([
-                'village:id,code,name,city,province',
+                'village:id,code,name,description,city,province',
+                'village.media' => fn ($query) => $query
+                    ->select(['id', 'village_id', 'file_path', 'external_url', 'is_cover', 'sort_order'])
+                    ->orderByDesc('is_cover')
+                    ->orderBy('sort_order')
+                    ->orderBy('id'),
                 'template:id,title,status',
                 'template.questions' => fn ($query) => $query
                     ->select(['id', 'survey_template_id'])
@@ -838,6 +843,20 @@ class VillageSurveyAssignmentService
             'annualWorkerTrainingStats:id,pariwisata_id,year,training_name,total_people,notes',
         ]);
 
+        $pariwisataQuestions = $this->pariwisataQuestionsForSummary();
+        $pariwisataAnswers = $assignment->pariwisataSurveyAnswers()
+            ->with([
+                'answeredBy:id,name,email',
+                'lastEditedBy:id,name,email',
+                'option:id,score,label,description',
+                'documents:id,pariwisata_survey_answer_id,uploaded_by,file_name,file_path,mime_type,file_size,created_at',
+                'documents.uploadedBy:id,name,email',
+            ])
+            ->get()
+            ->keyBy('pariwisata_survey_question_id');
+        $pariwisataSurveyGroups = $this->formatPariwisataSurveyGroups($pariwisataQuestions, $pariwisataAnswers);
+        $pariwisataSurveySummary = $this->buildPariwisataSurveySummary($pariwisataQuestions, $pariwisataAnswers, $pariwisataSurveyGroups);
+
         return [
             'assignment' => [
                 ...$this->formatAssignment($assignment),
@@ -857,6 +876,8 @@ class VillageSurveyAssignmentService
             ],
             'pariwisata' => $this->formatPariwisataForAssignment($assignment, $pariwisata),
             'category_options' => $this->pariwisataCategoryOptions(),
+            'pariwisata_survey_summary' => $pariwisataSurveySummary,
+            'pariwisata_survey_groups' => $pariwisataSurveyGroups,
             'edit_values' => $this->formatPariwisataEditValues($pariwisata),
         ];
     }
@@ -1342,6 +1363,13 @@ class VillageSurveyAssignmentService
      */
     private function formatAssignment(VillageSurveyAssignment $assignment): array
     {
+        $scoreTotal = (int) $assignment->answers->sum(fn (SurveyAnswer $answer): int => (int) $answer->score);
+        $scoreMax = (int) ($assignment->template?->questions
+            ->sum(fn (SurveyQuestion $question): int => (int) $question->options->max('score')) ?? 0);
+        $scorePercent = $scoreMax > 0 ? round(($scoreTotal / $scoreMax) * 100, 1) : 0.0;
+        $category = $this->villageCategoryForScore($scoreTotal);
+        $media = $assignment->village?->media?->first();
+
         return [
             'id' => $assignment->id,
             'code' => $assignment->code,
@@ -1349,6 +1377,14 @@ class VillageSurveyAssignmentService
             'village_name' => $assignment->village?->name ?? '-',
             'village_code' => $assignment->village?->code ?? '-',
             'village_location' => collect([$assignment->village?->city, $assignment->village?->province])->filter()->implode(', ') ?: '-',
+            'village_description' => $assignment->village?->description,
+            'village_image_url' => $media?->external_url ?: ($media?->file_path ? Storage::disk('public')->url($media->file_path) : null),
+            'village_score_total' => $scoreTotal,
+            'village_score_max' => $scoreMax,
+            'village_score_percent' => $scorePercent,
+            'village_category' => $category['value'],
+            'village_category_label' => $category['label'],
+            'village_category_description' => $category['description'],
             'survey_template_id' => $assignment->survey_template_id,
             'template_title' => $assignment->template?->title ?? '-',
             'template_status' => $assignment->template?->status ?? '-',
@@ -1368,10 +1404,22 @@ class VillageSurveyAssignmentService
             'created_at' => $this->formatDate($assignment->created_at),
             'updated_at' => $this->formatDate($assignment->updated_at),
             'is_trashed' => $assignment->trashed(),
-            'total_score' => $this->assignmentFinalScore($assignment),
+            'total_score' => $scoreMax > 0 ? round(($scoreTotal / $scoreMax) * 100, 1) : 0.0,
             'answers_count' => $assignment->answers_count,
             'documents_count' => $assignment->documents_count,
         ];
+    }
+
+    /** @return array{value: string, label: string, description: string} */
+    private function villageCategoryForScore(int $score): array
+    {
+        return match (true) {
+            $score >= 199 => ['value' => 'mandiri', 'label' => 'Mandiri', 'description' => 'Pengelolaan dan kesiapan wisata sudah sangat baik.'],
+            $score >= 153 => ['value' => 'maju', 'label' => 'Maju', 'description' => 'Pengelolaan dan kesiapan wisata sudah baik.'],
+            $score >= 107 => ['value' => 'berkembang', 'label' => 'Berkembang', 'description' => 'Potensi wisata sedang dikembangkan.'],
+            $score >= 61 => ['value' => 'rintisan', 'label' => 'Rintisan', 'description' => 'Desa berada pada tahap awal pengembangan wisata.'],
+            default => ['value' => 'unknown', 'label' => 'Belum dikategorikan', 'description' => 'Skor assessment belum mencukupi untuk kategori desa.'],
+        };
     }
 
     private function assignmentFinalScore(VillageSurveyAssignment $assignment): float

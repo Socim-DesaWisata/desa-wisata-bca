@@ -6,6 +6,7 @@ import {
     CheckCircle2,
     ChevronDown,
     ClipboardCheck,
+    Download,
     Eye,
     FileText,
     Info,
@@ -48,6 +49,7 @@ import {
     edit as editVillage,
     restore as restoreVillage,
     show as showVillage,
+    exportMethod as exportVillages,
 } from '@/routes/villages';
 
 type StatCard = {
@@ -853,7 +855,7 @@ export default function VillagesIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment Desa Wisata
+                                Assessment Desa Wisata
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Kelola data desa wisata binaan, status
@@ -862,6 +864,14 @@ export default function VillagesIndex({
                             </p>
                         </div>
 
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <a
+                                href={exportVillages.url()}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#0066AE] bg-white px-5 text-sm font-bold text-[#0066AE] shadow-[0_6px_14px_rgba(0,102,174,0.08)] transition hover:bg-[#F8FBFE]"
+                            >
+                                <Download className="size-4" />
+                                Export Desa
+                            </a>
                         {!isViewer && (
                             <div className="flex flex-col gap-3 sm:flex-row">
                                 <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
@@ -892,9 +902,10 @@ export default function VillagesIndex({
                                 )}
                             </div>
                         )}
+                        </div>
                     </header>
 
-                    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                         {stats.map((stat) => {
                             const Icon = statIcons[stat.icon];
 
@@ -903,7 +914,7 @@ export default function VillagesIndex({
                                     key={stat.label}
                                     className="flex min-h-[116px] items-center gap-4 rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_12px_rgba(3,17,32,0.06)]"
                                 >
-                                    <div className="flex size-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#EAF3FF] text-[#0066AE]">
+                                    <div className="flex size-[58px] shrink-0 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
                                         <Icon
                                             className="size-8"
                                             strokeWidth={1.9}

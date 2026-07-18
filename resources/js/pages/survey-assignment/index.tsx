@@ -1,10 +1,7 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Activity,
-    ArrowRight,
     CheckCircle2,
-    ChevronLeft,
-    ChevronRight,
     ClipboardCheck,
     ClipboardList,
     Eye,
@@ -14,8 +11,9 @@ import {
     Search,
     Trash2,
     ExternalLink,
+    ArrowRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -45,7 +43,6 @@ import {
     store as storeSurveyAssignment,
     takeSurvey,
 } from '@/routes/survey-assignments';
-import { show as showVillage } from '@/routes/villages';
 
 type StatCard = {
     label: string;
@@ -83,6 +80,14 @@ type AssignmentRow = {
     total_score: number;
     answers_count: number;
     documents_count: number;
+    village_description: string | null;
+    village_image_url: string | null;
+    village_score_total: number;
+    village_score_max: number;
+    village_score_percent: number;
+    village_category: string;
+    village_category_label: string;
+    village_category_description: string;
 };
 
 type PaginationLink = {
@@ -206,143 +211,172 @@ function FieldError({ message }: { message?: string }) {
     );
 }
 
-function ViewerCarousel({ assignments }: { assignments: AssignmentRow[] }) {
-    const [currentIndex, setCurrentIndex] = useState(0);
+function ViewerVillageCarousel({
+    assignments,
+}: {
+    assignments: AssignmentRow[];
+}) {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const villages = assignments.filter((assignment) => !assignment.is_trashed);
 
-    if (assignments.length === 0) {
+    useEffect(() => {
+        if (villages.length <= 1 || isPaused) return;
+        const timer = window.setInterval(() => {
+            setActiveIndex((current) => (current + 1) % villages.length);
+        }, 5000);
+        return () => window.clearInterval(timer);
+    }, [isPaused, villages.length]);
+
+    useEffect(() => {
+        if (activeIndex >= villages.length && villages.length > 0) {
+            setActiveIndex(0);
+        }
+    }, [activeIndex, villages.length]);
+
+    if (villages.length === 0) {
         return (
-            <div className="flex flex-col items-center px-6 py-14 text-center rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
-                <span className="flex size-14 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
-                    <ClipboardCheck className="size-7" />
-                </span>
-                <h3 className="mt-4 text-lg font-bold text-[#303030]">
-                    Belum ada survey assignment
-                </h3>
-                <p className="mt-1 max-w-md text-sm leading-5 text-[#7C7C7C]">
-                    Assignment survey desa wisata tidak ditemukan.
-                </p>
-            </div>
+            <section className="flex min-h-[220px] items-center rounded-2xl border border-[#E1E7EE] bg-white px-6 shadow-[0_10px_24px_rgba(3,17,32,0.06)]">
+                <div>
+                    <p className="text-sm font-bold text-[#303030]">
+                        Belum ada data desa wisata.
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        Data desa akan tampil setelah assignment tersedia.
+                    </p>
+                </div>
+            </section>
         );
     }
 
-    const current = assignments[currentIndex];
-    const maxScore = 244; 
-    const score = current.total_score || 0;
-    const percentage = Math.min(100, Math.max(0, (score / maxScore) * 100));
-
-    const getCategory = (s: number) => {
-        if (s >= 180) return { label: 'Mandiri', color: 'bg-[#00893D] text-white', desc: 'Desa wisata mandiri dengan fasilitas yang sangat lengkap dan pengelola yang sangat baik.' };
-        if (s >= 140) return { label: 'Maju', color: 'bg-[#009262] text-white', desc: 'Pengelolaan dan kesiapan wisata sudah baik.' };
-        if (s >= 80) return { label: 'Berkembang', color: 'bg-[#10B981] text-white', desc: 'Potensi wisata sedang dikembangkan.' };
-        return { label: 'Rintisan', color: 'bg-[#C9681E] text-white', desc: 'Desa wisata rintisan pada tahap awal pengembangan.' };
-    };
-    
-    const cat = getCategory(score);
-
     return (
-        <div className="relative w-full animate-in fade-in duration-500 group">
-            <div className="flex-1 overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)] relative">
-                
-                {assignments.length > 1 && (
-                    <>
-                        <button
-                            onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : assignments.length - 1))}
-                            className="absolute left-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#0066AE] focus:ring-offset-2"
-                        >
-                            <ChevronLeft className="size-5" />
-                        </button>
-                        <button
-                            onClick={() => setCurrentIndex((prev) => (prev < assignments.length - 1 ? prev + 1 : 0))}
-                            className="absolute right-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#0066AE] focus:ring-offset-2"
-                        >
-                            <ChevronRight className="size-5" />
-                        </button>
-                    </>
-                )}
-
+        <section
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            className="relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
+        >
+            <div className="overflow-hidden">
                 <div
-                    className="flex flex-col md:flex-row transition-opacity duration-500 ease-in-out"
-                    key={current.id}
+                    className="flex transition-transform duration-700 ease-out"
+                    style={{ transform: `translateX(-${activeIndex * 100}%)` }}
                 >
-                    <div className="relative h-48 md:h-auto md:w-[45%] shrink-0 overflow-hidden bg-gray-100">
-                        <img
-                            src="https://images.unsplash.com/photo-1596404555819-21cb8b776269?q=80&w=1000&auto=format&fit=crop"
-                            alt={current.village_name}
-                            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                        />
-                        <div className="absolute left-4 top-4 rounded-full bg-[#009262] px-3 py-1.5 text-xs font-bold text-white shadow-md flex items-center gap-1.5">
-                            <span className="text-lg leading-none mt-[-2px]">✦</span> Desa Wisata
-                        </div>
-                    </div>
+                    {villages.map((assignment) => {
+                        const progress = Math.min(
+                            Math.max(assignment.village_score_percent, 0),
+                            100,
+                        );
 
-                    <div className="flex flex-1 flex-col justify-center p-6 lg:p-8">
-                        <h2 className="text-2xl font-bold text-[#093967] md:text-[28px] leading-tight">
-                            {current.village_name}
-                        </h2>
-
-                        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <div>
-                                <p className="text-sm font-semibold text-[#7C7C7C]">Skor Assessment Kemenpar</p>
-                                <div className="mt-1 flex items-baseline gap-1">
-                                    <span className="text-4xl font-black tracking-tight text-[#093967]">{score.toFixed(0)}</span>
-                                    <span className="text-lg font-bold text-[#7C7C7C]">/ {maxScore}</span>
-                                </div>
-                                <div className="mt-3 h-2.5 w-full max-w-[280px] overflow-hidden rounded-full bg-[#EFEFEF]">
-                                    <div
-                                        className="h-full rounded-full bg-[#10B981] transition-all duration-1000 ease-out"
-                                        style={{ width: `${percentage}%` }}
-                                    />
-                                </div>
-                                <p className="mt-2 text-xs font-bold text-[#10B981]">
-                                    {percentage.toFixed(1)}% dari skor maksimum
-                                </p>
-                                
-                                <div className="mt-6">
-                                    <Link
-                                        href={showVillage.url({ village: current.village_id })}
-                                        className="inline-flex items-center gap-2 rounded-lg bg-[#093967] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#0066AE] shadow-md"
-                                    >
-                                        Lihat Detail
-                                        <ArrowRight className="size-4" />
-                                    </Link>
-                                </div>
-                            </div>
-
-                            <div>
-                                <p className="text-sm font-semibold text-[#7C7C7C]">Kategori</p>
-                                <div className="mt-2">
-                                    <span className={`inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-bold shadow-sm ${cat.color}`}>
-                                        {cat.label}
+                        return (
+                            <article
+                                key={assignment.id}
+                                className="grid min-h-[220px] min-w-full lg:grid-cols-[44%_56%]"
+                            >
+                                <div className="relative min-h-[220px] overflow-hidden bg-[radial-gradient(circle_at_30%_20%,#D9EAF7,#8AA5B8_55%,#17324F)]">
+                                    {assignment.village_image_url && (
+                                        <img
+                                            src={assignment.village_image_url}
+                                            alt={assignment.village_name}
+                                            className="absolute inset-0 size-full object-cover"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#071C32]/65 via-[#071C32]/10 to-transparent" />
+                                    <span className="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-[#006F67] px-4 py-2 text-xs font-bold text-white shadow-lg">
+                                        <span className="text-base">✦</span>{' '}
+                                        Desa Wisata
                                     </span>
                                 </div>
-                                <p className="mt-4 text-sm leading-relaxed text-[#7C7C7C] max-w-[220px]">
-                                    {cat.desc}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                                <div className="flex min-w-0 flex-col justify-between p-5 sm:p-6">
+                                    <div>
+                                        <h2 className="truncate text-2xl leading-tight font-bold tracking-[-0.02em] text-[#102A43] sm:text-3xl">
+                                            {assignment.village_name}
+                                        </h2>
+                                        <div className="mt-4 grid gap-5 sm:grid-cols-[1.2fr_.8fr]">
+                                            <div>
+                                                <p className="text-xs font-bold text-[#526174]">
+                                                    Skor Assessment Kemenpar
+                                                </p>
+                                                <p className="mt-2 text-4xl leading-none font-bold text-[#102A43]">
+                                                    {
+                                                        assignment.village_score_total
+                                                    }
+                                                    <span className="text-xl text-[#7C8795]">
+                                                        {' '}
+                                                        /{' '}
+                                                        {
+                                                            assignment.village_score_max
+                                                        }
+                                                    </span>
+                                                </p>
+                                                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[#E1E6EB]">
+                                                    <div
+                                                        className="h-full rounded-full bg-[#149B75]"
+                                                        style={{
+                                                            width: `${progress}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p className="mt-2 text-xs font-bold text-[#149B75]">
+                                                    {progress}% dari skor
+                                                    maksimum
+                                                </p>
+                                                <Link
+                                                    href={
+                                                        assignment.code
+                                                            ? showSurveyAssignment.url(
+                                                                assignment.code,
+                                                            )
+                                                            : '#'
+                                                    }
+                                                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#102A43] px-5 text-xs font-bold text-white transition hover:bg-[#173E61]"
+                                                >
+                                                    Lihat Detail{' '}
+                                                    <ArrowRight className="size-4" />
+                                                </Link>
+                                            </div>
+                                            <div className="border-l border-[#E4E8ED] pl-5">
+                                                <p className="text-xs font-bold text-[#526174]">
+                                                    Kategori
+                                                </p>
+                                                <span className="mt-3 inline-flex rounded-lg bg-[#149B75] px-4 py-2 text-sm font-bold text-white">
+                                                    {
+                                                        assignment.village_category_label
+                                                    }
+                                                </span>
+                                                <p className="mt-3 text-xs leading-5 text-[#526174]">
+                                                    {
+                                                        assignment.village_category_description
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        );
+                    })}
                 </div>
             </div>
-            
-            {assignments.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-wrap justify-center gap-2 z-10 md:bottom-6 md:left-[72.5%]">
-                    {assignments.map((_, idx) => (
+            {villages.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                    {villages.map((village, index) => (
                         <button
-                            key={idx}
-                            onClick={() => setCurrentIndex(idx)}
-                            className={`h-2 rounded-full transition-all duration-300 shadow-sm focus:outline-none ${
-                                idx === currentIndex ? 'w-6 bg-[#0066AE]' : 'w-2 bg-[#DDE4EC] hover:bg-[#7C7C7C]'
-                            }`}
-                            aria-label={`Go to slide ${idx + 1}`}
+                            key={village.id}
+                            type="button"
+                            aria-label={`Tampilkan ${village.village_name}`}
+                            onClick={() => setActiveIndex(index)}
+                            className={classNames(
+                                'h-1.5 rounded-full transition-all',
+                                index === activeIndex
+                                    ? 'w-6 bg-white'
+                                    : 'w-1.5 bg-white/60',
+                            )}
                         />
                     ))}
                 </div>
             )}
-        </div>
+        </section>
     );
 }
-
-
 export default function SurveyAssignmentIndex({
     stats,
     assignments,
@@ -355,7 +389,7 @@ export default function SurveyAssignmentIndex({
     const { auth } = usePage().props;
     const isEnumerator = auth.user?.role === 'enumerator';
     const isViewer = auth.user?.role === 'viewer';
-    console.log(isViewer)
+    console.log(isViewer);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false);
     const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<
@@ -670,11 +704,11 @@ export default function SurveyAssignmentIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Assesment KEMENPAR
+                                    Assessment KEMENPAR
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment KEMENPAR
+                                Assessment KEMENPAR
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau KEMENPAR survey desa wisata, status
@@ -706,7 +740,7 @@ export default function SurveyAssignmentIndex({
                                     <button
                                         type="button"
                                         onClick={openCreateModal}
-                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
                                     >
                                         <Plus className="size-4" />
                                         Tambah Assignment
@@ -715,39 +749,39 @@ export default function SurveyAssignmentIndex({
                         </div>
                     </header>
 
-                    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        {stats.map((stat) => {
-                            const Icon = statIcons[stat.icon];
+                    {isViewer ? (
+                        <ViewerVillageCarousel assignments={assignments.data} />
+                    ) : (
+                        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            {stats.map((stat) => {
+                                const Icon = statIcons[stat.icon];
 
-                            return (
-                                <article
-                                    key={stat.label}
-                                    className="flex min-h-[116px] items-center gap-4 rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_12px_rgba(3,17,32,0.06)]"
-                                >
-                                    <div className="flex size-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#EAF3FF] text-[#0066AE]">
-                                        <Icon
-                                            className="size-8"
-                                            strokeWidth={1.9}
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-[#303030]">
-                                            {stat.label}
-                                        </p>
-                                        <p className="text-[32px] leading-9 font-bold text-[#0066AE]">
-                                            {stat.value}
-                                        </p>
-                                        <p className="text-xs leading-4 text-[#7C7C7C]">
-                                            {stat.description}
-                                        </p>
-                                    </div>
-                                </article>
-                            );
-                        })}
-                    </section>
-
-                    {isViewer && assignments.data.length > 0 && (
-                        <ViewerCarousel assignments={assignments.data} />
+                                return (
+                                    <article
+                                        key={stat.label}
+                                        className="flex min-h-[116px] items-center gap-4 rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_4px_12px_rgba(3,17,32,0.06)]"
+                                    >
+                                        <div className="flex size-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#EAF3FF] text-[#0066AE]">
+                                            <Icon
+                                                className="size-8"
+                                                strokeWidth={1.9}
+                                            />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-[#303030]">
+                                                {stat.label}
+                                            </p>
+                                            <p className="text-[32px] leading-9 font-bold text-[#0066AE]">
+                                                {stat.value}
+                                            </p>
+                                            <p className="text-xs leading-4 text-[#7C7C7C]">
+                                                {stat.description}
+                                            </p>
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </section>
                     )}
 
                     <form
@@ -792,7 +826,9 @@ export default function SurveyAssignmentIndex({
                                             }
                                             className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
                                         >
-                                            <option value="">Semua Status</option>
+                                            <option value="">
+                                                Semua Status
+                                            </option>
                                             {status_options.map((option) => (
                                                 <option
                                                     key={option.value}
@@ -813,12 +849,15 @@ export default function SurveyAssignmentIndex({
                                             onChange={(event) =>
                                                 setFilterForm((current) => ({
                                                     ...current,
-                                                    template_id: event.target.value,
+                                                    template_id:
+                                                        event.target.value,
                                                 }))
                                             }
                                             className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none"
                                         >
-                                            <option value="">Semua Template</option>
+                                            <option value="">
+                                                Semua Template
+                                            </option>
                                             {template_options.map((option) => (
                                                 <option
                                                     key={option.value}
@@ -849,13 +888,17 @@ export default function SurveyAssignmentIndex({
                                         <option value="">Semua Kategori</option>
                                         <option value="mandiri">Mandiri</option>
                                         <option value="maju">Maju</option>
-                                        <option value="berkembang">Berkembang</option>
-                                        <option value="rintisan">Rintisan</option>
+                                        <option value="berkembang">
+                                            Berkembang
+                                        </option>
+                                        <option value="rintisan">
+                                            Rintisan
+                                        </option>
                                     </select>
                                 </label>
                             )}
 
-                            <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
+                            <button className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan
                             </button>
                             <button
@@ -868,180 +911,211 @@ export default function SurveyAssignmentIndex({
                         </div>
                     </form>
 
-                    {!isViewer ? (
-                        <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
-                            <div className="flex flex-col gap-3 border-b border-[#EFEFEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h2 className="text-lg font-bold text-[#303030]">
-                                        Daftar Survey Assignment
-                                    </h2>
-                                    <p className="mt-0.5 text-sm text-[#7C7C7C]">
-                                        Ringkasan assignment survey desa wisata dan
-                                        progress pengisiannya.
-                                    </p>
-                                </div>
-                                {canBulkUpdate &&
-                                    selectedAssignmentIds.length > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={openBulkStatusModal}
-                                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
-                                        >
-                                            Ubah Status (
-                                            {selectedAssignmentIds.length})
-                                        </button>
-                                    )}
+                    <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
+                        <div className="flex flex-col gap-3 border-b border-[#EFEFEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="text-lg font-bold text-[#303030]">
+                                    Daftar Desa Wisata Tools Assessment Kemenpar
+                                </h2>
+                                <p className="mt-0.5 text-sm text-[#7C7C7C]">
+                                    Ringkasan assignment survey desa wisata dan
+                                    progress pengisiannya.
+                                </p>
                             </div>
+                            {canBulkUpdate &&
+                                selectedAssignmentIds.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={openBulkStatusModal}
+                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                    >
+                                        Ubah Status (
+                                        {selectedAssignmentIds.length})
+                                    </button>
+                                )}
+                        </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-                                    <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
-                                        <tr>
-                                            {canBulkUpdate && (
-                                                <th className="w-12 px-3 py-3 text-center">
-                                                    <Checkbox
-                                                        checked={
-                                                            isAllVisibleSelected
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+                                <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
+                                    <tr>
+                                        {canBulkUpdate && (
+                                            <th className="w-12 px-3 py-3 text-center">
+                                                <Checkbox
+                                                    checked={
+                                                        isAllVisibleSelected
+                                                    }
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        toggleVisibleSelection(
+                                                            checked === true,
+                                                        )
+                                                    }
+                                                    aria-label="Pilih semua assignment pada halaman ini"
+                                                />
+                                            </th>
+                                        )}
+                                        {[
+                                            'ID',
+                                            'Desa',
+                                            ...(!isViewer
+                                                ? ['Status', 'Created At']
+                                                : []),
+                                            'Total Skor',
+                                            ...(!isViewer
+                                                ? ['Progress', 'Aksi']
+                                                : []),
+                                        ].map((head) => (
+                                            <th
+                                                key={head}
+                                                className={
+                                                    head === 'Total Skor'
+                                                        ? 'bg-[#EAF3FF] px-5 py-4 text-center text-sm font-bold whitespace-nowrap text-[#0066AE]'
+                                                        : 'px-3 py-3 font-bold whitespace-nowrap'
+                                                }
+                                            >
+                                                {head === 'Total Skor' ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={
+                                                            toggleScoreSort
                                                         }
+                                                        className="inline-flex items-center justify-center gap-1 font-bold text-[#0066AE]"
+                                                    >
+                                                        {head}
+                                                        <span aria-hidden="true">
+                                                            {scoreSortLabel()}
+                                                        </span>
+                                                    </button>
+                                                ) : (
+                                                    head
+                                                )}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#EFEFEF]">
+                                    {assignments.data.map((assignment) => (
+                                        <tr
+                                            key={assignment.id}
+                                            className="hover:bg-[#FAFCFF]"
+                                        >
+                                            {canBulkUpdate && (
+                                                <td className="px-3 py-3 text-center">
+                                                    <Checkbox
+                                                        checked={selectedAssignmentIds.includes(
+                                                            assignment.id,
+                                                        )}
                                                         onCheckedChange={(
                                                             checked,
                                                         ) =>
-                                                            toggleVisibleSelection(
-                                                                checked === true,
+                                                            toggleAssignmentSelection(
+                                                                assignment.id,
+                                                                checked ===
+                                                                true,
                                                             )
                                                         }
-                                                        aria-label="Pilih semua assignment pada halaman ini"
+                                                        aria-label={`Pilih ${assignment.village_name}`}
                                                     />
-                                                </th>
+                                                </td>
                                             )}
-                                            {[
-                                                'ID',
-                                                'Desa',
-                                                ...(!isViewer ? ['Status', 'Created At'] : []),
-                                                'Total Skor',
-                                                ...(!isViewer ? ['Progress', 'Aksi'] : []),
-                                            ].map((head) => (
-                                                <th
-                                                    key={head}
-                                                    className={
-                                                        head === 'Total Skor'
-                                                            ? 'bg-[#EAF3FF] px-5 py-4 text-center text-sm font-bold whitespace-nowrap text-[#0066AE]'
-                                                            : 'px-3 py-3 font-bold whitespace-nowrap'
+                                            <td className="px-3 py-3 font-bold text-[#0066AE]">
+                                                {isEnumerator
+                                                    ? `#${assignment.id}`
+                                                    : (assignment.code ??
+                                                        `#${assignment.id}`)}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <Link
+                                                    href={
+                                                        assignment.code
+                                                            ? showSurveyAssignment.url(
+                                                                assignment.code,
+                                                            )
+                                                            : '#'
                                                     }
+                                                    className="flex items-center gap-2 font-bold text-[#0066AE] hover:text-[#093967]"
                                                 >
-                                                    {head === 'Total Skor' ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={
-                                                                toggleScoreSort
-                                                            }
-                                                            className="inline-flex items-center justify-center gap-1 font-bold text-[#0066AE]"
-                                                        >
-                                                            {head}
-                                                            <span aria-hidden="true">
-                                                                {scoreSortLabel()}
-                                                            </span>
-                                                        </button>
-                                                    ) : (
-                                                        head
+                                                    {assignment.village_name}
+                                                    {isViewer && (
+                                                        <ExternalLink className="size-3 text-[#0066AE]" />
                                                     )}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#EFEFEF]">
-                                        {assignments.data.map((assignment) => (
-                                            <tr
-                                                key={assignment.id}
-                                                onClick={() => {
-                                                    if (isViewer) {
-                                                        router.visit(showVillage.url({ village: assignment.village_id }));
+                                                </Link>
+                                                <span className="block text-[12px] leading-4 text-[#7C7C7C]">
+                                                    {
+                                                        assignment.village_location
                                                     }
-                                                }}
-                                                className={classNames("hover:bg-[#FAFCFF]", isViewer && "cursor-pointer")}
-                                            >
-                                                {canBulkUpdate && (
-                                                    <td className="px-3 py-3 text-center">
-                                                        <Checkbox
-                                                            checked={selectedAssignmentIds.includes(
-                                                                assignment.id,
+                                                </span>
+                                            </td>
+                                            {!isViewer && (
+                                                <>
+                                                    <td className="px-3 py-3">
+                                                        <Badge
+                                                            className={statusClass(
+                                                                assignment.status,
                                                             )}
-                                                            onCheckedChange={(
-                                                                checked,
-                                                            ) =>
-                                                                toggleAssignmentSelection(
-                                                                    assignment.id,
-                                                                    checked ===
-                                                                    true,
-                                                                )
+                                                        >
+                                                            {
+                                                                assignment.status_label
                                                             }
-                                                            aria-label={`Pilih ${assignment.village_name}`}
-                                                        />
+                                                        </Badge>
                                                     </td>
+                                                    <td className="px-3 py-3 font-medium text-[#303030]">
+                                                        {assignment.created_at}
+                                                    </td>
+                                                </>
+                                            )}
+                                            <td className="bg-[#F8FBFE] px-5 py-4 text-center text-sm font-black text-[#0066AE]">
+                                                {assignment.total_score.toFixed(
+                                                    1,
                                                 )}
-                                                <td className="px-3 py-3 font-bold text-[#0066AE]">
-                                                    {isEnumerator
-                                                        ? `#${assignment.id}`
-                                                        : (assignment.code ??
-                                                            `#${assignment.id}`)}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <span className="flex items-center gap-2 font-bold text-[#303030]">
-                                                        {assignment.village_name}
-                                                        {isViewer && <ExternalLink className="size-3 text-[#0066AE]" />}
-                                                    </span>
-                                                    <span className="block text-[12px] leading-4 text-[#7C7C7C]">
-                                                        {
-                                                            assignment.village_location
-                                                        }
-                                                    </span>
-                                                </td>
-                                                {!isViewer && (
-                                                    <>
-                                                        <td className="px-3 py-3">
-                                                            <Badge
-                                                                className={statusClass(
-                                                                    assignment.status,
-                                                                )}
+                                            </td>
+                                            {!isViewer && (
+                                                <>
+                                                    <td className="px-3 py-3">
+                                                        <span className="block font-bold text-[#0066AE]">
+                                                            {
+                                                                assignment.answers_count
+                                                            }{' '}
+                                                            jawaban
+                                                        </span>
+                                                        <span className="block text-[12px] text-[#7C7C7C]">
+                                                            {
+                                                                assignment.documents_count
+                                                            }{' '}
+                                                            dokumen
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
                                                             >
-                                                                {assignment.status_label}
-                                                            </Badge>
-                                                        </td>
-                                                        <td className="px-3 py-3 font-medium text-[#303030]">
-                                                            {assignment.created_at}
-                                                        </td>
-                                                    </>
-                                                )}
-                                                <td className="bg-[#F8FBFE] px-5 py-4 text-center text-sm font-black text-[#0066AE]">
-                                                    {assignment.total_score.toFixed(
-                                                        1,
-                                                    )}
-                                                </td>
-                                                {!isViewer && (
-                                                    <>
-                                                        <td className="px-3 py-3">
-                                                            <span className="block font-bold text-[#0066AE]">
-                                                                {assignment.answers_count}{' '}
-                                                                jawaban
-                                                            </span>
-                                                            <span className="block text-[12px] text-[#7C7C7C]">
-                                                                {assignment.documents_count}{' '}
-                                                                dokumen
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-3 py-3">
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger
-                                                                    asChild
+                                                                <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
+                                                                    <MoreHorizontal className="size-4" />
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent
+                                                                align="end"
+                                                                className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
+                                                            >
+                                                                <DropdownMenuItem
+                                                                    className="gap-2 text-xs"
+                                                                    onSelect={(
+                                                                        event,
+                                                                    ) => {
+                                                                        event.preventDefault();
+                                                                        openAccessModal(
+                                                                            assignment,
+                                                                            'detail',
+                                                                        );
+                                                                    }}
                                                                 >
-                                                                    <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
-                                                                        <MoreHorizontal className="size-4" />
-                                                                    </button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent
-                                                                    align="end"
-                                                                    className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                                                                >
+                                                                    <Eye className="size-4 text-[#303030]" />
+                                                                    Lihat Detail
+                                                                </DropdownMenuItem>
+                                                                {!isViewer && (
                                                                     <DropdownMenuItem
                                                                         className="gap-2 text-xs"
                                                                         onSelect={(
@@ -1050,164 +1124,110 @@ export default function SurveyAssignmentIndex({
                                                                             event.preventDefault();
                                                                             openAccessModal(
                                                                                 assignment,
-                                                                                'detail',
+                                                                                'take-survey',
                                                                             );
                                                                         }}
                                                                     >
-                                                                        <Eye className="size-4 text-[#303030]" />
-                                                                        Lihat Detail
+                                                                        <ClipboardList className="size-4 text-[#303030]" />
+                                                                        Take
+                                                                        Survey
                                                                     </DropdownMenuItem>
-                                                                    {!isViewer && (
-                                                                        <DropdownMenuItem
-                                                                            className="gap-2 text-xs"
-                                                                            onSelect={(
-                                                                                event,
-                                                                            ) => {
-                                                                                event.preventDefault();
-                                                                                openAccessModal(
-                                                                                    assignment,
-                                                                                    'take-survey',
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            <ClipboardList className="size-4 text-[#303030]" />
-                                                                            Take Survey
-                                                                        </DropdownMenuItem>
+                                                                )}
+                                                                {!isEnumerator &&
+                                                                    !isViewer && (
+                                                                        <>
+                                                                            <DropdownMenuSeparator />
+                                                                            {assignment.is_trashed ? (
+                                                                                <DropdownMenuItem
+                                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                                    onSelect={(
+                                                                                        event,
+                                                                                    ) => {
+                                                                                        event.preventDefault();
+                                                                                        handleRestore(
+                                                                                            assignment,
+                                                                                        );
+                                                                                    }}
+                                                                                >
+                                                                                    <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                                    Pulihkan
+                                                                                    Assignment
+                                                                                </DropdownMenuItem>
+                                                                            ) : (
+                                                                                <DropdownMenuItem
+                                                                                    className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                                    onSelect={(
+                                                                                        event,
+                                                                                    ) => {
+                                                                                        event.preventDefault();
+                                                                                        handleDelete(
+                                                                                            assignment,
+                                                                                        );
+                                                                                    }}
+                                                                                >
+                                                                                    <Trash2 className="size-4 text-[#D81313]" />
+                                                                                    Hapus
+                                                                                    Assignment
+                                                                                </DropdownMenuItem>
+                                                                            )}
+                                                                        </>
                                                                     )}
-                                                                    {!isEnumerator &&
-                                                                        !isViewer && (
-                                                                            <>
-                                                                                <DropdownMenuSeparator />
-                                                                                {assignment.is_trashed ? (
-                                                                                    <DropdownMenuItem
-                                                                                        className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                                        onSelect={(
-                                                                                            event,
-                                                                                        ) => {
-                                                                                            event.preventDefault();
-                                                                                            handleRestore(
-                                                                                                assignment,
-                                                                                            );
-                                                                                        }}
-                                                                                    >
-                                                                                        <ClipboardCheck className="size-4 text-[#00893D]" />
-                                                                                        Pulihkan
-                                                                                        Assignment
-                                                                                    </DropdownMenuItem>
-                                                                                ) : (
-                                                                                    <DropdownMenuItem
-                                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                                        onSelect={(
-                                                                                            event,
-                                                                                        ) => {
-                                                                                            event.preventDefault();
-                                                                                            handleDelete(
-                                                                                                assignment,
-                                                                                            );
-                                                                                        }}
-                                                                                    >
-                                                                                        <Trash2 className="size-4 text-[#D81313]" />
-                                                                                        Hapus
-                                                                                        Assignment
-                                                                                    </DropdownMenuItem>
-                                                                                )}
-                                                                            </>
-                                                                        )}
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        </td>
-                                                    </>
-                                                )}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </td>
+                                                </>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
-                            {assignments.data.length === 0 && (
-                                <div className="flex flex-col items-center px-6 py-14 text-center">
-                                    <span className="flex size-14 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
-                                        <ClipboardCheck className="size-7" />
-                                    </span>
-                                    <h3 className="mt-4 text-lg font-bold text-[#303030]">
-                                        Belum ada survey assignment
-                                    </h3>
-                                    <p className="mt-1 max-w-md text-sm leading-5 text-[#7C7C7C]">
-                                        Assignment survey desa yang dibuat akan
-                                        muncul di halaman ini.
-                                    </p>
-                                    {!isEnumerator && !isViewer && (
-                                        <button
-                                            type="button"
-                                            onClick={openCreateModal}
-                                            className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
-                                        >
-                                            <Plus className="size-4" />
-                                            Tambah Assignment
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex flex-col gap-3 border-t border-[#EFEFEF] px-5 py-4 text-sm text-[#303030] lg:flex-row lg:items-center lg:justify-between">
-                                <span>
-                                    Menampilkan {assignments.from ?? 0}-
-                                    {assignments.to ?? 0} dari {assignments.total}{' '}
-                                    assignment
+                        {assignments.data.length === 0 && (
+                            <div className="flex flex-col items-center px-6 py-14 text-center">
+                                <span className="flex size-14 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                                    <ClipboardCheck className="size-7" />
                                 </span>
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                    <label className="flex items-center gap-2 text-sm font-semibold text-[#303030]">
-                                        <span>Per page</span>
-                                        <select
-                                            value={filterForm.per_page}
-                                            onChange={(event) =>
-                                                changePerPage(event.target.value)
-                                            }
-                                            className="h-9 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030] outline-none"
-                                        >
-                                            {per_page_options.map((option) => (
-                                                <option key={option} value={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {assignments.links.map((link, index) => (
-                                            <button
-                                                key={`${link.label}-${index}`}
-                                                type="button"
-                                                disabled={!link.url}
-                                                onClick={() =>
-                                                    link.url &&
-                                                    (setSelectedAssignmentIds([]),
-                                                        router.visit(link.url, {
-                                                            preserveScroll: true,
-                                                            preserveState: true,
-                                                        }))
-                                                }
-                                                className={classNames(
-                                                    'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',
-                                                    link.active
-                                                        ? 'border-[#0066AE] bg-[#0066AE] text-white'
-                                                        : 'border-[#DDE4EC] bg-white text-[#303030]',
-                                                )}
-                                            >
-                                                {paginationLabel(link.label)}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                                <h3 className="mt-4 text-lg font-bold text-[#303030]">
+                                    Belum ada desa dengan pencarian / kategori
+                                    tersebut
+                                </h3>
+                                {!isEnumerator && !isViewer && (
+                                    <button
+                                        type="button"
+                                        onClick={openCreateModal}
+                                        className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Assignment
+                                    </button>
+                                )}
                             </div>
-                        </section>
-                    ) : (
-                        <div className="flex flex-col gap-3 px-2 py-4 text-sm text-[#303030] lg:flex-row lg:items-center lg:justify-between">
+                        )}
+
+                        <div className="flex flex-col gap-3 border-t border-[#EFEFEF] px-5 py-4 text-sm text-[#303030] lg:flex-row lg:items-center lg:justify-between">
                             <span>
                                 Menampilkan {assignments.from ?? 0}-
                                 {assignments.to ?? 0} dari {assignments.total}{' '}
                                 assignment
                             </span>
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-[#303030]">
+                                    <span>Per page</span>
+                                    <select
+                                        value={filterForm.per_page}
+                                        onChange={(event) =>
+                                            changePerPage(event.target.value)
+                                        }
+                                        className="h-9 rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-bold text-[#303030] outline-none"
+                                    >
+                                        {per_page_options.map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
                                 <div className="flex flex-wrap gap-2">
                                     {assignments.links.map((link, index) => (
                                         <button
@@ -1235,7 +1255,7 @@ export default function SurveyAssignmentIndex({
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </section>
                 </div>
             </main>
 
@@ -1332,7 +1352,7 @@ export default function SurveyAssignmentIndex({
                             </button>
                             <button
                                 disabled={processing}
-                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:opacity-60"
+                                className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white disabled:opacity-60"
                             >
                                 {processing
                                     ? 'Menyimpan...'
@@ -1392,7 +1412,7 @@ export default function SurveyAssignmentIndex({
                                 disabled={
                                     isBulkProcessing || bulkData.status === ''
                                 }
-                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:opacity-60"
+                                className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white disabled:opacity-60"
                             >
                                 {isBulkProcessing
                                     ? 'Menyimpan...'
@@ -1460,7 +1480,7 @@ export default function SurveyAssignmentIndex({
                             </button>
                             <button
                                 disabled={accessCode.trim() === ''}
-                                className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                className="h-11 rounded-lg bg-[#0066AE] px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Masuk
                             </button>

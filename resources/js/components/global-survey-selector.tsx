@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { router, usePage } from '@inertiajs/react';
 import { Loader2, MapPin, Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { show as showVillage } from '@/routes/villages';
+import { show as showSurveyAssignment } from '@/routes/survey-assignments';
 
 type Desa = {
     id: number;
@@ -101,7 +101,7 @@ export function GlobalSurveySelector() {
         setSelectedDesa(code);
         localStorage.setItem('selected_desa_code', code);
 
-        router.visit(showVillage.url({ village: desa.id }));
+        router.visit(showSurveyAssignment.url({ assignment: desa.code }));
     };
 
     return (

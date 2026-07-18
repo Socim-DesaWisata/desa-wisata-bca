@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     ClipboardCheck,
@@ -60,6 +60,7 @@ type PariwisataRow = {
     village_name: string;
     village_code: string;
     village_location: string;
+    village_type: string;
     survey_answers_count: number;
     updated_at: string;
     is_trashed: boolean;
@@ -145,6 +146,8 @@ export default function PariwisataIndex({
     status_options,
     per_page_options,
 }: PariwisataIndexProps) {
+    const { auth } = usePage().props;
+    const isViewer = auth.user?.role === 'viewer';
     const [search, setSearch] = useState(filters.search ?? '');
     const [category, setCategory] = useState(filters.category ?? '');
     const [status, setStatus] = useState(filters.is_active ?? '');
@@ -227,7 +230,7 @@ export default function PariwisataIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assesment ISTC
+                                Assessment ISTC
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau destinasi pariwisata desa, kategori,
@@ -334,34 +337,38 @@ export default function PariwisataIndex({
                                 </Select>
                             </label>
 
-                            <label className="space-y-1">
-                                <span className="block text-[11px] font-semibold text-[#7C7C7C]">
-                                    Status
-                                </span>
-                                <Select
-                                    value={status || 'all'}
-                                    onValueChange={(value) =>
-                                        setStatus(value === 'all' ? '' : value)
-                                    }
-                                >
-                                    <SelectTrigger className="h-11 w-full rounded-lg border-[#DDE4EC] bg-white text-sm font-semibold text-[#303030]">
-                                        <SelectValue placeholder="Semua Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">
-                                            Semua Status
-                                        </SelectItem>
-                                        {status_options.map((option) => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
+                            {!isViewer && (
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] font-semibold text-[#7C7C7C]">
+                                        Status
+                                    </span>
+                                    <Select
+                                        value={status || 'all'}
+                                        onValueChange={(value) =>
+                                            setStatus(
+                                                value === 'all' ? '' : value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger className="h-11 w-full rounded-lg border-[#DDE4EC] bg-white text-sm font-semibold text-[#303030]">
+                                            <SelectValue placeholder="Semua Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua Status
                                             </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </label>
+                                            {status_options.map((option) => (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </label>
+                            )}
 
                             <button className="h-11 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(0,102,174,0.16)]">
                                 Terapkan Filter
@@ -395,12 +402,18 @@ export default function PariwisataIndex({
                                             'Wisata',
                                             'Desa',
                                             'Total Skor',
-                                            'Operasional',
+                                            isViewer
+                                                ? 'Jenis Desa'
+                                                : 'Operasional',
                                             'Harga Tiket',
                                             'PIC',
-                                            'Status',
-                                            'Updated At',
-                                            'Aksi',
+                                            ...(!isViewer
+                                                ? [
+                                                      'Status',
+                                                      'Updated At',
+                                                      'Aksi',
+                                                  ]
+                                                : []),
                                         ].map((head) => (
                                             <th
                                                 key={head}
@@ -419,7 +432,7 @@ export default function PariwisataIndex({
                                     {pariwisata.data.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={9}
+                                                colSpan={isViewer ? 6 : 9}
                                                 className="px-4 py-10 text-center text-sm font-semibold text-[#7C7C7C]"
                                             >
                                                 Belum ada pariwisata yang sesuai
@@ -438,9 +451,20 @@ export default function PariwisataIndex({
                                                             <MapPinned className="size-5" />
                                                         </span>
                                                         <span className="min-w-0">
-                                                            <span className="block font-bold text-[#303030]">
-                                                                {item.name}
-                                                            </span>
+                                                            {item.detail_url ? (
+                                                                <Link
+                                                                    href={
+                                                                        item.detail_url
+                                                                    }
+                                                                    className="block font-bold text-[#0066AE] hover:text-[#093967]"
+                                                                >
+                                                                    {item.name}
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="block font-bold text-[#303030]">
+                                                                    {item.name}
+                                                                </span>
+                                                            )}
                                                             <span className="block text-[12px] text-[#7C7C7C]">
                                                                 {item.address}
                                                             </span>
@@ -471,12 +495,24 @@ export default function PariwisataIndex({
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <span className="block font-bold text-[#303030]">
-                                                        {item.operational_days}
-                                                    </span>
-                                                    <span className="block text-[12px] text-[#7C7C7C]">
-                                                        {item.operational_hours}
-                                                    </span>
+                                                    {isViewer ? (
+                                                        <span className="font-medium text-[#303030]">
+                                                            {item.village_type}
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <span className="block font-bold text-[#303030]">
+                                                                {
+                                                                    item.operational_days
+                                                                }
+                                                            </span>
+                                                            <span className="block text-[12px] text-[#7C7C7C]">
+                                                                {
+                                                                    item.operational_hours
+                                                                }
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <span className="block font-bold text-[#303030]">
@@ -500,85 +536,92 @@ export default function PariwisataIndex({
                                                         }
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-3">
-                                                    <Badge
-                                                        className={statusClass(
-                                                            item.is_active,
-                                                        )}
-                                                    >
-                                                        {item.status_label}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-3 py-3 text-xs font-semibold text-[#7C7C7C]">
-                                                    {item.updated_at}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg border border-[#DDE4EC] bg-white text-[#303030] hover:bg-[#F1F5F8]">
-                                                            <MoreHorizontal className="size-4" />
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            className="w-44 rounded-lg"
-                                                        >
-                                                            {item.detail_url ? (
-                                                                <DropdownMenuItem
-                                                                    asChild
-                                                                    className="gap-2 text-xs"
+                                                {!isViewer && (
+                                                    <>
+                                                        <td className="px-3 py-3">
+                                                            <Badge
+                                                                className={statusClass(
+                                                                    item.is_active,
+                                                                )}
+                                                            >
+                                                                {
+                                                                    item.status_label
+                                                                }
+                                                            </Badge>
+                                                        </td>
+                                                        <td className="px-3 py-3 text-xs font-semibold text-[#7C7C7C]">
+                                                            {item.updated_at}
+                                                        </td>
+                                                        <td className="px-3 py-3">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg border border-[#DDE4EC] bg-white text-[#303030] hover:bg-[#F1F5F8]">
+                                                                    <MoreHorizontal className="size-4" />
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent
+                                                                    align="end"
+                                                                    className="w-44 rounded-lg"
                                                                 >
-                                                                    <Link
-                                                                        href={
-                                                                            item.detail_url
-                                                                        }
-                                                                    >
-                                                                        <Eye className="size-4" />
-                                                                        Lihat
-                                                                        Detail
-                                                                    </Link>
-                                                                </DropdownMenuItem>
-                                                            ) : (
-                                                                <DropdownMenuItem
-                                                                    disabled
-                                                                    className="gap-2 text-xs"
-                                                                >
-                                                                    <Eye className="size-4" />
-                                                                    Lihat Detail
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            {item.is_trashed ? (
-                                                                <DropdownMenuItem
-                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                    onSelect={(
-                                                                        event,
-                                                                    ) => {
-                                                                        event.preventDefault();
-                                                                        handleRestore(
-                                                                            item.id,
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <RotateCcw className="size-4 text-[#00893D]" />
-                                                                    Pulihkan
-                                                                </DropdownMenuItem>
-                                                            ) : (
-                                                                <DropdownMenuItem
-                                                                    className="gap-2 text-xs font-bold text-[#D81313]"
-                                                                    onSelect={(
-                                                                        event,
-                                                                    ) => {
-                                                                        event.preventDefault();
-                                                                        handleDelete(
-                                                                            item.id,
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <Trash2 className="size-4 text-[#D81313]" />
-                                                                    Hapus
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </td>
+                                                                    {item.detail_url ? (
+                                                                        <DropdownMenuItem
+                                                                            asChild
+                                                                            className="gap-2 text-xs"
+                                                                        >
+                                                                            <Link
+                                                                                href={
+                                                                                    item.detail_url
+                                                                                }
+                                                                            >
+                                                                                <Eye className="size-4" />
+                                                                                Lihat
+                                                                                Detail
+                                                                            </Link>
+                                                                        </DropdownMenuItem>
+                                                                    ) : (
+                                                                        <DropdownMenuItem
+                                                                            disabled
+                                                                            className="gap-2 text-xs"
+                                                                        >
+                                                                            <Eye className="size-4" />
+                                                                            Lihat
+                                                                            Detail
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    {item.is_trashed ? (
+                                                                        <DropdownMenuItem
+                                                                            className="gap-2 text-xs font-bold text-[#00893D]"
+                                                                            onSelect={(
+                                                                                event,
+                                                                            ) => {
+                                                                                event.preventDefault();
+                                                                                handleRestore(
+                                                                                    item.id,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <RotateCcw className="size-4 text-[#00893D]" />
+                                                                            Pulihkan
+                                                                        </DropdownMenuItem>
+                                                                    ) : (
+                                                                        <DropdownMenuItem
+                                                                            className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                            onSelect={(
+                                                                                event,
+                                                                            ) => {
+                                                                                event.preventDefault();
+                                                                                handleDelete(
+                                                                                    item.id,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <Trash2 className="size-4 text-[#D81313]" />
+                                                                            Hapus
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </td>
+                                                    </>
+                                                )}
                                             </tr>
                                         ))
                                     )}

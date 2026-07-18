@@ -61,6 +61,42 @@ type MediaForm = {
     sort_order: number;
 };
 
+type WorkerForm = {
+    id: number | null;
+    type: 'full-time' | 'part-time';
+    gender: 'male' | 'female' | 'unspecified';
+    age_min: number | null;
+    age_max: number | null;
+    amount: number;
+    notes: string;
+};
+
+type AdministratorForm = {
+    id: number | null;
+    education: string;
+    amount: number;
+};
+
+type InstitutionalForm = {
+    id: number | null;
+    title: string;
+    description: string;
+};
+
+type AdministratorLanguageForm = {
+    id: number | null;
+    language_name: string;
+    proficiency_level: 'basic' | 'intermediate' | 'advanced' | 'fluent';
+    amount: number;
+    notes: string;
+};
+
+type StakeholderForm = {
+    id: number | null;
+    name: string;
+    position: string;
+};
+
 type VillageForm = {
     id: number;
     code: string;
@@ -83,6 +119,11 @@ type VillageForm = {
     created_by: string;
     updated_at: string;
     media: MediaForm[];
+    workers: WorkerForm[];
+    administrators: AdministratorForm[];
+    administrator_languages: AdministratorLanguageForm[];
+    stakeholders: StakeholderForm[];
+    institutionals: InstitutionalForm[];
 };
 
 type VillagePayload = Omit<VillageForm, 'id' | 'created_by' | 'updated_at'>;
@@ -731,6 +772,11 @@ export default function VillageEdit({
             manager_email: village.manager_email,
             status: village.status,
             media: village.media ?? [],
+            workers: village.workers ?? [],
+            administrators: village.administrators ?? [],
+            administrator_languages: village.administrator_languages ?? [],
+            stakeholders: village.stakeholders ?? [],
+            institutionals: village.institutionals ?? [],
         });
     const [isResolvingAddress, setIsResolvingAddress] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
@@ -906,6 +952,39 @@ export default function VillageEdit({
             icon: FileImage,
             state: (mediaCount > 0 ? 'partial' : 'empty') as SectionState,
         },
+        {
+            id: 'workers',
+            label: 'Tenaga Kerja',
+            icon: User,
+            state: (data.workers.length > 0
+                ? 'partial'
+                : 'empty') as SectionState,
+        },
+        {
+            id: 'administrators',
+            label: 'Data Pengurus',
+            icon: User,
+            state: (data.administrators.length > 0 ||
+            data.administrator_languages.length > 0
+                ? 'partial'
+                : 'empty') as SectionState,
+        },
+        {
+            id: 'stakeholders',
+            label: 'Stakeholder',
+            icon: User,
+            state: (data.stakeholders.length > 0
+                ? 'partial'
+                : 'empty') as SectionState,
+        },
+        {
+            id: 'institutionals',
+            label: 'Kelembagaan',
+            icon: Landmark,
+            state: (data.institutionals.length > 0
+                ? 'partial'
+                : 'empty') as SectionState,
+        },
     ];
 
     const activePanel =
@@ -1066,6 +1145,34 @@ export default function VillageEdit({
                     ))}
                 </div>
             </SectionCard>
+        ) : [
+              'workers',
+              'administrators',
+              'stakeholders',
+              'institutionals',
+          ].includes(activeSection) ? (
+            <SupportingDataEditor
+                section={activeSection as SupportingDataSection}
+                workers={data.workers}
+                administrators={data.administrators}
+                administratorLanguages={data.administrator_languages}
+                stakeholders={data.stakeholders}
+                institutionals={data.institutionals}
+                errors={formErrors}
+                onWorkersChange={(workers) => setData('workers', workers)}
+                onAdministratorsChange={(administrators) =>
+                    setData('administrators', administrators)
+                }
+                onAdministratorLanguagesChange={(administratorLanguages) =>
+                    setData('administrator_languages', administratorLanguages)
+                }
+                onStakeholdersChange={(stakeholders) =>
+                    setData('stakeholders', stakeholders)
+                }
+                onInstitutionalsChange={(institutionals) =>
+                    setData('institutionals', institutionals)
+                }
+            />
         ) : (
             <SectionCard
                 id="main"
@@ -1502,6 +1609,703 @@ function SectionCard({
     );
 }
 
+type SupportingDataSection =
+    | 'workers'
+    | 'administrators'
+    | 'stakeholders'
+    | 'institutionals';
+
+function SupportingDataEditor({
+    section,
+    workers,
+    administrators,
+    administratorLanguages,
+    stakeholders,
+    institutionals,
+    errors,
+    onWorkersChange,
+    onAdministratorsChange,
+    onAdministratorLanguagesChange,
+    onStakeholdersChange,
+    onInstitutionalsChange,
+}: {
+    section: SupportingDataSection;
+    workers: WorkerForm[];
+    administrators: AdministratorForm[];
+    administratorLanguages: AdministratorLanguageForm[];
+    stakeholders: StakeholderForm[];
+    institutionals: InstitutionalForm[];
+    errors: Partial<Record<string, string>>;
+    onWorkersChange: (workers: WorkerForm[]) => void;
+    onAdministratorsChange: (administrators: AdministratorForm[]) => void;
+    onAdministratorLanguagesChange: (
+        items: AdministratorLanguageForm[],
+    ) => void;
+    onStakeholdersChange: (items: StakeholderForm[]) => void;
+    onInstitutionalsChange: (institutionals: InstitutionalForm[]) => void;
+}) {
+    return (
+        <div className="space-y-4">
+            {section === 'workers' && (
+                <SectionCard
+                    id="workers"
+                    icon={User}
+                    title="Tenaga Kerja Desa"
+                    description="Jumlah pekerja berdasarkan tipe, gender, dan rentang umur."
+                >
+                    <div className="space-y-3">
+                        {workers.map((worker, index) => (
+                            <div
+                                key={worker.id ?? `worker-${index}`}
+                                className="rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-3"
+                            >
+                                <div className="grid gap-3 md:grid-cols-5">
+                                    <SelectField
+                                        label="Tipe"
+                                        value={worker.type}
+                                        onChange={(type) =>
+                                            onWorkersChange(
+                                                workers.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  type: type as WorkerForm['type'],
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        options={[
+                                            {
+                                                value: 'full-time',
+                                                label: 'Penuh Waktu',
+                                            },
+                                            {
+                                                value: 'part-time',
+                                                label: 'Paruh Waktu',
+                                            },
+                                        ]}
+                                    />
+                                    <SelectField
+                                        label="Gender"
+                                        value={worker.gender}
+                                        onChange={(gender) =>
+                                            onWorkersChange(
+                                                workers.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  gender: gender as WorkerForm['gender'],
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        options={[
+                                            {
+                                                value: 'male',
+                                                label: 'Laki-laki',
+                                            },
+                                            {
+                                                value: 'female',
+                                                label: 'Perempuan',
+                                            },
+                                            {
+                                                value: 'unspecified',
+                                                label: 'Belum Ditentukan',
+                                            },
+                                        ]}
+                                    />
+                                    <Field
+                                        label="Umur Minimum"
+                                        value={worker.age_min?.toString() ?? ''}
+                                        onChange={(value) =>
+                                            onWorkersChange(
+                                                workers.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  age_min:
+                                                                      value ===
+                                                                      ''
+                                                                          ? null
+                                                                          : Number(
+                                                                                value,
+                                                                            ),
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="18"
+                                        error={
+                                            errors[`workers.${index}.age_min`]
+                                        }
+                                    />
+                                    <Field
+                                        label="Umur Maksimum"
+                                        value={worker.age_max?.toString() ?? ''}
+                                        onChange={(value) =>
+                                            onWorkersChange(
+                                                workers.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  age_max:
+                                                                      value ===
+                                                                      ''
+                                                                          ? null
+                                                                          : Number(
+                                                                                value,
+                                                                            ),
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="35"
+                                        error={
+                                            errors[`workers.${index}.age_max`]
+                                        }
+                                    />
+                                    <Field
+                                        label="Jumlah"
+                                        value={String(worker.amount)}
+                                        onChange={(value) =>
+                                            onWorkersChange(
+                                                workers.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  amount:
+                                                                      Number(
+                                                                          value,
+                                                                      ) || 0,
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="0"
+                                        error={
+                                            errors[`workers.${index}.amount`]
+                                        }
+                                    />
+                                </div>
+                                <div className="mt-3 grid gap-3 md:grid-cols-[1fr_40px]">
+                                    <TextAreaField
+                                        label="Catatan"
+                                        value={worker.notes}
+                                        onChange={(notes) =>
+                                            onWorkersChange(
+                                                workers.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, notes }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="Catatan tenaga kerja"
+                                        error={errors[`workers.${index}.notes`]}
+                                    />
+                                    <button
+                                        type="button"
+                                        aria-label="Hapus tenaga kerja"
+                                        onClick={() =>
+                                            onWorkersChange(
+                                                workers.filter(
+                                                    (_, itemIndex) =>
+                                                        itemIndex !== index,
+                                                ),
+                                            )
+                                        }
+                                        className="self-end rounded-lg border border-[#F4B7B7] p-2 text-[#D81313]"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onWorkersChange([
+                                    ...workers,
+                                    {
+                                        id: null,
+                                        type: 'full-time',
+                                        gender: 'unspecified',
+                                        age_min: null,
+                                        age_max: null,
+                                        amount: 0,
+                                        notes: '',
+                                    },
+                                ])
+                            }
+                            className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2 text-sm font-bold text-[#0066AE]"
+                        >
+                            Tambah Tenaga Kerja
+                        </button>
+                    </div>
+                </SectionCard>
+            )}
+
+            {section === 'administrators' && (
+                <>
+                    <SectionCard
+                        id="administrators"
+                        icon={User}
+                        title="Pendidikan Pengurus"
+                        description="Jumlah pengurus berdasarkan pendidikan terakhir."
+                    >
+                        <div className="space-y-3">
+                            {administrators.map((administrator, index) => (
+                                <div
+                                    key={
+                                        administrator.id ??
+                                        `administrator-${index}`
+                                    }
+                                    className="grid gap-3 rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-3 md:grid-cols-[1fr_1fr_40px]"
+                                >
+                                    <SelectField
+                                        label="Pendidikan"
+                                        value={administrator.education}
+                                        onChange={(education) =>
+                                            onAdministratorsChange(
+                                                administrators.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  education,
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        options={[
+                                            'sd',
+                                            'smp',
+                                            'sma',
+                                            'd3',
+                                            's1/d4',
+                                            's2',
+                                            's3',
+                                        ].map((value) => ({
+                                            value,
+                                            label: value.toUpperCase(),
+                                        }))}
+                                    />
+                                    <Field
+                                        label="Jumlah"
+                                        value={String(administrator.amount)}
+                                        onChange={(value) =>
+                                            onAdministratorsChange(
+                                                administrators.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  amount:
+                                                                      Number(
+                                                                          value,
+                                                                      ) || 0,
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="0"
+                                        error={
+                                            errors[
+                                                `administrators.${index}.amount`
+                                            ]
+                                        }
+                                    />
+                                    <button
+                                        type="button"
+                                        aria-label="Hapus data pengurus"
+                                        onClick={() =>
+                                            onAdministratorsChange(
+                                                administrators.filter(
+                                                    (_, itemIndex) =>
+                                                        itemIndex !== index,
+                                                ),
+                                            )
+                                        }
+                                        className="self-end rounded-lg border border-[#F4B7B7] p-2 text-[#D81313]"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onAdministratorsChange([
+                                        ...administrators,
+                                        {
+                                            id: null,
+                                            education: 'sd',
+                                            amount: 0,
+                                        },
+                                    ])
+                                }
+                                className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2 text-sm font-bold text-[#0066AE]"
+                            >
+                                Tambah Data Pengurus
+                            </button>
+                        </div>
+                    </SectionCard>
+
+                    <SectionCard
+                        id="administrator-languages"
+                        icon={User}
+                        title="Bahasa Asing Pengurus"
+                        description="Jumlah pengurus berdasarkan bahasa dan tingkat kemampuan."
+                    >
+                        <div className="space-y-3">
+                            {administratorLanguages.map((language, index) => (
+                                <div
+                                    key={language.id ?? `language-${index}`}
+                                    className="rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-3"
+                                >
+                                    <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_40px]">
+                                        <Field
+                                            label="Bahasa"
+                                            value={language.language_name}
+                                            onChange={(languageName) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, itemIndex) =>
+                                                            itemIndex === index
+                                                                ? {
+                                                                      ...item,
+                                                                      language_name:
+                                                                          languageName,
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="Inggris"
+                                            error={
+                                                errors[
+                                                    `administrator_languages.${index}.language_name`
+                                                ]
+                                            }
+                                        />
+                                        <SelectField
+                                            label="Kemampuan"
+                                            value={language.proficiency_level}
+                                            onChange={(level) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, itemIndex) =>
+                                                            itemIndex === index
+                                                                ? {
+                                                                      ...item,
+                                                                      proficiency_level:
+                                                                          level as AdministratorLanguageForm['proficiency_level'],
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            options={[
+                                                {
+                                                    value: 'basic',
+                                                    label: 'Dasar',
+                                                },
+                                                {
+                                                    value: 'intermediate',
+                                                    label: 'Menengah',
+                                                },
+                                                {
+                                                    value: 'advanced',
+                                                    label: 'Mahir',
+                                                },
+                                                {
+                                                    value: 'fluent',
+                                                    label: 'Fasih',
+                                                },
+                                            ]}
+                                        />
+                                        <Field
+                                            label="Jumlah"
+                                            value={String(language.amount)}
+                                            onChange={(value) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, itemIndex) =>
+                                                            itemIndex === index
+                                                                ? {
+                                                                      ...item,
+                                                                      amount:
+                                                                          Number(
+                                                                              value,
+                                                                          ) ||
+                                                                          0,
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="0"
+                                            error={
+                                                errors[
+                                                    `administrator_languages.${index}.amount`
+                                                ]
+                                            }
+                                        />
+                                        <button
+                                            type="button"
+                                            aria-label="Hapus bahasa"
+                                            onClick={() =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.filter(
+                                                        (_, itemIndex) =>
+                                                            itemIndex !== index,
+                                                    ),
+                                                )
+                                            }
+                                            className="self-end rounded-lg border border-[#F4B7B7] p-2 text-[#D81313]"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                    <div className="mt-3">
+                                        <TextAreaField
+                                            label="Catatan"
+                                            value={language.notes}
+                                            onChange={(notes) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, itemIndex) =>
+                                                            itemIndex === index
+                                                                ? {
+                                                                      ...item,
+                                                                      notes,
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="Keterangan kemampuan bahasa"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onAdministratorLanguagesChange([
+                                        ...administratorLanguages,
+                                        {
+                                            id: null,
+                                            language_name: '',
+                                            proficiency_level: 'basic',
+                                            amount: 0,
+                                            notes: '',
+                                        },
+                                    ])
+                                }
+                                className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2 text-sm font-bold text-[#0066AE]"
+                            >
+                                Tambah Bahasa Pengurus
+                            </button>
+                        </div>
+                    </SectionCard>
+                </>
+            )}
+
+            {section === 'stakeholders' && (
+                <SectionCard
+                    id="stakeholders"
+                    icon={User}
+                    title="Stakeholder Desa"
+                    description="Nama dan jabatan stakeholder desa."
+                >
+                    <div className="space-y-3">
+                        {stakeholders.map((stakeholder, index) => (
+                            <div
+                                key={stakeholder.id ?? `stakeholder-${index}`}
+                                className="grid gap-3 rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-3 md:grid-cols-[1fr_1fr_40px]"
+                            >
+                                <Field
+                                    label="Nama"
+                                    value={stakeholder.name}
+                                    onChange={(name) =>
+                                        onStakeholdersChange(
+                                            stakeholders.map(
+                                                (item, itemIndex) =>
+                                                    itemIndex === index
+                                                        ? { ...item, name }
+                                                        : item,
+                                            ),
+                                        )
+                                    }
+                                    placeholder="Nama stakeholder"
+                                    error={errors[`stakeholders.${index}.name`]}
+                                />
+                                <Field
+                                    label="Jabatan"
+                                    value={stakeholder.position}
+                                    onChange={(position) =>
+                                        onStakeholdersChange(
+                                            stakeholders.map(
+                                                (item, itemIndex) =>
+                                                    itemIndex === index
+                                                        ? { ...item, position }
+                                                        : item,
+                                            ),
+                                        )
+                                    }
+                                    placeholder="Jabatan"
+                                    error={
+                                        errors[`stakeholders.${index}.position`]
+                                    }
+                                />
+                                <button
+                                    type="button"
+                                    aria-label="Hapus stakeholder"
+                                    onClick={() =>
+                                        onStakeholdersChange(
+                                            stakeholders.filter(
+                                                (_, itemIndex) =>
+                                                    itemIndex !== index,
+                                            ),
+                                        )
+                                    }
+                                    className="self-end rounded-lg border border-[#F4B7B7] p-2 text-[#D81313]"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onStakeholdersChange([
+                                    ...stakeholders,
+                                    {
+                                        id: null,
+                                        name: '',
+                                        position: '',
+                                    },
+                                ])
+                            }
+                            className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2 text-sm font-bold text-[#0066AE]"
+                        >
+                            Tambah Stakeholder
+                        </button>
+                    </div>
+                </SectionCard>
+            )}
+
+            {section === 'institutionals' && (
+                <SectionCard
+                    id="institutionals"
+                    icon={Landmark}
+                    title="Kelembagaan Desa"
+                    description="Lembaga yang mendukung pengelolaan desa wisata."
+                >
+                    <div className="space-y-3">
+                        {institutionals.map((institutional, index) => (
+                            <div
+                                key={
+                                    institutional.id ?? `institutional-${index}`
+                                }
+                                className="rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-3"
+                            >
+                                <div className="grid gap-3 md:grid-cols-[1fr_40px]">
+                                    <Field
+                                        label="Nama Lembaga"
+                                        value={institutional.title}
+                                        onChange={(title) =>
+                                            onInstitutionalsChange(
+                                                institutionals.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, title }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="Pokdarwis"
+                                        error={
+                                            errors[
+                                                `institutionals.${index}.title`
+                                            ]
+                                        }
+                                    />
+                                    <button
+                                        type="button"
+                                        aria-label="Hapus kelembagaan"
+                                        onClick={() =>
+                                            onInstitutionalsChange(
+                                                institutionals.filter(
+                                                    (_, itemIndex) =>
+                                                        itemIndex !== index,
+                                                ),
+                                            )
+                                        }
+                                        className="self-end rounded-lg border border-[#F4B7B7] p-2 text-[#D81313]"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                                <div className="mt-3">
+                                    <TextAreaField
+                                        label="Deskripsi"
+                                        value={institutional.description}
+                                        onChange={(description) =>
+                                            onInstitutionalsChange(
+                                                institutionals.map(
+                                                    (item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                  ...item,
+                                                                  description,
+                                                              }
+                                                            : item,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="Peran lembaga"
+                                        error={
+                                            errors[
+                                                `institutionals.${index}.description`
+                                            ]
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onInstitutionalsChange([
+                                    ...institutionals,
+                                    { id: null, title: '', description: '' },
+                                ])
+                            }
+                            className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2 text-sm font-bold text-[#0066AE]"
+                        >
+                            Tambah Kelembagaan
+                        </button>
+                    </div>
+                </SectionCard>
+            )}
+        </div>
+    );
+}
 function MediaEditor({
     media,
     index,

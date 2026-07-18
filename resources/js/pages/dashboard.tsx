@@ -150,6 +150,13 @@ type TurnoverDetails = {
     rows: TurnoverDetail[];
 };
 
+type VillageStatusDetail = {
+    id: number;
+    name: string;
+    type: string;
+    kemenpar_score: number;
+    istc_score: number;
+};
 type DashboardProps = {
     dashboard_mode?: 'admin' | 'enumerator';
     kpis?: Kpi[];
@@ -163,6 +170,7 @@ type DashboardProps = {
     top_pariwisata_turnovers?: TopSurveyRow[];
     top_umkm_categories?: TopUmkmCategory[];
     village_status_kpis?: Kpi[];
+    village_status_details?: Record<string, VillageStatusDetail[]>;
     recent_assignments?: RecentAssignment[];
     priorities?: Priority[];
     activities?: Activity[];
@@ -656,6 +664,7 @@ export default function Dashboard({
     top_pariwisata_turnovers = [],
     top_umkm_categories = [],
     village_status_kpis = [],
+    village_status_details = {},
     recent_assignments = [],
     turnover_details = {
         umkm: { total: 0, rows: [] },
@@ -672,6 +681,7 @@ export default function Dashboard({
     const [selectedIstcAspects, setSelectedIstcAspects] = useState<string[]>(
         [],
     );
+    const [villageStatusModal, setVillageStatusModal] = useState<string | null>(null);
 
     function toggleAspect(
         aspect: string,
@@ -725,7 +735,50 @@ export default function Dashboard({
                                     Lihat Assignment
                                 </Link>
                             </div>
-                        </header>
+
+                        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            {village_status_kpis.map((kpi) => {
+                                const Icon = kpiIcons[kpi.icon];
+                                if (!Icon) return null;
+
+                                return (
+                                    <button
+                                        type="button"
+                                        key={kpi.title}
+                                        onClick={() => setVillageStatusModal(kpi.title.replace('Total Desa ', ''))}
+                                        className="group block w-full text-left"
+                                    >
+                                        <Panel className="h-full p-4 transition group-hover:border-[#0066AE] group-hover:shadow-md">
+                                            <p className="flex items-center gap-2 text-sm font-bold text-[#303030]">
+                                                <span className="flex size-8 items-center justify-center rounded-full bg-[#0066AE] text-white"><Icon className="size-4" /></span>
+                                                {kpi.title}
+                                            </p>
+                                            <p className="mt-3 text-3xl font-bold text-[#303030]">{kpi.value}</p>
+                                        </Panel>
+                                    </button>
+                                );
+                            })}
+                        </section>
+
+                        <Dialog
+                            open={villageStatusModal !== null}
+                            onOpenChange={(open) => !open && setVillageStatusModal(null)}
+                        >
+                             <DialogContent className="max-h-[85vh] w-[min(96vw,1200px)] max-w-none overflow-hidden rounded-xl border-[#EFEFEF] bg-white p-0">
+                                <DialogHeader className="border-b border-[#EFEFEF] px-5 py-4">
+                                    <DialogTitle>Detail Desa {villageStatusModal ?? ''}</DialogTitle>
+                                    <DialogDescription>Nama desa, skor KEMENPAR, skor ISTC, dan kategori desa.</DialogDescription>
+                                </DialogHeader>
+                                 <div className="max-h-[calc(85vh-100px)] overflow-y-auto px-5 py-4">
+                                    {(village_status_details[villageStatusModal ?? ''] ?? []).length > 0 ? (
+                                         <table className="w-full table-fixed text-left text-sm">
+                                             <thead><tr className="border-b"><th className="px-3 py-3">Nama Desa</th><th className="px-3 py-3 text-right">Skor KEMENPAR</th><th className="px-3 py-3 text-right">Skor ISTC</th><th className="px-3 py-3">Kategori Desa</th></tr></thead>
+                                             <tbody>{(village_status_details[villageStatusModal ?? ''] ?? []).map((village) => <tr key={village.id} className="border-b"><td className="px-3 py-3 font-semibold">{village.name}</td><td className="px-3 py-3 text-right font-bold text-[#0066AE]">{village.kemenpar_score}</td><td className="px-3 py-3 text-right font-bold text-[#00893D]">{village.istc_score}</td><td className="px-3 py-3">{village.type}</td></tr>)}</tbody>
+                                        </table>
+                                    ) : <div className="py-10 text-center text-sm text-[#7C7C7C]">Belum ada data desa pada kategori ini.</div>}
+                                </div>
+                            </DialogContent>
+                        </Dialog>               </header>
 
                         <Panel className="p-5 sm:p-6">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -810,14 +863,15 @@ export default function Dashboard({
                             if (!Icon) return null;
 
                             return (
-                                <Link
-                                    href={`${villagesRoute.url()}?jenis_desa=${kpi.title
-                                        .replace('Total Desa', '')
-                                        .trim()
-                                        .toLowerCase()
-                                        .replace(/\s+/g, '-')}`}
+                                                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setVillageStatusModal(
+                                            kpi.title.replace('Total Desa ', ''),
+                                        )
+                                    }
                                     key={kpi.title}
-                                    className="group block"
+                                    className="group block w-full text-left"
                                 >
                                     <Panel className="h-full p-3.5 transition group-hover:border-[#0066AE] group-hover:shadow-md sm:p-4">
                                         <div className="flex items-start justify-between gap-3">
@@ -840,7 +894,7 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </Panel>
-                                </Link>
+                                </button>
                             );
                         })}
                     </section>
@@ -858,7 +912,49 @@ export default function Dashboard({
                             onClick={() => setTurnoverModal('pariwisata')}
                         />
                     </section>
-
+                    <Dialog
+                        open={villageStatusModal !== null}
+                        onOpenChange={(open) => !open && setVillageStatusModal(null)}
+                    >
+                             <DialogContent className="max-h-[85vh] w-[min(96vw,1200px)] max-w-none overflow-hidden rounded-xl border-[#EFEFEF] bg-white p-0">
+                            <DialogHeader className="border-b border-[#EFEFEF] px-5 py-4">
+                                <DialogTitle className="text-lg font-bold text-[#303030]">
+                                    Detail Desa {villageStatusModal ?? ''}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Nama desa, skor KEMENPAR, skor ISTC, dan kategori desa.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="max-h-[calc(85vh-100px)] overflow-y-auto px-5 py-4 sm:px-6">
+                                {(village_status_details[villageStatusModal ?? ''] ?? []).length > 0 ? (
+                                    <table className="w-full table-fixed text-left text-sm">
+                                        <thead className="border-b border-[#EFEFEF] text-xs text-[#7C7C7C]">
+                                            <tr>
+                                                <th className="px-3 py-3 font-semibold">Nama Desa</th>
+                                                <th className="px-3 py-3 text-right font-semibold">Skor KEMENPAR</th>
+                                                <th className="px-3 py-3 text-right font-semibold">Skor ISTC</th>
+                                                <th className="px-3 py-3 font-semibold">Kategori Desa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(village_status_details[villageStatusModal ?? ''] ?? []).map((village) => (
+                                                <tr key={village.id} className="border-b border-[#F1F1F1] last:border-0">
+                                                    <td className="px-3 py-3 font-semibold text-[#303030]">{village.name}</td>
+                                                    <td className="px-3 py-3 text-right font-bold text-[#0066AE]">{village.kemenpar_score}</td>
+                                                    <td className="px-3 py-3 text-right font-bold text-[#00893D]">{village.istc_score}</td>
+                                                    <td className="px-3 py-3 text-[#7C7C7C]">{village.type}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="py-10 text-center text-sm font-semibold text-[#7C7C7C]">
+                                        Belum ada data desa pada kategori ini.
+                                    </div>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                     <Dialog
                         open={turnoverModal !== null}
                         onOpenChange={(open) => !open && setTurnoverModal(null)}

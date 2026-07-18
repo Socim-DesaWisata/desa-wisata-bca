@@ -1,4 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { dashboard } from '@/routes';
 import { show as showVillage } from '@/routes/villages';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
@@ -113,6 +121,37 @@ type VillageLinkItem = {
     description: string | null;
     cover_url: string | null;
 };
+type VillageWorker = {
+    id: number;
+    type: 'full-time' | 'part-time';
+    gender: 'male' | 'female' | 'unspecified';
+    age_min: number | null;
+    age_max: number | null;
+    amount: number;
+    notes: string | null;
+};
+type VillageAdministrator = {
+    id: number;
+    education: string;
+    amount: number;
+};
+type VillageAdministratorLanguage = {
+    id: number;
+    language_name: string;
+    proficiency_level: 'basic' | 'intermediate' | 'advanced' | 'fluent';
+    amount: number;
+    notes: string | null;
+};
+type VillageStakeholder = {
+    id: number;
+    name: string;
+    position: string;
+};
+type VillageInstitutional = {
+    id: number;
+    title: string;
+    description: string;
+};
 
 type VillageShowProps = {
     village: {
@@ -143,6 +182,11 @@ type VillageShowProps = {
         kemenpar_aspect_scores: KemenparAspectScore[];
         istc_aspect_scores: IstcAspectScore[];
         survey_assignment: { code: string } | null;
+        workers: VillageWorker[];
+        administrators: VillageAdministrator[];
+        administrator_languages: VillageAdministratorLanguage[];
+        stakeholders: VillageStakeholder[];
+        institutionals: VillageInstitutional[];
     };
     village_options: VillageLinkItem[];
     nearby_villages: VillageLinkItem[];
@@ -158,6 +202,17 @@ const truncateText = (value: string, maxLength = 96) =>
     value.length > maxLength
         ? `${value.slice(0, maxLength).trim()}....`
         : value;
+const profileDescriptionLimit = 320;
+const truncateAtWord = (value: string, maxLength: number) => {
+    if (value.length <= maxLength) {
+        return value;
+    }
+
+    const shortened = value.slice(0, maxLength);
+    const lastSpace = shortened.lastIndexOf(' ');
+
+    return `${shortened.slice(0, lastSpace > 0 ? lastSpace : maxLength).trim()}...`;
+};
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '-');
 const firstMediaUrl = (media: MediaItem[] | undefined) =>
     media?.find((item) => item.is_cover)?.url || media?.[0]?.url || null;
@@ -331,6 +386,175 @@ function Heading({
 }
 function Panel({ children }: { children: ReactNode }) {
     return <section className="rounded-[18px] p-5">{children}</section>;
+}
+
+function VillageProfileSummary({
+    workers,
+    stakeholders,
+    institutionals,
+}: {
+    workers: VillageWorker[];
+    stakeholders: VillageStakeholder[];
+    institutionals: VillageInstitutional[];
+}) {
+    const totalWorkers = workers.reduce(
+        (total, item) => total + item.amount,
+        0,
+    );
+    const partTimeWorkers = workers
+        .filter((item) => item.type === 'part-time')
+        .reduce((total, item) => total + item.amount, 0);
+    const fullTimeWorkers = workers
+        .filter((item) => item.type === 'full-time')
+        .reduce((total, item) => total + item.amount, 0);
+    const summaryStats = [
+        {
+            value: totalWorkers,
+            unit: 'Orang',
+            label: 'Total Tenaga Kerja',
+            icon: UsersThree,
+            iconClass: 'bg-[#EAF3FF] text-[#0066AE]',
+        },
+        {
+            value: partTimeWorkers,
+            unit: 'Orang',
+            label: 'Pekerja Paruh Waktu',
+            icon: Clock,
+            iconClass: 'bg-[#EAFBF4] text-[#18A66A]',
+        },
+        {
+            value: fullTimeWorkers,
+            unit: 'Orang',
+            label: 'Pekerja Penuh Waktu',
+            icon: Package,
+            iconClass: 'bg-[#F1EDFF] text-[#6D4AFF]',
+        },
+        {
+            value: institutionals.length,
+            unit: 'Lembaga',
+            label: 'Kelembagaan Terlibat',
+            icon: Buildings,
+            iconClass: 'bg-[#FFF4E5] text-[#E79A20]',
+        },
+    ];
+
+    return (
+        <section className="md:p-6">
+            <Heading icon={UsersThree}>Ringkasan Profil Desa</Heading>
+
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {summaryStats.map((stat) => {
+                    const Icon = stat.icon;
+
+                    return (
+                        <article
+                            key={stat.label}
+                            className="rounded-[14px] border border-[#EDF0F4] bg-white px-3 py-4 text-center shadow-[0_4px_14px_rgba(15,23,42,0.035)]"
+                        >
+                            <div className="flex items-center justify-center gap-2">
+                                <span
+                                    className={cx(
+                                        'grid size-9 place-items-center rounded-full',
+                                        stat.iconClass,
+                                    )}
+                                >
+                                    <Icon className="size-5" weight="fill" />
+                                </span>
+                                <div className="text-left leading-none">
+                                    <p className="text-[22px] font-black tracking-[-0.03em] text-[#0066AE]">
+                                        {stat.value}
+                                    </p>
+                                    <p className="mt-1 text-[10px] font-extrabold text-[#303030]">
+                                        {stat.unit}
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="mt-3 text-[10px] leading-4 font-extrabold text-[#303030]">
+                                {stat.label}
+                            </p>
+                        </article>
+                    );
+                })}
+            </div>
+
+            <div className="mt-6">
+                <h3 className="mb-3 flex items-center gap-2 text-[12px] font-extrabold text-[#093967]">
+                    <Buildings
+                        className="size-4 text-[#0066AE]"
+                        weight="fill"
+                    />
+                    Kelembagaan yang Terlibat dalam Pengelolaan Desa
+                </h3>
+                {institutionals.length ? (
+                    <div className="grid gap-3 md:grid-cols-3">
+                        {institutionals.map((institution) => (
+                            <article
+                                key={institution.title}
+                                className="flex gap-3 rounded-[14px] border border-[#EDF0F4] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.03)]"
+                            >
+                                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#EAF3FF] text-[#0066AE]">
+                                    <Buildings
+                                        className="size-6"
+                                        weight="fill"
+                                    />
+                                </span>
+                                <div>
+                                    <h4 className="text-[12px] font-black text-[#303030]">
+                                        {institution.title}
+                                    </h4>
+                                    <p className="mt-1 text-[9px] leading-[1.55] font-semibold text-[#5F6B76]">
+                                        {institution.description}
+                                    </p>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState title="Tidak ada data kelembagaan" />
+                )}
+            </div>
+
+            <div className="bg- mt-5 rounded-[15px] border border-[#E4E8ED] p-4 shadow-[0_7px_20px_rgba(15,23,42,0.08)] md:p-5">
+                <h3 className="text-[13px] font-black text-[#0066AE]">
+                    Stakeholder Kunci
+                </h3>
+                {stakeholders.length ? (
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {stakeholders.map((stakeholder, index) => (
+                            <article
+                                key={stakeholder.id}
+                                className="text-center"
+                            >
+                                <div className="flex flex-col items-center">
+                                    <div className="relative grid size-12 shrink-0 place-items-center rounded-full border-[3px] border-[#13AAB5] bg-[#EAF3FF] shadow-[0_4px_12px_rgba(0,102,174,0.18)]">
+                                        <User
+                                            className="size-7 text-[#093967]"
+                                            weight="fill"
+                                        />
+                                        <span className="absolute -right-1 -bottom-1 grid size-4 place-items-center rounded-full bg-[#0066AE] text-[8px] font-black text-white ring-2 ring-white">
+                                            {index + 1}
+                                        </span>
+                                    </div>
+                                    <div className="mt-2">
+                                        <p className="text-[10px] font-black text-[#303030]">
+                                            {stakeholder.position}
+                                        </p>
+                                        <p className="mt-1 text-[9px] font-semibold text-[#66717C]">
+                                            {stakeholder.name}
+                                        </p>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="mt-4">
+                        <EmptyState title="Tidak ada data stakeholder" />
+                    </div>
+                )}
+            </div>
+        </section>
+    );
 }
 function EmptyState({ title }: { title: string }) {
     return (
@@ -626,6 +850,338 @@ function SidebarCard({
             </h3>
             {children}
         </aside>
+    );
+}
+
+function WorkforceInsight({
+    children,
+    tone = 'blue',
+}: {
+    children: ReactNode;
+    tone?: 'blue' | 'green' | 'yellow';
+}) {
+    const styles = {
+        blue: 'border-[#D9EAF8] bg-[#F0F8FF] text-[#426075]',
+        green: 'border-[#DDF2E5] bg-[#F1FBF5] text-[#3E7656]',
+        yellow: 'border-[#F6EAC5] bg-[#FFF9E9] text-[#7D6A35]',
+    };
+
+    return (
+        <div
+            className={cx(
+                'mt-4 flex items-start gap-2 rounded-[10px] border px-3 py-2.5 text-[9px] leading-4 font-semibold',
+                styles[tone],
+            )}
+        >
+            <Info className="mt-0.5 size-3.5 shrink-0" weight="fill" />
+            <p>{children}</p>
+        </div>
+    );
+}
+
+function WorkforceProgress({
+    label,
+    value,
+    percentage,
+    color,
+    icon: Icon,
+}: {
+    label: string;
+    value: string;
+    percentage: number;
+    color: string;
+    icon: Icon;
+}) {
+    return (
+        <div>
+            <div className="flex items-center gap-2 text-[10px] font-extrabold text-[#303030]">
+                <Icon
+                    className="size-4 shrink-0"
+                    weight="fill"
+                    style={{ color }}
+                />
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+                <span className="shrink-0 text-[9px] font-black tabular-nums">
+                    {value} ({percentage}%)
+                </span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E8EDF2]">
+                <div
+                    className="h-full rounded-full"
+                    style={{ width: `${percentage}%`, backgroundColor: color }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function WorkforceSidebarSummary({
+    workers,
+    administrators,
+    administratorLanguages,
+}: {
+    workers: VillageWorker[];
+    administrators: VillageAdministrator[];
+    administratorLanguages: VillageAdministratorLanguage[];
+}) {
+    const totalWorkers = workers.reduce(
+        (total, item) => total + item.amount,
+        0,
+    );
+    const percentageOf = (value: number, total: number) =>
+        total > 0 ? Math.round((value / total) * 100) : 0;
+    const genderRows = [
+        {
+            value: 'male',
+            label: 'Laki-laki',
+            color: '#1688CC',
+        },
+        {
+            value: 'female',
+            label: 'Perempuan',
+            color: '#E95B85',
+        },
+        {
+            value: 'unspecified',
+            label: 'Tidak Diketahui',
+            color: '#94A3B8',
+        },
+    ].map((gender) => ({
+        ...gender,
+        amount: workers
+            .filter((item) => item.gender === gender.value)
+            .reduce((total, item) => total + item.amount, 0),
+    }));
+    const malePercent = percentageOf(genderRows[0].amount, totalWorkers);
+    const femalePercent = percentageOf(genderRows[1].amount, totalWorkers);
+    const genderGradient = `conic-gradient(#1688CC 0 ${malePercent}%, #E95B85 ${malePercent}% ${malePercent + femalePercent}%, #94A3B8 ${malePercent + femalePercent}% 100%)`;
+    const dominantGender = [...genderRows].sort(
+        (a, b) => b.amount - a.amount,
+    )[0];
+    const ageRows = Array.from(
+        workers
+            .reduce(
+                (groups, worker) => {
+                    const hasCompleteRange =
+                        worker.age_min !== null && worker.age_max !== null;
+                    const key = hasCompleteRange
+                        ? `${worker.age_min}-${worker.age_max}`
+                        : 'unknown';
+                    const current = groups.get(key) ?? {
+                        key,
+                        ageMin: hasCompleteRange ? worker.age_min : null,
+                        ageMax: hasCompleteRange ? worker.age_max : null,
+                        amount: 0,
+                        notes: [] as string[],
+                    };
+
+                    current.amount += worker.amount;
+                    if (worker.notes && !current.notes.includes(worker.notes)) {
+                        current.notes.push(worker.notes);
+                    }
+                    groups.set(key, current);
+
+                    return groups;
+                },
+                new Map<
+                    string,
+                    {
+                        key: string;
+                        ageMin: number | null;
+                        ageMax: number | null;
+                        amount: number;
+                        notes: string[];
+                    }
+                >(),
+            )
+            .values(),
+    ).sort((a, b) => {
+        if (a.ageMin === null) return 1;
+        if (b.ageMin === null) return -1;
+
+        return a.ageMin - b.ageMin || (a.ageMax ?? 0) - (b.ageMax ?? 0);
+    });
+    const totalAdministrators = administrators.reduce(
+        (total, item) => total + item.amount,
+        0,
+    );
+    const totalAdministratorLanguages = administratorLanguages.reduce(
+        (total, item) => total + item.amount,
+        0,
+    );
+    const educationColors = ['#1688CC', '#16A765', '#F2A900', '#6D4AFF'];
+    const proficiencyLabels = {
+        basic: 'Dasar',
+        intermediate: 'Menengah',
+        advanced: 'Mahir',
+        fluent: 'Fasih',
+    } as const;
+
+    return (
+        <div className="space-y-4">
+            <SidebarCard
+                title="Komposisi Tenaga Kerja (Gender)"
+                icon={UsersThree}
+            >
+                {totalWorkers > 0 ? (
+                    <>
+                        <div className="grid grid-cols-[112px_1fr] items-center gap-4">
+                            <div
+                                className="relative mx-auto grid size-24 place-items-center rounded-full"
+                                style={{
+                                    background: genderGradient,
+                                }}
+                            >
+                                <div className="grid size-[62px] place-items-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_#EEF1F4]">
+                                    <div>
+                                        <p className="text-[17px] leading-none font-black text-[#303030]">
+                                            {totalWorkers}
+                                        </p>
+                                        <p className="mt-1 text-[9px] font-extrabold text-[#4B5560]">
+                                            Orang
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                {genderRows.map((gender) => (
+                                    <div
+                                        key={gender.value}
+                                        className="flex items-start gap-2"
+                                    >
+                                        <span
+                                            className="mt-1 size-2.5 rounded-full"
+                                            style={{
+                                                backgroundColor: gender.color,
+                                            }}
+                                        />
+                                        <div>
+                                            <p className="text-[10px] font-black text-[#303030]">
+                                                {gender.label}
+                                            </p>
+                                            <p className="mt-0.5 text-[9px] font-semibold text-[#596773]">
+                                                {gender.amount} Orang (
+                                                {percentageOf(
+                                                    gender.amount,
+                                                    totalWorkers,
+                                                )}
+                                                %)
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <WorkforceInsight>
+                            Komposisi terbesar: {dominantGender.label} (
+                            {percentageOf(dominantGender.amount, totalWorkers)}
+                            %).
+                        </WorkforceInsight>
+                    </>
+                ) : (
+                    <EmptyState title="Tidak ada data tenaga kerja" />
+                )}
+            </SidebarCard>
+
+            <SidebarCard title="Rentang Umur Tenaga Kerja" icon={Clock}>
+                {ageRows.length ? (
+                    <div className="space-y-4">
+                        {ageRows.map((row, index) => (
+                            <div key={row.key}>
+                                <WorkforceProgress
+                                    label={
+                                        row.ageMin === null
+                                            ? 'Umur Tidak Diketahui'
+                                            : `${row.ageMin}–${row.ageMax} Tahun`
+                                    }
+                                    value={`${row.amount} Orang`}
+                                    percentage={percentageOf(
+                                        row.amount,
+                                        totalWorkers,
+                                    )}
+                                    color={
+                                        educationColors[
+                                            index % educationColors.length
+                                        ]
+                                    }
+                                    icon={Clock}
+                                />
+                                {row.notes.length > 0 && (
+                                    <p className="mt-1 text-[9px] leading-4 font-semibold text-[#596773]">
+                                        Catatan: {row.notes.join('; ')}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState title="Tidak ada data rentang umur tenaga kerja" />
+                )}
+            </SidebarCard>
+
+            <SidebarCard
+                title="Status Pengurus menurut Pendidikan"
+                icon={Trophy}
+            >
+                {administrators.length ? (
+                    <div className="grid gap-4">
+                        <div className="space-y-4">
+                            {administrators.map((administrator, index) => (
+                                <WorkforceProgress
+                                    key={administrator.id}
+                                    label={administrator.education.toUpperCase()}
+                                    value={`${administrator.amount} Orang`}
+                                    percentage={percentageOf(
+                                        administrator.amount,
+                                        totalAdministrators,
+                                    )}
+                                    color={
+                                        educationColors[
+                                            index % educationColors.length
+                                        ]
+                                    }
+                                    icon={Trophy}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <EmptyState title="Tidak ada data pendidikan pengurus" />
+                )}
+            </SidebarCard>
+
+            <SidebarCard title="Bahasa Asing Pengurus" icon={ChatsCircle}>
+                {administratorLanguages.length ? (
+                    <div className="space-y-4">
+                        {administratorLanguages.map((language, index) => (
+                            <div key={language.id}>
+                                <WorkforceProgress
+                                    label={`${language.language_name} (${proficiencyLabels[language.proficiency_level]})`}
+                                    value={`${language.amount} Orang`}
+                                    percentage={percentageOf(
+                                        language.amount,
+                                        totalAdministratorLanguages,
+                                    )}
+                                    color={
+                                        educationColors[
+                                            index % educationColors.length
+                                        ]
+                                    }
+                                    icon={ChatsCircle}
+                                />
+                                {language.notes && (
+                                    <p className="mt-1 text-[9px] leading-4 font-semibold text-[#596773]">
+                                        Catatan: {language.notes}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState title="Tidak ada data bahasa asing pengurus" />
+                )}
+            </SidebarCard>
+        </div>
     );
 }
 function Rows({ rows }: { rows: Row[] }) {
@@ -1025,6 +1581,9 @@ export default function VillageDetail({
         village.manager_email,
         'Tidak ada data',
     );
+    const villageDescription = village.description ?? '';
+    const hasLongDescription =
+        villageDescription.length > profileDescriptionLimit;
 
     return (
         <>
@@ -1053,16 +1612,52 @@ export default function VillageDetail({
                                         />
                                     )}
                                     <div className="space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
-                                        {village.description ? (
+                                        {villageDescription ? (
                                             <>
-                                                <p>{village.description}</p>
-                                                {locationText !==
-                                                'Tidak ada data' ? (
+                                                <div>
                                                     <p>
-                                                        Desa ini berlokasi di{' '}
-                                                        {locationText}.
+                                                        {truncateAtWord(
+                                                            villageDescription,
+                                                            profileDescriptionLimit,
+                                                        )}
                                                     </p>
-                                                ) : null}
+                                                    {hasLongDescription ? (
+                                                        <Dialog>
+                                                            <DialogTrigger
+                                                                asChild
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    className="mt-3 inline-flex items-center rounded-lg text-[13px] font-extrabold text-[#0066AE] transition hover:text-[#093967] focus-visible:ring-2 focus-visible:ring-[#0066AE] focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                                >
+                                                                    Lihat
+                                                                    Selengkapnya
+                                                                </button>
+                                                            </DialogTrigger>
+                                                            <DialogContent className="max-h-[85dvh] overflow-hidden rounded-2xl border-[#DDE7E7] bg-white p-0 sm:max-w-2xl">
+                                                                <DialogHeader className="border-b border-[#E5EAF1] px-6 py-5">
+                                                                    <DialogTitle className="text-xl font-extrabold text-[#093967]">
+                                                                        Deskripsi
+                                                                        Profil
+                                                                        Desa
+                                                                    </DialogTitle>
+                                                                    <DialogDescription className="text-sm font-semibold text-[#64748B]">
+                                                                        {
+                                                                            villageName
+                                                                        }
+                                                                    </DialogDescription>
+                                                                </DialogHeader>
+                                                                <div className="max-h-[70dvh] overflow-y-auto px-6 py-5">
+                                                                    <p className="text-[14px] leading-7 font-semibold whitespace-pre-wrap text-[#303030]">
+                                                                        {
+                                                                            villageDescription
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    ) : null}
+                                                </div>
                                             </>
                                         ) : (
                                             <EmptyState title="Tidak ada data profil" />
@@ -1071,6 +1666,11 @@ export default function VillageDetail({
                                 </div>
                             </Panel>
                         </section>
+                        <VillageProfileSummary
+                            workers={village.workers}
+                            stakeholders={village.stakeholders}
+                            institutionals={village.institutionals}
+                        />
                         <section id="pariwisata">
                             <Heading icon={Star}>Pariwisata</Heading>
                             {attractionItems.length ? (
@@ -1122,6 +1722,13 @@ export default function VillageDetail({
                     </div>
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
                         {/* <QrBlock rows={villageInfoRows} villageName={villageName} /> */}
+                        <WorkforceSidebarSummary
+                            workers={village.workers}
+                            administrators={village.administrators}
+                            administratorLanguages={
+                                village.administrator_languages
+                            }
+                        />
                         <AspectScoreCard
                             title="Skor Per Aspek (Kemenpar)"
                             emptyLabel="Belum ada data skor Kemenpar"
