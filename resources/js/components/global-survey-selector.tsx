@@ -9,9 +9,9 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { router, usePage } from '@inertiajs/react';
-import { Loader2, MapPin, Menu } from 'lucide-react';
+import { Loader2, Map as MapIcon, Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { show as showSurveyAssignment } from '@/routes/survey-assignments';
+import { show as showVillage } from '@/routes/villages';
 
 type Desa = {
     id: number;
@@ -101,7 +101,7 @@ export function GlobalSurveySelector() {
         setSelectedDesa(code);
         localStorage.setItem('selected_desa_code', code);
 
-        router.visit(showSurveyAssignment.url({ assignment: desa.code }));
+        router.visit(showVillage.url({ village: desa.id }));
     };
 
     return (
@@ -134,15 +134,15 @@ export function GlobalSurveySelector() {
                     disabled={loadingDesa}
                 >
                     <SelectTrigger
-                        className="w-full bg-[#F8FBFE] focus:ring-1 focus:ring-[#0066AE]"
+                        className="w-full bg-[#093967] border-0 text-white font-bold focus:ring-1 focus:ring-[#0066AE] hover:bg-[#072d54]"
                         aria-label="Desa Wisata"
                     >
                         <div className="flex items-center gap-2 overflow-hidden">
-                            <MapPin className="h-4 w-4 shrink-0 text-[#7C7C7C]" />
+                            <MapIcon className="h-4 w-4 shrink-0 text-white" />
                             {loadingDesa ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-[#7C7C7C]" />
+                                <Loader2 className="h-4 w-4 animate-spin text-white" />
                             ) : (
-                                <SelectValue placeholder="Desa Wisata" />
+                                <SelectValue placeholder="List Desa" />
                             )}
                         </div>
                     </SelectTrigger>
