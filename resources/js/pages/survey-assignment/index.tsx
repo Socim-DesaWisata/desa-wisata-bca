@@ -12,6 +12,8 @@ import {
     Trash2,
     ExternalLink,
     ArrowRight,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -253,8 +255,24 @@ function ViewerVillageCarousel({
         <section
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
+            className="group relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
         >
+            {villages.length > 1 && (
+                <>
+                    <button
+                        onClick={() => setActiveIndex((prev) => (prev > 0 ? prev - 1 : villages.length - 1))}
+                        className="absolute left-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                    >
+                        <ChevronLeft className="size-5" />
+                    </button>
+                    <button
+                        onClick={() => setActiveIndex((prev) => (prev < villages.length - 1 ? prev + 1 : 0))}
+                        className="absolute right-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                    >
+                        <ChevronRight className="size-5" />
+                    </button>
+                </>
+            )}
             <div className="overflow-hidden">
                 <div
                     className="flex transition-transform duration-700 ease-out"
@@ -323,8 +341,8 @@ function ViewerVillageCarousel({
                                                     href={
                                                         assignment.code
                                                             ? showSurveyAssignment.url(
-                                                                  assignment.code,
-                                                              )
+                                                                assignment.code,
+                                                            )
                                                             : '#'
                                                     }
                                                     className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#102A43] px-5 text-xs font-bold text-white transition hover:bg-[#173E61]"
@@ -492,7 +510,7 @@ export default function SurveyAssignmentIndex({
         setSelectedAssignmentIds([]);
         const sort_direction =
             filterForm.sort_by === 'total_score' &&
-            filterForm.sort_direction === 'desc'
+                filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
@@ -804,8 +822,8 @@ export default function SurveyAssignmentIndex({
                                         isEnumerator
                                             ? 'Cari desa, kode desa, atau template...'
                                             : isViewer
-                                              ? 'Nama, ID, Kode desa wisata..'
-                                              : 'Cari ID assignment, desa, kode desa, atau template...'
+                                                ? 'Nama, ID, Kode desa wisata..'
+                                                : 'Cari ID assignment, desa, kode desa, atau template...'
                                     }
                                 />
                             </label>
@@ -1013,7 +1031,7 @@ export default function SurveyAssignmentIndex({
                                                             toggleAssignmentSelection(
                                                                 assignment.id,
                                                                 checked ===
-                                                                    true,
+                                                                true,
                                                             )
                                                         }
                                                         aria-label={`Pilih ${assignment.village_name}`}
@@ -1024,15 +1042,15 @@ export default function SurveyAssignmentIndex({
                                                 {isEnumerator
                                                     ? `#${assignment.id}`
                                                     : (assignment.code ??
-                                                      `#${assignment.id}`)}
+                                                        `#${assignment.id}`)}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Link
                                                     href={
                                                         assignment.code
                                                             ? showSurveyAssignment.url(
-                                                                  assignment.code,
-                                                              )
+                                                                assignment.code,
+                                                            )
                                                             : '#'
                                                     }
                                                     className="flex items-center gap-2 font-bold text-[#0066AE] hover:text-[#093967]"
@@ -1237,10 +1255,10 @@ export default function SurveyAssignmentIndex({
                                             onClick={() =>
                                                 link.url &&
                                                 (setSelectedAssignmentIds([]),
-                                                router.visit(link.url, {
-                                                    preserveScroll: true,
-                                                    preserveState: true,
-                                                }))
+                                                    router.visit(link.url, {
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                    }))
                                             }
                                             className={classNames(
                                                 'h-9 rounded-lg border px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45',
