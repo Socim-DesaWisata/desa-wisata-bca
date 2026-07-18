@@ -17,6 +17,9 @@ import {
     Plus,
     Search,
     Trash2,
+    ArrowRight,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -594,6 +597,168 @@ function VillageLocationPicker({
     );
 }
 
+function ViewerVillageCarousel({
+    villages,
+}: {
+    villages: VillageRow[];
+}) {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const activeVillages = villages.filter((village) => !village.is_trashed);
+
+    useEffect(() => {
+        if (activeVillages.length <= 1 || isPaused) return;
+        const timer = window.setInterval(() => {
+            setActiveIndex((current) => (current + 1) % activeVillages.length);
+        }, 5000);
+        return () => window.clearInterval(timer);
+    }, [isPaused, activeVillages.length]);
+
+    useEffect(() => {
+        if (activeIndex >= activeVillages.length && activeVillages.length > 0) {
+            setActiveIndex(0);
+        }
+    }, [activeIndex, activeVillages.length]);
+
+    if (activeVillages.length === 0) {
+        return (
+            <section className="flex min-h-[220px] items-center rounded-2xl border border-[#E1E7EE] bg-white px-6 shadow-[0_10px_24px_rgba(3,17,32,0.06)]">
+                <div>
+                    <p className="text-sm font-bold text-[#303030]">
+                        Belum ada data desa wisata.
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        Data desa akan tampil setelah ditambahkan.
+                    </p>
+                </div>
+            </section>
+        );
+    }
+
+    return (
+        <section
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            className="group relative overflow-hidden rounded-2xl border border-[#DDE4EC] bg-white shadow-[0_12px_30px_rgba(3,17,32,0.10)]"
+        >
+            {activeVillages.length > 1 && (
+                <>
+                    <button
+                        onClick={() => setActiveIndex((prev) => (prev > 0 ? prev - 1 : activeVillages.length - 1))}
+                        className="absolute left-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                    >
+                        <ChevronLeft className="size-5" />
+                    </button>
+                    <button
+                        onClick={() => setActiveIndex((prev) => (prev < activeVillages.length - 1 ? prev + 1 : 0))}
+                        className="absolute right-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                    >
+                        <ChevronRight className="size-5" />
+                    </button>
+                </>
+            )}
+            <div className="overflow-hidden">
+                <div
+                    className="flex transition-transform duration-700 ease-out"
+                    style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+                >
+                    {activeVillages.map((village) => {
+                        const progress = Math.min(
+                            Math.max(village.total_score, 0),
+                            100,
+                        );
+
+                        return (
+                            <article
+                                key={village.id}
+                                className="grid min-h-[220px] min-w-full lg:grid-cols-[44%_56%]"
+                            >
+                                <div className="relative min-h-[220px] overflow-hidden bg-[radial-gradient(circle_at_30%_20%,#D9EAF7,#8AA5B8_55%,#17324F)]">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#071C32]/65 via-[#071C32]/10 to-transparent" />
+                                    <span className="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-[#006F67] px-4 py-2 text-xs font-bold text-white shadow-lg">
+                                        <span className="text-base">✦</span>{' '}
+                                        Desa Wisata
+                                    </span>
+                                </div>
+                                <div className="flex min-w-0 flex-col justify-between p-5 sm:p-6">
+                                    <div>
+                                        <h2 className="truncate text-2xl leading-tight font-bold tracking-[-0.02em] text-[#102A43] sm:text-3xl">
+                                            {village.name}
+                                        </h2>
+                                        <div className="mt-4 grid gap-5 sm:grid-cols-[1.2fr_.8fr]">
+                                            <div>
+                                                <p className="text-xs font-bold text-[#526174]">
+                                                    Skor Assessment Kemenpar
+                                                </p>
+                                                <p className="mt-2 text-4xl leading-none font-bold text-[#102A43]">
+                                                    {village.total_score}
+                                                    <span className="text-xl text-[#7C8795]">
+                                                        {' '}
+                                                        /{' '}
+                                                        100
+                                                    </span>
+                                                </p>
+                                                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[#E1E6EB]">
+                                                    <div
+                                                        className="h-full rounded-full bg-[#149B75]"
+                                                        style={{
+                                                            width: `${progress}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p className="mt-2 text-xs font-bold text-[#149B75]">
+                                                    {progress}% dari skor
+                                                    maksimum
+                                                </p>
+                                                <Link
+                                                    href={showVillage.url(village.id)}
+                                                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#102A43] px-5 text-xs font-bold text-white transition hover:bg-[#173E61]"
+                                                >
+                                                    Lihat Detail{' '}
+                                                    <ArrowRight className="size-4" />
+                                                </Link>
+                                            </div>
+                                            <div className="border-l border-[#E4E8ED] pl-5">
+                                                <p className="text-xs font-bold text-[#526174]">
+                                                    Kategori
+                                                </p>
+                                                <span className="mt-3 inline-flex rounded-lg bg-[#149B75] px-4 py-2 text-sm font-bold text-white">
+                                                    {village.village_type || 'Belum Ditentukan'}
+                                                </span>
+                                                <p className="mt-3 text-xs leading-5 text-[#526174]">
+                                                    Desa {village.name} berlokasi di {village.city}.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        );
+                    })}
+                </div>
+            </div>
+            {activeVillages.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                    {activeVillages.map((village, index) => (
+                        <button
+                            key={village.id}
+                            type="button"
+                            aria-label={`Tampilkan ${village.name}`}
+                            onClick={() => setActiveIndex(index)}
+                            className={classNames(
+                                'h-1.5 rounded-full transition-all',
+                                index === activeIndex
+                                    ? 'w-6 bg-white'
+                                    : 'w-1.5 bg-white/60',
+                            )}
+                        />
+                    ))}
+                </div>
+            )}
+        </section>
+    );
+}
+
 export default function VillagesIndex({
     stats,
     villages,
@@ -1055,6 +1220,7 @@ export default function VillagesIndex({
                             </div>
 
                             <div className="overflow-x-auto">
+                                {!isViewer ? (
                                 <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                                     <thead className="bg-[#F8FBFF] text-[12px] text-[#093967]">
                                         <tr>
@@ -1268,6 +1434,11 @@ export default function VillagesIndex({
                                         ))}
                                     </tbody>
                                 </table>
+                                ) : (
+                                    <div className="p-4 sm:p-5">
+                                        <ViewerVillageCarousel villages={villages.data} />
+                                    </div>
+                                )}
                             </div>
 
                             {villages.data.length === 0 && (
