@@ -158,9 +158,9 @@ class UmkmService
                 'icon' => 'tag',
             ],
             [
-                'label' => 'Sudah Export',
+                'label' => 'Sudah Expor',
                 'value' => (string) VillageUmkm::query()->where('has_exported', true)->count(),
-                'description' => 'UMKM dengan riwayat export',
+                'description' => 'UMKM dengan riwayat expor',
                 'icon' => 'send',
             ],
             [

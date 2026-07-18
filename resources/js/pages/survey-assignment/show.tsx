@@ -642,7 +642,7 @@ function MetricCard({
                     <div className="min-w-0 flex-1">
                         <p
                             className={classNames(
-                                'truncate text-[11px] font-semibold',
+                                'text-[11px] leading-snug font-semibold text-wrap break-words line-clamp-2',
                                 tone === 'blue'
                                     ? 'text-white/80'
                                     : 'text-[#667085]',
@@ -650,10 +650,10 @@ function MetricCard({
                         >
                             {label}
                         </p>
-                        <div className="mt-0.5 flex min-w-0 items-baseline gap-1.5">
+                        <div className="mt-1 flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-1.5">
                             <p
                                 className={classNames(
-                                    'truncate text-lg leading-6 font-black tabular-nums',
+                                    'text-sm sm:text-base leading-tight font-black tabular-nums text-wrap break-words line-clamp-2',
                                     tone === 'blue'
                                         ? 'text-white'
                                         : 'text-[#111827]',
@@ -663,7 +663,7 @@ function MetricCard({
                             </p>
                             <p
                                 className={classNames(
-                                    'shrink-0 text-xs leading-4 font-bold tabular-nums',
+                                    'shrink-0 text-[10px] sm:text-xs leading-tight font-bold tabular-nums',
                                     tone === 'blue' && 'text-white/90',
                                     tone === 'green' && 'text-[#00893D]',
                                     tone === 'orange' && 'text-[#F97316]',
