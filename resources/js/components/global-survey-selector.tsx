@@ -12,6 +12,7 @@ import { router, usePage } from '@inertiajs/react';
 import { Loader2, Map as MapIcon, Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { show as showVillage } from '@/routes/villages';
+import { dashboard } from '@/routes';
 
 type Desa = {
     id: number;
@@ -92,6 +93,13 @@ export function GlobalSurveySelector() {
     }, [url, desaList.length]);
 
     const handleDesaChange = (code: string) => {
+        if (code === 'unselected') {
+            setSelectedDesa('');
+            localStorage.removeItem('selected_desa_code');
+            router.visit(dashboard.url());
+            return;
+        }
+
         const desa = desaList.find((item) => item.code === code);
 
         if (!desa) {
@@ -142,11 +150,14 @@ export function GlobalSurveySelector() {
                             {loadingDesa ? (
                                 <Loader2 className="h-4 w-4 animate-spin text-white" />
                             ) : (
-                                <SelectValue placeholder="List Desa" />
+                                <SelectValue placeholder="Pilih desa..." />
                             )}
                         </div>
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="unselected">
+                            Pilih desa...
+                        </SelectItem>
                         {desaList.map((desa) => (
                             <SelectItem key={desa.code} value={desa.code}>
                                 {desa.name}
