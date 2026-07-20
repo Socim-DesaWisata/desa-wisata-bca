@@ -79,18 +79,29 @@ export function GlobalSurveySelector() {
     }, []);
 
     useEffect(() => {
-        const urlMatch = url.match(/\/survey-assignments\/([^\/?#]+)/);
-        const currentDesaCode =
-            urlMatch?.[1] || localStorage.getItem('selected_desa_code') || '';
+        const path = url.split('?')[0].replace(/\/$/, '');
+        const isIndexPage = [
+            '',
+            '/dashboard',
+            '/villages',
+            '/survey-assignments',
+            '/pariwisata',
+            '/umkm',
+            '/users',
+            '/profile'
+        ].includes(path);
 
-        if (urlMatch?.[1]) {
-            localStorage.setItem('selected_desa_code', urlMatch[1]);
+        if (isIndexPage) {
+            setSelectedDesa('');
+            localStorage.removeItem('selected_desa_code');
+            return;
         }
 
+        const currentDesaCode = localStorage.getItem('selected_desa_code') || '';
         if (currentDesaCode && currentDesaCode !== selectedDesa) {
             setSelectedDesa(currentDesaCode);
         }
-    }, [url, desaList.length]);
+    }, [url]);
 
     const handleDesaChange = (code: string) => {
         if (code === 'unselected') {
@@ -142,7 +153,7 @@ export function GlobalSurveySelector() {
                     disabled={loadingDesa}
                 >
                     <SelectTrigger
-                        className="w-full bg-[#093967] border-0 text-white font-bold focus:ring-1 focus:ring-[#0066AE] hover:bg-[#072d54]"
+                        className="w-full bg-[#093967] border-0 text-white font-bold focus:ring-1 focus:ring-[#0066AE] hover:bg-[#072d54] data-[placeholder]:text-white"
                         aria-label="Desa Wisata"
                     >
                         <div className="flex items-center gap-2 overflow-hidden">
