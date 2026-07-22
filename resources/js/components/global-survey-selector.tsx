@@ -88,7 +88,7 @@ export function GlobalSurveySelector() {
             '/pariwisata',
             '/umkm',
             '/users',
-            '/profile'
+            '/profile',
         ].includes(path);
 
         if (isIndexPage) {
@@ -97,7 +97,8 @@ export function GlobalSurveySelector() {
             return;
         }
 
-        const currentDesaCode = localStorage.getItem('selected_desa_code') || '';
+        const currentDesaCode =
+            localStorage.getItem('selected_desa_code') || '';
         if (currentDesaCode && currentDesaCode !== selectedDesa) {
             setSelectedDesa(currentDesaCode);
         }
@@ -153,7 +154,7 @@ export function GlobalSurveySelector() {
                     disabled={loadingDesa}
                 >
                     <SelectTrigger
-                        className="w-full bg-[#093967] border-0 text-white font-bold focus:ring-1 focus:ring-[#0066AE] hover:bg-[#072d54] data-[placeholder]:text-white"
+                        className="w-full border-0 bg-[#093967] font-bold text-white hover:bg-[#072d54] focus:ring-1 focus:ring-[#0066AE] data-[placeholder]:text-white"
                         aria-label="Desa Wisata"
                     >
                         <div className="flex items-center gap-2 overflow-hidden">

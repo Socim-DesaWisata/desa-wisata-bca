@@ -27,6 +27,7 @@ import {
     UserRound,
     X,
 } from 'lucide-react';
+import { EditableFileName } from '@/components/editable-filename';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
@@ -75,7 +76,10 @@ import {
 } from '@/routes/survey-assignments/pariwisata';
 import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
 import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
-import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
+import {
+    destroy as destroySurveyDocument,
+    update as updateSurveyDocument,
+} from '@/routes/survey-assignments/take-survey/documents';
 import { show as showUmkm } from '@/routes/survey-assignments/umkm';
 
 type UserSummary = {
@@ -642,7 +646,7 @@ function MetricCard({
                     <div className="min-w-0 flex-1">
                         <p
                             className={classNames(
-                                'text-[11px] leading-snug font-semibold text-wrap break-words line-clamp-2',
+                                'line-clamp-2 text-[11px] leading-snug font-semibold text-wrap break-words',
                                 tone === 'blue'
                                     ? 'text-white/80'
                                     : 'text-[#667085]',
@@ -653,7 +657,7 @@ function MetricCard({
                         <div className="mt-1 flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-1.5">
                             <p
                                 className={classNames(
-                                    'text-sm sm:text-base leading-tight font-black tabular-nums text-wrap break-words line-clamp-2',
+                                    'line-clamp-2 text-sm leading-tight font-black text-wrap break-words tabular-nums sm:text-base',
                                     tone === 'blue'
                                         ? 'text-white'
                                         : 'text-[#111827]',
@@ -663,7 +667,7 @@ function MetricCard({
                             </p>
                             <p
                                 className={classNames(
-                                    'shrink-0 text-[10px] sm:text-xs leading-tight font-bold tabular-nums',
+                                    'shrink-0 text-[10px] leading-tight font-bold tabular-nums sm:text-xs',
                                     tone === 'blue' && 'text-white/90',
                                     tone === 'green' && 'text-[#00893D]',
                                     tone === 'orange' && 'text-[#F97316]',
@@ -1215,6 +1219,7 @@ function VillageStatisticsCards({
     );
 }
 function DocumentBadge({ document }: { document: SurveyDocument }) {
+    const { assignment } = usePage<any>().props;
     const isPdf = document.mime_type?.includes('pdf');
 
     return (
@@ -1230,9 +1235,14 @@ function DocumentBadge({ document }: { document: SurveyDocument }) {
                 <FileText size={16} strokeWidth={2.2} />
             </span>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-[#303030]">
-                    {document.file_name}
-                </p>
+                <EditableFileName
+                    fileName={document.file_name}
+                    updateUrl={updateSurveyDocument.url({
+                        assignment: assignment.id,
+                        document: document.id,
+                    })}
+                    className="text-xs font-bold text-[#303030]"
+                />
                 <p className="text-[11px] font-semibold text-[#7C7C7C]">
                     {document.file_size_label} · {document.uploaded_by.name}
                 </p>
@@ -3672,7 +3682,9 @@ export default function SurveyAssignmentShow({
                                                             ),
                                                         )}
                                                     >
-                                                        {assignment.status_label}
+                                                        {
+                                                            assignment.status_label
+                                                        }
                                                     </span>
                                                 )}
                                             </div>
@@ -3755,16 +3767,16 @@ export default function SurveyAssignmentShow({
                                     />
                                     {!isViewer && (
                                         <MetricCard
-                                        label="Survey Terjawab"
-                                        value={`${summary.answered_questions}/${summary.total_questions}`}
-                                        helper=""
-                                        icon={
-                                            <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
-                                                <ClipboardCheck size={22} />
-                                            </span>
-                                        }
-                                        tone="blue"
-                                        compact
+                                            label="Survey Terjawab"
+                                            value={`${summary.answered_questions}/${summary.total_questions}`}
+                                            helper=""
+                                            icon={
+                                                <span className="inline-flex items-center justify-center rounded-lg border-2 border-white p-2">
+                                                    <ClipboardCheck size={22} />
+                                                </span>
+                                            }
+                                            tone="blue"
+                                            compact
                                         />
                                     )}
                                     <MetricCard

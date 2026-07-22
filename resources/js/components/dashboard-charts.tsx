@@ -132,13 +132,19 @@ function VillageScoreBarChart({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
-                                    {selectedAspect} <ChevronDown className="size-3" />
+                                    {selectedAspect}{' '}
+                                    <ChevronDown className="size-3" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="max-h-[300px] w-[200px] overflow-auto">
+                            <DropdownMenuContent
+                                align="end"
+                                className="max-h-[300px] w-[200px] overflow-auto"
+                            >
                                 <DropdownMenuItem
                                     className="cursor-pointer text-xs"
-                                    onSelect={() => setSelectedAspect('Total Skor')}
+                                    onSelect={() =>
+                                        setSelectedAspect('Total Skor')
+                                    }
                                 >
                                     Total Skor
                                 </DropdownMenuItem>
@@ -146,7 +152,9 @@ function VillageScoreBarChart({
                                     <DropdownMenuItem
                                         key={aspect}
                                         className="cursor-pointer text-xs"
-                                        onSelect={() => setSelectedAspect(aspect)}
+                                        onSelect={() =>
+                                            setSelectedAspect(aspect)
+                                        }
                                     >
                                         {aspect}
                                     </DropdownMenuItem>
@@ -158,7 +166,8 @@ function VillageScoreBarChart({
                         href={href}
                         className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-bold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
                     >
-                        Detail Survey <ArrowUpRight className="size-3" strokeWidth={2.2} />
+                        Detail Survey{' '}
+                        <ArrowUpRight className="size-3" strokeWidth={2.2} />
                     </Link>
                 </div>
             </div>
@@ -199,7 +208,11 @@ function VillageScoreBarChart({
                                         '/' +
                                         String(item.payload.maxScore ?? 0) +
                                         ' (' +
-                                        String(Math.round(item.payload.percentage ?? 0)) +
+                                        String(
+                                            Math.round(
+                                                item.payload.percentage ?? 0,
+                                            ),
+                                        ) +
                                         '%)',
                                     selectedAspect,
                                 ]}
@@ -220,7 +233,9 @@ function VillageScoreBarChart({
                                 <LabelList
                                     dataKey="percentage"
                                     position="right"
-                                    formatter={(value: number | string | undefined) =>
+                                    formatter={(
+                                        value: number | string | undefined,
+                                    ) =>
                                         String(Math.round(Number(value ?? 0))) +
                                         '%'
                                     }

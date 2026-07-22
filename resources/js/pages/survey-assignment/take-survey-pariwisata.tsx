@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -24,7 +24,11 @@ import {
 
 import { show as showAssignment } from '@/routes/survey-assignments';
 import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
-import { destroy as destroyPariwisataSurveyDocument } from '@/routes/survey-assignments/pariwisata/take-survey/documents';
+import {
+    destroy as destroyPariwisataSurveyDocument,
+    update as updatePariwisataSurveyDocument,
+} from '@/routes/survey-assignments/pariwisata/take-survey/documents';
+import { EditableFileName } from '@/components/editable-filename';
 
 type SurveyOption = {
     id: number;
@@ -328,6 +332,7 @@ function QuestionCard({
     onRemoveFile: (file: File) => void;
     onDeleteDocument: (document: SurveyDocument) => void;
 }) {
+    const { assignment } = usePage<any>().props;
     const localChanged =
         Boolean(selectedOptionId) &&
         selectedOptionId !== question.answer?.selected_option_id;
@@ -483,9 +488,14 @@ function QuestionCard({
                             className="flex items-center gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2 text-sm font-semibold text-[#303030]"
                         >
                             <FileText className="size-5 shrink-0 text-[#0066AE]" />
-                            <span className="min-w-0 flex-1 truncate">
-                                {document.file_name}
-                            </span>
+                            <EditableFileName
+                                fileName={document.file_name}
+                                updateUrl={updatePariwisataSurveyDocument.url({
+                                    assignment: assignment.id,
+                                    document: document.id,
+                                })}
+                                className="min-w-0 flex-1 truncate"
+                            />
                             <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-xs font-bold text-[#00893D]">
                                 Database
                             </span>

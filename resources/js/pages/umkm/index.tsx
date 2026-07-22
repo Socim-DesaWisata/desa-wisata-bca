@@ -519,7 +519,9 @@ export default function UmkmIndex({
                                                 {!isViewer && (
                                                     <>
                                                         <td className="px-3 py-3 text-xs font-semibold text-[#303030]">
-                                                            {umkm.documents_count}{' '}
+                                                            {
+                                                                umkm.documents_count
+                                                            }{' '}
                                                             dokumen
                                                             <br />
                                                             {

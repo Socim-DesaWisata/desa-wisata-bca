@@ -597,11 +597,7 @@ function VillageLocationPicker({
     );
 }
 
-function ViewerVillageCarousel({
-    villages,
-}: {
-    villages: VillageRow[];
-}) {
+function ViewerVillageCarousel({ villages }: { villages: VillageRow[] }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const activeVillages = villages.filter((village) => !village.is_trashed);
@@ -644,14 +640,22 @@ function ViewerVillageCarousel({
             {activeVillages.length > 1 && (
                 <>
                     <button
-                        onClick={() => setActiveIndex((prev) => (prev > 0 ? prev - 1 : activeVillages.length - 1))}
-                        className="absolute left-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                        onClick={() =>
+                            setActiveIndex((prev) =>
+                                prev > 0 ? prev - 1 : activeVillages.length - 1,
+                            )
+                        }
+                        className="absolute top-1/2 left-4 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:bg-white focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2 focus:outline-none"
                     >
                         <ChevronLeft className="size-5" />
                     </button>
                     <button
-                        onClick={() => setActiveIndex((prev) => (prev < activeVillages.length - 1 ? prev + 1 : 0))}
-                        className="absolute right-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all hover:bg-white group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2"
+                        onClick={() =>
+                            setActiveIndex((prev) =>
+                                prev < activeVillages.length - 1 ? prev + 1 : 0,
+                            )
+                        }
+                        className="absolute top-1/2 right-4 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#303030] opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:bg-white focus:ring-2 focus:ring-[#102A43] focus:ring-offset-2 focus:outline-none"
                     >
                         <ChevronRight className="size-5" />
                     </button>
@@ -694,8 +698,7 @@ function ViewerVillageCarousel({
                                                     {village.total_score}
                                                     <span className="text-xl text-[#7C8795]">
                                                         {' '}
-                                                        /{' '}
-                                                        100
+                                                        / 100
                                                     </span>
                                                 </p>
                                                 <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[#E1E6EB]">
@@ -711,7 +714,9 @@ function ViewerVillageCarousel({
                                                     maksimum
                                                 </p>
                                                 <Link
-                                                    href={showVillage.url({ village: village.id })}
+                                                    href={showVillage.url({
+                                                        village: village.id,
+                                                    })}
                                                     className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#102A43] px-5 text-xs font-bold text-white transition hover:bg-[#173E61]"
                                                 >
                                                     Lihat Detail{' '}
@@ -723,10 +728,12 @@ function ViewerVillageCarousel({
                                                     Kategori
                                                 </p>
                                                 <span className="mt-3 inline-flex rounded-lg bg-[#149B75] px-4 py-2 text-sm font-bold text-white">
-                                                    {village.village_type || 'Belum Ditentukan'}
+                                                    {village.village_type ||
+                                                        'Belum Ditentukan'}
                                                 </span>
                                                 <p className="mt-3 text-xs leading-5 text-[#526174]">
-                                                    Desa {village.name} berlokasi di {village.city}.
+                                                    Desa {village.name}{' '}
+                                                    berlokasi di {village.city}.
                                                 </p>
                                             </div>
                                         </div>
@@ -932,7 +939,7 @@ export default function VillagesIndex({
     function toggleScoreSort(sortBy: 'total_score' | 'istc_score') {
         const sort_direction =
             filterForm.sort_by === sortBy &&
-                filterForm.sort_direction === 'desc'
+            filterForm.sort_direction === 'desc'
                 ? 'asc'
                 : 'desc';
 
@@ -1037,36 +1044,36 @@ export default function VillagesIndex({
                                 <Download className="size-4" />
                                 Export Desa
                             </a>
-                        {!isViewer && (
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => changeView('active')}
-                                        className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
-                                    >
-                                        Data Aktif
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => changeView('trash')}
-                                        className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
-                                    >
-                                        Trash
-                                    </button>
+                            {!isViewer && (
+                                <div className="flex flex-col gap-3 sm:flex-row">
+                                    <div className="inline-flex rounded-lg border border-[#DDE4EC] bg-white p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => changeView('active')}
+                                            className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'active' ? 'bg-[#0066AE] text-white' : 'text-[#0066AE]'}`}
+                                        >
+                                            Data Aktif
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => changeView('trash')}
+                                            className={`rounded-md px-4 py-2 text-sm font-bold ${filterForm.view === 'trash' ? 'bg-[#093967] text-white' : 'text-[#7C7C7C]'}`}
+                                        >
+                                            Trash
+                                        </button>
+                                    </div>
+                                    {filterForm.view !== 'trash' && (
+                                        <button
+                                            type="button"
+                                            onClick={openCreateModal}
+                                            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
+                                        >
+                                            <Plus className="size-4" />
+                                            Tambah Desa
+                                        </button>
+                                    )}
                                 </div>
-                                {filterForm.view !== 'trash' && (
-                                    <button
-                                        type="button"
-                                        onClick={openCreateModal}
-                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0066AE] px-5 text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,102,174,0.2)] transition hover:bg-[#093967]"
-                                    >
-                                        <Plus className="size-4" />
-                                        Tambah Desa
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                            )}
                         </div>
                     </header>
 
@@ -1192,7 +1199,9 @@ export default function VillagesIndex({
                                 >
                                     <option value="">Semua Jenis</option>
                                     <option value="rintisan">Rintisan</option>
-                                    <option value="berkembang">Berkembang</option>
+                                    <option value="berkembang">
+                                        Berkembang
+                                    </option>
                                     <option value="maju">Maju</option>
                                     <option value="mandiri">Mandiri</option>
                                 </select>
@@ -1246,7 +1255,7 @@ export default function VillagesIndex({
                                                     className="px-3 py-3 font-bold whitespace-nowrap"
                                                 >
                                                     {head === 'Skor KEMENPAR' ||
-                                                        head === 'Skor ISTC' ? (
+                                                    head === 'Skor ISTC' ? (
                                                         <button
                                                             type="button"
                                                             onClick={() =>
@@ -1350,88 +1359,103 @@ export default function VillagesIndex({
                                                 <td className="px-3 py-3">
                                                     {isViewer ? (
                                                         <Link
-                                                            href={showVillage.url({ village: village.id })}
+                                                            href={showVillage.url(
+                                                                {
+                                                                    village:
+                                                                        village.id,
+                                                                },
+                                                            )}
                                                             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#303030] shadow-[0_2px_4px_rgba(3,17,32,0.04)] transition hover:bg-[#F8FBFE] hover:text-[#0066AE]"
                                                         >
                                                             <Eye className="size-3.5" />
                                                             Lihat Detail
                                                         </Link>
                                                     ) : (
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
-                                                        >
-                                                            <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
-                                                                <MoreHorizontal className="size-4" />
-                                                            </button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
-                                                        >
-                                                            {filterForm.view ===
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
+                                                            >
+                                                                <button className="flex size-8 items-center justify-center rounded-md border border-[#DDE4EC] bg-[#F1F5F8] text-[#093967]">
+                                                                    <MoreHorizontal className="size-4" />
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent
+                                                                align="end"
+                                                                className="w-48 rounded-lg border-[#EFEFEF] bg-white text-xs shadow-[0_12px_30px_rgba(3,17,32,0.14)]"
+                                                            >
+                                                                {filterForm.view ===
                                                                 'trash' ? (
-                                                                <DropdownMenuItem
-                                                                    className="gap-2 text-xs font-bold text-[#00893D]"
-                                                                    onSelect={(
-                                                                        event,
-                                                                    ) => {
-                                                                        event.preventDefault();
-                                                                        handleRestore(
-                                                                            village,
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <ClipboardCheck className="size-4 text-[#00893D]" />
-                                                                    Pulihkan
-                                                                    Desa
-                                                                </DropdownMenuItem>
-                                                            ) : (
-                                                                <>
                                                                     <DropdownMenuItem
-                                                                        asChild
-                                                                        className="gap-2 text-xs"
-                                                                    >
-                                                                        <Link
-                                                                            href={showVillage.url({ village: village.id })}
-                                                                        >
-                                                                            <Eye className="size-4 text-[#303030]" />
-                                                                            Lihat
-                                                                            Detail
-                                                                        </Link>
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem
-                                                                        asChild
-                                                                        className="gap-2 text-xs"
-                                                                    >
-                                                                        <Link
-                                                                            href={editVillage.url({ village: village.id })}
-                                                                        >
-                                                                            <Pencil className="size-4 text-[#303030]" />
-                                                                            Edit
-                                                                            Desa
-                                                                        </Link>
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                        className="gap-2 text-xs font-bold text-[#00893D]"
                                                                         onSelect={(
                                                                             event,
                                                                         ) => {
                                                                             event.preventDefault();
-                                                                            handleDelete(
+                                                                            handleRestore(
                                                                                 village,
                                                                             );
                                                                         }}
                                                                     >
-                                                                        <Trash2 className="size-4 text-[#D81313]" />
-                                                                        Hapus
+                                                                        <ClipboardCheck className="size-4 text-[#00893D]" />
+                                                                        Pulihkan
                                                                         Desa
                                                                     </DropdownMenuItem>
-                                                                </>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                                ) : (
+                                                                    <>
+                                                                        <DropdownMenuItem
+                                                                            asChild
+                                                                            className="gap-2 text-xs"
+                                                                        >
+                                                                            <Link
+                                                                                href={showVillage.url(
+                                                                                    {
+                                                                                        village:
+                                                                                            village.id,
+                                                                                    },
+                                                                                )}
+                                                                            >
+                                                                                <Eye className="size-4 text-[#303030]" />
+                                                                                Lihat
+                                                                                Detail
+                                                                            </Link>
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            asChild
+                                                                            className="gap-2 text-xs"
+                                                                        >
+                                                                            <Link
+                                                                                href={editVillage.url(
+                                                                                    {
+                                                                                        village:
+                                                                                            village.id,
+                                                                                    },
+                                                                                )}
+                                                                            >
+                                                                                <Pencil className="size-4 text-[#303030]" />
+                                                                                Edit
+                                                                                Desa
+                                                                            </Link>
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem
+                                                                            className="gap-2 text-xs font-bold text-[#D81313]"
+                                                                            onSelect={(
+                                                                                event,
+                                                                            ) => {
+                                                                                event.preventDefault();
+                                                                                handleDelete(
+                                                                                    village,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <Trash2 className="size-4 text-[#D81313]" />
+                                                                            Hapus
+                                                                            Desa
+                                                                        </DropdownMenuItem>
+                                                                    </>
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     )}
                                                 </td>
                                             </tr>

@@ -74,11 +74,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { EditableFileName } from '@/components/editable-filename';
 
 import { dashboard, surveyAssignments } from '@/routes';
 import { show as showAssignment } from '@/routes/survey-assignments';
 import { update as updatePariwisata } from '@/routes/survey-assignments/pariwisata';
 import { store as storePariwisataSurveyDraft } from '@/routes/survey-assignments/pariwisata/take-survey';
+import { update as updatePariwisataSurveyDocument } from '@/routes/survey-assignments/pariwisata/take-survey/documents';
 
 type Assignment = {
     id: number;
@@ -555,6 +557,7 @@ function EditSection({
 }
 
 function DocumentBadge({ document }: { document: SurveyDocument }) {
+    const { assignment } = usePage<any>().props;
     const isPdf = document.mime_type?.includes('pdf');
 
     return (
@@ -570,9 +573,14 @@ function DocumentBadge({ document }: { document: SurveyDocument }) {
                 <FileText size={16} strokeWidth={2.2} />
             </span>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-[#303030]">
-                    {document.file_name}
-                </p>
+                <EditableFileName
+                    fileName={document.file_name}
+                    updateUrl={updatePariwisataSurveyDocument.url({
+                        assignment: assignment.id,
+                        document: document.id,
+                    })}
+                    className="text-xs font-bold text-[#303030]"
+                />
                 <p className="text-[11px] font-semibold text-[#7C7C7C]">
                     {document.file_size_label} · {document.uploaded_by.name}
                 </p>
@@ -878,13 +886,18 @@ function IstcQuestionRow({
                     {question.indicator_name}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-[#0066AE]">
-                    {[question.criteria_code, question.criteria_name, question.indicator_code]
+                    {[
+                        question.criteria_code,
+                        question.criteria_name,
+                        question.indicator_code,
+                    ]
                         .filter(Boolean)
                         .join(' · ')}
                 </p>
                 {(question.indicator_description || question.document_hint) && (
                     <p className="mt-2 text-xs font-semibold text-[#7C7C7C]">
-                        {question.indicator_description ?? question.document_hint}
+                        {question.indicator_description ??
+                            question.document_hint}
                     </p>
                 )}
             </div>
@@ -892,11 +905,14 @@ function IstcQuestionRow({
                 <div
                     className={classNames(
                         'w-full rounded-lg px-4 py-3 text-center shadow-[0_6px_12px_rgba(0,102,174,0.10)]',
-                        answered ? 'bg-[#0066AE] text-white' : 'bg-[#F1F5F8] text-[#7C7C7C]',
+                        answered
+                            ? 'bg-[#0066AE] text-white'
+                            : 'bg-[#F1F5F8] text-[#7C7C7C]',
                     )}
                 >
                     <p className="text-sm font-bold">
-                        Skor {question.answer?.score ?? '-'} / {question.max_score || '-'}
+                        Skor {question.answer?.score ?? '-'} /{' '}
+                        {question.max_score || '-'}
                     </p>
                     <p className="line-clamp-2 text-[11px] font-semibold opacity-80">
                         {question.answer?.score_label ?? 'Belum dijawab'}
@@ -921,7 +937,8 @@ function IstcQuestionRow({
             {!isViewer && (
                 <div className="flex min-w-0 flex-col justify-center text-center text-xs">
                     <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
-                        <UserRound size={14} className="text-[#0066AE]" /> Dijawab oleh
+                        <UserRound size={14} className="text-[#0066AE]" />{' '}
+                        Dijawab oleh
                     </p>
                     <p className="mt-1 font-bold text-[#303030]">
                         {question.answer?.answered_by.name ?? '-'}
@@ -931,7 +948,8 @@ function IstcQuestionRow({
             {!isViewer && (
                 <div className="flex min-w-0 flex-col justify-center text-center text-xs">
                     <p className="flex items-center justify-center gap-2 font-semibold text-[#7C7C7C]">
-                        <Clock3 size={14} className="text-[#0066AE]" /> Terakhir diedit
+                        <Clock3 size={14} className="text-[#0066AE]" /> Terakhir
+                        diedit
                     </p>
                     <p className="mt-1 font-bold text-[#303030]">
                         {question.answer?.last_edited_at ?? '-'}
@@ -942,15 +960,27 @@ function IstcQuestionRow({
                 <div className="flex items-center justify-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button type="button" className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]">
+                            <button
+                                type="button"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#DDE4EC] bg-white px-3 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]"
+                            >
                                 Action <ChevronDown size={14} />
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs">
-                            <DropdownMenuItem className="gap-2 text-xs" onClick={() => onViewDetail(question)}>
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-44 rounded-lg border-[#EFEFEF] bg-white text-xs"
+                        >
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onViewDetail(question)}
+                            >
                                 <Eye className="size-4" /> Lihat Detail
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-xs" onClick={() => onEditData(question)}>
+                            <DropdownMenuItem
+                                className="gap-2 text-xs"
+                                onClick={() => onEditData(question)}
+                            >
                                 <Pencil className="size-4" /> Edit Data
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -981,21 +1011,24 @@ function IstcAnswerEditModal({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const { data, setData, post, processing, errors, clearErrors } = useForm<IstcAnswerEditForm>({
-        answers: [],
-    });
+    const { data, setData, post, processing, errors, clearErrors } =
+        useForm<IstcAnswerEditForm>({
+            answers: [],
+        });
 
     useEffect(() => {
         if (!open || !question) return;
 
-        setData('answers', [{
-            question_id: question.id,
-            pariwisata_suvey_option_id: question.answer
-                ? String(question.answer.pariwisata_suvey_option_id)
-                : '',
-            notes: question.answer?.notes ?? '',
-            documents: [],
-        }]);
+        setData('answers', [
+            {
+                question_id: question.id,
+                pariwisata_suvey_option_id: question.answer
+                    ? String(question.answer.pariwisata_suvey_option_id)
+                    : '',
+                notes: question.answer?.notes ?? '',
+                documents: [],
+            },
+        ]);
         clearErrors();
     }, [clearErrors, open, question, setData]);
 
@@ -1018,26 +1051,137 @@ function IstcAnswerEditModal({
             <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>Edit Jawaban Survey ISTC</DialogTitle>
-                    <DialogDescription>Ubah jawaban, catatan, atau tambahkan dokumen pendukung.</DialogDescription>
+                    <DialogDescription>
+                        Ubah jawaban, catatan, atau tambahkan dokumen pendukung.
+                    </DialogDescription>
                 </DialogHeader>
                 <form className="space-y-5" onSubmit={submit}>
                     <div className="rounded-xl bg-[#F8FBFF] p-4">
-                        <p className="text-xs font-bold text-[#0066AE]">{question.indicator_code}</p>
-                        <h3 className="mt-2 text-base font-bold text-[#303030]">{question.indicator_name}</h3>
+                        <p className="text-xs font-bold text-[#0066AE]">
+                            {question.indicator_code}
+                        </p>
+                        <h3 className="mt-2 text-base font-bold text-[#303030]">
+                            {question.indicator_name}
+                        </h3>
                     </div>
                     <div className="space-y-2">
-                        <p className="text-sm font-bold text-[#303030]">Opsi Jawaban</p>
+                        <p className="text-sm font-bold text-[#303030]">
+                            Opsi Jawaban
+                        </p>
                         {question.options.map((option) => (
-                            <label key={option.id} className={classNames('flex cursor-pointer gap-3 rounded-xl border p-3', answer?.pariwisata_suvey_option_id === String(option.id) ? 'border-[#0066AE] bg-[#EAF3FF]' : 'border-[#E5E7EB]')}>
-                                <input type="radio" name="option" checked={answer?.pariwisata_suvey_option_id === String(option.id)} onChange={() => setData('answers', [{ ...answer, question_id: question.id, pariwisata_suvey_option_id: String(option.id), notes: answer?.notes ?? '', documents: answer?.documents ?? [] }])} />
-                                <span><span className="block text-sm font-bold text-[#303030]">Skor {option.score} · {option.label}</span><span className="mt-1 block text-xs text-[#7C7C7C]">{option.description}</span></span>
+                            <label
+                                key={option.id}
+                                className={classNames(
+                                    'flex cursor-pointer gap-3 rounded-xl border p-3',
+                                    answer?.pariwisata_suvey_option_id ===
+                                        String(option.id)
+                                        ? 'border-[#0066AE] bg-[#EAF3FF]'
+                                        : 'border-[#E5E7EB]',
+                                )}
+                            >
+                                <input
+                                    type="radio"
+                                    name="option"
+                                    checked={
+                                        answer?.pariwisata_suvey_option_id ===
+                                        String(option.id)
+                                    }
+                                    onChange={() =>
+                                        setData('answers', [
+                                            {
+                                                ...answer,
+                                                question_id: question.id,
+                                                pariwisata_suvey_option_id:
+                                                    String(option.id),
+                                                notes: answer?.notes ?? '',
+                                                documents:
+                                                    answer?.documents ?? [],
+                                            },
+                                        ])
+                                    }
+                                />
+                                <span>
+                                    <span className="block text-sm font-bold text-[#303030]">
+                                        Skor {option.score} · {option.label}
+                                    </span>
+                                    <span className="mt-1 block text-xs text-[#7C7C7C]">
+                                        {option.description}
+                                    </span>
+                                </span>
                             </label>
                         ))}
-                        {errorBag['answers.0.pariwisata_suvey_option_id'] && <p className="text-xs font-semibold text-red-600">{errorBag['answers.0.pariwisata_suvey_option_id']}</p>}
+                        {errorBag['answers.0.pariwisata_suvey_option_id'] && (
+                            <p className="text-xs font-semibold text-red-600">
+                                {
+                                    errorBag[
+                                        'answers.0.pariwisata_suvey_option_id'
+                                    ]
+                                }
+                            </p>
+                        )}
                     </div>
-                    <label className="block text-sm font-bold text-[#303030]">Catatan<textarea value={answer?.notes ?? ''} onChange={(event) => setData('answers', [{ ...answer, question_id: question.id, pariwisata_suvey_option_id: answer?.pariwisata_suvey_option_id ?? '', notes: event.target.value, documents: answer?.documents ?? [] }])} className="mt-2 min-h-24 w-full rounded-xl border border-[#DCE3EA] p-3 text-sm font-medium" /></label>
-                    <label className="block text-sm font-bold text-[#303030]">Dokumen Pendukung<input type="file" multiple onChange={(event) => setData('answers', [{ ...answer, question_id: question.id, pariwisata_suvey_option_id: answer?.pariwisata_suvey_option_id ?? '', notes: answer?.notes ?? '', documents: [...(answer?.documents ?? []), ...Array.from(event.target.files ?? [])] }])} className="mt-2 block w-full text-sm" /></label>
-                    <div className="flex justify-end gap-2"><button type="button" onClick={() => onOpenChange(false)} className="h-10 rounded-lg border border-[#DDE4EC] px-4 text-sm font-bold">Batal</button><button type="submit" disabled={processing} className="h-10 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white disabled:opacity-60">Simpan Jawaban</button></div>
+                    <label className="block text-sm font-bold text-[#303030]">
+                        Catatan
+                        <textarea
+                            value={answer?.notes ?? ''}
+                            onChange={(event) =>
+                                setData('answers', [
+                                    {
+                                        ...answer,
+                                        question_id: question.id,
+                                        pariwisata_suvey_option_id:
+                                            answer?.pariwisata_suvey_option_id ??
+                                            '',
+                                        notes: event.target.value,
+                                        documents: answer?.documents ?? [],
+                                    },
+                                ])
+                            }
+                            className="mt-2 min-h-24 w-full rounded-xl border border-[#DCE3EA] p-3 text-sm font-medium"
+                        />
+                    </label>
+                    <label className="block text-sm font-bold text-[#303030]">
+                        Dokumen Pendukung
+                        <input
+                            type="file"
+                            multiple
+                            onChange={(event) =>
+                                setData('answers', [
+                                    {
+                                        ...answer,
+                                        question_id: question.id,
+                                        pariwisata_suvey_option_id:
+                                            answer?.pariwisata_suvey_option_id ??
+                                            '',
+                                        notes: answer?.notes ?? '',
+                                        documents: [
+                                            ...(answer?.documents ?? []),
+                                            ...Array.from(
+                                                event.target.files ?? [],
+                                            ),
+                                        ],
+                                    },
+                                ])
+                            }
+                            className="mt-2 block w-full text-sm"
+                        />
+                    </label>
+                    <div className="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            className="h-10 rounded-lg border border-[#DDE4EC] px-4 text-sm font-bold"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="h-10 rounded-lg bg-[#0066AE] px-4 text-sm font-bold text-white disabled:opacity-60"
+                        >
+                            Simpan Jawaban
+                        </button>
+                    </div>
                 </form>
             </DialogContent>
         </Dialog>
@@ -1056,25 +1200,175 @@ function IstcSurveyTable({
     const [search, setSearch] = useState('');
     const [aspect, setAspect] = useState('all');
     const [closed, setClosed] = useState<Record<string, boolean>>({});
-    const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(null);
-    const [editingQuestion, setEditingQuestion] = useState<SurveyQuestion | null>(null);
-    const filteredGroups = useMemo(() => groups.filter((group) => aspect === 'all' || group.category_name === aspect).map((group) => ({ ...group, questions: group.questions.filter((question) => [group.category_name, question.criteria_name, question.indicator_code, question.indicator_name, question.answer?.score_label].filter(Boolean).some((value) => String(value).toLowerCase().includes(search.toLowerCase()))) })).filter((group) => group.questions.length > 0), [aspect, groups, search]);
+    const [detailQuestion, setDetailQuestion] = useState<SurveyQuestion | null>(
+        null,
+    );
+    const [editingQuestion, setEditingQuestion] =
+        useState<SurveyQuestion | null>(null);
+    const filteredGroups = useMemo(
+        () =>
+            groups
+                .filter(
+                    (group) =>
+                        aspect === 'all' || group.category_name === aspect,
+                )
+                .map((group) => ({
+                    ...group,
+                    questions: group.questions.filter((question) =>
+                        [
+                            group.category_name,
+                            question.criteria_name,
+                            question.indicator_code,
+                            question.indicator_name,
+                            question.answer?.score_label,
+                        ]
+                            .filter(Boolean)
+                            .some((value) =>
+                                String(value)
+                                    .toLowerCase()
+                                    .includes(search.toLowerCase()),
+                            ),
+                    ),
+                }))
+                .filter((group) => group.questions.length > 0),
+        [aspect, groups, search],
+    );
 
     return (
         <Card className="overflow-hidden">
             <div className="border-b border-[#EFEFEF] p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div><h2 className="text-base font-bold text-[#303030]">Jawaban Survey ISTC</h2><p className="mt-1 text-sm font-semibold text-[#7C7C7C]">Pertanyaan, skor, catatan, dan dokumen pendukung survey pariwisata.</p></div>
-                    <div className="flex flex-col gap-2 sm:flex-row"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari pertanyaan..." className="h-10 rounded-lg border border-[#DDE4EC] px-3 text-sm" /><select value={aspect} onChange={(event) => setAspect(event.target.value)} className="h-10 rounded-lg border border-[#DDE4EC] px-3 text-sm"><option value="all">Semua Aspek</option>{groups.map((group) => <option key={group.category_name} value={group.category_name}>{group.category_name}</option>)}</select></div>
+                    <div>
+                        <h2 className="text-base font-bold text-[#303030]">
+                            Jawaban Survey ISTC
+                        </h2>
+                        <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
+                            Pertanyaan, skor, catatan, dan dokumen pendukung
+                            survey pariwisata.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder="Cari pertanyaan..."
+                            className="h-10 rounded-lg border border-[#DDE4EC] px-3 text-sm"
+                        />
+                        <select
+                            value={aspect}
+                            onChange={(event) => setAspect(event.target.value)}
+                            className="h-10 rounded-lg border border-[#DDE4EC] px-3 text-sm"
+                        >
+                            <option value="all">Semua Aspek</option>
+                            {groups.map((group) => (
+                                <option
+                                    key={group.category_name}
+                                    value={group.category_name}
+                                >
+                                    {group.category_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
             {filteredGroups.map((group) => {
-                const percent = group.max_score > 0 ? (group.score / group.max_score) * 100 : 0;
-                return <div key={group.category_name} className="border-b border-[#EFEFEF] last:border-b-0"><button type="button" onClick={() => setClosed((current) => ({ ...current, [group.category_name]: !current[group.category_name] }))} className="flex w-full flex-col gap-3 bg-[#F8FBFE] p-4 text-left lg:flex-row lg:items-center lg:justify-between"><div className="flex items-center gap-3"><span className="flex size-8 items-center justify-center rounded-lg bg-white text-[#0066AE]"><ShieldCheck size={18} /></span><div><h3 className="text-sm font-bold text-[#303030]">{group.category_name}</h3><p className="mt-1 text-xs font-semibold text-[#7C7C7C]">{group.question_count} pertanyaan · {group.answered_count} terjawab · {group.documents_count} dokumen · {group.score} / {group.max_score} poin</p></div></div><div className="flex min-w-[220px] items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-white"><div className="h-full bg-[#0066AE]" style={{ width: `${Math.min(percent, 100)}%` }} /></div><ChevronDown size={18} className={classNames('text-[#0066AE] transition-transform', closed[group.category_name] && '-rotate-90')} /></div></button>{!closed[group.category_name] && group.questions.map((question, index) => <IstcQuestionRow key={question.id} question={question} number={index + 1} isViewer={isViewer} onViewDetail={setDetailQuestion} onEditData={setEditingQuestion} />)}</div>;
+                const percent =
+                    group.max_score > 0
+                        ? (group.score / group.max_score) * 100
+                        : 0;
+                return (
+                    <div
+                        key={group.category_name}
+                        className="border-b border-[#EFEFEF] last:border-b-0"
+                    >
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setClosed((current) => ({
+                                    ...current,
+                                    [group.category_name]:
+                                        !current[group.category_name],
+                                }))
+                            }
+                            className="flex w-full flex-col gap-3 bg-[#F8FBFE] p-4 text-left lg:flex-row lg:items-center lg:justify-between"
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="flex size-8 items-center justify-center rounded-lg bg-white text-[#0066AE]">
+                                    <ShieldCheck size={18} />
+                                </span>
+                                <div>
+                                    <h3 className="text-sm font-bold text-[#303030]">
+                                        {group.category_name}
+                                    </h3>
+                                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                                        {group.question_count} pertanyaan ·{' '}
+                                        {group.answered_count} terjawab ·{' '}
+                                        {group.documents_count} dokumen ·{' '}
+                                        {group.score} / {group.max_score} poin
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex min-w-[220px] items-center gap-3">
+                                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
+                                    <div
+                                        className="h-full bg-[#0066AE]"
+                                        style={{
+                                            width: `${Math.min(percent, 100)}%`,
+                                        }}
+                                    />
+                                </div>
+                                <ChevronDown
+                                    size={18}
+                                    className={classNames(
+                                        'text-[#0066AE] transition-transform',
+                                        closed[group.category_name] &&
+                                            '-rotate-90',
+                                    )}
+                                />
+                            </div>
+                        </button>
+                        {!closed[group.category_name] &&
+                            group.questions.map((question, index) => (
+                                <IstcQuestionRow
+                                    key={question.id}
+                                    question={question}
+                                    number={index + 1}
+                                    isViewer={isViewer}
+                                    onViewDetail={setDetailQuestion}
+                                    onEditData={setEditingQuestion}
+                                />
+                            ))}
+                    </div>
+                );
             })}
-            {filteredGroups.length === 0 && <div className="p-12 text-center"><p className="text-sm font-bold text-[#303030]">Data tidak ditemukan</p><p className="mt-1 text-xs font-semibold text-[#7C7C7C]">Ubah pencarian atau filter aspek.</p></div>}
-            <AnswerDetailModal question={detailQuestion} open={Boolean(detailQuestion)} onOpenChange={(open) => { if (!open) setDetailQuestion(null); }} />
-            {!isViewer && <IstcAnswerEditModal assignmentCode={assignmentCode} question={editingQuestion} open={Boolean(editingQuestion)} onOpenChange={(open) => { if (!open) setEditingQuestion(null); }} />}
+            {filteredGroups.length === 0 && (
+                <div className="p-12 text-center">
+                    <p className="text-sm font-bold text-[#303030]">
+                        Data tidak ditemukan
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        Ubah pencarian atau filter aspek.
+                    </p>
+                </div>
+            )}
+            <AnswerDetailModal
+                question={detailQuestion}
+                open={Boolean(detailQuestion)}
+                onOpenChange={(open) => {
+                    if (!open) setDetailQuestion(null);
+                }}
+            />
+            {!isViewer && (
+                <IstcAnswerEditModal
+                    assignmentCode={assignmentCode}
+                    question={editingQuestion}
+                    open={Boolean(editingQuestion)}
+                    onOpenChange={(open) => {
+                        if (!open) setEditingQuestion(null);
+                    }}
+                />
+            )}
         </Card>
     );
 }
@@ -3084,16 +3378,29 @@ function PariwisataSurveyScoreCharts({
     return (
         <div className="grid gap-5 xl:grid-cols-[0.9fr_1.25fr_1fr]">
             <Card className="min-h-[360px] p-6">
-                <h2 className="text-base font-bold text-[#111827]">Skor Akhir Survey</h2>
-                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Nilai kesiapan keseluruhan</p>
+                <h2 className="text-base font-bold text-[#111827]">
+                    Skor Akhir Survey
+                </h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                    Nilai kesiapan keseluruhan
+                </p>
                 <div className="mt-9 flex flex-col items-center">
                     <div
                         className="grid size-48 place-items-center rounded-full"
-                        style={{ background: 'conic-gradient(#0066AE ' + clampScore(summary.final_score) + '%, #EAF3FF 0)' }}
+                        style={{
+                            background:
+                                'conic-gradient(#0066AE ' +
+                                clampScore(summary.final_score) +
+                                '%, #EAF3FF 0)',
+                        }}
                     >
                         <div className="grid size-40 place-items-center rounded-full bg-white text-center">
-                            <p className="text-4xl font-black text-[#093967]">{formatStatScore(summary.final_score)}</p>
-                            <p className="text-xs font-bold text-[#7C7C7C]">dari 100</p>
+                            <p className="text-4xl font-black text-[#093967]">
+                                {formatStatScore(summary.final_score)}
+                            </p>
+                            <p className="text-xs font-bold text-[#7C7C7C]">
+                                dari 100
+                            </p>
                         </div>
                     </div>
                     <p className="mt-5 text-sm font-bold text-[#303030]">
@@ -3103,25 +3410,62 @@ function PariwisataSurveyScoreCharts({
             </Card>
 
             <Card className="min-h-[360px] p-6">
-                <h2 className="text-base font-bold text-[#111827]">Skor per Aspek</h2>
-                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Total skor per aspek</p>
+                <h2 className="text-base font-bold text-[#111827]">
+                    Skor per Aspek
+                </h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                    Total skor per aspek
+                </p>
                 <div className="mt-6 h-[260px]">
                     {aspects.length === 0 ? (
-                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">Belum ada data aspek</div>
+                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                            Belum ada data aspek
+                        </div>
                     ) : (
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={aspects} layout="vertical" margin={{ left: 8, right: 24 }}>
-                                <CartesianGrid horizontal={false} stroke="#EAF0F6" />
+                            <BarChart
+                                data={aspects}
+                                layout="vertical"
+                                margin={{ left: 8, right: 24 }}
+                            >
+                                <CartesianGrid
+                                    horizontal={false}
+                                    stroke="#EAF0F6"
+                                />
                                 <XAxis type="number" domain={[0, 100]} hide />
-                                <YAxis dataKey="name" type="category" width={110} tick={{ fill: '#667085', fontSize: 11, fontWeight: 700 }} />
+                                <YAxis
+                                    dataKey="name"
+                                    type="category"
+                                    width={110}
+                                    tick={{
+                                        fill: '#667085',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                    }}
+                                />
                                 <Tooltip
                                     formatter={(value, _name, item) => [
-                                        Number(value).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '% (' + item.payload.score + '/' + item.payload.max_score + ')',
+                                        Number(value).toLocaleString('id-ID', {
+                                            maximumFractionDigits: 1,
+                                        }) +
+                                            '% (' +
+                                            item.payload.score +
+                                            '/' +
+                                            item.payload.max_score +
+                                            ')',
                                         'Skor',
                                     ]}
-                                    contentStyle={{ border: '1px solid #E5EDF6', borderRadius: '12px', fontSize: '12px' }}
+                                    contentStyle={{
+                                        border: '1px solid #E5EDF6',
+                                        borderRadius: '12px',
+                                        fontSize: '12px',
+                                    }}
                                 />
-                                <Bar dataKey="score_percent" fill="#0066AE" radius={[0, 6, 6, 0]} />
+                                <Bar
+                                    dataKey="score_percent"
+                                    fill="#0066AE"
+                                    radius={[0, 6, 6, 0]}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     )}
@@ -3129,22 +3473,56 @@ function PariwisataSurveyScoreCharts({
             </Card>
 
             <Card className="min-h-[360px] p-6">
-                <h2 className="text-base font-bold text-[#111827]">Perbandingan Aspek (Radar)</h2>
-                <p className="mt-1 text-sm font-medium text-[#8A97A8]">Visualisasi nilai antar aspek</p>
+                <h2 className="text-base font-bold text-[#111827]">
+                    Perbandingan Aspek (Radar)
+                </h2>
+                <p className="mt-1 text-sm font-medium text-[#8A97A8]">
+                    Visualisasi nilai antar aspek
+                </p>
                 <div className="mt-5 h-[260px]">
                     {aspects.length === 0 ? (
-                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">Belum ada data aspek</div>
+                        <div className="grid h-full place-items-center rounded-xl bg-[#F8FBFE] text-sm font-semibold text-[#8A97A8]">
+                            Belum ada data aspek
+                        </div>
                     ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <RadarChart data={radarData} outerRadius="66%">
                                 <PolarGrid stroke="#E4EAF2" />
-                                <PolarAngleAxis dataKey="name" tick={{ fill: '#667085', fontSize: 10, fontWeight: 700 }} />
-                                <PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#98A2B3', fontSize: 9 }} axisLine={false} />
-                                <Radar dataKey="score" stroke="#0066AE" strokeWidth={2} fill="#0066AE" fillOpacity={0.22} />
+                                <PolarAngleAxis
+                                    dataKey="name"
+                                    tick={{
+                                        fill: '#667085',
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                    }}
+                                />
+                                <PolarRadiusAxis
+                                    domain={[0, 100]}
+                                    tick={{ fill: '#98A2B3', fontSize: 9 }}
+                                    axisLine={false}
+                                />
+                                <Radar
+                                    dataKey="score"
+                                    stroke="#0066AE"
+                                    strokeWidth={2}
+                                    fill="#0066AE"
+                                    fillOpacity={0.22}
+                                />
                                 <Tooltip
-                                    formatter={(value) => [formatStatScore(Number(value)) + '%', 'Skor']}
-                                    labelFormatter={(label) => radarData.find((item) => item.name === label)?.fullName ?? label}
-                                    contentStyle={{ border: '1px solid #E5EDF6', borderRadius: '12px', fontSize: '12px' }}
+                                    formatter={(value) => [
+                                        formatStatScore(Number(value)) + '%',
+                                        'Skor',
+                                    ]}
+                                    labelFormatter={(label) =>
+                                        radarData.find(
+                                            (item) => item.name === label,
+                                        )?.fullName ?? label
+                                    }
+                                    contentStyle={{
+                                        border: '1px solid #E5EDF6',
+                                        borderRadius: '12px',
+                                        fontSize: '12px',
+                                    }}
                                 />
                             </RadarChart>
                         </ResponsiveContainer>
@@ -3188,7 +3566,6 @@ export default function ShowPariwisata({
             },
         );
     }
-
 
     return (
         <>
@@ -3346,8 +3723,8 @@ export default function ShowPariwisata({
                             ],
                             [
                                 'Aspek Terendah',
-                                pariwisata_survey_summary.lowest_aspect
-                                    ?.name ?? '-',
+                                pariwisata_survey_summary.lowest_aspect?.name ??
+                                    '-',
                             ],
                         ].map(([label, value]) => (
                             <Card key={label} className="p-4">

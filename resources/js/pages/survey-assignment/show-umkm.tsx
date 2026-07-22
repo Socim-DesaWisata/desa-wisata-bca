@@ -3042,36 +3042,38 @@ export default function ShowUmkm({
                     </Card>
 
                     {!isViewer && (
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <MetricCard
-                            label="Jawaban"
-                            value={String(survey_summary.answered_questions)}
-                            helper="Total assessment"
-                            icon={<CheckCircle2 size={18} />}
-                            compact
-                        />
-                        <MetricCard
-                            label="Rata-rata"
-                            value={String(survey_summary.average_score)}
-                            helper="/ 100"
-                            icon={<Star size={18} />}
-                            compact
-                        />
-                        <MetricCard
-                            label="Weighted Score"
-                            value={String(survey_summary.weighted_score)}
-                            helper="/ 100"
-                            icon={<BadgeDollarSign size={18} />}
-                            compact
-                        />
-                        <MetricCard
-                            label="Update Survey"
-                            value={survey_summary.last_answered_at}
-                            helper="Terakhir diedit"
-                            icon={<CalendarDays size={18} />}
-                            compact
-                        />
-                    </div>
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <MetricCard
+                                label="Jawaban"
+                                value={String(
+                                    survey_summary.answered_questions,
+                                )}
+                                helper="Total assessment"
+                                icon={<CheckCircle2 size={18} />}
+                                compact
+                            />
+                            <MetricCard
+                                label="Rata-rata"
+                                value={String(survey_summary.average_score)}
+                                helper="/ 100"
+                                icon={<Star size={18} />}
+                                compact
+                            />
+                            <MetricCard
+                                label="Weighted Score"
+                                value={String(survey_summary.weighted_score)}
+                                helper="/ 100"
+                                icon={<BadgeDollarSign size={18} />}
+                                compact
+                            />
+                            <MetricCard
+                                label="Update Survey"
+                                value={survey_summary.last_answered_at}
+                                helper="Terakhir diedit"
+                                icon={<CalendarDays size={18} />}
+                                compact
+                            />
+                        </div>
                     )}
 
                     <UmkmAnnualCharts values={edit_values} />
@@ -3135,14 +3137,21 @@ export default function ShowUmkm({
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className={classNames("mt-3 grid gap-2", isViewer ? "grid-cols-1" : "grid-cols-3")}>
+                                        <div
+                                            className={classNames(
+                                                'mt-3 grid gap-2',
+                                                isViewer
+                                                    ? 'grid-cols-1'
+                                                    : 'grid-cols-3',
+                                            )}
+                                        >
                                             <a
                                                 href={document.file_url}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className={classNames(
-                                                    "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]",
-                                                    isViewer ? "w-full" : ""
+                                                    'inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#0066AE] transition hover:bg-[#F1F5F8]',
+                                                    isViewer ? 'w-full' : '',
                                                 )}
                                             >
                                                 <Download size={13} />
@@ -3153,7 +3162,9 @@ export default function ShowUmkm({
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            openEditDocument(document)
+                                                            openEditDocument(
+                                                                document,
+                                                            )
                                                         }
                                                         className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#DDE4EC] bg-white px-2 text-xs font-bold text-[#303030] transition hover:bg-[#F1F5F8]"
                                                     >
@@ -3163,7 +3174,9 @@ export default function ShowUmkm({
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            deleteDocument(document)
+                                                            deleteDocument(
+                                                                document,
+                                                            )
                                                         }
                                                         disabled={
                                                             documentDeleteForm.processing
@@ -3182,31 +3195,33 @@ export default function ShowUmkm({
                         </Card>
 
                         {!isViewer && (
-                        <Card className="p-4">
-                            <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
-                                <Store size={16} className="text-[#0066AE]" />
-                                Data Ringkas
-                            </h2>
-                            <div className="mt-4 space-y-3">
-                                <DetailPair
-                                    label="Collector"
-                                    value={umkm.collector.name}
-                                />
-                                <DetailPair
-                                    label="Dibuat Oleh"
-                                    value={umkm.creator.name}
-                                />
-                                <DetailPair
-                                    label="Kapasitas Bulanan"
-                                    value={umkm.monthly_production_capacity}
-                                />
-                                <DetailPair
-                                    label="Sertifikasi"
-                                    value={umkm.certifications}
-                                />
-                            </div>
-                        </Card>
-
+                            <Card className="p-4">
+                                <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">
+                                    <Store
+                                        size={16}
+                                        className="text-[#0066AE]"
+                                    />
+                                    Data Ringkas
+                                </h2>
+                                <div className="mt-4 space-y-3">
+                                    <DetailPair
+                                        label="Collector"
+                                        value={umkm.collector.name}
+                                    />
+                                    <DetailPair
+                                        label="Dibuat Oleh"
+                                        value={umkm.creator.name}
+                                    />
+                                    <DetailPair
+                                        label="Kapasitas Bulanan"
+                                        value={umkm.monthly_production_capacity}
+                                    />
+                                    <DetailPair
+                                        label="Sertifikasi"
+                                        value={umkm.certifications}
+                                    />
+                                </div>
+                            </Card>
                         )}
                         <Card className="p-4">
                             <h2 className="flex items-center gap-2 text-sm font-bold text-[#303030]">

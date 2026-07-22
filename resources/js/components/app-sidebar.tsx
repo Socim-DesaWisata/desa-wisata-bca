@@ -129,8 +129,8 @@ export function AdminSidebarContent({
         auth.user?.role === 'admin'
             ? 'admin'
             : auth.user?.role === 'viewer'
-                ? 'viewer'
-                : 'enumerator';
+              ? 'viewer'
+              : 'enumerator';
     const visibleNavGroups = navGroups
         .map((group) => ({
             ...group,
@@ -179,8 +179,8 @@ export function AdminSidebarContent({
                                     item.href === '#' && !hasChildren;
                                 const href =
                                     !isPlaceholder &&
-                                        !hasChildren &&
-                                        typeof item.href !== 'string'
+                                    !hasChildren &&
+                                    typeof item.href !== 'string'
                                         ? item.href
                                         : null;
                                 const childHrefs = item.children?.filter(
@@ -195,10 +195,10 @@ export function AdminSidebarContent({
                                 const isActive = hasActiveChild
                                     ? true
                                     : href && href.url === questions().url
-                                        ? isCurrentOrParentUrl(href)
-                                        : href
-                                            ? isCurrentUrl(href)
-                                            : false;
+                                      ? isCurrentOrParentUrl(href)
+                                      : href
+                                        ? isCurrentUrl(href)
+                                        : false;
 
                                 const content = (
                                     <>
@@ -241,8 +241,8 @@ export function AdminSidebarContent({
                                     isActive || isOpen
                                         ? 'bg-[#2FA6FC] font-semibold text-white shadow-sm'
                                         : isPlaceholder
-                                            ? 'cursor-default font-medium text-white/42'
-                                            : 'font-medium text-white/72 hover:translate-x-0.5 hover:bg-white/10 hover:text-white',
+                                          ? 'cursor-default font-medium text-white/42'
+                                          : 'font-medium text-white/72 hover:translate-x-0.5 hover:bg-white/10 hover:text-white',
                                 ].join(' ');
 
                                 if (hasChildren) {
@@ -257,7 +257,7 @@ export function AdminSidebarContent({
                                                         ...current,
                                                         [item.title]:
                                                             !current[
-                                                            item.title
+                                                                item.title
                                                             ],
                                                     }))
                                                 }

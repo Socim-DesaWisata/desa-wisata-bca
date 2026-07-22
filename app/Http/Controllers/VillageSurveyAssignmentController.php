@@ -17,6 +17,8 @@ use App\Http\Requests\VillageSurveyAssignments\StoreVillageUmkmDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdatePariwisataSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAnswerRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateUmkmSurveyAssignmentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdatePariwisataSurveyDocumentRequest;
+use App\Http\Requests\VillageSurveyAssignments\UpdateSurveyDocumentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageAnnualDataRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageSurveyAssignmentRequest;
 use App\Http\Requests\VillageSurveyAssignments\UpdateVillageUmkmDocumentRequest;
@@ -273,6 +275,17 @@ class VillageSurveyAssignmentController extends Controller
         return back()->with('success', 'Draft survey pariwisata berhasil disimpan.');
     }
 
+    public function updatePariwisataSurveyDocument(
+        UpdatePariwisataSurveyDocumentRequest $request,
+        VillageSurveyAssignment $assignment,
+        PariwisataSurveyAnswerDocument $document,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->updatePariwisataSurveyDocument($assignment, $document, $request->validated());
+
+        return back()->with('success', 'Nama dokumen berhasil diperbarui.');
+    }
+
     public function destroyPariwisataSurveyDocument(
         VillageSurveyAssignment $assignment,
         PariwisataSurveyAnswerDocument $document,
@@ -318,6 +331,17 @@ class VillageSurveyAssignmentController extends Controller
         $service->saveSurveyDraft($assignment, $request->validated(), $request->user());
 
         return back()->with('success', 'Draft survey berhasil disimpan.');
+    }
+
+    public function updateSurveyDocument(
+        UpdateSurveyDocumentRequest $request,
+        VillageSurveyAssignment $assignment,
+        SurveyAnswerDocument $document,
+        VillageSurveyAssignmentService $service
+    ): RedirectResponse {
+        $service->updateSurveyDocument($assignment, $document, $request->validated());
+
+        return back()->with('success', 'Nama dokumen berhasil diperbarui.');
     }
 
     public function destroySurveyDocument(

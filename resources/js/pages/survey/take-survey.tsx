@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -24,7 +24,11 @@ import {
 
 import { show as showAssignment } from '@/routes/survey-assignments';
 import { store as storeSurveyDraft } from '@/routes/survey-assignments/take-survey';
-import { destroy as destroySurveyDocument } from '@/routes/survey-assignments/take-survey/documents';
+import {
+    destroy as destroySurveyDocument,
+    update as updateSurveyDocument,
+} from '@/routes/survey-assignments/take-survey/documents';
+import { EditableFileName } from '@/components/editable-filename';
 
 const MAX_UPLOAD_FILE_SIZE_MB = 50;
 const MAX_UPLOAD_FILE_SIZE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024;
@@ -404,6 +408,7 @@ function QuestionCard({
     noteValue: string;
     onNotesChange: (value: string) => void;
 }) {
+    const { assignment } = usePage<any>().props;
     const [fileError, setFileError] = useState('');
     const hasDocuments =
         (question.answer?.documents.length ?? 0) > 0 || files.length > 0;
@@ -618,9 +623,14 @@ function QuestionCard({
                                 className="flex items-center gap-3 rounded-xl border border-[#EFEFEF] bg-white px-3 py-2 text-sm font-semibold text-[#303030] transition hover:border-[#AAD2F8] hover:bg-[#F8FBFF]"
                             >
                                 <FileText className="size-5 shrink-0 text-[#0066AE]" />
-                                <span className="min-w-0 flex-1 truncate">
-                                    {document.file_name}
-                                </span>
+                                <EditableFileName
+                                    fileName={document.file_name}
+                                    updateUrl={updateSurveyDocument.url({
+                                        assignment: assignment.id,
+                                        document: document.id,
+                                    })}
+                                    className="min-w-0 flex-1 truncate"
+                                />
                                 <span className="rounded-md bg-[#EAF8F0] px-2 py-1 text-xs font-bold text-[#00893D]">
                                     Database
                                 </span>

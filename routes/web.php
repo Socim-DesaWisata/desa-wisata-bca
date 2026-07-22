@@ -83,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/survey-assignments/{assignment}/pariwisata/take-survey', [VillageSurveyAssignmentController::class, 'storePariwisataSurveyDraft'])
         ->middleware('role:admin,enumerator')
         ->name('survey-assignments.pariwisata.take-survey.store');
+    Route::patch('/survey-assignments/{assignment}/pariwisata/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'updatePariwisataSurveyDocument'])->name('survey-assignments.pariwisata.take-survey.documents.update');
     Route::delete('/survey-assignments/{assignment}/pariwisata/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroyPariwisataSurveyDocument'])
         ->middleware('role:admin,enumerator')
         ->name('survey-assignments.pariwisata.take-survey.documents.destroy');
@@ -135,6 +136,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/survey-assignments/{assignment}/take-survey', [VillageSurveyAssignmentController::class, 'storeSurveyDraft'])
         ->middleware('role:admin,enumerator')
         ->name('survey-assignments.take-survey.store');
+    Route::patch('/survey-assignments/{assignment}/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'updateSurveyDocument'])->name('survey-assignments.take-survey.documents.update');
     Route::delete('/survey-assignments/{assignment}/take-survey/documents/{document}', [VillageSurveyAssignmentController::class, 'destroySurveyDocument'])
         ->middleware('role:admin,enumerator')
         ->name('survey-assignments.take-survey.documents.destroy');

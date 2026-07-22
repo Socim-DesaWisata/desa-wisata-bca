@@ -1048,6 +1048,20 @@ class VillageSurveyAssignmentService
         });
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function updatePariwisataSurveyDocument(VillageSurveyAssignment $assignment, PariwisataSurveyAnswerDocument $document, array $data): void
+    {
+        $document->loadMissing('answer:id,village_survey_assignment_id');
+
+        abort_unless($document->answer?->village_survey_assignment_id === $assignment->id, 404);
+
+        $document->update([
+            'file_name' => $data['file_name'],
+        ]);
+    }
+
     public function deletePariwisataSurveyDocument(VillageSurveyAssignment $assignment, PariwisataSurveyAnswerDocument $document): void
     {
         $document->loadMissing('answer:id,village_survey_assignment_id');
@@ -1225,6 +1239,20 @@ class VillageSurveyAssignmentService
                 'last_saved_at' => now(),
             ]);
         });
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function updateSurveyDocument(VillageSurveyAssignment $assignment, SurveyAnswerDocument $document, array $data): void
+    {
+        $document->loadMissing('answer:id,village_survey_assignment_id');
+
+        abort_unless($document->answer?->village_survey_assignment_id === $assignment->id, 404);
+
+        $document->update([
+            'file_name' => $data['file_name'],
+        ]);
     }
 
     public function deleteSurveyDocument(VillageSurveyAssignment $assignment, SurveyAnswerDocument $document): void
