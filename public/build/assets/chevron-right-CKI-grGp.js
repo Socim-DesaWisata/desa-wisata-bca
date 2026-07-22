@@ -1,0 +1,1 @@
+import{st as e}from"./app-CnuH2H3s.js";var t=e(`ChevronRight`,[[`path`,{d:`m9 18 6-6-6-6`,key:`mthhwq`}]]);export{t};
