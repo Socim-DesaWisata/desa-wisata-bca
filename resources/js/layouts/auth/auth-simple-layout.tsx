@@ -9,8 +9,17 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center bg-[#F7F7F7] px-4 py-8 font-bca text-[#303030] sm:px-6">
-            <div className="w-full max-w-[420px] rounded-3xl border border-[#E4EAF0] bg-white px-6 py-7 shadow-[0_18px_46px_rgba(9,57,103,0.10)] sm:px-8">
+        <div className="relative flex min-h-svh flex-col items-center justify-center px-4 py-8 font-bca text-[#303030] sm:px-6">
+            {/* Background Image */}
+            <div 
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: 'url("/images/bg-login.webp")' }}
+            />
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 z-0 bg-[#093967]/40 mix-blend-multiply" />
+
+            <div className="relative z-10 w-full max-w-[420px] rounded-3xl border border-white/20 bg-white/95 px-6 py-7 shadow-[0_18px_46px_rgba(9,57,103,0.15)] backdrop-blur-md sm:px-8">
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col items-center gap-3">
                         <Link

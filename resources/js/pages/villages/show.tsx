@@ -203,15 +203,9 @@ const truncateText = (value: string, maxLength = 96) =>
         ? `${value.slice(0, maxLength).trim()}....`
         : value;
 const profileDescriptionLimit = 320;
-const truncateAtWord = (value: string, maxLength: number) => {
-    if (value.length <= maxLength) {
-        return value;
-    }
-
-    const shortened = value.slice(0, maxLength);
-    const lastSpace = shortened.lastIndexOf(' ');
-
-    return `${shortened.slice(0, lastSpace > 0 ? lastSpace : maxLength).trim()}...`;
+const stripHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
 };
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '-');
 const firstMediaUrl = (media: MediaItem[] | undefined) =>
@@ -1583,7 +1577,7 @@ export default function VillageDetail({
     );
     const villageDescription = village.description ?? '';
     const hasLongDescription =
-        villageDescription.length > profileDescriptionLimit;
+        stripHtml(villageDescription).length > profileDescriptionLimit;
 
     return (
         <>
@@ -1615,12 +1609,10 @@ export default function VillageDetail({
                                         {villageDescription ? (
                                             <>
                                                 <div>
-                                                    <p>
-                                                        {truncateAtWord(
-                                                            villageDescription,
-                                                            profileDescriptionLimit,
-                                                        )}
-                                                    </p>
+                                                    <div 
+                                                        className="line-clamp-6 rich-text-content"
+                                                        dangerouslySetInnerHTML={{ __html: villageDescription }}
+                                                    />
                                                     {hasLongDescription ? (
                                                         <Dialog>
                                                             <DialogTrigger
@@ -1648,11 +1640,10 @@ export default function VillageDetail({
                                                                     </DialogDescription>
                                                                 </DialogHeader>
                                                                 <div className="max-h-[70dvh] overflow-y-auto px-6 py-5">
-                                                                    <p className="text-[14px] leading-7 font-semibold whitespace-pre-wrap text-[#303030]">
-                                                                        {
-                                                                            villageDescription
-                                                                        }
-                                                                    </p>
+                                                                    <div 
+                                                                        className="text-[14px] leading-7 font-semibold text-[#303030] rich-text-content"
+                                                                        dangerouslySetInnerHTML={{ __html: villageDescription }}
+                                                                    />
                                                                 </div>
                                                             </DialogContent>
                                                         </Dialog>

@@ -1,4 +1,5 @@
 import { update as updateVillage } from '@/actions/App/Http/Controllers/TourismVillageController';
+import { RichTextField } from '@/components/ui/rich-text-field';
 import { dashboard, villages as villagesRoute } from '@/routes';
 import { show as showVillage } from '@/routes/villages';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -1214,7 +1215,7 @@ export default function VillageEdit({
                         options={status_options}
                     />
                     <div className="md:col-span-2">
-                        <TextAreaField
+                        <RichTextField
                             label="Deskripsi"
                             value={data.description}
                             onChange={(value) => setData('description', value)}
