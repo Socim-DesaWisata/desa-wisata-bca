@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import loginLogo from '../../../../resources/js/assets/auth-login-logo.png';
-import loginBg from '../../../../design/login-bg.png';
 
 type Props = {
     status?: string;
@@ -41,7 +40,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
             <main
                 className="relative min-h-svh overflow-hidden bg-cover bg-center font-bca text-[#0a2246]"
-                style={{ backgroundImage: `url(${loginBg})` }}
+                style={{ backgroundImage: 'url("/images/bg-login.webp")' }}
             >
                 <section className="relative z-10 flex min-h-svh items-center justify-end px-4 py-5 sm:px-6 lg:px-14 xl:px-20">
                     <div className="w-full max-w-[520px] rounded-3xl border border-white/70 bg-white/96 px-6 py-7 shadow-[0_22px_70px_rgba(17,55,99,0.18)] backdrop-blur-sm sm:px-8 lg:px-10 lg:py-9">
