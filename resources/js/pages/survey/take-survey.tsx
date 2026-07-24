@@ -626,7 +626,7 @@ function QuestionCard({
                                 <EditableFileName
                                     fileName={document.file_name}
                                     updateUrl={updateSurveyDocument.url({
-                                        assignment: assignment.id,
+                                        assignment: assignment.code,
                                         document: document.id,
                                     })}
                                     className="min-w-0 flex-1 truncate"

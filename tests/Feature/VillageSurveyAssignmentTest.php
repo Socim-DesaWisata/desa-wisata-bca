@@ -1161,6 +1161,139 @@ test('authenticated users can delete survey answer documents', function () {
     ]);
 });
 
+test('admins can rename survey answer documents through assignment code route', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $template = SurveyTemplate::factory()->create(['created_by' => $admin->id]);
+    $village = TourismVillage::factory()->create(['created_by' => $admin->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-RENAME-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $admin->id,
+    ]);
+    $question = SurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'aspect' => 'Amenitas',
+        'question_text' => 'Dokumen apa yang tersedia?',
+        'sort_order' => 1,
+    ]);
+    $option = SurveyQuestionOption::query()->create([
+        'survey_question_id' => $question->id,
+        'score' => 4,
+        'label' => 'Lengkap',
+        'sort_order' => 1,
+    ]);
+    $answer = SurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'survey_question_id' => $question->id,
+        'survey_question_option_id' => $option->id,
+        'score' => 4,
+        'answered_by' => $admin->id,
+        'last_edited_by' => $admin->id,
+    ]);
+    $document = SurveyAnswerDocument::query()->create([
+        'survey_answer_id' => $answer->id,
+        'uploaded_by' => $admin->id,
+        'file_name' => 'nama-lama.pdf',
+        'file_path' => 'survey-documents/nama-lama.pdf',
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('survey-assignments.take-survey.documents.update', [
+            'assignment' => $assignment->code,
+            'document' => $document->id,
+        ]), ['file_name' => 'nama-baru.pdf'])
+        ->assertRedirect();
+
+    expect($document->refresh()->file_name)->toBe('nama-baru.pdf');
+
+    $otherVillage = TourismVillage::factory()->create(['created_by' => $admin->id]);
+    $otherAssignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-RENAME-OTHER',
+        'village_id' => $otherVillage->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $admin->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('survey-assignments.take-survey.documents.update', [
+            'assignment' => $otherAssignment->code,
+            'document' => $document->id,
+        ]), ['file_name' => 'tidak-boleh.pdf'])
+        ->assertNotFound();
+
+    expect($document->refresh()->file_name)->toBe('nama-baru.pdf');
+});
+
+test('admins can rename pariwisata survey documents through assignment code route', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $template = SurveyTemplate::factory()->create([
+        'type' => 'pariwisata',
+        'created_by' => $admin->id,
+    ]);
+    $village = TourismVillage::factory()->create(['created_by' => $admin->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-RENAME-001',
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $admin->id,
+    ]);
+    $question = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Dokumen pendukung',
+        'sort_order' => 1,
+    ]);
+    $option = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $question->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Lengkap',
+        'description' => 'Dokumen lengkap',
+        'sort_order' => 1,
+    ]);
+    $answer = PariwisataSurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $question->id,
+        'pariwisata_suvey_option_id' => $option->id,
+        'score' => 4,
+        'answered_by' => $admin->id,
+        'last_edited_by' => $admin->id,
+    ]);
+    $document = PariwisataSurveyAnswerDocument::query()->create([
+        'pariwisata_survey_answer_id' => $answer->id,
+        'uploaded_by' => $admin->id,
+        'file_name' => 'pariwisata-lama.pdf',
+        'file_path' => 'pariwisata-survey-documents/pariwisata-lama.pdf',
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('survey-assignments.pariwisata.take-survey.documents.update', [
+            'assignment' => $assignment->code,
+            'document' => $document->id,
+        ]), ['file_name' => 'pariwisata-baru.pdf'])
+        ->assertRedirect();
+
+    expect($document->refresh()->file_name)->toBe('pariwisata-baru.pdf');
+
+    $otherVillage = TourismVillage::factory()->create(['created_by' => $admin->id]);
+    $otherAssignment = VillageSurveyAssignment::factory()->create([
+        'code' => 'ASG-PAR-RENAME-OTHER',
+        'village_id' => $otherVillage->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $admin->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('survey-assignments.pariwisata.take-survey.documents.update', [
+            'assignment' => $otherAssignment->code,
+            'document' => $document->id,
+        ]), ['file_name' => 'tidak-boleh.pdf'])
+        ->assertNotFound();
+
+    expect($document->refresh()->file_name)->toBe('pariwisata-baru.pdf');
+});
+
 test('authenticated users can save pariwisata survey answers scoped by assignment', function () {
     Storage::fake('public');
 
