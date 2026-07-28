@@ -1072,7 +1072,7 @@ function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
                     aspects.map((aspect) => (
                         <div
                             key={aspect.name}
-                            className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_72px] md:items-center"
+                            className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_112px] md:items-center"
                         >
                             <p className="truncate text-xs font-semibold text-[#344256]">
                                 {aspect.name}
@@ -1086,10 +1086,15 @@ function AspectScoreBars({ aspects }: { aspects: ScoreAspectSummary[] }) {
                                 />
                             </div>
                             <p className="text-right text-xs font-black text-[#111827] tabular-nums">
-                                {formatPointScore(
-                                    aspect.score,
-                                    aspect.max_score,
-                                )}
+                                <span>
+                                    {formatPointScore(
+                                        aspect.score,
+                                        aspect.max_score,
+                                    )}
+                                </span>{' '}
+                                <span className="font-medium text-[#8A97A8]">
+                                    ({formatStatScore(aspect.score_percent)}%)
+                                </span>
                             </p>
                         </div>
                     ))
