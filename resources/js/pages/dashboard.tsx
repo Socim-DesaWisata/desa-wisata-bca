@@ -784,7 +784,7 @@ export default function Dashboard({
                                             {villageStatusModal ?? ''}
                                         </DialogTitle>
                                         <DialogDescription>
-                                            Nama desa, skor KEMENPAR, skor ISTC,
+                                            Nama desa, skor KEMENPAR, skor GSTC,
                                             dan kategori desa.
                                         </DialogDescription>
                                     </DialogHeader>
@@ -804,7 +804,7 @@ export default function Dashboard({
                                                             Skor KEMENPAR
                                                         </th>
                                                         <th className="px-3 py-3 text-right">
-                                                            Skor ISTC
+                                                            Skor GSTC
                                                         </th>
                                                         <th className="px-3 py-3">
                                                             Kategori Desa
@@ -1000,7 +1000,7 @@ export default function Dashboard({
                                     Detail Desa {villageStatusModal ?? ''}
                                 </DialogTitle>
                                 <DialogDescription>
-                                    Nama desa, skor KEMENPAR, skor ISTC, dan
+                                    Nama desa, skor KEMENPAR, skor GSTC, dan
                                     kategori desa.
                                 </DialogDescription>
                             </DialogHeader>
@@ -1020,7 +1020,7 @@ export default function Dashboard({
                                                     Skor KEMENPAR
                                                 </th>
                                                 <th className="px-3 py-3 text-right font-semibold">
-                                                    Skor ISTC
+                                                    Skor GSTC
                                                 </th>
                                                 <th className="px-3 py-3 font-semibold">
                                                     Kategori Desa
@@ -1262,7 +1262,7 @@ export default function Dashboard({
                             theme="kemenpar"
                         />
                         <VillageScoreTable
-                            title="Skor Desa ISTC"
+                            title="Skor Desa GSTC"
                             data={istc_village_scores}
                             selectedAspects={selectedIstcAspects}
                             onToggleAspect={(aspect) =>

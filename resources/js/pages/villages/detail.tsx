@@ -165,7 +165,7 @@ const whyChooseUs: IconCardItem[] = [
     {
         icon: Mountain,
         title: 'Destinasi Nyata',
-        description: 'ISTC/pariwisata aktif ditampilkan langsung dari backend.',
+        description: 'GSTC/pariwisata aktif ditampilkan langsung dari backend.',
     },
     {
         icon: BedDouble,
@@ -502,7 +502,7 @@ function PariwisataCard({ item }: { item: PariwisataItem }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <p className="text-[11px] font-semibold tracking-[0.08em] text-[#2FA6FC] uppercase">
-                        ISTC / Pariwisata
+                        GSTC / Pariwisata
                     </p>
                     <h3 className="mt-1 text-[16px] font-bold text-[#26311f]">
                         {item.name}
@@ -687,7 +687,7 @@ export default function VillageShow({ village }: VillageShowProps) {
         {
             icon: Mountain,
             value: String(village.pariwisata.length),
-            label: 'ISTC / Pariwisata',
+            label: 'GSTC / Pariwisata',
         },
     ];
     const heroImage =
@@ -882,7 +882,7 @@ export default function VillageShow({ village }: VillageShowProps) {
                 <section id="istc" className="px-4 py-6 md:px-6 lg:px-8">
                     <div className="mx-auto max-w-[1180px]">
                         <SectionHeading
-                            title="ISTC / Pariwisata"
+                            title="GSTC / Pariwisata"
                             action="Lihat Semua Destinasi"
                             href="#istc"
                         />
@@ -893,7 +893,7 @@ export default function VillageShow({ village }: VillageShowProps) {
                                 ))
                             ) : (
                                 <div className="rounded-[16px] border border-dashed border-[#BFD6EA] bg-[#F8FBFE] p-5 text-[13px] text-[#59564c]">
-                                    Belum ada data ISTC/pariwisata aktif dari
+                                    Belum ada data GSTC/pariwisata aktif dari
                                     backend.
                                 </div>
                             )}
@@ -1056,7 +1056,7 @@ export default function VillageShow({ village }: VillageShowProps) {
                                 <p className="mt-4 max-w-[280px] text-[12px] leading-6 text-[#59564c]">
                                     Halaman desa memakai data backend untuk
                                     profil, galeri, paket, atraksi, UMKM, dan
-                                    ISTC/pariwisata.
+                                    GSTC/pariwisata.
                                 </p>
                                 <div className="mt-4 flex items-center gap-2.5 text-[#0066AE]">
                                     <span className="flex size-9 items-center justify-center rounded-full border border-[#BFD6EA] bg-white">
@@ -1117,7 +1117,7 @@ export default function VillageShow({ village }: VillageShowProps) {
                                     <p>{village.umkms.length} UMKM</p>
                                     <p>
                                         {village.pariwisata.length} data
-                                        ISTC/pariwisata
+                                        GSTC/pariwisata
                                     </p>
                                 </div>
                             </div>

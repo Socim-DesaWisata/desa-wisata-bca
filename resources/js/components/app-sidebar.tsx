@@ -77,7 +77,7 @@ const navGroups: SidebarNavGroup[] = [
                         icon: ClipboardCheck,
                     },
                     { title: 'UMKM', href: umkm(), icon: Store },
-                    { title: 'ISTC', href: pariwisata(), icon: ChartColumnBig },
+                    { title: 'GSTC', href: pariwisata(), icon: ChartColumnBig },
                 ],
             },
             {

@@ -1243,7 +1243,7 @@ export default function VillagesIndex({
                                                     ? ['Status']
                                                     : []),
                                                 'Skor KEMENPAR',
-                                                'Skor ISTC',
+                                                'Skor GSTC',
                                                 'Jenis Desa',
                                                 ...(!isViewer
                                                     ? ['Dibuat Oleh']
@@ -1255,7 +1255,7 @@ export default function VillagesIndex({
                                                     className="px-3 py-3 font-bold whitespace-nowrap"
                                                 >
                                                     {head === 'Skor KEMENPAR' ||
-                                                    head === 'Skor ISTC' ? (
+                                                    head === 'Skor GSTC' ? (
                                                         <button
                                                             type="button"
                                                             onClick={() =>

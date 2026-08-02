@@ -349,7 +349,7 @@ export function DashboardCharts() {
                                             updateFilter('program_type', 'ISTC')
                                         }
                                     >
-                                        ISTC
+                                        GSTC
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -621,8 +621,8 @@ export function DashboardCharts() {
                 href={surveyAssignments.url()}
             />
             <VillageScoreBarChart
-                title="Assessment ISTC"
-                subtitle="Skor ISTC per desa"
+                title="Assessment GSTC"
+                subtitle="Skor GSTC per desa"
                 aspects={istcVillageScores?.aspects ?? []}
                 rows={istcVillageScores?.rows ?? []}
                 color="#00893D"

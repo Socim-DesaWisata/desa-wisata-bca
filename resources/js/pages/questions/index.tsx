@@ -1813,7 +1813,7 @@ export default function QuestionsIndex({
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-bold text-[#303030]">
-                                                Opsi Skor ISTC
+                                                Opsi Skor GSTC
                                             </p>
                                             <p className="text-[11px] text-[#7C7C7C]">
                                                 Score, level, label, dan

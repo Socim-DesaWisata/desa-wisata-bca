@@ -1050,7 +1050,7 @@ function IstcAnswerEditModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>Edit Jawaban Survey ISTC</DialogTitle>
+                    <DialogTitle>Edit Jawaban Survey GSTC</DialogTitle>
                     <DialogDescription>
                         Ubah jawaban, catatan, atau tambahkan dokumen pendukung.
                     </DialogDescription>
@@ -1240,7 +1240,7 @@ function IstcSurveyTable({
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h2 className="text-base font-bold text-[#303030]">
-                            Jawaban Survey ISTC
+                            Jawaban Survey GSTC
                         </h2>
                         <p className="mt-1 text-sm font-semibold text-[#7C7C7C]">
                             Pertanyaan, skor, catatan, dan dokumen pendukung

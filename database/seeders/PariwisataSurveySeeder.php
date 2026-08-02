@@ -27,7 +27,7 @@ class PariwisataSurveySeeder extends Seeder
             );
 
             $template = SurveyTemplate::withTrashed()->firstOrNew([
-                'title' => 'Survey Pariwisata ISTC',
+                'title' => 'Survey Pariwisata GSTC',
                 'type' => 'pariwisata',
             ]);
             $shouldRestore = $template->exists && $template->trashed();

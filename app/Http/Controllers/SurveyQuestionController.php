@@ -95,7 +95,7 @@ class SurveyQuestionController extends Controller
     ): RedirectResponse {
         $service->updatePariwisataQuestion($question, $request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pertanyaan ISTC berhasil diperbarui.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pertanyaan GSTC berhasil diperbarui.']);
 
         return back();
     }

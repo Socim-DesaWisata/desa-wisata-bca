@@ -1585,7 +1585,7 @@ function PariwisataAnswerDetailModal({
             <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle className="text-[#303030]">
-                        Detail Jawaban Survey ISTC
+                        Detail Jawaban Survey GSTC
                     </DialogTitle>
                     <DialogDescription>
                         Pertanyaan, opsi jawaban, skor terpilih, catatan, dan
@@ -1859,7 +1859,7 @@ function PariwisataAnswerEditModal({
             <DialogContent className="max-h-[86vh] overflow-y-auto border-[#EFEFEF] bg-white sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle className="text-[#303030]">
-                        Edit Jawaban Survey ISTC
+                        Edit Jawaban Survey GSTC
                     </DialogTitle>
                     <DialogDescription>
                         Ubah jawaban, catatan, atau tambahkan dokumen pendukung
@@ -2422,7 +2422,7 @@ function PariwisataTab({
             <div className="flex flex-col gap-3 rounded-xl border border-[#D7E8F8] bg-[#F8FBFE] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-base font-bold text-[#303030]">
-                        Data Master ISTC
+                        Data Master GSTC
                     </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -2441,7 +2441,7 @@ function PariwisataTab({
                             <Link href={createPariwisata.url(assignmentCode)}>
                                 <Button>
                                     <MapPin size={16} />
-                                    Tambah ISTC
+                                    Tambah GSTC
                                 </Button>
                             </Link>
                         </>
@@ -2523,8 +2523,8 @@ function PariwisataTab({
 
             {pariwisata.length === 0 ? (
                 <EmptyState
-                    title="Belum ada data ISTC"
-                    description="Tambahkan master ISTC untuk desa pada assignment ini."
+                    title="Belum ada data GSTC"
+                    description="Tambahkan master GSTC untuk desa pada assignment ini."
                 />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -3636,7 +3636,7 @@ export default function SurveyAssignmentShow({
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
-                                label="ISTC"
+                                label="GSTC"
                                 count={tab_counts.istc}
                                 icon={<Flag size={16} />}
                                 href={showSurveyAssignment.url(

@@ -1733,8 +1733,8 @@ export default function VillageDetail({
                             }
                         />
                         <AspectScoreCard
-                            title="Skor Per Aspek (ISTC)"
-                            emptyLabel="Belum ada data skor ISTC"
+                            title="Skor Per Aspek (GSTC)"
+                            emptyLabel="Belum ada data skor GSTC"
                             aspects={village.istc_aspect_scores}
                             detailHref={
                                 village.survey_assignment
