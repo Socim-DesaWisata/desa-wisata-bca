@@ -1602,7 +1602,8 @@ export default function VillageDetail({
         village.manager_email,
         'Tidak ada data',
     );
-    const villageDescription = village.description ?? '';
+    const villageDescriptionRaw = village.description ?? '';
+    const villageDescription = villageDescriptionRaw.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
     const hasLongDescription =
         stripHtml(villageDescription).length > profileDescriptionLimit;
 
@@ -1640,7 +1641,7 @@ export default function VillageDetail({
                                                         <div 
                                                             className={cx(
                                                                 "rich-text-content text-justify overflow-hidden transition-all duration-300",
-                                                                hasLongDescription ? "line-clamp-[9]" : ""
+                                                                hasLongDescription ? "max-h-[231px]" : ""
                                                             )}
                                                             dangerouslySetInnerHTML={{ __html: villageDescription }}
                                                         />
