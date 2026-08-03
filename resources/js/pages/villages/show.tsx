@@ -204,6 +204,9 @@ const truncateText = (value: string, maxLength = 96) =>
         : value;
 const profileDescriptionLimit = 320;
 const stripHtml = (html: string) => {
+    if (typeof DOMParser === 'undefined') {
+        return html.replace(/<[^>]*>?/gm, '');
+    }
     const doc = new DOMParser().parseFromString(html, 'text/html');
     return doc.body.textContent || "";
 };
@@ -1615,7 +1618,7 @@ export default function VillageDetail({
                                                     <div className="relative">
                                                         <div 
                                                             className={cx(
-                                                                "rich-text-content overflow-hidden transition-all duration-300",
+                                                                "rich-text-content text-justify overflow-hidden transition-all duration-300",
                                                                 hasLongDescription ? "max-h-[220px]" : ""
                                                             )}
                                                             dangerouslySetInnerHTML={{ __html: villageDescription }}
@@ -1648,7 +1651,7 @@ export default function VillageDetail({
                                                                 </DialogHeader>
                                                                 <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
                                                                     <div 
-                                                                        className="min-w-0 break-words text-[15px] leading-relaxed font-medium text-[#303030] rich-text-content"
+                                                                        className="min-w-0 break-words text-justify text-[15px] leading-relaxed font-medium text-[#303030] rich-text-content"
                                                                         dangerouslySetInnerHTML={{ __html: villageDescription }}
                                                                     />
                                                                 </div>
