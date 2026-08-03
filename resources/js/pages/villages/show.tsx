@@ -1632,7 +1632,7 @@ export default function VillageDetail({
                                             className="aspect-[16/9] rounded-[12px] shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
                                         />
                                     )}
-                                    <div className="min-w-0 break-words space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
+                                    <div className="min-w-0 space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
                                         {villageDescription ? (
                                             <>
                                                 <div>
@@ -1672,7 +1672,7 @@ export default function VillageDetail({
                                                                 </DialogHeader>
                                                                 <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
                                                                     <div 
-                                                                        className="min-w-0 break-words text-justify text-[15px] leading-relaxed font-medium text-[#303030] rich-text-content"
+                                                                        className="min-w-0 text-justify text-[15px] leading-relaxed font-medium text-[#303030] rich-text-content"
                                                                         dangerouslySetInnerHTML={{ __html: villageDescription }}
                                                                     />
                                                                 </div>
