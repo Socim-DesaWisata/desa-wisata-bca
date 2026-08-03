@@ -230,6 +230,8 @@ const nav = [
     [User, 'Profil', '#profil'],
     [Star, 'Pariwisata', '#pariwisata'],
     [Gift, 'UMKM', '#umkm'],
+    [MapTrifold, 'Paket Wisata', '#paket-wisata'],
+    [Camera, 'Galeri', '#galeri'],
 ] as const;
 const footerCols = [
     [
@@ -1525,10 +1527,11 @@ export default function VillageDetail({
               tone: 'bg-[#0066AE]',
           }))
         : profileProducts(souvenirProfiles, undefined, 'bg-[#0066AE]');
+    const packageItems = profileProducts(packageProfiles, undefined, 'bg-[#E79A20]');
     const nearbyItems = nearby_villages.map((item) => ({
         title: item.name,
         image: item.cover_url,
-        desc: item.description || undefined,
+        desc: item.description ? stripHtml(item.description) : undefined,
         meta: item.location,
         href: showVillage.url(item.id),
     }));
@@ -1605,14 +1608,22 @@ export default function VillageDetail({
                                             className="aspect-[16/9] rounded-[12px] shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
                                         />
                                     )}
-                                    <div className="space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
+                                    <div className="min-w-0 break-words space-y-5 text-[14px] leading-[1.65] font-semibold text-[#303030]">
                                         {villageDescription ? (
                                             <>
                                                 <div>
-                                                    <div 
-                                                        className="line-clamp-6 rich-text-content"
-                                                        dangerouslySetInnerHTML={{ __html: villageDescription }}
-                                                    />
+                                                    <div className="relative">
+                                                        <div 
+                                                            className={cx(
+                                                                "rich-text-content overflow-hidden transition-all duration-300",
+                                                                hasLongDescription ? "max-h-[220px]" : ""
+                                                            )}
+                                                            dangerouslySetInnerHTML={{ __html: villageDescription }}
+                                                        />
+                                                        {hasLongDescription && (
+                                                            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#ffffff] to-transparent pointer-events-none" />
+                                                        )}
+                                                    </div>
                                                     {hasLongDescription ? (
                                                         <Dialog>
                                                             <DialogTrigger
@@ -1626,22 +1637,18 @@ export default function VillageDetail({
                                                                     Selengkapnya
                                                                 </button>
                                                             </DialogTrigger>
-                                                            <DialogContent className="max-h-[85dvh] overflow-hidden rounded-2xl border-[#DDE7E7] bg-white p-0 sm:max-w-2xl">
-                                                                <DialogHeader className="border-b border-[#E5EAF1] px-6 py-5">
+                                                            <DialogContent className="flex max-h-[85dvh] w-[95vw] sm:w-[60vw] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white p-0 shadow-2xl">
+                                                                <DialogHeader className="border-b border-[#E5EAF1] px-6 py-5 sm:px-8">
                                                                     <DialogTitle className="text-xl font-extrabold text-[#093967]">
-                                                                        Deskripsi
-                                                                        Profil
-                                                                        Desa
+                                                                        Deskripsi Profil Desa
                                                                     </DialogTitle>
                                                                     <DialogDescription className="text-sm font-semibold text-[#64748B]">
-                                                                        {
-                                                                            villageName
-                                                                        }
+                                                                        {villageName}
                                                                     </DialogDescription>
                                                                 </DialogHeader>
-                                                                <div className="max-h-[70dvh] overflow-y-auto px-6 py-5">
+                                                                <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
                                                                     <div 
-                                                                        className="text-[14px] leading-7 font-semibold text-[#303030] rich-text-content"
+                                                                        className="min-w-0 break-words text-[15px] leading-relaxed font-medium text-[#303030] rich-text-content"
                                                                         dangerouslySetInnerHTML={{ __html: villageDescription }}
                                                                     />
                                                                 </div>
@@ -1692,6 +1699,44 @@ export default function VillageDetail({
                                 </div>
                             ) : (
                                 <EmptyState title="Tidak ada data UMKM" />
+                            )}
+                        </section>
+                        <section id="paket-wisata">
+                            <Heading icon={MapTrifold}>Paket Wisata</Heading>
+                            {packageItems.length ? (
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                    {packageItems.map((p) => (
+                                        <ProductCard
+                                            key={p.title}
+                                            p={p}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState title="Tidak ada data paket wisata" />
+                            )}
+                        </section>
+                        <section id="galeri">
+                            <Heading icon={Camera}>Galeri Desa</Heading>
+                            {village.media.length ? (
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+                                    {village.media.map((m) => (
+                                        <a key={m.id} href={m.url || '#'} target="_blank" rel="noreferrer" className="group relative aspect-square overflow-hidden rounded-[14px] bg-[#F1F5F8] shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                                            {m.url ? (
+                                                <img src={m.url} alt={m.title || 'Media'} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+                                            ) : (
+                                                <ImagePlaceholder label="media" />
+                                            )}
+                                            {m.caption && (
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-3">
+                                                    <p className="text-white text-[10px] font-semibold line-clamp-2">{m.caption}</p>
+                                                </div>
+                                            )}
+                                        </a>
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState title="Tidak ada data galeri" />
                             )}
                         </section>
                         <section>
