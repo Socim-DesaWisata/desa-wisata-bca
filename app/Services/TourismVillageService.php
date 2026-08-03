@@ -199,6 +199,7 @@ class TourismVillageService
             'enumerators:id,name,email',
             'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
             'pariwisataVillages.categories:id,pariwisata_village_id,category',
+            'pariwisataVillages.packages' => fn ($query) => $query->orderBy('name')->orderBy('id'),
             'workers' => fn ($query) => $query->orderBy('type')->orderBy('gender')->orderBy('age_min')->orderBy('id'),
             'administrators' => fn ($query) => $query->orderBy('education')->orderBy('id'),
             'administratorLanguages' => fn ($query) => $query->orderBy('language_name')->orderBy('proficiency_level')->orderBy('id'),
@@ -1295,6 +1296,17 @@ class TourismVillageService
                     'id' => $category->id,
                     'value' => $category->category,
                     'label' => $this->pariwisataCategoryLabel($category->category),
+                ])
+                ->values(),
+            'packages' => $pariwisata->packages
+                ->map(fn ($package): array => [
+                    'id' => $package->id,
+                    'name' => $package->name,
+                    'package_type' => $package->package_type,
+                    'duration' => $package->duration,
+                    'facilities' => $package->facilities,
+                    'description' => $package->description,
+                    'price' => $package->price !== null ? $this->formatCurrency((float) $package->price) : null,
                 ])
                 ->values(),
         ];

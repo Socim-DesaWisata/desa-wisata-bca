@@ -106,6 +106,15 @@ type PariwisataItem = {
     person_in_charge_phone: string | null;
     status_label: string;
     categories: BadgeItem[];
+    packages: {
+        id: number;
+        name: string;
+        package_type: string | null;
+        duration: string | null;
+        facilities: string | null;
+        description: string | null;
+        price: string | null;
+    }[];
 };
 type KemenparAspectScore = {
     name: string;
@@ -1530,7 +1539,19 @@ export default function VillageDetail({
               tone: 'bg-[#0066AE]',
           }))
         : profileProducts(souvenirProfiles, undefined, 'bg-[#0066AE]');
-    const packageItems = profileProducts(packageProfiles, undefined, 'bg-[#E79A20]');
+    
+    // Merge new relational packages and legacy profile-based packages
+    const relationalPackages = village.pariwisata.flatMap((item) => item.packages || []).map((pkg) => ({
+        title: pkg.name,
+        desc: pkg.description || pkg.facilities || undefined,
+        price: pkg.price !== null ? pkg.price : undefined,
+        meta: pkg.duration || undefined,
+        badge: pkg.package_type || undefined,
+        tone: 'bg-[#E79A20]',
+    }));
+    const legacyPackageItems = profileProducts(packageProfiles, undefined, 'bg-[#E79A20]');
+    const packageItems = [...relationalPackages, ...legacyPackageItems];
+
     const nearbyItems = nearby_villages.map((item) => ({
         title: item.name,
         image: item.cover_url,
@@ -1619,7 +1640,7 @@ export default function VillageDetail({
                                                         <div 
                                                             className={cx(
                                                                 "rich-text-content text-justify overflow-hidden transition-all duration-300",
-                                                                hasLongDescription ? "max-h-[220px]" : ""
+                                                                hasLongDescription ? "line-clamp-[9]" : ""
                                                             )}
                                                             dangerouslySetInnerHTML={{ __html: villageDescription }}
                                                         />
