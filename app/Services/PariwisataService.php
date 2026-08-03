@@ -238,6 +238,11 @@ class PariwisataService
                 : ($pariwisata->village?->surveyAssignment
                     ? route('survey-assignments.pariwisata.show', [$pariwisata->village->surveyAssignment, $pariwisata])
                     : null),
+            'take_survey_url' => $pariwisata->trashed()
+                ? null
+                : ($pariwisata->village?->surveyAssignment
+                    ? route('survey-assignments.pariwisata.take-survey', [$pariwisata->village->surveyAssignment])
+                    : null),
         ];
     }
 

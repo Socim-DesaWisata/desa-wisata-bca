@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { ClipboardList } from 'lucide-react';
 
 import {
     destroy as destroyPariwisata,
@@ -65,6 +66,7 @@ type PariwisataRow = {
     updated_at: string;
     is_trashed: boolean;
     detail_url: string | null;
+    take_survey_url: string | null;
 };
 
 type Option = {
@@ -584,6 +586,21 @@ export default function PariwisataIndex({
                                                                             <Eye className="size-4" />
                                                                             Lihat
                                                                             Detail
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    {item.take_survey_url && !isViewer && (
+                                                                        <DropdownMenuItem
+                                                                            asChild
+                                                                            className="gap-2 text-xs"
+                                                                        >
+                                                                            <Link
+                                                                                href={
+                                                                                    item.take_survey_url
+                                                                                }
+                                                                            >
+                                                                                <ClipboardList className="size-4" />
+                                                                                Take Survey
+                                                                            </Link>
                                                                         </DropdownMenuItem>
                                                                     )}
                                                                     {item.is_trashed ? (
