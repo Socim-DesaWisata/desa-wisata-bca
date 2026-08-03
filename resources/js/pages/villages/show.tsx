@@ -841,6 +841,53 @@ function ShowcaseProductCard({
         </article>
     );
 }
+function PackageTicketCard({ p }: { p: Product }) {
+    return (
+        <article className="group relative flex flex-col justify-between overflow-hidden rounded-[24px] bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F8FBFE] to-white" />
+            <div className="relative flex h-full flex-col rounded-[20px] border border-[#EAF3FF] p-5">
+                <div className="flex items-start justify-between gap-3">
+                    {p.badge ? (
+                        <span className="inline-flex items-center rounded-lg bg-[#FFF4E5] px-3 py-1.5 text-[10px] font-black tracking-wide text-[#E79A20] uppercase">
+                            {p.badge}
+                        </span>
+                    ) : <div />}
+                    {p.meta && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#64748B]">
+                            <Clock className="size-4 text-[#0066AE]" weight="fill" />
+                            {p.meta}
+                        </span>
+                    )}
+                </div>
+                
+                <div className="mt-5 flex-1">
+                    <h3 className="text-[18px] leading-snug font-black tracking-tight text-[#093967]">
+                        {p.title}
+                    </h3>
+                    {p.desc && (
+                        <p className="mt-3 line-clamp-3 text-[13px] leading-relaxed font-medium text-[#5F6B76]">
+                            {p.desc}
+                        </p>
+                    )}
+                </div>
+
+                <div className="mt-6 flex items-end justify-between border-t border-dashed border-[#C8D8E8] pt-5">
+                    <div>
+                        <p className="text-[10px] font-extrabold tracking-wider text-[#94A3B8] uppercase">
+                            Harga Paket
+                        </p>
+                        <p className="mt-0.5 text-[18px] font-black text-[#0066AE]">
+                            {p.price || 'Hubungi Pengelola'}
+                        </p>
+                    </div>
+                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EAF3FF] text-[#0066AE] transition-colors group-hover:bg-[#0066AE] group-hover:text-white">
+                        <MapTrifold className="size-5" weight="fill" />
+                    </span>
+                </div>
+            </div>
+        </article>
+    );
+}
 function SidebarCard({
     title,
     icon: Icon,
@@ -1731,7 +1778,7 @@ export default function VillageDetail({
                             {packageItems.length ? (
                                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                     {packageItems.map((p) => (
-                                        <ProductCard
+                                        <PackageTicketCard
                                             key={p.title}
                                             p={p}
                                         />
