@@ -488,6 +488,7 @@ class TourismVillageService
         return [
             ['value' => 'image', 'label' => 'Gambar'],
             ['value' => 'video', 'label' => 'Video'],
+            ['value' => 'url', 'label' => 'Tautan / URL'],
         ];
     }
 
