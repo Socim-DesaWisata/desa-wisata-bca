@@ -576,7 +576,7 @@ function DocumentBadge({ document }: { document: SurveyDocument }) {
                 <EditableFileName
                     fileName={document.file_name}
                     updateUrl={updatePariwisataSurveyDocument.url({
-                        assignment: assignment.id,
+                        assignment: assignment.code,
                         document: document.id,
                     })}
                     className="text-xs font-bold text-[#303030]"
