@@ -18,6 +18,7 @@ use App\Models\TourismVillage;
 use App\Models\UmkmSurveyAnswer;
 use App\Models\User;
 use App\Models\VillageActiveGroupAnnual;
+use App\Models\VillageAdministrator;
 use App\Models\VillageAdministratorLanguage;
 use App\Models\VillageAnnualPopulationStat;
 use App\Models\VillageEnumeratorAssignment;
@@ -33,10 +34,7 @@ use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
 use App\Models\VillageUmkmDocument;
 use App\Models\VillageVulnerableGroupAnnual;
-use App\Models\VillageWorkerAge;
-use App\Models\VillageWorkerEducation;
-use App\Models\VillageWorkerGender;
-use App\Models\VillageWorkerType;
+use App\Models\VillageWorker;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -176,7 +174,6 @@ class TourismVillageService
             'manager_phone' => $data['manager_phone'] ?? null,
             'manager_email' => $data['manager_email'] ?? null,
             'status' => $data['status'],
-            'total_personnel' => $data['total_personnel'] ?? 0,
             'created_by' => $creator->id,
         ]);
     }
@@ -203,10 +200,8 @@ class TourismVillageService
             'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
             'pariwisataVillages.categories:id,pariwisata_village_id,category',
             'pariwisataVillages.packages' => fn ($query) => $query->orderBy('name')->orderBy('id'),
-            'workerTypes' => fn ($query) => $query->orderBy('type')->orderBy('id'),
-            'workerGenders' => fn ($query) => $query->orderBy('gender')->orderBy('id'),
-            'workerAges' => fn ($query) => $query->orderBy('id'),
-            'workerEducations' => fn ($query) => $query->orderBy('education')->orderBy('id'),
+            'workers' => fn ($query) => $query->orderBy('type')->orderBy('gender')->orderBy('age_min')->orderBy('id'),
+            'administrators' => fn ($query) => $query->orderBy('education')->orderBy('id'),
             'administratorLanguages' => fn ($query) => $query->orderBy('language_name')->orderBy('proficiency_level')->orderBy('id'),
             'stakeholders' => fn ($query) => $query->orderBy('name')->orderBy('id'),
             'institutionals' => fn ($query) => $query->orderBy('id'),
@@ -227,10 +222,8 @@ class TourismVillageService
             'profileItems' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
             'profileItems.category:id,name,slug',
             'profileItems.media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
-            'workerTypes' => fn ($query) => $query->orderBy('type')->orderBy('id'),
-            'workerGenders' => fn ($query) => $query->orderBy('gender')->orderBy('id'),
-            'workerAges' => fn ($query) => $query->orderBy('id'),
-            'workerEducations' => fn ($query) => $query->orderBy('education')->orderBy('id'),
+            'workers' => fn ($query) => $query->orderBy('type')->orderBy('id'),
+            'administrators' => fn ($query) => $query->orderBy('education')->orderBy('id'),
             'administratorLanguages' => fn ($query) => $query->orderBy('language_name')->orderBy('proficiency_level')->orderBy('id'),
             'stakeholders' => fn ($query) => $query->orderBy('name')->orderBy('id'),
             'institutionals' => fn ($query) => $query->orderBy('id'),
@@ -268,7 +261,6 @@ class TourismVillageService
                 'manager_phone' => $data['manager_phone'] ?? null,
                 'manager_email' => $data['manager_email'] ?? null,
                 'status' => $data['status'],
-                'total_personnel' => $data['total_personnel'] ?? 0,
             ]);
 
             $this->syncVillageMedia($village, $data['media'] ?? [], $actor);
@@ -277,17 +269,12 @@ class TourismVillageService
                 $this->syncProfileItems($village, $data['profile_items'] ?? [], $actor);
             }
 
-            if (array_key_exists('worker_types', $data)) {
-                $this->syncVillageWorkerTypes($village, $data['worker_types'] ?? []);
+            if (array_key_exists('workers', $data)) {
+                $this->syncVillageWorkers($village, $data['workers'] ?? []);
             }
-            if (array_key_exists('worker_genders', $data)) {
-                $this->syncVillageWorkerGenders($village, $data['worker_genders'] ?? []);
-            }
-            if (array_key_exists('worker_ages', $data)) {
-                $this->syncVillageWorkerAges($village, $data['worker_ages'] ?? []);
-            }
-            if (array_key_exists('worker_educations', $data)) {
-                $this->syncVillageWorkerEducations($village, $data['worker_educations'] ?? []);
+
+            if (array_key_exists('administrators', $data)) {
+                $this->syncVillageAdministrators($village, $data['administrators'] ?? []);
             }
 
             if (array_key_exists('administrator_languages', $data)) {
@@ -641,27 +628,19 @@ class TourismVillageService
                     'email' => $user->email,
                 ])
                 ->values(),
-            'total_personnel' => $village->total_personnel,
-            'worker_types' => $village->workerTypes->map(fn (VillageWorkerType $worker): array => [
+            'workers' => $village->workers->map(fn (VillageWorker $worker): array => [
                 'id' => $worker->id,
                 'type' => $worker->type,
-                'amount' => $worker->amount,
-            ])->values(),
-            'worker_genders' => $village->workerGenders->map(fn (VillageWorkerGender $worker): array => [
-                'id' => $worker->id,
                 'gender' => $worker->gender,
-                'amount' => $worker->amount,
-            ])->values(),
-            'worker_ages' => $village->workerAges->map(fn (VillageWorkerAge $worker): array => [
-                'id' => $worker->id,
                 'age_min' => $worker->age_min,
                 'age_max' => $worker->age_max,
                 'amount' => $worker->amount,
+                'notes' => $worker->notes,
             ])->values(),
-            'worker_educations' => $village->workerEducations->map(fn (VillageWorkerEducation $worker): array => [
-                'id' => $worker->id,
-                'education' => $worker->education,
-                'amount' => $worker->amount,
+            'administrators' => $village->administrators->map(fn (VillageAdministrator $administrator): array => [
+                'id' => $administrator->id,
+                'education' => $administrator->education,
+                'amount' => $administrator->amount,
             ])->values(),
             'administrator_languages' => $village->administratorLanguages->map(fn (VillageAdministratorLanguage $language): array => [
                 'id' => $language->id,
@@ -810,27 +789,19 @@ class TourismVillageService
             'updated_at' => $this->formatDate($village->updated_at),
             'media' => $village->media->map(fn (VillageMedia $media): array => $this->formatMedia($media))->values(),
             'profile_items' => $village->profileItems->map(fn (VillageProfileItem $item): array => $this->formatProfileItemForForm($item))->values(),
-            'total_personnel' => $village->total_personnel,
-            'worker_types' => $village->workerTypes->map(fn (VillageWorkerType $worker): array => [
+            'workers' => $village->workers->map(fn (VillageWorker $worker): array => [
                 'id' => $worker->id,
                 'type' => $worker->type,
-                'amount' => $worker->amount,
-            ])->values(),
-            'worker_genders' => $village->workerGenders->map(fn (VillageWorkerGender $worker): array => [
-                'id' => $worker->id,
                 'gender' => $worker->gender,
-                'amount' => $worker->amount,
-            ])->values(),
-            'worker_ages' => $village->workerAges->map(fn (VillageWorkerAge $worker): array => [
-                'id' => $worker->id,
                 'age_min' => $worker->age_min,
                 'age_max' => $worker->age_max,
                 'amount' => $worker->amount,
+                'notes' => $worker->notes,
             ])->values(),
-            'worker_educations' => $village->workerEducations->map(fn (VillageWorkerEducation $worker): array => [
-                'id' => $worker->id,
-                'education' => $worker->education,
-                'amount' => $worker->amount,
+            'administrators' => $village->administrators->map(fn (VillageAdministrator $administrator): array => [
+                'id' => $administrator->id,
+                'education' => $administrator->education,
+                'amount' => $administrator->amount,
             ])->values(),
             'administrator_languages' => $village->administratorLanguages->map(fn (VillageAdministratorLanguage $language): array => [
                 'id' => $language->id,
@@ -853,86 +824,65 @@ class TourismVillageService
     }
 
     /** @param array<int, array<string, mixed>> $items */
-    private function syncVillageWorkerTypes(TourismVillage $village, array $items): void
+    private function syncVillageWorkers(TourismVillage $village, array $items): void
     {
         $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
-        $keptIds = $village->workerTypes()->whereKey($submittedIds)->pluck('id')->all();
+        $keptIds = $village->workers()->whereKey($submittedIds)->pluck('id')->all();
 
-        $village->workerTypes()
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['workers' => 'Data tenaga kerja tidak valid.']);
+        }
+
+        $village->workers()
             ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
             ->when($keptIds === [], fn ($query) => $query)
             ->delete();
 
         foreach ($items as $item) {
-            $payload = ['type' => $item['type'], 'amount' => $item['amount']];
+            $payload = [
+                'type' => $item['type'],
+                'gender' => $item['gender'],
+                'age_min' => $item['age_min'] ?? null,
+                'age_max' => $item['age_max'] ?? null,
+                'amount' => $item['amount'],
+                'notes' => $item['notes'] ?? null,
+            ];
+
             if (! empty($item['id'])) {
-                $village->workerTypes()->whereKey($item['id'])->update($payload);
-            } else {
-                $village->workerTypes()->create($payload);
+                $village->workers()->whereKey($item['id'])->update($payload);
+
+                continue;
             }
+
+            $village->workers()->create($payload);
         }
     }
 
     /** @param array<int, array<string, mixed>> $items */
-    private function syncVillageWorkerGenders(TourismVillage $village, array $items): void
+    private function syncVillageAdministrators(TourismVillage $village, array $items): void
     {
         $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
-        $keptIds = $village->workerGenders()->whereKey($submittedIds)->pluck('id')->all();
+        $keptIds = $village->administrators()->whereKey($submittedIds)->pluck('id')->all();
 
-        $village->workerGenders()
-            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
-            ->when($keptIds === [], fn ($query) => $query)
-            ->delete();
-
-        foreach ($items as $item) {
-            $payload = ['gender' => $item['gender'], 'amount' => $item['amount']];
-            if (! empty($item['id'])) {
-                $village->workerGenders()->whereKey($item['id'])->update($payload);
-            } else {
-                $village->workerGenders()->create($payload);
-            }
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['administrators' => 'Data pengelola tidak valid.']);
         }
-    }
 
-    /** @param array<int, array<string, mixed>> $items */
-    private function syncVillageWorkerAges(TourismVillage $village, array $items): void
-    {
-        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
-        $keptIds = $village->workerAges()->whereKey($submittedIds)->pluck('id')->all();
-
-        $village->workerAges()
-            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
-            ->when($keptIds === [], fn ($query) => $query)
-            ->delete();
-
-        foreach ($items as $item) {
-            $payload = ['age_min' => $item['age_min'] ?? null, 'age_max' => $item['age_max'] ?? null, 'amount' => $item['amount']];
-            if (! empty($item['id'])) {
-                $village->workerAges()->whereKey($item['id'])->update($payload);
-            } else {
-                $village->workerAges()->create($payload);
-            }
-        }
-    }
-
-    /** @param array<int, array<string, mixed>> $items */
-    private function syncVillageWorkerEducations(TourismVillage $village, array $items): void
-    {
-        $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
-        $keptIds = $village->workerEducations()->whereKey($submittedIds)->pluck('id')->all();
-
-        $village->workerEducations()
+        $village->administrators()
             ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
             ->when($keptIds === [], fn ($query) => $query)
             ->delete();
 
         foreach ($items as $item) {
             $payload = ['education' => $item['education'], 'amount' => $item['amount']];
+
             if (! empty($item['id'])) {
-                $village->workerEducations()->whereKey($item['id'])->update($payload);
-            } else {
-                $village->workerEducations()->create($payload);
+                $village->administrators()->whereKey($item['id'])->update($payload);
+
+                continue;
             }
+
+            $village->administrators()->create($payload);
         }
     }
 

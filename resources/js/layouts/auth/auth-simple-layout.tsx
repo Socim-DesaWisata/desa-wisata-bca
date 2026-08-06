@@ -11,11 +11,11 @@ export default function AuthSimpleLayout({
     return (
         <div className="relative flex min-h-svh flex-col items-center justify-center px-4 py-8 font-bca text-[#303030] sm:px-6">
             {/* Background Image */}
-            <div 
+            <div
                 className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: 'url("/images/bg-login.webp")' }}
             />
-            
+
             {/* Overlay */}
             <div className="absolute inset-0 z-0 bg-[#093967]/40 mix-blend-multiply" />
 

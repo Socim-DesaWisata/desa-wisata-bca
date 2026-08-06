@@ -588,21 +588,23 @@ export default function PariwisataIndex({
                                                                             Detail
                                                                         </DropdownMenuItem>
                                                                     )}
-                                                                    {item.take_survey_url && !isViewer && (
-                                                                        <DropdownMenuItem
-                                                                            asChild
-                                                                            className="gap-2 text-xs"
-                                                                        >
-                                                                            <Link
-                                                                                href={
-                                                                                    item.take_survey_url
-                                                                                }
+                                                                    {item.take_survey_url &&
+                                                                        !isViewer && (
+                                                                            <DropdownMenuItem
+                                                                                asChild
+                                                                                className="gap-2 text-xs"
                                                                             >
-                                                                                <ClipboardList className="size-4" />
-                                                                                Take Survey
-                                                                            </Link>
-                                                                        </DropdownMenuItem>
-                                                                    )}
+                                                                                <Link
+                                                                                    href={
+                                                                                        item.take_survey_url
+                                                                                    }
+                                                                                >
+                                                                                    <ClipboardList className="size-4" />
+                                                                                    Take
+                                                                                    Survey
+                                                                                </Link>
+                                                                            </DropdownMenuItem>
+                                                                        )}
                                                                     {item.is_trashed ? (
                                                                         <DropdownMenuItem
                                                                             className="gap-2 text-xs font-bold text-[#00893D]"

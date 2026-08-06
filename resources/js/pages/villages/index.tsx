@@ -454,16 +454,20 @@ function VillageLocationPicker({
         () => parseCoordinates(latitude, longitude),
         [latitude, longitude],
     );
-    const markerIcon = useMemo(
-        () =>
-            L.divIcon({
-                className: '',
-                html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10],
-            }),
-        [],
-    );
+    const [markerIcon, setMarkerIcon] = useState<any>(null);
+    useEffect(() => {
+        import('leaflet').then((leafletModule) => {
+            setMarkerIcon(
+                // @ts-ignore
+                leafletModule.divIcon({
+                    className: '',
+                    html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                })
+            );
+        });
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);

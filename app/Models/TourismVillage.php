@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'code', 'name', 'slug', 'description', 'province', 'city', 'district', 'subdistrict',
     'address', 'postal_code', 'latitude', 'longitude', 'maps_url', 'manager_name',
-    'manager_phone', 'manager_email', 'status', 'created_by',
+    'manager_phone', 'manager_email', 'status', 'created_by', 'total_personnel',
 ])]
 class TourismVillage extends Model
 {
@@ -122,14 +122,24 @@ class TourismVillage extends Model
         return $this->hasMany(VillageActiveGroupAnnual::class, 'village_id');
     }
 
-    public function workers(): HasMany
+    public function workerTypes(): HasMany
     {
-        return $this->hasMany(VillageWorker::class, 'village_id');
+        return $this->hasMany(VillageWorkerType::class, 'village_id');
     }
 
-    public function administrators(): HasMany
+    public function workerGenders(): HasMany
     {
-        return $this->hasMany(VillageAdministrator::class, 'village_id');
+        return $this->hasMany(VillageWorkerGender::class, 'village_id');
+    }
+
+    public function workerAges(): HasMany
+    {
+        return $this->hasMany(VillageWorkerAge::class, 'village_id');
+    }
+
+    public function workerEducations(): HasMany
+    {
+        return $this->hasMany(VillageWorkerEducation::class, 'village_id');
     }
 
     public function administratorLanguages(): HasMany

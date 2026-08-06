@@ -1,9 +1,10 @@
 import { update as updateVillage } from '@/actions/App/Http/Controllers/TourismVillageController';
+import { WorkerAdminTree } from '@/components/worker-admin-tree';
 import { RichTextField } from '@/components/ui/rich-text-field';
-import IndependentPersonnelStats, { WorkerTypeForm, WorkerGenderForm, WorkerAgeForm, WorkerEducationForm } from '@/components/independent-personnel-stats';
 import { dashboard, villages as villagesRoute } from '@/routes';
 import { show as showVillage } from '@/routes/villages';
 import { Head, Link, useForm } from '@inertiajs/react';
+import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import {
     Archive,
@@ -31,9 +32,14 @@ import {
     Zap,
 } from 'lucide-react';
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-
-const VillageLocationPicker = lazy(() => import('@/components/VillageLocationPicker'));
+import { useEffect, useMemo, useState } from 'react';
+import {
+    MapContainer,
+    Marker,
+    TileLayer,
+    useMap,
+    useMapEvents,
+} from 'react-leaflet';
 
 type Option = {
     value?: string;
@@ -115,11 +121,8 @@ type VillageForm = {
     created_by: string;
     updated_at: string;
     media: MediaForm[];
-    total_personnel: number;
-    worker_types: WorkerTypeForm[];
-    worker_genders: WorkerGenderForm[];
-    worker_ages: WorkerAgeForm[];
-    worker_educations: WorkerEducationForm[];
+    workers: WorkerForm[];
+    administrators: AdministratorForm[];
     administrator_languages: AdministratorLanguageForm[];
     stakeholders: StakeholderForm[];
     institutionals: InstitutionalForm[];
@@ -339,7 +342,232 @@ function errorText(errors: Partial<Record<string, string>>, key: string) {
     ) : null;
 }
 
+function MapClickHandler({
+    onPick,
+}: {
+    onPick: (latitude: number, longitude: number) => void;
+}) {
+    useMapEvents({
+        click(event) {
+            onPick(event.latlng.lat, event.latlng.lng);
+        },
+    });
 
+    return null;
+}
+
+function MapResizer({ active }: { active: boolean }) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!active) {
+            return;
+        }
+
+        const timeout = window.setTimeout(() => {
+            map.invalidateSize();
+        }, 150);
+
+        return () => window.clearTimeout(timeout);
+    }, [active, map]);
+
+    return null;
+}
+
+function MapRecenter({
+    position,
+}: {
+    position: { lat: number; lng: number } | null;
+}) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (position) {
+            map.setView([position.lat, position.lng], selectedMapZoom);
+        }
+    }, [map, position]);
+
+    return null;
+}
+
+function VillageLocationPicker({
+    latitude,
+    longitude,
+    active,
+    isResolvingAddress,
+    locationError,
+    onPick,
+}: {
+    latitude: string;
+    longitude: string;
+    active: boolean;
+    isResolvingAddress: boolean;
+    locationError: string | null;
+    onPick: (latitude: number, longitude: number) => void;
+}) {
+    const position = useMemo(
+        () => parseCoordinates(latitude, longitude),
+        [latitude, longitude],
+    );
+    const markerIcon = useMemo(
+        () =>
+            L.divIcon({
+                className: '',
+                html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10],
+            }),
+        [],
+    );
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<
+        Array<{ display_name: string; lat: string; lon: string }>
+    >([]);
+
+    async function handleSearch() {
+        if (!searchQuery.trim()) {
+            return;
+        }
+
+        setIsSearching(true);
+
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`,
+            );
+            const payload = (await response.json()) as Array<{
+                display_name: string;
+                lat: string;
+                lon: string;
+            }>;
+
+            setSearchResults(payload);
+        } catch (error) {
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }
+
+    function selectResult(result: {
+        display_name: string;
+        lat: string;
+        lon: string;
+    }) {
+        onPick(Number(result.lat), Number(result.lon));
+        setSearchResults([]);
+        setSearchQuery(result.display_name);
+    }
+
+    return (
+        <section className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <p className="text-sm font-bold text-[#303030]">
+                        Lokasi Pin Desa
+                    </p>
+                    <p className="text-xs leading-5 text-[#7C7C7C]">
+                        Klik peta, geser pin, atau cari lokasi untuk mengisi
+                        koordinat dan alamat administratif otomatis.
+                    </p>
+                </div>
+                {isResolvingAddress && (
+                    <span className="rounded-full bg-[#EAF3FF] px-2 py-1 text-[11px] font-bold text-[#0066AE]">
+                        Membaca alamat...
+                    </span>
+                )}
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-[#DDE4EC]">
+                <div className="absolute top-2 right-2 z-[1000] w-[280px] max-w-[calc(100%-16px)]">
+                    <div className="relative flex items-center">
+                        <input
+                            type="text"
+                            placeholder="Cari lokasi desa..."
+                            value={searchQuery}
+                            onChange={(event) =>
+                                setSearchQuery(event.target.value)
+                            }
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    void handleSearch();
+                                }
+                            }}
+                            className="h-10 w-full rounded-lg border-none bg-white/95 pr-10 pl-10 text-xs font-semibold text-[#303030] shadow-[0_4px_12px_rgba(3,17,32,0.12)] backdrop-blur outline-none placeholder:font-medium placeholder:text-[#7C7C7C] focus:bg-white focus:ring-2 focus:ring-[#0066AE]"
+                        />
+                        <Search className="absolute left-3.5 size-4 text-[#7C7C7C]" />
+                        {isSearching && (
+                            <Loader2 className="absolute right-3.5 size-4 animate-spin text-[#0066AE]" />
+                        )}
+                    </div>
+                    {searchResults.length > 0 && (
+                        <div className="mt-1 max-h-48 overflow-y-auto rounded-lg bg-white shadow-[0_6px_16px_rgba(3,17,32,0.12)]">
+                            {searchResults.map((result, index) => (
+                                <button
+                                    key={`${result.lat}-${result.lon}-${index}`}
+                                    type="button"
+                                    onClick={() => selectResult(result)}
+                                    className="w-full border-b border-[#EFEFEF] px-3 py-2 text-left text-[11px] leading-4 text-[#303030] transition last:border-0 hover:bg-[#F1F5F8]"
+                                >
+                                    {result.display_name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <MapContainer
+                    center={position ?? defaultMapCenter}
+                    zoom={position ? selectedMapZoom : defaultMapZoom}
+                    className="h-[320px] w-full"
+                    scrollWheelZoom
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <MapResizer active={active} />
+                    <MapRecenter position={position} />
+                    <MapClickHandler
+                        onPick={(lat, lng) => {
+                            setSearchResults([]);
+                            onPick(lat, lng);
+                        }}
+                    />
+                    {position && (
+                        <Marker
+                            draggable
+                            icon={markerIcon}
+                            position={[position.lat, position.lng]}
+                            eventHandlers={{
+                                dragend(event) {
+                                    const latLng = event.target.getLatLng();
+                                    onPick(latLng.lat, latLng.lng);
+                                },
+                            }}
+                        />
+                    )}
+                </MapContainer>
+            </div>
+            <div className="flex flex-col gap-1 text-xs leading-5 text-[#7C7C7C] sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                    Koordinat:{' '}
+                    <strong className="text-[#303030]">
+                        {position
+                            ? `${coordinateValue(position.lat)}, ${coordinateValue(position.lng)}`
+                            : 'Belum dipilih'}
+                    </strong>
+                </span>
+                {locationError && (
+                    <span className="font-semibold text-[#D81313]">
+                        {locationError}
+                    </span>
+                )}
+            </div>
+        </section>
+    );
+}
 
 function StatusBadge({ status }: { status: string }) {
     const label =
@@ -546,11 +774,8 @@ export default function VillageEdit({
             manager_email: village.manager_email,
             status: village.status,
             media: village.media ?? [],
-            total_personnel: village.total_personnel ?? 0,
-            worker_types: village.worker_types ?? [],
-            worker_genders: village.worker_genders ?? [],
-            worker_ages: village.worker_ages ?? [],
-            worker_educations: village.worker_educations ?? [],
+            workers: village.workers ?? [],
+            administrators: village.administrators ?? [],
             administrator_languages: village.administrator_languages ?? [],
             stakeholders: village.stakeholders ?? [],
             institutionals: village.institutionals ?? [],
@@ -730,10 +955,12 @@ export default function VillageEdit({
             state: (mediaCount > 0 ? 'partial' : 'empty') as SectionState,
         },
         {
-            id: 'personnel',
+            id: 'workers',
             label: 'Tenaga Kerja & Pengurus',
             icon: User,
-            state: (data.worker_types.length > 0
+            state: (data.workers.length > 0 ||
+            data.administrators.length > 0 ||
+            data.administrator_languages.length > 0
                 ? 'partial'
                 : 'empty') as SectionState,
         },
@@ -765,16 +992,14 @@ export default function VillageEdit({
                 complete
             >
                 <div className="space-y-4">
-                    <Suspense fallback={<div className="h-[320px] w-full animate-pulse rounded-xl bg-[#F1F5F8]" />}>
-                        <VillageLocationPicker
-                            latitude={data.latitude}
-                            longitude={data.longitude}
-                            active={activeSection === 'location'}
-                            isResolvingAddress={isResolvingAddress}
-                            locationError={locationError}
-                            onPick={handleLocationPick}
-                        />
-                    </Suspense>
+                    <VillageLocationPicker
+                        latitude={data.latitude}
+                        longitude={data.longitude}
+                        active={activeSection === 'location'}
+                        isResolvingAddress={isResolvingAddress}
+                        locationError={locationError}
+                        onPick={handleLocationPick}
+                    />
                     <div className="grid gap-4 md:grid-cols-2">
                         {errorText(formErrors, 'latitude')}
                         {errorText(formErrors, 'longitude')}
@@ -916,26 +1141,23 @@ export default function VillageEdit({
                 </div>
             </SectionCard>
         ) : [
-              'personnel',
+              'workers',
+              'administrators',
               'stakeholders',
               'institutionals',
           ].includes(activeSection) ? (
             <SupportingDataEditor
                 section={activeSection as SupportingDataSection}
-                totalPersonnel={data.total_personnel}
-                workerTypes={data.worker_types}
-                workerGenders={data.worker_genders}
-                workerAges={data.worker_ages}
-                workerEducations={data.worker_educations}
+                workers={data.workers}
+                administrators={data.administrators}
                 administratorLanguages={data.administrator_languages}
                 stakeholders={data.stakeholders}
                 institutionals={data.institutionals}
                 errors={formErrors}
-                onTotalPersonnelChange={(val) => setData('total_personnel', val)}
-                onWorkerTypesChange={(items) => setData('worker_types', items)}
-                onWorkerGendersChange={(items) => setData('worker_genders', items)}
-                onWorkerAgesChange={(items) => setData('worker_ages', items)}
-                onWorkerEducationsChange={(items) => setData('worker_educations', items)}
+                onWorkersChange={(workers) => setData('workers', workers)}
+                onAdministratorsChange={(administrators) =>
+                    setData('administrators', administrators)
+                }
                 onAdministratorLanguagesChange={(administratorLanguages) =>
                     setData('administrator_languages', administratorLanguages)
                 }
@@ -1383,45 +1605,34 @@ function SectionCard({
 }
 
 type SupportingDataSection =
-    | 'personnel'
+    | 'workers'
+    | 'administrators'
     | 'stakeholders'
     | 'institutionals';
 
 function SupportingDataEditor({
     section,
-    totalPersonnel,
-    workerTypes,
-    workerGenders,
-    workerAges,
-    workerEducations,
+    workers,
+    administrators,
     administratorLanguages,
     stakeholders,
     institutionals,
     errors,
-    onTotalPersonnelChange,
-    onWorkerTypesChange,
-    onWorkerGendersChange,
-    onWorkerAgesChange,
-    onWorkerEducationsChange,
+    onWorkersChange,
+    onAdministratorsChange,
     onAdministratorLanguagesChange,
     onStakeholdersChange,
     onInstitutionalsChange,
 }: {
     section: SupportingDataSection;
-    totalPersonnel: number;
-    workerTypes: WorkerTypeForm[];
-    workerGenders: WorkerGenderForm[];
-    workerAges: WorkerAgeForm[];
-    workerEducations: WorkerEducationForm[];
+    workers: WorkerForm[];
+    administrators: AdministratorForm[];
     administratorLanguages: AdministratorLanguageForm[];
     stakeholders: StakeholderForm[];
     institutionals: InstitutionalForm[];
     errors: Partial<Record<string, string>>;
-    onTotalPersonnelChange: (val: number) => void;
-    onWorkerTypesChange: (items: WorkerTypeForm[]) => void;
-    onWorkerGendersChange: (items: WorkerGenderForm[]) => void;
-    onWorkerAgesChange: (items: WorkerAgeForm[]) => void;
-    onWorkerEducationsChange: (items: WorkerEducationForm[]) => void;
+    onWorkersChange: (workers: WorkerForm[]) => void;
+    onAdministratorsChange: (administrators: AdministratorForm[]) => void;
     onAdministratorLanguagesChange: (
         items: AdministratorLanguageForm[],
     ) => void;
@@ -1430,27 +1641,215 @@ function SupportingDataEditor({
 }) {
     return (
         <div className="space-y-4">
-            {section === 'personnel' && (
-                <SectionCard
-                    id="personnel"
-                    icon={User}
-                    title="Tenaga Kerja & Pengurus Desa"
-                    description="Data statistik jumlah tenaga kerja dan pengurus desa berdasarkan berbagai kategori."
-                >
-                    <IndependentPersonnelStats
-                        totalPersonnel={totalPersonnel}
-                        onTotalChange={onTotalPersonnelChange}
-                        workerTypes={workerTypes}
-                        onWorkerTypesChange={onWorkerTypesChange}
-                        workerGenders={workerGenders}
-                        onWorkerGendersChange={onWorkerGendersChange}
-                        workerAges={workerAges}
-                        onWorkerAgesChange={onWorkerAgesChange}
-                        workerEducations={workerEducations}
-                        onWorkerEducationsChange={onWorkerEducationsChange}
-                        errors={errors}
-                    />
-                </SectionCard>
+            {section === 'workers' && (
+                <>
+                    <SectionCard
+                        id="workers"
+                        icon={User}
+                        title="Data Tenaga Kerja & Pengurus"
+                        description="Jumlah tenaga kerja dan pengurus desa berdasarkan kategori."
+                    >
+                        <WorkerAdminTree
+                            workers={workers}
+                            administrators={administrators}
+                            onChange={(w, a) => {
+                                onWorkersChange(w);
+                                onAdministratorsChange(a);
+                            }}
+                        />
+                    </SectionCard>
+                    <div className="mt-6">
+                        <SectionCard
+                            id="administrator-languages"
+                            icon={User}
+                            title="Bahasa Asing Pengurus"
+                            description="Jumlah pengurus berdasarkan bahasa dan tingkat kemampuan."
+                        >
+                            <div className="space-y-3">
+                                {administratorLanguages.map(
+                                    (language, index) => (
+                                        <div
+                                            key={
+                                                language.id ??
+                                                `language-${index}`
+                                            }
+                                            className="rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-3"
+                                        >
+                                            <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_40px]">
+                                                <Field
+                                                    label="Bahasa"
+                                                    value={
+                                                        language.language_name
+                                                    }
+                                                    onChange={(languageName) =>
+                                                        onAdministratorLanguagesChange(
+                                                            administratorLanguages.map(
+                                                                (
+                                                                    item,
+                                                                    itemIndex,
+                                                                ) =>
+                                                                    itemIndex ===
+                                                                    index
+                                                                        ? {
+                                                                              ...item,
+                                                                              language_name:
+                                                                                  languageName,
+                                                                          }
+                                                                        : item,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="Inggris"
+                                                    error={
+                                                        errors[
+                                                            `administrator_languages.${index}.language_name`
+                                                        ]
+                                                    }
+                                                />
+                                                <SelectField
+                                                    label="Kemampuan"
+                                                    value={
+                                                        language.proficiency_level
+                                                    }
+                                                    onChange={(level) =>
+                                                        onAdministratorLanguagesChange(
+                                                            administratorLanguages.map(
+                                                                (
+                                                                    item,
+                                                                    itemIndex,
+                                                                ) =>
+                                                                    itemIndex ===
+                                                                    index
+                                                                        ? {
+                                                                              ...item,
+                                                                              proficiency_level:
+                                                                                  level as AdministratorLanguageForm['proficiency_level'],
+                                                                          }
+                                                                        : item,
+                                                            ),
+                                                        )
+                                                    }
+                                                    options={[
+                                                        {
+                                                            value: 'basic',
+                                                            label: 'Dasar',
+                                                        },
+                                                        {
+                                                            value: 'intermediate',
+                                                            label: 'Menengah',
+                                                        },
+                                                        {
+                                                            value: 'advanced',
+                                                            label: 'Mahir',
+                                                        },
+                                                        {
+                                                            value: 'fluent',
+                                                            label: 'Fasih',
+                                                        },
+                                                    ]}
+                                                />
+                                                <Field
+                                                    label="Jumlah"
+                                                    value={String(
+                                                        language.amount,
+                                                    )}
+                                                    onChange={(value) =>
+                                                        onAdministratorLanguagesChange(
+                                                            administratorLanguages.map(
+                                                                (
+                                                                    item,
+                                                                    itemIndex,
+                                                                ) =>
+                                                                    itemIndex ===
+                                                                    index
+                                                                        ? {
+                                                                              ...item,
+                                                                              amount:
+                                                                                  Number(
+                                                                                      value,
+                                                                                  ) ||
+                                                                                  0,
+                                                                          }
+                                                                        : item,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="0"
+                                                    error={
+                                                        errors[
+                                                            `administrator_languages.${index}.amount`
+                                                        ]
+                                                    }
+                                                />
+                                                <button
+                                                    type="button"
+                                                    aria-label="Hapus bahasa"
+                                                    onClick={() =>
+                                                        onAdministratorLanguagesChange(
+                                                            administratorLanguages.filter(
+                                                                (
+                                                                    _,
+                                                                    itemIndex,
+                                                                ) =>
+                                                                    itemIndex !==
+                                                                    index,
+                                                            ),
+                                                        )
+                                                    }
+                                                    className="self-end rounded-lg border border-[#F4B7B7] p-2 text-[#D81313]"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+                                            <div className="mt-3">
+                                                <TextAreaField
+                                                    label="Catatan"
+                                                    value={language.notes}
+                                                    onChange={(notes) =>
+                                                        onAdministratorLanguagesChange(
+                                                            administratorLanguages.map(
+                                                                (
+                                                                    item,
+                                                                    itemIndex,
+                                                                ) =>
+                                                                    itemIndex ===
+                                                                    index
+                                                                        ? {
+                                                                              ...item,
+                                                                              notes,
+                                                                          }
+                                                                        : item,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="Keterangan kemampuan bahasa"
+                                                />
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onAdministratorLanguagesChange([
+                                            ...administratorLanguages,
+                                            {
+                                                id: null,
+                                                language_name: '',
+                                                proficiency_level: 'basic',
+                                                amount: 0,
+                                                notes: '',
+                                            },
+                                        ])
+                                    }
+                                    className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2 text-sm font-bold text-[#0066AE]"
+                                >
+                                    Tambah Bahasa Pengurus
+                                </button>
+                            </div>
+                        </SectionCard>
+                    </div>
+                </>
             )}
 
             {section === 'stakeholders' && (

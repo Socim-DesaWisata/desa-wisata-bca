@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('village_stakeholders', function (Blueprint $table) {
+            $table->dropForeign(['village_id']);
             $table->dropIndex('village_stakeholders_filter_index');
+            $table->foreign('village_id')->references('id')->on('tourism_villages')->cascadeOnDelete();
             $table->dropColumn([
                 'organization',
                 'category',
@@ -34,7 +36,9 @@ return new class extends Migration
             $table->text('collaboration_scope')->nullable()->after('email');
             $table->text('notes')->nullable()->after('collaboration_scope');
             $table->boolean('is_active')->default(true)->after('notes');
+            $table->dropForeign(['village_id']);
             $table->index(['village_id', 'category', 'stakeholder_type', 'is_active'], 'village_stakeholders_filter_index');
+            $table->foreign('village_id')->references('id')->on('tourism_villages')->cascadeOnDelete();
         });
     }
 };

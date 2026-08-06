@@ -130,16 +130,23 @@ type VillageLinkItem = {
     description: string | null;
     cover_url: string | null;
 };
-type VillageWorker = {
+type VillageWorkerType = {
     id: number;
     type: 'full-time' | 'part-time';
+    amount: number;
+};
+type VillageWorkerGender = {
+    id: number;
     gender: 'male' | 'female' | 'unspecified';
+    amount: number;
+};
+type VillageWorkerAge = {
+    id: number;
     age_min: number | null;
     age_max: number | null;
     amount: number;
-    notes: string | null;
 };
-type VillageAdministrator = {
+type VillageWorkerEducation = {
     id: number;
     education: string;
     amount: number;
@@ -191,8 +198,10 @@ type VillageShowProps = {
         kemenpar_aspect_scores: KemenparAspectScore[];
         istc_aspect_scores: IstcAspectScore[];
         survey_assignment: { code: string } | null;
-        workers: VillageWorker[];
-        administrators: VillageAdministrator[];
+        worker_types: VillageWorkerType[];
+        worker_genders: VillageWorkerGender[];
+        worker_ages: VillageWorkerAge[];
+        worker_educations: VillageWorkerEducation[];
         administrator_languages: VillageAdministratorLanguage[];
         stakeholders: VillageStakeholder[];
         institutionals: VillageInstitutional[];
@@ -217,7 +226,7 @@ const stripHtml = (html: string) => {
         return html.replace(/<[^>]*>?/gm, '');
     }
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    return doc.body.textContent || "";
+    return doc.body.textContent || '';
 };
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '-');
 const firstMediaUrl = (media: MediaItem[] | undefined) =>
@@ -397,22 +406,22 @@ function Panel({ children }: { children: ReactNode }) {
 }
 
 function VillageProfileSummary({
-    workers,
+    workerTypes,
     stakeholders,
     institutionals,
 }: {
-    workers: VillageWorker[];
+    workerTypes: VillageWorkerType[];
     stakeholders: VillageStakeholder[];
     institutionals: VillageInstitutional[];
 }) {
-    const totalWorkers = workers.reduce(
+    const totalWorkers = workerTypes.reduce(
         (total, item) => total + item.amount,
         0,
     );
-    const partTimeWorkers = workers
+    const partTimeWorkers = workerTypes
         .filter((item) => item.type === 'part-time')
         .reduce((total, item) => total + item.amount, 0);
-    const fullTimeWorkers = workers
+    const fullTimeWorkers = workerTypes
         .filter((item) => item.type === 'full-time')
         .reduce((total, item) => total + item.amount, 0);
     const summaryStats = [
@@ -851,15 +860,20 @@ function PackageTicketCard({ p }: { p: Product }) {
                         <span className="inline-flex items-center rounded-lg bg-[#FFF4E5] px-3 py-1.5 text-[10px] font-black tracking-wide text-[#E79A20] uppercase">
                             {p.badge}
                         </span>
-                    ) : <div />}
+                    ) : (
+                        <div />
+                    )}
                     {p.meta && (
                         <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#64748B]">
-                            <Clock className="size-4 text-[#0066AE]" weight="fill" />
+                            <Clock
+                                className="size-4 text-[#0066AE]"
+                                weight="fill"
+                            />
                             {p.meta}
                         </span>
                     )}
                 </div>
-                
+
                 <div className="mt-5 flex-1">
                     <h3 className="text-[18px] leading-snug font-black tracking-tight text-[#093967]">
                         {p.title}
@@ -971,15 +985,19 @@ function WorkforceProgress({
 }
 
 function WorkforceSidebarSummary({
-    workers,
-    administrators,
+    workerTypes,
+    workerGenders,
+    workerAges,
+    workerEducations,
     administratorLanguages,
 }: {
-    workers: VillageWorker[];
-    administrators: VillageAdministrator[];
+    workerTypes: VillageWorkerType[];
+    workerGenders: VillageWorkerGender[];
+    workerAges: VillageWorkerAge[];
+    workerEducations: VillageWorkerEducation[];
     administratorLanguages: VillageAdministratorLanguage[];
 }) {
-    const totalWorkers = workers.reduce(
+    const totalWorkers = workerTypes.reduce(
         (total, item) => total + item.amount,
         0,
     );
@@ -996,14 +1014,14 @@ function WorkforceSidebarSummary({
             label: 'Perempuan',
             color: '#E95B85',
         },
-        {
-            value: 'unspecified',
-            label: 'Tidak Diketahui',
-            color: '#94A3B8',
-        },
+        // {
+        //     value: 'unspecified',
+        //     label: 'Tidak Diketahui',
+        //     color: '#94A3B8',
+        // },
     ].map((gender) => ({
         ...gender,
-        amount: workers
+        amount: workerGenders
             .filter((item) => item.gender === gender.value)
             .reduce((total, item) => total + item.amount, 0),
     }));
@@ -1014,7 +1032,7 @@ function WorkforceSidebarSummary({
         (a, b) => b.amount - a.amount,
     )[0];
     const ageRows = Array.from(
-        workers
+        workerAges
             .reduce(
                 (groups, worker) => {
                     const hasCompleteRange =
@@ -1027,13 +1045,9 @@ function WorkforceSidebarSummary({
                         ageMin: hasCompleteRange ? worker.age_min : null,
                         ageMax: hasCompleteRange ? worker.age_max : null,
                         amount: 0,
-                        notes: [] as string[],
                     };
 
                     current.amount += worker.amount;
-                    if (worker.notes && !current.notes.includes(worker.notes)) {
-                        current.notes.push(worker.notes);
-                    }
                     groups.set(key, current);
 
                     return groups;
@@ -1045,7 +1059,6 @@ function WorkforceSidebarSummary({
                         ageMin: number | null;
                         ageMax: number | null;
                         amount: number;
-                        notes: string[];
                     }
                 >(),
             )
@@ -1056,15 +1069,41 @@ function WorkforceSidebarSummary({
 
         return a.ageMin - b.ageMin || (a.ageMax ?? 0) - (b.ageMax ?? 0);
     });
-    const totalAdministrators = administrators.reduce(
+    const totalEducations = workerEducations.reduce(
         (total, item) => total + item.amount,
         0,
     );
+    const educationColors = ['#1688CC', '#16A765', '#F2A900', '#6D4AFF', '#E95B85', '#94A3B8'];
+    const educationRows = Array.from(
+        workerEducations.reduce((groups, item) => {
+            const key = item.education.toLowerCase();
+            const current = groups.get(key) ?? {
+                label: item.education.toUpperCase(),
+                amount: 0,
+            };
+            current.amount += item.amount;
+            groups.set(key, current);
+            return groups;
+        }, new Map<string, { label: string; amount: number }>()).values()
+    ).sort((a, b) => b.amount - a.amount).map((row, index) => ({
+        ...row,
+        color: educationColors[index % educationColors.length],
+    }));
+    let currentEduPercent = 0;
+    const educationGradient = educationRows.length > 0
+        ? `conic-gradient(${educationRows.map((row, i, arr) => {
+            const percent = percentageOf(row.amount, totalEducations);
+            const start = currentEduPercent;
+            currentEduPercent += percent;
+            const end = i === arr.length - 1 ? 100 : currentEduPercent;
+            return `${row.color} ${start}% ${end}%`;
+        }).join(', ')})`
+        : 'none';
+    const dominantEducation = educationRows[0] ?? { label: '-', amount: 0 };
     const totalAdministratorLanguages = administratorLanguages.reduce(
         (total, item) => total + item.amount,
         0,
     );
-    const educationColors = ['#1688CC', '#16A765', '#F2A900', '#6D4AFF'];
     const proficiencyLabels = {
         basic: 'Dasar',
         intermediate: 'Menengah',
@@ -1161,11 +1200,7 @@ function WorkforceSidebarSummary({
                                     }
                                     icon={Clock}
                                 />
-                                {row.notes.length > 0 && (
-                                    <p className="mt-1 text-[9px] leading-4 font-semibold text-[#596773]">
-                                        Catatan: {row.notes.join('; ')}
-                                    </p>
-                                )}
+
                             </div>
                         ))}
                     </div>
@@ -1178,28 +1213,61 @@ function WorkforceSidebarSummary({
                 title="Status Pengurus menurut Pendidikan"
                 icon={Trophy}
             >
-                {administrators.length ? (
-                    <div className="grid gap-4">
-                        <div className="space-y-4">
-                            {administrators.map((administrator, index) => (
-                                <WorkforceProgress
-                                    key={administrator.id}
-                                    label={administrator.education.toUpperCase()}
-                                    value={`${administrator.amount} Orang`}
-                                    percentage={percentageOf(
-                                        administrator.amount,
-                                        totalAdministrators,
-                                    )}
-                                    color={
-                                        educationColors[
-                                            index % educationColors.length
-                                        ]
-                                    }
-                                    icon={Trophy}
-                                />
-                            ))}
+                {educationRows.length ? (
+                    <>
+                        <div className="grid grid-cols-[112px_1fr] items-center gap-4">
+                            <div
+                                className="relative mx-auto grid size-24 place-items-center rounded-full"
+                                style={{
+                                    background: educationGradient,
+                                }}
+                            >
+                                <div className="grid size-[62px] place-items-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_#EEF1F4]">
+                                    <div>
+                                        <p className="text-[17px] leading-none font-black text-[#303030]">
+                                            {totalEducations}
+                                        </p>
+                                        <p className="mt-1 text-[9px] font-extrabold text-[#4B5560]">
+                                            Orang
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                {educationRows.map((edu) => (
+                                    <div
+                                        key={edu.label}
+                                        className="flex items-start gap-2"
+                                    >
+                                        <span
+                                            className="mt-1 size-2.5 rounded-full"
+                                            style={{
+                                                backgroundColor: edu.color,
+                                            }}
+                                        />
+                                        <div>
+                                            <p className="text-[10px] font-black text-[#303030]">
+                                                {edu.label}
+                                            </p>
+                                            <p className="mt-0.5 text-[9px] font-semibold text-[#596773]">
+                                                {edu.amount} Orang (
+                                                {percentageOf(
+                                                    edu.amount,
+                                                    totalEducations,
+                                                )}
+                                                %)
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                        <WorkforceInsight>
+                            Komposisi terbesar: {dominantEducation.label} (
+                            {percentageOf(dominantEducation.amount, totalEducations)}
+                            %).
+                        </WorkforceInsight>
+                    </>
                 ) : (
                     <EmptyState title="Tidak ada data pendidikan pengurus" />
                 )}
@@ -1586,17 +1654,23 @@ export default function VillageDetail({
               tone: 'bg-[#0066AE]',
           }))
         : profileProducts(souvenirProfiles, undefined, 'bg-[#0066AE]');
-    
+
     // Merge new relational packages and legacy profile-based packages
-    const relationalPackages = village.pariwisata.flatMap((item) => item.packages || []).map((pkg) => ({
-        title: pkg.name,
-        desc: pkg.description || pkg.facilities || undefined,
-        price: pkg.price !== null ? pkg.price : undefined,
-        meta: pkg.duration || undefined,
-        badge: pkg.package_type || undefined,
-        tone: 'bg-[#E79A20]',
-    }));
-    const legacyPackageItems = profileProducts(packageProfiles, undefined, 'bg-[#E79A20]');
+    const relationalPackages = village.pariwisata
+        .flatMap((item) => item.packages || [])
+        .map((pkg) => ({
+            title: pkg.name,
+            desc: pkg.description || pkg.facilities || undefined,
+            price: pkg.price !== null ? pkg.price : undefined,
+            meta: pkg.duration || undefined,
+            badge: pkg.package_type || undefined,
+            tone: 'bg-[#E79A20]',
+        }));
+    const legacyPackageItems = profileProducts(
+        packageProfiles,
+        undefined,
+        'bg-[#E79A20]',
+    );
     const packageItems = [...relationalPackages, ...legacyPackageItems];
 
     const nearbyItems = nearby_villages.map((item) => ({
@@ -1650,7 +1724,9 @@ export default function VillageDetail({
         'Tidak ada data',
     );
     const villageDescriptionRaw = village.description ?? '';
-    const villageDescription = villageDescriptionRaw.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
+    const villageDescription = villageDescriptionRaw
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\u00A0/g, ' ');
     const hasLongDescription =
         stripHtml(villageDescription).length > profileDescriptionLimit;
 
@@ -1685,15 +1761,19 @@ export default function VillageDetail({
                                             <>
                                                 <div>
                                                     <div className="relative">
-                                                        <div 
+                                                        <div
                                                             className={cx(
-                                                                "rich-text-content text-justify overflow-hidden transition-all duration-300",
-                                                                hasLongDescription ? "max-h-[231px]" : ""
+                                                                'rich-text-content overflow-hidden text-justify transition-all duration-300',
+                                                                hasLongDescription
+                                                                    ? 'max-h-[231px]'
+                                                                    : '',
                                                             )}
-                                                            dangerouslySetInnerHTML={{ __html: villageDescription }}
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: villageDescription,
+                                                            }}
                                                         />
                                                         {hasLongDescription && (
-                                                            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#ffffff] to-transparent pointer-events-none" />
+                                                            <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-20 bg-gradient-to-t from-[#ffffff] to-transparent" />
                                                         )}
                                                     </div>
                                                     {hasLongDescription ? (
@@ -1709,19 +1789,25 @@ export default function VillageDetail({
                                                                     Selengkapnya
                                                                 </button>
                                                             </DialogTrigger>
-                                                            <DialogContent className="flex max-h-[85dvh] w-[95vw] sm:w-[60vw] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white p-0 shadow-2xl">
+                                                            <DialogContent className="flex max-h-[85dvh] w-[95vw] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border border-[#DDE7E7] bg-white p-0 shadow-2xl sm:w-[60vw]">
                                                                 <DialogHeader className="border-b border-[#E5EAF1] px-6 py-5 sm:px-8">
                                                                     <DialogTitle className="text-xl font-extrabold text-[#093967]">
-                                                                        Deskripsi Profil Desa
+                                                                        Deskripsi
+                                                                        Profil
+                                                                        Desa
                                                                     </DialogTitle>
                                                                     <DialogDescription className="text-sm font-semibold text-[#64748B]">
-                                                                        {villageName}
+                                                                        {
+                                                                            villageName
+                                                                        }
                                                                     </DialogDescription>
                                                                 </DialogHeader>
                                                                 <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-                                                                    <div 
-                                                                        className="min-w-0 text-justify text-[15px] leading-relaxed font-medium text-[#303030] rich-text-content"
-                                                                        dangerouslySetInnerHTML={{ __html: villageDescription }}
+                                                                    <div
+                                                                        className="rich-text-content min-w-0 text-justify text-[15px] leading-relaxed font-medium text-[#303030]"
+                                                                        dangerouslySetInnerHTML={{
+                                                                            __html: villageDescription,
+                                                                        }}
                                                                     />
                                                                 </div>
                                                             </DialogContent>
@@ -1737,7 +1823,7 @@ export default function VillageDetail({
                             </Panel>
                         </section>
                         <VillageProfileSummary
-                            workers={village.workers}
+                            workerTypes={village.worker_types}
                             stakeholders={village.stakeholders}
                             institutionals={village.institutionals}
                         />
@@ -1793,15 +1879,27 @@ export default function VillageDetail({
                             {village.media.length ? (
                                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
                                     {village.media.map((m) => (
-                                        <a key={m.id} href={m.url || '#'} target="_blank" rel="noreferrer" className="group relative aspect-square overflow-hidden rounded-[14px] bg-[#F1F5F8] shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                                        <a
+                                            key={m.id}
+                                            href={m.url || '#'}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="group relative aspect-square overflow-hidden rounded-[14px] bg-[#F1F5F8] shadow-[0_4px_14px_rgba(15,23,42,0.04)]"
+                                        >
                                             {m.url ? (
-                                                <img src={m.url} alt={m.title || 'Media'} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+                                                <img
+                                                    src={m.url}
+                                                    alt={m.title || 'Media'}
+                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                                                />
                                             ) : (
                                                 <ImagePlaceholder label="media" />
                                             )}
                                             {m.caption && (
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-3">
-                                                    <p className="text-white text-[10px] font-semibold line-clamp-2">{m.caption}</p>
+                                                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                                    <p className="line-clamp-2 text-[10px] font-semibold text-white">
+                                                        {m.caption}
+                                                    </p>
                                                 </div>
                                             )}
                                         </a>
@@ -1831,8 +1929,10 @@ export default function VillageDetail({
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
                         {/* <QrBlock rows={villageInfoRows} villageName={villageName} /> */}
                         <WorkforceSidebarSummary
-                            workers={village.workers}
-                            administrators={village.administrators}
+                            workerTypes={village.worker_types}
+                            workerGenders={village.worker_genders}
+                            workerAges={village.worker_ages}
+                            workerEducations={village.worker_educations}
                             administratorLanguages={
                                 village.administrator_languages
                             }
