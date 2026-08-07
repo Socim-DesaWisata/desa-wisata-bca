@@ -196,7 +196,7 @@ export default function VillageLocationPicker({
                             onPick(lat, lng);
                         }}
                     />
-                    {position && (
+                    {position && markerIcon && (
                         <Marker
                             draggable
                             icon={markerIcon}
