@@ -3826,9 +3826,9 @@ export default function SurveyAssignmentShow({
 
                                 <SurveyStatistics aspects={aspects} />
 
-                                <VillageAnnualMultipleBarChart
+                                {/* <VillageAnnualMultipleBarChart
                                     values={village_annual_edit_values}
-                                />
+                                /> */}
 
                                 <Card className="overflow-hidden">
                                     <div className="border-b border-[#EFEFEF] p-4">
