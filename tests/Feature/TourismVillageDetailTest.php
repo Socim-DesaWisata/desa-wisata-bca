@@ -4,7 +4,6 @@ use App\Models\PariwisataVillage;
 use App\Models\PariwisataVillageCategory;
 use App\Models\TourismVillage;
 use App\Models\User;
-use App\Models\VillageAdministrator;
 use App\Models\VillageAdministratorLanguage;
 use App\Models\VillageInstitutional;
 use App\Models\VillageMedia;
@@ -14,7 +13,10 @@ use App\Models\VillageProfileItemMedia;
 use App\Models\VillageStakeholder;
 use App\Models\VillageUmkm;
 use App\Models\VillageUmkmCategory;
-use App\Models\VillageWorker;
+use App\Models\VillageWorkerAge;
+use App\Models\VillageWorkerEducation;
+use App\Models\VillageWorkerGender;
+use App\Models\VillageWorkerType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -30,6 +32,7 @@ test('village detail page exposes real backend profile media umkm and pariwisata
         'manager_phone' => '08123456789',
         'manager_email' => 'desa@example.com',
         'address' => 'Jl. Desa Wisata 1',
+        'total_personnel' => 15,
     ]);
 
     VillageMedia::query()->create([
@@ -107,17 +110,26 @@ test('village detail page exposes real backend profile media umkm and pariwisata
         'category' => 'alam',
     ]);
 
-    VillageWorker::query()->create([
+    VillageWorkerType::query()->create([
         'village_id' => $village->id,
         'type' => 'full-time',
+        'amount' => 8,
+    ]);
+
+    VillageWorkerGender::query()->create([
+        'village_id' => $village->id,
         'gender' => 'female',
+        'amount' => 8,
+    ]);
+
+    VillageWorkerAge::query()->create([
+        'village_id' => $village->id,
         'age_min' => 21,
         'age_max' => 35,
         'amount' => 8,
-        'notes' => 'Pemandu wisata',
     ]);
 
-    VillageAdministrator::query()->create([
+    VillageWorkerEducation::query()->create([
         'village_id' => $village->id,
         'education' => 's1/d4',
         'amount' => 3,
@@ -150,14 +162,16 @@ test('village detail page exposes real backend profile media umkm and pariwisata
             ->component('villages/show')
             ->where('village.name', 'Desa Nyata')
             ->where('village.cover.title', 'Cover Desa')
+            ->where('village.total_personnel', 15)
             ->where('village.profile_items.0.category', 'Paket Wisata')
             ->where('village.profile_items.0.items.0.name', 'Paket Sunrise')
             ->where('village.umkms.0.name', 'UMKM Kopi Desa')
             ->where('village.umkms.0.categories.0.label', 'Makanan Minuman')
             ->where('village.pariwisata.0.name', 'Spot Bukit Desa')
             ->where('village.pariwisata.0.categories.0.label', 'Nature')
-            ->where('village.workers.0.amount', 8)
-            ->where('village.administrators.0.education', 's1/d4')
+            ->where('village.worker_types.0.amount', 8)
+            ->where('village.worker_genders.0.gender', 'female')
+            ->where('village.worker_educations.0.education', 's1/d4')
             ->where('village.administrator_languages.0.language_name', 'Inggris')
             ->where('village.stakeholders.0.name', 'Siti Aminah')
             ->missing('village.stakeholders.0.organization')

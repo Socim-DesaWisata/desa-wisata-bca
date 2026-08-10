@@ -198,6 +198,7 @@ type VillageShowProps = {
         kemenpar_aspect_scores: KemenparAspectScore[];
         istc_aspect_scores: IstcAspectScore[];
         survey_assignment: { code: string } | null;
+        total_personnel: number;
         worker_types: VillageWorkerType[];
         worker_genders: VillageWorkerGender[];
         worker_ages: VillageWorkerAge[];
@@ -406,29 +407,33 @@ function Panel({ children }: { children: ReactNode }) {
 }
 
 function VillageProfileSummary({
+    totalPersonnel,
     workerTypes,
     stakeholders,
     institutionals,
 }: {
+    totalPersonnel?: number;
     workerTypes: VillageWorkerType[];
     stakeholders: VillageStakeholder[];
     institutionals: VillageInstitutional[];
 }) {
-    const totalWorkers = workerTypes.reduce(
-        (total, item) => total + item.amount,
+    const sumWorkerTypes = workerTypes.reduce(
+        (total, item) => total + (item.amount || 0),
         0,
     );
+    const totalWorkers =
+        totalPersonnel && totalPersonnel > 0 ? totalPersonnel : sumWorkerTypes;
     const partTimeWorkers = workerTypes
         .filter((item) => item.type === 'part-time')
-        .reduce((total, item) => total + item.amount, 0);
+        .reduce((total, item) => total + (item.amount || 0), 0);
     const fullTimeWorkers = workerTypes
         .filter((item) => item.type === 'full-time')
-        .reduce((total, item) => total + item.amount, 0);
+        .reduce((total, item) => total + (item.amount || 0), 0);
     const summaryStats = [
         {
             value: totalWorkers,
             unit: 'Orang',
-            label: 'Total Tenaga Kerja',
+            label: 'Total Tenaga Kerja & Pengurus',
             icon: UsersThree,
             iconClass: 'bg-[#EAF3FF] text-[#0066AE]',
         },
@@ -985,25 +990,25 @@ function WorkforceProgress({
 }
 
 function WorkforceSidebarSummary({
-    workerTypes,
     workerGenders,
     workerAges,
     workerEducations,
     administratorLanguages,
 }: {
-    workerTypes: VillageWorkerType[];
     workerGenders: VillageWorkerGender[];
     workerAges: VillageWorkerAge[];
     workerEducations: VillageWorkerEducation[];
     administratorLanguages: VillageAdministratorLanguage[];
 }) {
-    const totalWorkers = workerTypes.reduce(
-        (total, item) => total + item.amount,
-        0,
-    );
     const percentageOf = (value: number, total: number) =>
         total > 0 ? Math.round((value / total) * 100) : 0;
-    const genderRows = [
+
+    // --- Gender Statistics ---
+    const totalGenders = workerGenders.reduce(
+        (total, item) => total + (item.amount || 0),
+        0,
+    );
+    const genderConfigs = [
         {
             value: 'male',
             label: 'Laki-laki',
@@ -1014,40 +1019,76 @@ function WorkforceSidebarSummary({
             label: 'Perempuan',
             color: '#E95B85',
         },
-        // {
-        //     value: 'unspecified',
-        //     label: 'Tidak Diketahui',
-        //     color: '#94A3B8',
-        // },
-    ].map((gender) => ({
-        ...gender,
-        amount: workerGenders
-            .filter((item) => item.gender === gender.value)
-            .reduce((total, item) => total + item.amount, 0),
-    }));
-    const malePercent = percentageOf(genderRows[0].amount, totalWorkers);
-    const femalePercent = percentageOf(genderRows[1].amount, totalWorkers);
-    const genderGradient = `conic-gradient(#1688CC 0 ${malePercent}%, #E95B85 ${malePercent}% ${malePercent + femalePercent}%, #94A3B8 ${malePercent + femalePercent}% 100%)`;
-    const dominantGender = [...genderRows].sort(
-        (a, b) => b.amount - a.amount,
-    )[0];
+        {
+            value: 'unspecified',
+            label: 'Belum Ditentukan',
+            color: '#94A3B8',
+        },
+    ];
+    const genderRows = genderConfigs
+        .map((gender) => ({
+            ...gender,
+            amount: workerGenders
+                .filter((item) => item.gender === gender.value)
+                .reduce((total, item) => total + (item.amount || 0), 0),
+        }))
+        .filter((row) => row.amount > 0 || row.value !== 'unspecified');
+
+    let currentGenderPercent = 0;
+    const activeGenderRows = genderRows.filter((r) => r.amount > 0);
+    const genderGradient =
+        totalGenders > 0 && activeGenderRows.length > 0
+            ? `conic-gradient(${activeGenderRows
+                  .map((row, i, arr) => {
+                      const percent = percentageOf(row.amount, totalGenders);
+                      const start = currentGenderPercent;
+                      currentGenderPercent += percent;
+                      const end =
+                          i === arr.length - 1 ? 100 : currentGenderPercent;
+                      return `${row.color} ${start}% ${end}%`;
+                  })
+                  .join(', ')})`
+            : 'none';
+    const dominantGender = [...genderRows]
+        .filter((r) => r.amount > 0)
+        .sort((a, b) => b.amount - a.amount)[0];
+
+    // --- Age Range Statistics ---
+    const totalAges = workerAges.reduce(
+        (total, item) => total + (item.amount || 0),
+        0,
+    );
     const ageRows = Array.from(
         workerAges
             .reduce(
                 (groups, worker) => {
-                    const hasCompleteRange =
-                        worker.age_min !== null && worker.age_max !== null;
-                    const key = hasCompleteRange
-                        ? `${worker.age_min}-${worker.age_max}`
-                        : 'unknown';
+                    const hasMin =
+                        worker.age_min !== null && worker.age_min !== undefined;
+                    const hasMax =
+                        worker.age_max !== null && worker.age_max !== undefined;
+                    let label = 'Umur Tidak Diketahui';
+                    let key = 'unknown';
+
+                    if (hasMin && hasMax) {
+                        label = `${worker.age_min}–${worker.age_max} Tahun`;
+                        key = `${worker.age_min}-${worker.age_max}`;
+                    } else if (hasMin) {
+                        label = `≥ ${worker.age_min} Tahun`;
+                        key = `min-${worker.age_min}`;
+                    } else if (hasMax) {
+                        label = `≤ ${worker.age_max} Tahun`;
+                        key = `max-${worker.age_max}`;
+                    }
+
                     const current = groups.get(key) ?? {
                         key,
-                        ageMin: hasCompleteRange ? worker.age_min : null,
-                        ageMax: hasCompleteRange ? worker.age_max : null,
+                        label,
+                        ageMin: hasMin ? worker.age_min : null,
+                        ageMax: hasMax ? worker.age_max : null,
                         amount: 0,
                     };
 
-                    current.amount += worker.amount;
+                    current.amount += worker.amount || 0;
                     groups.set(key, current);
 
                     return groups;
@@ -1056,6 +1097,7 @@ function WorkforceSidebarSummary({
                     string,
                     {
                         key: string;
+                        label: string;
                         ageMin: number | null;
                         ageMax: number | null;
                         amount: number;
@@ -1063,53 +1105,96 @@ function WorkforceSidebarSummary({
                 >(),
             )
             .values(),
-    ).sort((a, b) => {
-        if (a.ageMin === null) return 1;
-        if (b.ageMin === null) return -1;
+    )
+        .filter((row) => row.amount > 0)
+        .sort((a, b) => {
+            if (a.ageMin === null) {
+                return 1;
+            }
+            if (b.ageMin === null) {
+                return -1;
+            }
 
-        return a.ageMin - b.ageMin || (a.ageMax ?? 0) - (b.ageMax ?? 0);
-    });
+            return a.ageMin - b.ageMin || (a.ageMax ?? 0) - (b.ageMax ?? 0);
+        });
+
+    // --- Education Statistics ---
     const totalEducations = workerEducations.reduce(
-        (total, item) => total + item.amount,
+        (total, item) => total + (item.amount || 0),
         0,
     );
-    const educationColors = ['#1688CC', '#16A765', '#F2A900', '#6D4AFF', '#E95B85', '#94A3B8'];
+    const educationLabels: Record<string, string> = {
+        sd: 'SD',
+        smp: 'SMP',
+        sma: 'SMA / SMK',
+        d3: 'D3',
+        's1/d4': 'S1 / D4',
+        s2: 'S2',
+        s3: 'S3',
+    };
+    const educationColors = [
+        '#1688CC',
+        '#16A765',
+        '#F2A900',
+        '#6D4AFF',
+        '#E95B85',
+        '#94A3B8',
+    ];
     const educationRows = Array.from(
-        workerEducations.reduce((groups, item) => {
-            const key = item.education.toLowerCase();
-            const current = groups.get(key) ?? {
-                label: item.education.toUpperCase(),
-                amount: 0,
-            };
-            current.amount += item.amount;
-            groups.set(key, current);
-            return groups;
-        }, new Map<string, { label: string; amount: number }>()).values()
-    ).sort((a, b) => b.amount - a.amount).map((row, index) => ({
-        ...row,
-        color: educationColors[index % educationColors.length],
-    }));
+        workerEducations
+            .reduce((groups, item) => {
+                const rawKey = (item.education || '').toLowerCase().trim();
+                const key = rawKey || 'unknown';
+                const label =
+                    educationLabels[key] ??
+                    (key === 'unknown' ? 'Lainnya' : key.toUpperCase());
+                const current = groups.get(key) ?? {
+                    label,
+                    amount: 0,
+                };
+                current.amount += item.amount || 0;
+                groups.set(key, current);
+                return groups;
+            }, new Map<string, { label: string; amount: number }>())
+            .values(),
+    )
+        .filter((row) => row.amount > 0)
+        .sort((a, b) => b.amount - a.amount)
+        .map((row, index) => ({
+            ...row,
+            color: educationColors[index % educationColors.length],
+        }));
+
     let currentEduPercent = 0;
-    const educationGradient = educationRows.length > 0
-        ? `conic-gradient(${educationRows.map((row, i, arr) => {
-            const percent = percentageOf(row.amount, totalEducations);
-            const start = currentEduPercent;
-            currentEduPercent += percent;
-            const end = i === arr.length - 1 ? 100 : currentEduPercent;
-            return `${row.color} ${start}% ${end}%`;
-        }).join(', ')})`
-        : 'none';
-    const dominantEducation = educationRows[0] ?? { label: '-', amount: 0 };
+    const educationGradient =
+        totalEducations > 0 && educationRows.length > 0
+            ? `conic-gradient(${educationRows
+                  .map((row, i, arr) => {
+                      const percent = percentageOf(row.amount, totalEducations);
+                      const start = currentEduPercent;
+                      currentEduPercent += percent;
+                      const end =
+                          i === arr.length - 1 ? 100 : currentEduPercent;
+                      return `${row.color} ${start}% ${end}%`;
+                  })
+                  .join(', ')})`
+            : 'none';
+    const dominantEducation = educationRows[0];
+
+    // --- Language Statistics ---
     const totalAdministratorLanguages = administratorLanguages.reduce(
-        (total, item) => total + item.amount,
+        (total, item) => total + (item.amount || 0),
         0,
     );
-    const proficiencyLabels = {
+    const activeAdministratorLanguages = administratorLanguages.filter(
+        (item) => (item.amount || 0) > 0,
+    );
+    const proficiencyLabels: Record<string, string> = {
         basic: 'Dasar',
         intermediate: 'Menengah',
         advanced: 'Mahir',
         fluent: 'Fasih',
-    } as const;
+    };
 
     return (
         <div className="space-y-4">
@@ -1117,7 +1202,7 @@ function WorkforceSidebarSummary({
                 title="Komposisi Tenaga Kerja (Gender)"
                 icon={UsersThree}
             >
-                {totalWorkers > 0 ? (
+                {totalGenders > 0 ? (
                     <>
                         <div className="grid grid-cols-[112px_1fr] items-center gap-4">
                             <div
@@ -1129,7 +1214,7 @@ function WorkforceSidebarSummary({
                                 <div className="grid size-[62px] place-items-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_#EEF1F4]">
                                     <div>
                                         <p className="text-[17px] leading-none font-black text-[#303030]">
-                                            {totalWorkers}
+                                            {totalGenders}
                                         </p>
                                         <p className="mt-1 text-[9px] font-extrabold text-[#4B5560]">
                                             Orang
@@ -1157,7 +1242,7 @@ function WorkforceSidebarSummary({
                                                 {gender.amount} Orang (
                                                 {percentageOf(
                                                     gender.amount,
-                                                    totalWorkers,
+                                                    totalGenders,
                                                 )}
                                                 %)
                                             </p>
@@ -1166,32 +1251,33 @@ function WorkforceSidebarSummary({
                                 ))}
                             </div>
                         </div>
-                        <WorkforceInsight>
-                            Komposisi terbesar: {dominantGender.label} (
-                            {percentageOf(dominantGender.amount, totalWorkers)}
-                            %).
-                        </WorkforceInsight>
+                        {dominantGender && dominantGender.amount > 0 && (
+                            <WorkforceInsight>
+                                Komposisi terbesar: {dominantGender.label} (
+                                {percentageOf(
+                                    dominantGender.amount,
+                                    totalGenders,
+                                )}
+                                %).
+                            </WorkforceInsight>
+                        )}
                     </>
                 ) : (
-                    <EmptyState title="Tidak ada data tenaga kerja" />
+                    <EmptyState title="Tidak ada data komposisi gender" />
                 )}
             </SidebarCard>
 
             <SidebarCard title="Rentang Umur Tenaga Kerja" icon={Clock}>
-                {ageRows.length ? (
+                {totalAges > 0 && ageRows.length ? (
                     <div className="space-y-4">
                         {ageRows.map((row, index) => (
                             <div key={row.key}>
                                 <WorkforceProgress
-                                    label={
-                                        row.ageMin === null
-                                            ? 'Umur Tidak Diketahui'
-                                            : `${row.ageMin}–${row.ageMax} Tahun`
-                                    }
+                                    label={row.label}
                                     value={`${row.amount} Orang`}
                                     percentage={percentageOf(
                                         row.amount,
-                                        totalWorkers,
+                                        totalAges,
                                     )}
                                     color={
                                         educationColors[
@@ -1200,7 +1286,6 @@ function WorkforceSidebarSummary({
                                     }
                                     icon={Clock}
                                 />
-
                             </div>
                         ))}
                     </div>
@@ -1213,7 +1298,7 @@ function WorkforceSidebarSummary({
                 title="Status Pengurus menurut Pendidikan"
                 icon={Trophy}
             >
-                {educationRows.length ? (
+                {totalEducations > 0 && educationRows.length ? (
                     <>
                         <div className="grid grid-cols-[112px_1fr] items-center gap-4">
                             <div
@@ -1262,11 +1347,16 @@ function WorkforceSidebarSummary({
                                 ))}
                             </div>
                         </div>
-                        <WorkforceInsight>
-                            Komposisi terbesar: {dominantEducation.label} (
-                            {percentageOf(dominantEducation.amount, totalEducations)}
-                            %).
-                        </WorkforceInsight>
+                        {dominantEducation && dominantEducation.amount > 0 && (
+                            <WorkforceInsight>
+                                Komposisi terbesar: {dominantEducation.label} (
+                                {percentageOf(
+                                    dominantEducation.amount,
+                                    totalEducations,
+                                )}
+                                %).
+                            </WorkforceInsight>
+                        )}
                     </>
                 ) : (
                     <EmptyState title="Tidak ada data pendidikan pengurus" />
@@ -1274,12 +1364,13 @@ function WorkforceSidebarSummary({
             </SidebarCard>
 
             <SidebarCard title="Bahasa Asing Pengurus" icon={ChatsCircle}>
-                {administratorLanguages.length ? (
+                {totalAdministratorLanguages > 0 &&
+                activeAdministratorLanguages.length ? (
                     <div className="space-y-4">
-                        {administratorLanguages.map((language, index) => (
+                        {activeAdministratorLanguages.map((language, index) => (
                             <div key={language.id}>
                                 <WorkforceProgress
-                                    label={`${language.language_name} (${proficiencyLabels[language.proficiency_level]})`}
+                                    label={`${language.language_name} (${proficiencyLabels[language.proficiency_level] ?? language.proficiency_level})`}
                                     value={`${language.amount} Orang`}
                                     percentage={percentageOf(
                                         language.amount,
@@ -1823,6 +1914,7 @@ export default function VillageDetail({
                             </Panel>
                         </section>
                         <VillageProfileSummary
+                            totalPersonnel={village.total_personnel}
                             workerTypes={village.worker_types}
                             stakeholders={village.stakeholders}
                             institutionals={village.institutionals}
@@ -1929,7 +2021,6 @@ export default function VillageDetail({
                     <div className="space-y-8 lg:sticky lg:top-6 lg:self-start">
                         {/* <QrBlock rows={villageInfoRows} villageName={villageName} /> */}
                         <WorkforceSidebarSummary
-                            workerTypes={village.worker_types}
                             workerGenders={village.worker_genders}
                             workerAges={village.worker_ages}
                             workerEducations={village.worker_educations}
