@@ -164,6 +164,14 @@ type DashboardProps = {
     top_village_surveys?: TopSurveyRow[];
     kemenpar_village_scores?: VillageScoreTableData;
     istc_village_scores?: VillageScoreTableData;
+    umkm_score_chart?: Array<{
+        id: number;
+        name: string;
+        village_id: number;
+        village_name: string;
+        product_category: string;
+        score: number;
+    }>;
     top_umkm_surveys?: TopSurveyRow[];
     top_pariwisata_surveys?: TopSurveyRow[];
     top_umkm_turnovers?: TopSurveyRow[];

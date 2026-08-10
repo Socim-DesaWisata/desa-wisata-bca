@@ -43,6 +43,85 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertOk();
 });
 
+test('dashboard provides UMKM score chart data grouped by village', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'type' => 'umkm',
+    ]);
+    $question = UmkmSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'criteria_code' => 'UMKM-1',
+        'criteria_name' => 'Kriteria UMKM',
+        'criteria_weight_percent' => 100,
+        'question_number' => 1,
+        'question_text' => 'Pertanyaan UMKM',
+        'question_weight_percent' => 100,
+        'max_score' => 4,
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $villageA = TourismVillage::factory()->create([
+        'name' => 'Desa A',
+        'created_by' => $user->id,
+    ]);
+    $villageB = TourismVillage::factory()->create([
+        'name' => 'Desa B',
+        'created_by' => $user->id,
+    ]);
+    $umkmA = VillageUmkm::query()->create([
+        'village_id' => $villageA->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM A',
+        'product_category' => 'Kuliner',
+    ]);
+    $umkmB = VillageUmkm::query()->create([
+        'village_id' => $villageA->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM B',
+        'product_category' => 'Kerajinan',
+    ]);
+    $umkmC = VillageUmkm::query()->create([
+        'village_id' => $villageB->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM C',
+        'product_category' => 'Kuliner',
+    ]);
+
+    foreach ([[$umkmA, 67.5], [$umkmB, 42.5], [$umkmC, 85.0]] as [$umkm, $weightedScore]) {
+        UmkmSurveyAnswer::query()->create([
+            'umkm_id' => $umkm->id,
+            'umkm_assessment_question_id' => $question->id,
+            'answered_by' => $user->id,
+            'score' => 4,
+            'criteria_code_snapshot' => 'UMKM-1',
+            'criteria_name_snapshot' => 'Kriteria UMKM',
+            'criteria_weight_percent_snapshot' => 100,
+            'question_text_snapshot' => 'Pertanyaan UMKM',
+            'question_weight_percent_snapshot' => 100,
+            'max_score_snapshot' => 4,
+            'normalized_score' => 1,
+            'weighted_score' => $weightedScore,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('umkm_score_chart.0.name', 'UMKM C')
+            ->where('umkm_score_chart.0.village_id', $villageB->id)
+            ->where('umkm_score_chart.0.village_name', 'Desa B')
+            ->where('umkm_score_chart.0.product_category', 'Kuliner')
+            ->where('umkm_score_chart.0.score', 85)
+            ->where('umkm_score_chart.1.name', 'UMKM A')
+            ->where('umkm_score_chart.1.village_id', $villageA->id)
+            ->where('umkm_score_chart.2.name', 'UMKM B')
+            ->where('umkm_score_chart.2.village_id', $villageA->id)
+            ->where('umkm_score_chart.2.product_category', 'Kerajinan')
+        );
+});
+
 test('dashboard top turnovers use annual turnover data and recent assignments omit removed columns', function () {
     $user = User::factory()->create();
     $template = SurveyTemplate::factory()->create(['created_by' => $user->id]);

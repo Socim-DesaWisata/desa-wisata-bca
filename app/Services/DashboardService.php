@@ -31,6 +31,7 @@ class DashboardService
             'top_village_surveys' => $this->topVillageSurveys(),
             'kemenpar_village_scores' => $this->villageScoreTable('kemenpar'),
             'istc_village_scores' => $this->villageScoreTable('istc'),
+            'umkm_score_chart' => $this->umkmScoreChart(),
             'top_umkm_surveys' => $this->topUmkmSurveys(),
             'top_pariwisata_surveys' => $this->topPariwisataSurveys(),
             'top_umkm_turnovers' => $this->topUmkmTurnovers(),
@@ -421,6 +422,30 @@ class DashboardService
                     'aspect_scores' => $aspectScores,
                 ];
             })
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{id: int, name: string, village_id: int, village_name: string, product_category: string, score: float}>
+     */
+    private function umkmScoreChart(): array
+    {
+        return VillageUmkm::query()
+            ->select(['id', 'village_id', 'name', 'product_category'])
+            ->whereHas('surveyAnswers')
+            ->with('village:id,name')
+            ->withSum('surveyAnswers as total_score', 'weighted_score')
+            ->orderByDesc('total_score')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (VillageUmkm $umkm): array => [
+                'id' => $umkm->id,
+                'name' => $umkm->name,
+                'village_id' => $umkm->village_id,
+                'village_name' => $umkm->village?->name ?? '-',
+                'product_category' => $umkm->product_category ?: 'Tanpa kategori',
+                'score' => round(min(max((float) ($umkm->total_score ?? 0), 0), 100), 1),
+            ])
             ->all();
     }
 

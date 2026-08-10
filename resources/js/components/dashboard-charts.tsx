@@ -8,6 +8,7 @@ import {
     ResponsiveContainer,
     BarChart,
     Bar,
+    Cell,
     LabelList,
     Radar,
     RadarChart,
@@ -23,7 +24,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { surveyAssignments, pariwisata } from '@/routes';
+import { surveyAssignments, pariwisata, umkm } from '@/routes';
 import {
     ArrowUpRight,
     ArrowDownRight,
@@ -54,6 +55,15 @@ type VillageScoreBarDatum = {
     score: number;
     maxScore: number;
     percentage: number;
+};
+
+type UmkmScoreChartDatum = {
+    id: number;
+    name: string;
+    village_id: number;
+    village_name: string;
+    product_category: string;
+    score: number;
 };
 
 function VillageScoreBarChart({
@@ -252,6 +262,246 @@ function VillageScoreBarChart({
     );
 }
 
+const umkmVillageColors = [
+    '#0066AE',
+    '#00893D',
+    '#E58A00',
+    '#8A4FFF',
+    '#D13C7A',
+    '#0F9D9A',
+    '#A14F1B',
+    '#52616B',
+];
+
+function UmkmScoreHorizontalChart({
+    data,
+}: {
+    data: UmkmScoreChartDatum[];
+}) {
+    const [selectedCategory, setSelectedCategory] =
+        useState('Semua Kategori');
+    const categories = Array.from(
+        new Set(data.map((item) => item.product_category)),
+    ).sort((left, right) => left.localeCompare(right, 'id'));
+    const filteredData =
+        selectedCategory === 'Semua Kategori'
+            ? data
+            : data.filter(
+                  (item) => item.product_category === selectedCategory,
+              );
+
+    if (data.length === 0) {
+        return (
+            <Panel className="flex min-h-[280px] flex-col p-4 lg:col-span-2">
+                <h2 className="text-sm font-bold text-[#303030]">
+                    Skor UMKM per Desa
+                </h2>
+                <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                    Skor UMKM dalam persentase
+                </p>
+                <p className="flex flex-1 items-center justify-center text-center text-sm font-semibold text-[#7C7C7C]">
+                    Belum ada skor UMKM.
+                </p>
+            </Panel>
+        );
+    }
+
+    const villageIds = Array.from(
+        new Set(filteredData.map((item) => item.village_id)),
+    ).sort((left, right) => left - right);
+    const villageColors = new Map(
+        villageIds.map((villageId, index) => [
+            villageId,
+            umkmVillageColors[index % umkmVillageColors.length],
+        ]),
+    );
+    const villageNames = new Map(
+        filteredData.map((item) => [item.village_id, item.village_name]),
+    );
+    const chartHeight = Math.min(
+        Math.max(filteredData.length * 42, 240),
+        560,
+    );
+
+    return (
+        <Panel className="min-w-0 p-4 lg:col-span-2">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h2 className="text-sm font-bold text-[#303030]">
+                        Skor UMKM per Desa
+                    </h2>
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        Skor UMKM dalam persentase
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                        {categories.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
+                                        {selectedCategory}{' '}
+                                        <ChevronDown className="size-3" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="max-h-[300px] w-[200px] overflow-auto"
+                                >
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-xs"
+                                        onSelect={() =>
+                                            setSelectedCategory(
+                                                'Semua Kategori',
+                                            )
+                                        }
+                                    >
+                                        Semua Kategori
+                                    </DropdownMenuItem>
+                                    {categories.map((category) => (
+                                        <DropdownMenuItem
+                                            key={category}
+                                            className="cursor-pointer text-xs"
+                                            onSelect={() =>
+                                                setSelectedCategory(category)
+                                            }
+                                        >
+                                            {category}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                        <Link
+                            href={umkm.url()}
+                            className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-bold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
+                        >
+                            Detail UMKM{' '}
+                            <ArrowUpRight className="size-3" strokeWidth={2.2} />
+                        </Link>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <div className="min-w-[720px]">
+                    <div
+                        className="max-h-[560px] overflow-y-auto pr-1"
+                        style={{ height: chartHeight }}
+                    >
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={filteredData}
+                                layout="vertical"
+                                margin={{
+                                    top: 4,
+                                    right: 56,
+                                    left: 8,
+                                    bottom: 4,
+                                }}
+                            >
+                                <CartesianGrid
+                                    stroke="#EAF0F7"
+                                    horizontal={false}
+                                />
+                                <XAxis
+                                    type="number"
+                                    domain={[0, 100]}
+                                    tickFormatter={(value) => `${value}%`}
+                                    tick={{
+                                        fill: '#7C7C7C',
+                                        fontSize: 10,
+                                    }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    type="category"
+                                    dataKey="name"
+                                    width={180}
+                                    tick={{
+                                        fill: '#303030',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                    }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    formatter={(value) => [
+                                        `${Number(value ?? 0).toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`,
+                                        'Skor',
+                                    ]}
+                                    labelFormatter={(label, payload) => {
+                                        const item = payload[0]
+                                            ?.payload as
+                                            | UmkmScoreChartDatum
+                                            | undefined;
+                                        return `${label} · ${item?.village_name ?? '-'}`;
+                                    }}
+                                    contentStyle={{
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        boxShadow:
+                                            '0 4px 14px rgba(3,17,32,0.08)',
+                                        color: '#303030',
+                                        fontSize: '12px',
+                                    }}
+                                />
+                                <Bar
+                                    dataKey="score"
+                                    radius={[0, 3, 3, 0]}
+                                    barSize={22}
+                                >
+                                    {filteredData.map((item) => (
+                                        <Cell
+                                            key={item.id}
+                                            fill={
+                                                villageColors.get(
+                                                    item.village_id,
+                                                )
+                                            }
+                                        />
+                                    ))}
+                                    <LabelList
+                                        dataKey="score"
+                                        position="right"
+                                        formatter={(
+                                            value:
+                                                | number
+                                                | string
+                                                | undefined,
+                                        ) =>
+                                            `${Number(value ?? 0).toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`
+                                        }
+                                        fill="#303030"
+                                        fontSize={10}
+                                        fontWeight={700}
+                                    />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-[#EFEFEF] pt-4 text-[10px] font-semibold text-[#7C7C7C]">
+                {villageIds.map((villageId) => (
+                    <span
+                        key={villageId}
+                        className="inline-flex items-center gap-2 rounded-md border border-[#DDE4EC] bg-white px-3 py-2"
+                    >
+                        <span
+                            className="size-2.5"
+                            style={{
+                                backgroundColor: villageColors.get(villageId),
+                            }}
+                        />
+                        {villageNames.get(villageId) ?? '-'}
+                    </span>
+                ))}
+            </div>
+        </Panel>
+    );
+}
+
 export function DashboardCharts() {
     const { props } = usePage();
     const generalReport = (props as any).general_report || {};
@@ -292,6 +542,9 @@ export function DashboardCharts() {
     const showGeneralReport = false;
     const kemenparVillageScores = (props as any).kemenpar_village_scores;
     const istcVillageScores = (props as any).istc_village_scores;
+    const umkmScoreChart = (props as any).umkm_score_chart as
+        | UmkmScoreChartDatum[]
+        | undefined;
 
     return (
         <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -629,6 +882,7 @@ export function DashboardCharts() {
                 emptyMessage="Belum ada skor ISTC desa."
                 href={pariwisata.url()}
             />
+            <UmkmScoreHorizontalChart data={umkmScoreChart ?? []} />
         </div>
     );
 }
