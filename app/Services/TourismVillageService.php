@@ -858,6 +858,10 @@ class TourismVillageService
         $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
         $keptIds = $village->workerTypes()->whereKey($submittedIds)->pluck('id')->all();
 
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['worker_types' => 'Data tipe pekerja tidak valid.']);
+        }
+
         $village->workerTypes()
             ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
             ->when($keptIds === [], fn ($query) => $query)
@@ -878,6 +882,10 @@ class TourismVillageService
     {
         $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
         $keptIds = $village->workerGenders()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['worker_genders' => 'Data gender pekerja tidak valid.']);
+        }
 
         $village->workerGenders()
             ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
@@ -900,6 +908,10 @@ class TourismVillageService
         $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
         $keptIds = $village->workerAges()->whereKey($submittedIds)->pluck('id')->all();
 
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['worker_ages' => 'Data rentang umur pekerja tidak valid.']);
+        }
+
         $village->workerAges()
             ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))
             ->when($keptIds === [], fn ($query) => $query)
@@ -920,6 +932,10 @@ class TourismVillageService
     {
         $submittedIds = collect($items)->pluck('id')->filter()->map(fn ($id): int => (int) $id)->all();
         $keptIds = $village->workerEducations()->whereKey($submittedIds)->pluck('id')->all();
+
+        if (count($submittedIds) !== count($keptIds)) {
+            throw ValidationException::withMessages(['worker_educations' => 'Data pendidikan pengurus tidak valid.']);
+        }
 
         $village->workerEducations()
             ->when($keptIds !== [], fn ($query) => $query->whereNotIn('id', $keptIds))

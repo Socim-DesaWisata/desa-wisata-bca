@@ -2096,8 +2096,7 @@ function UmkmEditSidebar({
                             <FieldError
                                 message={
                                     fieldError(errors, 'annual_turnovers') as
-                                        | string
-                                        | undefined
+                                        string | undefined
                                 }
                             />
                             <div className="mt-4 space-y-3">

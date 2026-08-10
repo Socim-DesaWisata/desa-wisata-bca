@@ -2987,10 +2987,7 @@ function SurveyAnswerEditModal({
 
     function updateAnswerField(
         key:
-            | 'question_id'
-            | 'survey_question_option_id'
-            | 'notes'
-            | 'documents',
+            'question_id' | 'survey_question_option_id' | 'notes' | 'documents',
         value: number | string | File[],
     ) {
         setData('answers', [

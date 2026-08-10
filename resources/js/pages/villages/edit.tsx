@@ -1,6 +1,11 @@
 import { update as updateVillage } from '@/actions/App/Http/Controllers/TourismVillageController';
 import { RichTextField } from '@/components/ui/rich-text-field';
-import IndependentPersonnelStats, { WorkerTypeForm, WorkerGenderForm, WorkerAgeForm, WorkerEducationForm } from '@/components/independent-personnel-stats';
+import IndependentPersonnelStats, {
+    WorkerTypeForm,
+    WorkerGenderForm,
+    WorkerAgeForm,
+    WorkerEducationForm,
+} from '@/components/independent-personnel-stats';
 import { dashboard, villages as villagesRoute } from '@/routes';
 import { show as showVillage } from '@/routes/villages';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -33,7 +38,9 @@ import {
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 
-const VillageLocationPicker = lazy(() => import('@/components/VillageLocationPicker'));
+const VillageLocationPicker = lazy(
+    () => import('@/components/VillageLocationPicker'),
+);
 
 type Option = {
     value?: string;
@@ -338,8 +345,6 @@ function errorText(errors: Partial<Record<string, string>>, key: string) {
         </p>
     ) : null;
 }
-
-
 
 function StatusBadge({ status }: { status: string }) {
     const label =
@@ -765,7 +770,11 @@ export default function VillageEdit({
                 complete
             >
                 <div className="space-y-4">
-                    <Suspense fallback={<div className="h-[320px] w-full animate-pulse rounded-xl bg-[#F1F5F8]" />}>
+                    <Suspense
+                        fallback={
+                            <div className="h-[320px] w-full animate-pulse rounded-xl bg-[#F1F5F8]" />
+                        }
+                    >
                         <VillageLocationPicker
                             latitude={data.latitude}
                             longitude={data.longitude}
@@ -915,11 +924,9 @@ export default function VillageEdit({
                     ))}
                 </div>
             </SectionCard>
-        ) : [
-              'personnel',
-              'stakeholders',
-              'institutionals',
-          ].includes(activeSection) ? (
+        ) : ['personnel', 'stakeholders', 'institutionals'].includes(
+              activeSection,
+          ) ? (
             <SupportingDataEditor
                 section={activeSection as SupportingDataSection}
                 totalPersonnel={data.total_personnel}
@@ -931,11 +938,17 @@ export default function VillageEdit({
                 stakeholders={data.stakeholders}
                 institutionals={data.institutionals}
                 errors={formErrors}
-                onTotalPersonnelChange={(val) => setData('total_personnel', val)}
+                onTotalPersonnelChange={(val) =>
+                    setData('total_personnel', val)
+                }
                 onWorkerTypesChange={(items) => setData('worker_types', items)}
-                onWorkerGendersChange={(items) => setData('worker_genders', items)}
+                onWorkerGendersChange={(items) =>
+                    setData('worker_genders', items)
+                }
                 onWorkerAgesChange={(items) => setData('worker_ages', items)}
-                onWorkerEducationsChange={(items) => setData('worker_educations', items)}
+                onWorkerEducationsChange={(items) =>
+                    setData('worker_educations', items)
+                }
                 onAdministratorLanguagesChange={(administratorLanguages) =>
                     setData('administrator_languages', administratorLanguages)
                 }
@@ -1382,10 +1395,7 @@ function SectionCard({
     );
 }
 
-type SupportingDataSection =
-    | 'personnel'
-    | 'stakeholders'
-    | 'institutionals';
+type SupportingDataSection = 'personnel' | 'stakeholders' | 'institutionals';
 
 function SupportingDataEditor({
     section,

@@ -11,7 +11,10 @@ import type { LatLngExpression } from 'leaflet';
 
 const defaultLatitude = '-7.2965549';
 const defaultLongitude = '112.7927000';
-const defaultMapCenter: LatLngExpression = [Number(defaultLatitude), Number(defaultLongitude)];
+const defaultMapCenter: LatLngExpression = [
+    Number(defaultLatitude),
+    Number(defaultLongitude),
+];
 const defaultMapZoom = 14;
 const selectedMapZoom = 14;
 
@@ -26,7 +29,11 @@ function coordinateValue(value: number) {
     return value.toFixed(7);
 }
 
-function MapClickHandler({ onPick }: { onPick: (latitude: number, longitude: number) => void }) {
+function MapClickHandler({
+    onPick,
+}: {
+    onPick: (latitude: number, longitude: number) => void;
+}) {
     useMapEvents({
         click(event) {
             onPick(event.latlng.lat, event.latlng.lng);
@@ -47,7 +54,11 @@ function MapResizer({ active }: { active: boolean }) {
     return null;
 }
 
-function MapRecenter({ position }: { position: { lat: number; lng: number } | null }) {
+function MapRecenter({
+    position,
+}: {
+    position: { lat: number; lng: number } | null;
+}) {
     const map = useMap();
     useEffect(() => {
         if (position) {
@@ -77,7 +88,7 @@ export default function VillageLocationPicker({
         [latitude, longitude],
     );
     const [markerIcon, setMarkerIcon] = useState<any>(null);
-    
+
     useEffect(() => {
         import('leaflet').then((leafletModule) => {
             setMarkerIcon(
@@ -87,7 +98,7 @@ export default function VillageLocationPicker({
                     html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
                     iconSize: [20, 20],
                     iconAnchor: [10, 10],
-                })
+                }),
             );
         });
     }, []);
@@ -118,7 +129,11 @@ export default function VillageLocationPicker({
         }
     }
 
-    function selectResult(result: { display_name: string; lat: string; lon: string }) {
+    function selectResult(result: {
+        display_name: string;
+        lat: string;
+        lon: string;
+    }) {
         onPick(Number(result.lat), Number(result.lon));
         setSearchResults([]);
         setSearchQuery(result.display_name);
@@ -149,7 +164,9 @@ export default function VillageLocationPicker({
                             type="text"
                             placeholder="Cari lokasi desa..."
                             value={searchQuery}
-                            onChange={(event) => setSearchQuery(event.target.value)}
+                            onChange={(event) =>
+                                setSearchQuery(event.target.value)
+                            }
                             onKeyDown={(event) => {
                                 if (event.key === 'Enter') {
                                     event.preventDefault();

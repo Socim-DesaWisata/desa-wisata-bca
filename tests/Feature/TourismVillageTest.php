@@ -6,7 +6,6 @@ use App\Models\PariwisataSuveyOption;
 use App\Models\SurveyTemplate;
 use App\Models\TourismVillage;
 use App\Models\User;
-use App\Models\VillageAdministrator;
 use App\Models\VillageAdministratorLanguage;
 use App\Models\VillageInstitutional;
 use App\Models\VillageMedia;
@@ -14,7 +13,10 @@ use App\Models\VillageProfileItem;
 use App\Models\VillageProfileItemCategory;
 use App\Models\VillageStakeholder;
 use App\Models\VillageSurveyAssignment;
-use App\Models\VillageWorker;
+use App\Models\VillageWorkerAge;
+use App\Models\VillageWorkerEducation;
+use App\Models\VillageWorkerGender;
+use App\Models\VillageWorkerType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -95,7 +97,7 @@ test('village detail exposes ISTC aspect scores and assignment code', function (
 });
 
 test('authenticated users can create a tourism village', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => 'admin']);
 
     $payload = [
         'code' => 'DW-TEST-001',
@@ -130,7 +132,7 @@ test('authenticated users can create a tourism village', function () {
 });
 
 test('edit page exposes village media from database', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => 'admin']);
     $village = TourismVillage::factory()->create(['created_by' => $user->id]);
 
     VillageMedia::query()->create([
@@ -157,7 +159,7 @@ test('edit page exposes village media from database', function () {
 });
 
 test('updating village without profile items preserves existing profile data', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => 'admin']);
     $village = TourismVillage::factory()->create([
         'created_by' => $user->id,
         'code' => 'DW-PRESERVE-001',
@@ -212,14 +214,14 @@ test('updating village without profile items preserves existing profile data', f
 
 test('edit village supports updating supporting data', function () {
     $user = User::factory()->create(['role' => 'admin']);
-    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id, 'total_personnel' => 7]);
     $otherVillage = TourismVillage::factory()->create(['created_by' => $user->id]);
-    $worker = VillageWorker::query()->create([
+    $workerType = VillageWorkerType::query()->create([
         'village_id' => $village->id,
         'type' => 'full-time',
         'amount' => 5,
     ]);
-    $administrator = VillageAdministrator::query()->create([
+    $workerEdu = VillageWorkerEducation::query()->create([
         'village_id' => $village->id,
         'education' => 'sma',
         'amount' => 2,
@@ -229,7 +231,7 @@ test('edit village supports updating supporting data', function () {
         'title' => 'Lembaga Lama',
         'description' => 'Deskripsi lama',
     ]);
-    $otherWorker = VillageWorker::query()->create([
+    $otherWorkerType = VillageWorkerType::query()->create([
         'village_id' => $otherVillage->id,
         'type' => 'part-time',
         'amount' => 99,
@@ -238,8 +240,8 @@ test('edit village supports updating supporting data', function () {
     $this->actingAs($user)
         ->get(route('villages.edit', $village))
         ->assertInertia(fn ($page) => $page
-            ->where('village.workers.0.id', $worker->id)
-            ->where('village.administrators.0.id', $administrator->id)
+            ->where('village.worker_types.0.id', $workerType->id)
+            ->where('village.worker_educations.0.id', $workerEdu->id)
             ->where('village.institutionals.0.id', $institutional->id)
         );
 
@@ -263,11 +265,18 @@ test('edit village supports updating supporting data', function () {
             'manager_email' => $village->manager_email,
             'status' => 'active',
             'media' => [],
-            'workers' => [
-                ['id' => $worker->id, 'type' => 'part-time', 'gender' => 'female', 'age_min' => 20, 'age_max' => 35, 'amount' => 8, 'notes' => 'Tim operasional'],
+            'total_personnel' => 12,
+            'worker_types' => [
+                ['id' => $workerType->id, 'type' => 'part-time', 'amount' => 8],
             ],
-            'administrators' => [
-                ['id' => $administrator->id, 'education' => 's1/d4', 'amount' => 4],
+            'worker_genders' => [
+                ['id' => null, 'gender' => 'female', 'amount' => 8],
+            ],
+            'worker_ages' => [
+                ['id' => null, 'age_min' => 20, 'age_max' => 35, 'amount' => 8],
+            ],
+            'worker_educations' => [
+                ['id' => $workerEdu->id, 'education' => 's1/d4', 'amount' => 4],
             ],
             'institutionals' => [
                 ['id' => $institutional->id, 'title' => 'Pokdarwis', 'description' => 'Deskripsi baru'],
@@ -282,16 +291,13 @@ test('edit village supports updating supporting data', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('village_workers', [
-        'id' => $worker->id,
+    $this->assertDatabaseHas('village_worker_types', [
+        'id' => $workerType->id,
         'type' => 'part-time',
-        'gender' => 'female',
-        'age_min' => 20,
-        'age_max' => 35,
         'amount' => 8,
     ]);
-    $this->assertDatabaseHas('village_administrators', [
-        'id' => $administrator->id,
+    $this->assertDatabaseHas('village_worker_educations', [
+        'id' => $workerEdu->id,
         'education' => 's1/d4',
         'amount' => 4,
     ]);
@@ -311,8 +317,8 @@ test('edit village supports updating supporting data', function () {
         'name' => 'Budi Santoso',
         'position' => 'Kepala Bidang',
     ]);
-    $this->assertDatabaseHas('village_workers', [
-        'id' => $otherWorker->id,
+    $this->assertDatabaseHas('village_worker_types', [
+        'id' => $otherWorkerType->id,
         'amount' => 99,
     ]);
 });
@@ -321,7 +327,7 @@ test('edit village rejects supporting data from another village', function () {
     $user = User::factory()->create(['role' => 'admin']);
     $village = TourismVillage::factory()->create(['created_by' => $user->id]);
     $otherVillage = TourismVillage::factory()->create(['created_by' => $user->id]);
-    $otherWorker = VillageWorker::query()->create([
+    $otherWorkerType = VillageWorkerType::query()->create([
         'village_id' => $otherVillage->id,
         'type' => 'part-time',
         'amount' => 99,
@@ -333,12 +339,12 @@ test('edit village rejects supporting data from another village', function () {
             'name' => $village->name,
             'slug' => $village->slug,
             'status' => 'active',
-            'workers' => [['id' => $otherWorker->id, 'type' => 'full-time', 'gender' => 'male', 'age_min' => 18, 'age_max' => 30, 'amount' => 1, 'notes' => null]],
+            'worker_types' => [['id' => $otherWorkerType->id, 'type' => 'full-time', 'amount' => 1]],
         ])
-        ->assertSessionHasErrors('workers');
+        ->assertSessionHasErrors('worker_types');
 
-    $this->assertDatabaseHas('village_workers', [
-        'id' => $otherWorker->id,
+    $this->assertDatabaseHas('village_worker_types', [
+        'id' => $otherWorkerType->id,
         'amount' => 99,
     ]);
 });
@@ -353,17 +359,14 @@ test('edit village rejects invalid worker age range', function () {
             'name' => $village->name,
             'slug' => $village->slug,
             'status' => 'active',
-            'workers' => [[
+            'worker_ages' => [[
                 'id' => null,
-                'type' => 'full-time',
-                'gender' => 'male',
                 'age_min' => 40,
                 'age_max' => 20,
                 'amount' => 2,
-                'notes' => null,
             ]],
         ])
-        ->assertSessionHasErrors('workers.0.age_max');
+        ->assertSessionHasErrors('worker_ages.0.age_max');
 });
 
 test('edit village rejects language and stakeholder ids from another village', function () {
