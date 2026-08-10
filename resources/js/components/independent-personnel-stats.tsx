@@ -31,7 +31,16 @@ export interface WorkerAgeForm {
 
 export interface WorkerEducationForm {
     id?: number;
-    education: 'sd' | 'smp' | 'sma' | 'd3' | 's1/d4' | 's2' | 's3';
+    education:
+        | 'tidak_bersekolah'
+        | 'sd'
+        | 'smp'
+        | 'sma'
+        | 'd3'
+        | 's1/d4'
+        | 's2'
+        | 's3'
+        | string;
     amount: number;
 }
 
@@ -89,6 +98,7 @@ export default function IndependentPersonnelStats({
         { value: 'unspecified', label: 'Belum Ditentukan' },
     ];
     const educationOptions = [
+        { value: 'tidak_bersekolah', label: 'Tidak Bersekolah' },
         { value: 'sd', label: 'SD' },
         { value: 'smp', label: 'SMP' },
         { value: 'sma', label: 'SMA' },

@@ -1124,6 +1124,10 @@ function WorkforceSidebarSummary({
         0,
     );
     const educationLabels: Record<string, string> = {
+        tidak_bersekolah: 'Tidak Bersekolah',
+        tidak_sekolah: 'Tidak Bersekolah',
+        'tidak-bersekolah': 'Tidak Bersekolah',
+        'tidak-sekolah': 'Tidak Bersekolah',
         sd: 'SD',
         smp: 'SMP',
         sma: 'SMA / SMK',

@@ -105,7 +105,7 @@ class UpdateTourismVillageRequest extends FormRequest
             'worker_ages.*.amount' => ['required', 'integer', 'min:0'],
             'worker_educations' => ['nullable', 'array'],
             'worker_educations.*.id' => ['nullable', 'integer'],
-            'worker_educations.*.education' => ['required', 'string', Rule::in(['sd', 'smp', 'sma', 'd3', 's1/d4', 's2', 's3'])],
+            'worker_educations.*.education' => ['required', 'string', Rule::in(['tidak_bersekolah', 'tidak_sekolah', 'sd', 'smp', 'sma', 'd3', 's1/d4', 's2', 's3'])],
             'worker_educations.*.amount' => ['required', 'integer', 'min:0'],
             'institutionals' => ['nullable', 'array'],
             'institutionals.*.id' => ['nullable', 'integer'],

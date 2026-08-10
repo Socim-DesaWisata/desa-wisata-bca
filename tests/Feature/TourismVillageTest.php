@@ -277,6 +277,7 @@ test('edit village supports updating supporting data', function () {
             ],
             'worker_educations' => [
                 ['id' => $workerEdu->id, 'education' => 's1/d4', 'amount' => 4],
+                ['id' => null, 'education' => 'tidak_bersekolah', 'amount' => 2],
             ],
             'institutionals' => [
                 ['id' => $institutional->id, 'title' => 'Pokdarwis', 'description' => 'Deskripsi baru'],
@@ -300,6 +301,11 @@ test('edit village supports updating supporting data', function () {
         'id' => $workerEdu->id,
         'education' => 's1/d4',
         'amount' => 4,
+    ]);
+    $this->assertDatabaseHas('village_worker_educations', [
+        'village_id' => $village->id,
+        'education' => 'tidak_bersekolah',
+        'amount' => 2,
     ]);
     $this->assertDatabaseHas('village_institutional', [
         'id' => $institutional->id,
