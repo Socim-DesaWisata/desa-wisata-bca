@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import L from 'leaflet';
+import type { LatLngExpression } from 'leaflet';
 import {
     MapContainer,
     Marker,
@@ -7,7 +9,6 @@ import {
     useMapEvents,
 } from 'react-leaflet';
 import { Search, Loader2 } from 'lucide-react';
-import type { LatLngExpression } from 'leaflet';
 
 const defaultLatitude = '-7.2965549';
 const defaultLongitude = '112.7927000';
@@ -87,19 +88,13 @@ export default function VillageLocationPicker({
         () => parseCoordinates(latitude, longitude),
         [latitude, longitude],
     );
-    const [markerIcon, setMarkerIcon] = useState<any>(null);
-
-    useEffect(() => {
-        import('leaflet').then((leafletModule) => {
-            setMarkerIcon(
-                // @ts-ignore
-                leafletModule.divIcon({
-                    className: '',
-                    html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10],
-                }),
-            );
+    const markerIcon = useMemo(() => {
+        if (typeof window === 'undefined' || !L) return undefined;
+        return L.divIcon({
+            className: '',
+            html: '<div class="size-5 rounded-full border-[3px] border-white bg-[#0066AE] shadow-[0_8px_18px_rgba(3,17,32,0.25)]"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
         });
     }, []);
 

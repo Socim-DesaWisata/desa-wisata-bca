@@ -25,6 +25,7 @@ import {
     Image,
     Info,
     Landmark,
+    Languages,
     MapPinned,
     MapPin,
     Save,
@@ -370,6 +371,8 @@ function Field({
     placeholder,
     error,
     icon: Icon,
+    type = 'text',
+    min,
 }: {
     label: string;
     value: string;
@@ -377,6 +380,8 @@ function Field({
     placeholder?: string;
     error?: string;
     icon?: typeof Info;
+    type?: string;
+    min?: string;
 }) {
     return (
         <label className="block">
@@ -388,6 +393,8 @@ function Field({
                     <Icon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0066AE]" />
                 )}
                 <input
+                    type={type}
+                    min={min}
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
                     className={`h-11 w-full rounded-lg border border-[#DDE4EC] bg-white text-sm text-[#303030] transition outline-none placeholder:text-[#7C7C7C] focus:border-[#2FA6FC] focus:ring-2 focus:ring-[#2FA6FC]/15 ${Icon ? 'pr-3 pl-9' : 'px-3'}`}
@@ -1441,26 +1448,212 @@ function SupportingDataEditor({
     return (
         <div className="space-y-4">
             {section === 'personnel' && (
-                <SectionCard
-                    id="personnel"
-                    icon={User}
-                    title="Tenaga Kerja & Pengurus Desa"
-                    description="Data statistik jumlah tenaga kerja dan pengurus desa berdasarkan berbagai kategori."
-                >
-                    <IndependentPersonnelStats
-                        totalPersonnel={totalPersonnel}
-                        onTotalChange={onTotalPersonnelChange}
-                        workerTypes={workerTypes}
-                        onWorkerTypesChange={onWorkerTypesChange}
-                        workerGenders={workerGenders}
-                        onWorkerGendersChange={onWorkerGendersChange}
-                        workerAges={workerAges}
-                        onWorkerAgesChange={onWorkerAgesChange}
-                        workerEducations={workerEducations}
-                        onWorkerEducationsChange={onWorkerEducationsChange}
-                        errors={errors}
-                    />
-                </SectionCard>
+                <>
+                    <SectionCard
+                        id="personnel"
+                        icon={User}
+                        title="Tenaga Kerja & Pengurus Desa"
+                        description="Data statistik jumlah tenaga kerja dan pengurus desa berdasarkan berbagai kategori."
+                    >
+                        <IndependentPersonnelStats
+                            totalPersonnel={totalPersonnel}
+                            onTotalChange={onTotalPersonnelChange}
+                            workerTypes={workerTypes}
+                            onWorkerTypesChange={onWorkerTypesChange}
+                            workerGenders={workerGenders}
+                            onWorkerGendersChange={onWorkerGendersChange}
+                            workerAges={workerAges}
+                            onWorkerAgesChange={onWorkerAgesChange}
+                            workerEducations={workerEducations}
+                            onWorkerEducationsChange={onWorkerEducationsChange}
+                            errors={errors}
+                        />
+                    </SectionCard>
+
+                    <SectionCard
+                        id="languages"
+                        icon={Languages}
+                        title="Penguasaan Bahasa Asing"
+                        description="Data kemampuan bahasa asing yang dikuasai oleh pengurus atau tenaga kerja desa wisata."
+                    >
+                        <div className="space-y-3">
+                            {administratorLanguages.map((lang, index) => (
+                                <div
+                                    key={lang.id ?? `lang-${index}`}
+                                    className="rounded-lg border border-[#DDE4EC] bg-[#F8FBFF] p-4"
+                                >
+                                    <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-[1.5fr_1.5fr_1fr_40px]">
+                                        <Field
+                                            label="Nama Bahasa"
+                                            value={lang.language_name}
+                                            onChange={(val) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, i) =>
+                                                            i === index
+                                                                ? {
+                                                                      ...item,
+                                                                      language_name:
+                                                                          val,
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="Contoh: Inggris, Mandarin, Jepang"
+                                            error={
+                                                errors[
+                                                    `administrator_languages.${index}.language_name`
+                                                ]
+                                            }
+                                        />
+                                        <div>
+                                            <span className="mb-1 block text-sm font-bold text-[#303030]">
+                                                Tingkat Kemampuan
+                                            </span>
+                                            <select
+                                                value={lang.proficiency_level}
+                                                onChange={(e) =>
+                                                    onAdministratorLanguagesChange(
+                                                        administratorLanguages.map(
+                                                            (item, i) =>
+                                                                i === index
+                                                                    ? {
+                                                                          ...item,
+                                                                          proficiency_level:
+                                                                              e
+                                                                                  .target
+                                                                                  .value as AdministratorLanguageForm['proficiency_level'],
+                                                                      }
+                                                                    : item,
+                                                        ),
+                                                    )
+                                                }
+                                                className="h-11 w-full rounded-lg border border-[#DDE4EC] bg-white px-3 text-sm font-semibold text-[#303030] outline-none focus:border-[#2FA6FC] focus:ring-2 focus:ring-[#2FA6FC]/15"
+                                            >
+                                                <option value="basic">
+                                                    Pemula (Basic)
+                                                </option>
+                                                <option value="intermediate">
+                                                    Menengah (Intermediate)
+                                                </option>
+                                                <option value="advanced">
+                                                    Mahir (Advanced)
+                                                </option>
+                                                <option value="fluent">
+                                                    Fasih (Fluent)
+                                                </option>
+                                            </select>
+                                            {errors[
+                                                `administrator_languages.${index}.proficiency_level`
+                                            ] && (
+                                                <p className="mt-1 text-xs font-semibold text-[#D81313]">
+                                                    {
+                                                        errors[
+                                                            `administrator_languages.${index}.proficiency_level`
+                                                        ]
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                        <Field
+                                            label="Jumlah Orang"
+                                            type="number"
+                                            min="0"
+                                            value={
+                                                lang.amount
+                                                    ? String(lang.amount)
+                                                    : ''
+                                            }
+                                            onChange={(val) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, i) =>
+                                                            i === index
+                                                                ? {
+                                                                      ...item,
+                                                                      amount:
+                                                                          parseInt(
+                                                                              val,
+                                                                              10,
+                                                                          ) ||
+                                                                          0,
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="0"
+                                            error={
+                                                errors[
+                                                    `administrator_languages.${index}.amount`
+                                                ]
+                                            }
+                                        />
+                                        <button
+                                            type="button"
+                                            aria-label="Hapus bahasa"
+                                            onClick={() =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.filter(
+                                                        (_, i) => i !== index,
+                                                    ),
+                                                )
+                                            }
+                                            className="mt-6 self-start rounded-lg border border-[#F4B7B7] p-2.5 text-[#D81313] transition hover:bg-[#FDE8E8]"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                    <div className="mt-3">
+                                        <Field
+                                            label="Catatan (Opsional)"
+                                            value={lang.notes ?? ''}
+                                            onChange={(val) =>
+                                                onAdministratorLanguagesChange(
+                                                    administratorLanguages.map(
+                                                        (item, i) =>
+                                                            i === index
+                                                                ? {
+                                                                      ...item,
+                                                                      notes: val,
+                                                                  }
+                                                                : item,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="Contoh: Pemandu tamu mancanegara, sertifikasi TOEFL, dll."
+                                            error={
+                                                errors[
+                                                    `administrator_languages.${index}.notes`
+                                                ]
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onAdministratorLanguagesChange([
+                                        ...administratorLanguages,
+                                        {
+                                            id: null,
+                                            language_name: '',
+                                            proficiency_level: 'basic',
+                                            amount: 1,
+                                            notes: '',
+                                        },
+                                    ])
+                                }
+                                className="w-full rounded-lg border border-dashed border-[#AAD2F8] py-2.5 text-sm font-bold text-[#0066AE] transition hover:bg-[#F0F7FF]"
+                            >
+                                + Tambah Bahasa Asing
+                            </button>
+                        </div>
+                    </SectionCard>
+                </>
             )}
 
             {section === 'stakeholders' && (

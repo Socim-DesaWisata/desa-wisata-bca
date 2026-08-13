@@ -349,16 +349,22 @@ export default function DashboardVillageMap({
                             attribution={mapThemes[mapTheme].attribution}
                             url={mapThemes[mapTheme].url}
                         />
-                        {validPoints.map((point) => (
-                            <Marker
-                                key={point.id}
-                                position={[point.latitude, point.longitude]}
-                                icon={markerIcons.get(point.id)}
-                                eventHandlers={{
-                                    click: () => setSelectedVillageId(point.id),
-                                }}
-                            />
-                        ))}
+                        {validPoints.map((point) => {
+                            const icon = markerIcons.get(point.id);
+                            if (!icon) return null;
+
+                            return (
+                                <Marker
+                                    key={point.id}
+                                    position={[point.latitude, point.longitude]}
+                                    icon={icon}
+                                    eventHandlers={{
+                                        click: () =>
+                                            setSelectedVillageId(point.id),
+                                    }}
+                                />
+                            );
+                        })}
                     </MapContainer>
                 </div>
 

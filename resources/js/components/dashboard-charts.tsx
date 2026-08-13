@@ -273,22 +273,15 @@ const umkmVillageColors = [
     '#52616B',
 ];
 
-function UmkmScoreHorizontalChart({
-    data,
-}: {
-    data: UmkmScoreChartDatum[];
-}) {
-    const [selectedCategory, setSelectedCategory] =
-        useState('Semua Kategori');
+function UmkmScoreHorizontalChart({ data }: { data: UmkmScoreChartDatum[] }) {
+    const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
     const categories = Array.from(
         new Set(data.map((item) => item.product_category)),
     ).sort((left, right) => left.localeCompare(right, 'id'));
     const filteredData =
         selectedCategory === 'Semua Kategori'
             ? data
-            : data.filter(
-                  (item) => item.product_category === selectedCategory,
-              );
+            : data.filter((item) => item.product_category === selectedCategory);
 
     if (data.length === 0) {
         return (
@@ -318,10 +311,7 @@ function UmkmScoreHorizontalChart({
     const villageNames = new Map(
         filteredData.map((item) => [item.village_id, item.village_name]),
     );
-    const chartHeight = Math.min(
-        Math.max(filteredData.length * 42, 240),
-        560,
-    );
+    const chartHeight = Math.min(Math.max(filteredData.length * 42, 240), 560);
 
     return (
         <Panel className="min-w-0 p-4 lg:col-span-2">
@@ -335,49 +325,47 @@ function UmkmScoreHorizontalChart({
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                        {categories.length > 0 && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
-                                        {selectedCategory}{' '}
-                                        <ChevronDown className="size-3" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="end"
-                                    className="max-h-[300px] w-[200px] overflow-auto"
+                    {categories.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
+                                    {selectedCategory}{' '}
+                                    <ChevronDown className="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className="max-h-[300px] w-[200px] overflow-auto"
+                            >
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() =>
+                                        setSelectedCategory('Semua Kategori')
+                                    }
                                 >
+                                    Semua Kategori
+                                </DropdownMenuItem>
+                                {categories.map((category) => (
                                     <DropdownMenuItem
+                                        key={category}
                                         className="cursor-pointer text-xs"
                                         onSelect={() =>
-                                            setSelectedCategory(
-                                                'Semua Kategori',
-                                            )
+                                            setSelectedCategory(category)
                                         }
                                     >
-                                        Semua Kategori
+                                        {category}
                                     </DropdownMenuItem>
-                                    {categories.map((category) => (
-                                        <DropdownMenuItem
-                                            key={category}
-                                            className="cursor-pointer text-xs"
-                                            onSelect={() =>
-                                                setSelectedCategory(category)
-                                            }
-                                        >
-                                            {category}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-                        <Link
-                            href={umkm.url()}
-                            className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-bold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
-                        >
-                            Detail UMKM{' '}
-                            <ArrowUpRight className="size-3" strokeWidth={2.2} />
-                        </Link>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                    <Link
+                        href={umkm.url()}
+                        className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-bold text-[#0066AE] shadow-sm transition hover:bg-[#F8FBFE]"
+                    >
+                        Detail UMKM{' '}
+                        <ArrowUpRight className="size-3" strokeWidth={2.2} />
+                    </Link>
                 </div>
             </div>
 
@@ -431,10 +419,8 @@ function UmkmScoreHorizontalChart({
                                         'Skor',
                                     ]}
                                     labelFormatter={(label, payload) => {
-                                        const item = payload[0]
-                                            ?.payload as
-                                            | UmkmScoreChartDatum
-                                            | undefined;
+                                        const item = payload[0]?.payload as
+                                            UmkmScoreChartDatum | undefined;
                                         return `${label} · ${item?.village_name ?? '-'}`;
                                     }}
                                     contentStyle={{
@@ -454,21 +440,16 @@ function UmkmScoreHorizontalChart({
                                     {filteredData.map((item) => (
                                         <Cell
                                             key={item.id}
-                                            fill={
-                                                villageColors.get(
-                                                    item.village_id,
-                                                )
-                                            }
+                                            fill={villageColors.get(
+                                                item.village_id,
+                                            )}
                                         />
                                     ))}
                                     <LabelList
                                         dataKey="score"
                                         position="right"
                                         formatter={(
-                                            value:
-                                                | number
-                                                | string
-                                                | undefined,
+                                            value: number | string | undefined,
                                         ) =>
                                             `${Number(value ?? 0).toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`
                                         }
@@ -543,8 +524,7 @@ export function DashboardCharts() {
     const kemenparVillageScores = (props as any).kemenpar_village_scores;
     const istcVillageScores = (props as any).istc_village_scores;
     const umkmScoreChart = (props as any).umkm_score_chart as
-        | UmkmScoreChartDatum[]
-        | undefined;
+        UmkmScoreChartDatum[] | undefined;
 
     return (
         <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
