@@ -166,6 +166,10 @@ type UmkmData = {
     created_at: string;
     updated_at: string;
     survey_summary: SurveySummary;
+    ranking: {
+        position: number;
+        total: number;
+    };
 };
 
 type SurveySummary = {
@@ -2989,9 +2993,15 @@ export default function ShowUmkm({
                                             )}
                                         </div>
                                     </div>
-                                    <span className="inline-flex rounded-full bg-[#EAF8F0] px-3 py-1.5 text-xs font-bold text-[#00893D]">
-                                        Master UMKM
-                                    </span>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="inline-flex rounded-full bg-[#EAF8F0] px-3 py-1.5 text-xs font-bold text-[#00893D]">
+                                            Master UMKM
+                                        </span>
+                                        <span className="inline-flex rounded-full bg-[#EAF3FF] px-3 py-1.5 text-xs font-bold text-[#0066AE]">
+                                            {umkm.ranking.position}/
+                                            {umkm.ranking.total} UMKM
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                     <DetailPair

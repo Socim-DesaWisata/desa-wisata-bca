@@ -524,6 +524,303 @@ test('survey assignment show umkm tab only sends umkm payload', function () {
         );
 });
 
+test('survey assignment desa includes turnover charts scoped to its village', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create(['created_by' => $user->id]);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $otherVillage = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $umkmHigh = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Omset Tinggi',
+    ]);
+    $umkmLow = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Omset Rendah',
+    ]);
+    $otherUmkm = VillageUmkm::query()->create([
+        'village_id' => $otherVillage->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Desa Lain',
+    ]);
+    $pariwisataHigh = PariwisataVillage::query()->create([
+        'village_id' => $village->id,
+        'name' => 'Wisata Omset Tinggi',
+        'is_active' => true,
+    ]);
+    $otherPariwisata = PariwisataVillage::query()->create([
+        'village_id' => $otherVillage->id,
+        'name' => 'Wisata Desa Lain',
+        'is_active' => true,
+    ]);
+
+    foreach ([
+        [$umkmHigh, 'umkm', 2025, 10000000],
+        [$umkmHigh, 'umkm', 2026, 5000000],
+        [$umkmLow, 'umkm', 2026, 12000000],
+        [$otherUmkm, 'umkm', 2026, 90000000],
+        [$pariwisataHigh, 'pariwisata', 2025, 7000000],
+        [$pariwisataHigh, 'pariwisata', 2026, 1000000],
+        [$otherPariwisata, 'pariwisata', 2026, 80000000],
+    ] as [$entity, $entityType, $year, $value]) {
+        AnnualTurnover::query()->create([
+            'entity_type' => $entityType,
+            'umkm_id' => $entityType === 'umkm' ? $entity->id : null,
+            'pariwisata_id' => $entityType === 'pariwisata' ? $entity->id : null,
+            'entity_key' => $entityType.':'.$entity->id,
+            'year' => $year,
+            'value' => $value,
+            'created_by' => $user->id,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.show', $assignment).'?tab=desa')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show')
+            ->has('turnover_charts.umkm', 2)
+            ->where('turnover_charts.umkm.0.name', 'UMKM Omset Tinggi')
+            ->where('turnover_charts.umkm.0.total_turnover', 15000000)
+            ->where('turnover_charts.umkm.1.name', 'UMKM Omset Rendah')
+            ->has('turnover_charts.pariwisata', 1)
+            ->where('turnover_charts.pariwisata.0.name', 'Wisata Omset Tinggi')
+            ->where('turnover_charts.pariwisata.0.total_turnover', 8000000)
+        );
+});
+
+test('survey assignment desa includes UMKM and GSTC score charts', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create(['created_by' => $user->id]);
+    $umkmTemplate = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'type' => 'umkm',
+    ]);
+    $pariwisataTemplate = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'type' => 'pariwisata',
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $otherVillage = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $umkmQuestion = UmkmSurveyQuestion::query()->create([
+        'survey_template_id' => $umkmTemplate->id,
+        'criteria_code' => 'A',
+        'criteria_name' => 'Kriteria A',
+        'criteria_weight_percent' => 100,
+        'question_number' => 1,
+        'question_text' => 'Pertanyaan UMKM',
+        'question_weight_percent' => 100,
+        'max_score' => 100,
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $umkmHigh = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Skor Tinggi',
+        'product_category' => 'Kuliner',
+    ]);
+    $umkmLow = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Skor Rendah',
+        'product_category' => 'Jasa',
+    ]);
+    $otherUmkm = VillageUmkm::query()->create([
+        'village_id' => $otherVillage->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Desa Lain',
+        'product_category' => 'Kuliner',
+    ]);
+
+    foreach ([[$umkmHigh, 75], [$umkmLow, 30], [$otherUmkm, 99]] as [$umkm, $score]) {
+        UmkmSurveyAnswer::query()->create([
+            'umkm_id' => $umkm->id,
+            'umkm_assessment_question_id' => $umkmQuestion->id,
+            'answered_by' => $user->id,
+            'score' => $score,
+            'criteria_code_snapshot' => 'A',
+            'criteria_name_snapshot' => 'Kriteria A',
+            'criteria_weight_percent_snapshot' => 100,
+            'question_text_snapshot' => 'Pertanyaan UMKM',
+            'question_weight_percent_snapshot' => 100,
+            'max_score_snapshot' => 100,
+            'weighted_score' => $score,
+            'last_edited_at' => now(),
+        ]);
+    }
+
+    $pariwisataQuestionA = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $pariwisataTemplate->id,
+        'category_code' => 'A',
+        'category_name' => 'Amenitas',
+        'criteria_code' => 'A.1',
+        'criteria_name' => 'Kriteria A1',
+        'indicator_code' => 'A.1.1',
+        'indicator_name' => 'Indikator A1',
+        'input_type' => 'single_choice',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $pariwisataQuestionB = PariwisataSurveyQuestion::query()->create([
+        'survey_template_id' => $pariwisataTemplate->id,
+        'category_code' => 'B',
+        'category_name' => 'Aksesibilitas',
+        'criteria_code' => 'B.1',
+        'criteria_name' => 'Kriteria B1',
+        'indicator_code' => 'B.1.1',
+        'indicator_name' => 'Indikator B1',
+        'input_type' => 'single_choice',
+        'sort_order' => 2,
+        'is_active' => true,
+    ]);
+    $pariwisataOptionA = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $pariwisataQuestionA->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 1,
+    ]);
+    $pariwisataOptionB = PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $pariwisataQuestionB->id,
+        'score' => 3,
+        'level' => 'B',
+        'label' => 'Baik',
+        'description' => 'Baik',
+        'sort_order' => 1,
+    ]);
+    PariwisataSuveyOption::query()->create([
+        'pariwisata_survey_question_id' => $pariwisataQuestionB->id,
+        'score' => 4,
+        'level' => 'A',
+        'label' => 'Sangat Baik',
+        'description' => 'Sangat Baik',
+        'sort_order' => 2,
+    ]);
+    PariwisataSurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $pariwisataQuestionA->id,
+        'pariwisata_suvey_option_id' => $pariwisataOptionA->id,
+        'score' => 4,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+        'last_edited_at' => now(),
+    ]);
+    PariwisataSurveyAnswer::query()->create([
+        'village_survey_assignment_id' => $assignment->id,
+        'pariwisata_survey_question_id' => $pariwisataQuestionB->id,
+        'pariwisata_suvey_option_id' => $pariwisataOptionB->id,
+        'score' => 3,
+        'answered_by' => $user->id,
+        'last_edited_by' => $user->id,
+        'last_edited_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.show', $assignment).'?tab=desa')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show')
+            ->has('score_charts.umkm', 2)
+            ->where('score_charts.umkm.0.name', 'UMKM Skor Tinggi')
+            ->where('score_charts.umkm.0.category', 'Kuliner')
+            ->where('score_charts.umkm.0.score', 75)
+            ->where('score_charts.umkm.1.name', 'UMKM Skor Rendah')
+            ->has('score_charts.pariwisata', 1)
+            ->where('score_charts.pariwisata.0.name', $village->name)
+            ->where('score_charts.pariwisata.0.score', 87.5)
+        );
+});
+
+test('umkm detail includes global ranking by weighted survey score', function () {
+    $user = User::factory()->create();
+    $template = SurveyTemplate::factory()->create([
+        'created_by' => $user->id,
+        'type' => 'umkm',
+    ]);
+    $village = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $otherVillage = TourismVillage::factory()->create(['created_by' => $user->id]);
+    $assignment = VillageSurveyAssignment::factory()->create([
+        'village_id' => $village->id,
+        'survey_template_id' => $template->id,
+        'assigned_by' => $user->id,
+    ]);
+    $question = UmkmSurveyQuestion::query()->create([
+        'survey_template_id' => $template->id,
+        'criteria_code' => 'UMKM-1',
+        'criteria_name' => 'Kriteria UMKM',
+        'criteria_weight_percent' => 100,
+        'question_number' => 1,
+        'question_text' => 'Pertanyaan UMKM',
+        'question_weight_percent' => 100,
+        'max_score' => 100,
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+    $highest = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Tertinggi',
+    ]);
+    $target = VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Target',
+    ]);
+    $lowest = VillageUmkm::query()->create([
+        'village_id' => $otherVillage->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Terendah',
+    ]);
+    VillageUmkm::query()->create([
+        'village_id' => $village->id,
+        'created_by' => $user->id,
+        'name' => 'UMKM Tanpa Jawaban',
+    ]);
+
+    foreach ([[$highest, 80], [$target, 50], [$lowest, 20]] as [$umkm, $weightedScore]) {
+        UmkmSurveyAnswer::query()->create([
+            'umkm_id' => $umkm->id,
+            'umkm_assessment_question_id' => $question->id,
+            'answered_by' => $user->id,
+            'score' => $weightedScore,
+            'criteria_code_snapshot' => 'UMKM-1',
+            'criteria_name_snapshot' => 'Kriteria UMKM',
+            'criteria_weight_percent_snapshot' => 100,
+            'question_text_snapshot' => 'Pertanyaan UMKM',
+            'question_weight_percent_snapshot' => 100,
+            'max_score_snapshot' => 100,
+            'normalized_score' => $weightedScore,
+            'weighted_score' => $weightedScore,
+            'answered_at' => now(),
+            'last_edited_at' => now(),
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('survey-assignments.umkm.show', [$assignment, $target]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('survey-assignment/show-umkm')
+            ->where('umkm.ranking.position', 2)
+            ->where('umkm.ranking.total', 4)
+        );
+});
+
 test('authenticated users can export umkm detail as excel', function () {
     Storage::fake('public');
 
