@@ -556,6 +556,12 @@ class VillageSurveyAssignmentService
 
         $summary = $this->emptyAssignmentSummary();
         $aspects = [];
+        $scoreCharts = $activeTab === 'desa'
+            ? $this->scoreChartsForAssignment($assignment)
+            : $this->emptyScoreCharts();
+        $turnoverCharts = $activeTab === 'desa'
+            ? $this->turnoverChartsForVillage((int) $assignment->village_id)
+            : $this->emptyTurnoverCharts();
 
         if ($activeTab === 'desa') {
             $questions = $assignment->template?->questions ?? collect();
@@ -615,6 +621,8 @@ class VillageSurveyAssignmentService
             ],
             'summary' => $summary,
             'tab_counts' => $tabCounts,
+            'score_charts' => $scoreCharts,
+            'turnover_charts' => $turnoverCharts,
             'aspects' => $aspects,
             'desa_survey' => [
                 'summary' => $summary,
@@ -655,6 +663,112 @@ class VillageSurveyAssignmentService
                 'reviewed_at' => $this->formatDateTimeLocal($assignment->reviewed_at),
             ],
             'village_annual_edit_values' => $this->formatVillageAnnualEditValues($assignment->village),
+        ];
+    }
+
+    /**
+     * @return array{umkm: array<int, array{id: int, name: string, category: string, score: float}>, pariwisata: array<int, array{id: int, name: string, score: float}>}
+     */
+    private function scoreChartsForAssignment(VillageSurveyAssignment $assignment): array
+    {
+        $umkmScores = VillageUmkm::query()
+            ->select(['id', 'name', 'product_category'])
+            ->where('village_id', $assignment->village_id)
+            ->whereHas('surveyAnswers')
+            ->withSum('surveyAnswers as total_score', 'weighted_score')
+            ->orderByDesc('total_score')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (VillageUmkm $umkm): array => [
+                'id' => $umkm->id,
+                'name' => $umkm->name,
+                'category' => $umkm->product_category ?: 'Tanpa kategori',
+                'score' => round(min(max((float) ($umkm->total_score ?? 0), 0), 100), 1),
+            ])
+            ->values()
+            ->all();
+
+        $pariwisataAnswers = PariwisataSurveyAnswer::query()
+            ->where('village_survey_assignment_id', $assignment->id)
+            ->get(['score']);
+        $pariwisataMaxScore = $this->pariwisataQuestionsForSummary()
+            ->sum(fn (PariwisataSurveyQuestion $question): int => (int) $question->options->max('score'));
+        $pariwisataScores = $pariwisataAnswers->isNotEmpty() && $pariwisataMaxScore > 0
+            ? [[
+                'id' => $assignment->id,
+                'name' => $assignment->village?->name ?? 'Desa',
+                'score' => round(min(max(((float) $pariwisataAnswers->sum('score') / $pariwisataMaxScore) * 100, 0), 100), 1),
+            ]]
+            : [];
+
+        return [
+            'umkm' => $umkmScores,
+            'pariwisata' => $pariwisataScores,
+        ];
+    }
+
+    /**
+     * @return array{umkm: array<int, array{id: int, name: string, category: string, score: float}>, pariwisata: array<int, array{id: int, name: string, score: float}>}
+     */
+    private function emptyScoreCharts(): array
+    {
+        return [
+            'umkm' => [],
+            'pariwisata' => [],
+        ];
+    }
+
+    /**
+     * @return array{umkm: array<int, array{id: int, name: string, total_turnover: float}>, pariwisata: array<int, array{id: int, name: string, total_turnover: float}>}
+     */
+    private function turnoverChartsForVillage(int $villageId): array
+    {
+        return [
+            'umkm' => VillageUmkm::query()
+                ->select(['id', 'name'])
+                ->where('village_id', $villageId)
+                ->whereHas('annualTurnovers')
+                ->withSum('annualTurnovers as total_turnover', 'value')
+                ->orderByDesc('total_turnover')
+                ->orderBy('name')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (VillageUmkm $umkm): array => [
+                    'id' => $umkm->id,
+                    'name' => $umkm->name,
+                    'total_turnover' => (float) $umkm->total_turnover,
+                ])
+                ->values()
+                ->all(),
+            'pariwisata' => PariwisataVillage::query()
+                ->select(['id', 'name'])
+                ->where('village_id', $villageId)
+                ->where('is_active', true)
+                ->whereHas('annualTurnovers')
+                ->withSum('annualTurnovers as total_turnover', 'value')
+                ->orderByDesc('total_turnover')
+                ->orderBy('name')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (PariwisataVillage $pariwisata): array => [
+                    'id' => $pariwisata->id,
+                    'name' => $pariwisata->name,
+                    'total_turnover' => (float) $pariwisata->total_turnover,
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array{umkm: array<int, array{id: int, name: string, total_turnover: float}>, pariwisata: array<int, array{id: int, name: string, total_turnover: float}>}
+     */
+    private function emptyTurnoverCharts(): array
+    {
+        return [
+            'umkm' => [],
+            'pariwisata' => [],
         ];
     }
 
@@ -797,6 +911,7 @@ class VillageSurveyAssignmentService
         ]);
 
         $formattedUmkm = $this->formatUmkmForAssignment($umkm);
+        $formattedUmkm['ranking'] = $this->umkmRanking($umkm->id);
 
         return [
             'assignment' => [
@@ -1749,6 +1864,26 @@ class VillageSurveyAssignmentService
                 ])
                 ->values()
                 ->all(),
+        ];
+    }
+
+    /**
+     * @return array{position: int, total: int}
+     */
+    private function umkmRanking(int $umkmId): array
+    {
+        $rankedUmkmIds = VillageUmkm::query()
+            ->withSum('surveyAnswers as total_weighted_score', 'weighted_score')
+            ->orderByRaw('COALESCE(total_weighted_score, 0) DESC')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->pluck('id');
+
+        $position = $rankedUmkmIds->search($umkmId);
+
+        return [
+            'position' => $position === false ? 1 : $position + 1,
+            'total' => $rankedUmkmIds->count(),
         ];
     }
 

@@ -34,6 +34,7 @@ import {
     Bar,
     BarChart,
     CartesianGrid,
+    LabelList,
     Legend,
     PolarAngleAxis,
     PolarGrid,
@@ -164,6 +165,19 @@ type ScoreDistributionSummary = {
     count: number;
 };
 
+type TurnoverChartDatum = {
+    id: number;
+    name: string;
+    total_turnover: number;
+};
+
+type ScoreChartDatum = {
+    id: number;
+    name: string;
+    category?: string;
+    score: number;
+};
+
 type SurveyAssignmentShowProps = {
     assignment: {
         id: number;
@@ -232,6 +246,14 @@ type SurveyAssignmentShowProps = {
         kemenpar: number;
         umkm: number;
         istc: number;
+    };
+    score_charts: {
+        umkm: ScoreChartDatum[];
+        pariwisata: ScoreChartDatum[];
+    };
+    turnover_charts: {
+        umkm: TurnoverChartDatum[];
+        pariwisata: TurnoverChartDatum[];
     };
     umkms: UmkmData[];
     pariwisata: PariwisataData[];
@@ -712,6 +734,264 @@ function MetricCard({
                     {icon}
                 </span>
             </div>
+        </Card>
+    );
+}
+
+function ScoreHorizontalChart({
+    title,
+    description,
+    data,
+    color,
+    emptyMessage,
+    showCategoryFilter = false,
+}: {
+    title: string;
+    description: string;
+    data: ScoreChartDatum[];
+    color: string;
+    emptyMessage: string;
+    showCategoryFilter?: boolean;
+}) {
+    const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
+    const categories = Array.from(
+        new Set(data.map((item) => item.category).filter(Boolean)),
+    ).sort((left, right) => left!.localeCompare(right!, 'id'));
+    const filteredData =
+        showCategoryFilter && selectedCategory !== 'Semua Kategori'
+            ? data.filter((item) => item.category === selectedCategory)
+            : data;
+    const chartHeight = Math.min(Math.max(filteredData.length * 42, 220), 520);
+
+    return (
+        <Card className="min-w-0 p-4">
+            <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h2 className="text-sm font-bold text-[#303030]">{title}</h2>
+                    <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                        {description}
+                    </p>
+                </div>
+                {showCategoryFilter && categories.length > 0 && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
+                                {selectedCategory} <ChevronDown className="size-3" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="max-h-[300px] w-[200px] overflow-auto"
+                        >
+                            <DropdownMenuItem
+                                className="cursor-pointer text-xs"
+                                onSelect={() => setSelectedCategory('Semua Kategori')}
+                            >
+                                Semua Kategori
+                            </DropdownMenuItem>
+                            {categories.map((category) => (
+                                <DropdownMenuItem
+                                    key={category}
+                                    className="cursor-pointer text-xs"
+                                    onSelect={() => setSelectedCategory(category!)}
+                                >
+                                    {category}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
+
+            {filteredData.length === 0 ? (
+                <div className="flex h-[220px] items-center justify-center text-center text-sm font-semibold text-[#7C7C7C]">
+                    {emptyMessage}
+                </div>
+            ) : (
+                <div className="mt-4 overflow-x-auto">
+                    <div className="min-w-[480px]" style={{ height: chartHeight }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={filteredData}
+                                layout="vertical"
+                                margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
+                            >
+                                <CartesianGrid stroke="#EAF0F7" horizontal={false} />
+                                <XAxis
+                                    type="number"
+                                    domain={[0, 100]}
+                                    tickFormatter={(value) => String(value) + '%'}
+                                    tick={{ fill: '#7C7C7C', fontSize: 10 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    type="category"
+                                    dataKey="name"
+                                    width={140}
+                                    tick={{ fill: '#303030', fontSize: 10, fontWeight: 600 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    formatter={(value) => [
+                                        Number(value ?? 0).toLocaleString('id-ID', {
+                                            maximumFractionDigits: 1,
+                                        }) + '%',
+                                        'Skor',
+                                    ]}
+                                    contentStyle={{
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        boxShadow: '0 4px 14px rgba(3,17,32,0.08)',
+                                        color: '#303030',
+                                        fontSize: '12px',
+                                    }}
+                                />
+                                <Bar
+                                    dataKey="score"
+                                    fill={color}
+                                    radius={[0, 3, 3, 0]}
+                                    barSize={22}
+                                >
+                                    <LabelList
+                                        dataKey="score"
+                                        position="right"
+                                        formatter={(value: number | string | undefined) =>
+                                            Number(value ?? 0).toLocaleString('id-ID', {
+                                                maximumFractionDigits: 1,
+                                            }) + '%'
+                                        }
+                                        fill="#303030"
+                                        fontSize={10}
+                                        fontWeight={700}
+                                    />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+        </Card>
+    );
+}
+
+function formatRupiah(value: number) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(value);
+}
+
+function formatCompactRupiah(value: number) {
+    return `Rp ${new Intl.NumberFormat('id-ID', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(value)}`;
+}
+
+function TurnoverHorizontalChart({
+    title,
+    description,
+    data,
+    color,
+}: {
+    title: string;
+    description: string;
+    data: TurnoverChartDatum[];
+    color: string;
+}) {
+    const chartHeight = Math.min(Math.max(data.length * 42, 220), 520);
+
+    return (
+        <Card className="min-w-0 p-4">
+            <h2 className="text-sm font-bold text-[#303030]">{title}</h2>
+            <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
+                {description}
+            </p>
+
+            {data.length === 0 ? (
+                <div className="flex h-[220px] items-center justify-center text-center text-sm font-semibold text-[#7C7C7C]">
+                    Belum ada data omset.
+                </div>
+            ) : (
+                <div className="mt-4 overflow-x-auto">
+                    <div className="min-w-[480px]" style={{ height: chartHeight }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={data}
+                                layout="vertical"
+                                margin={{ top: 4, right: 82, left: 8, bottom: 4 }}
+                            >
+                                <CartesianGrid
+                                    stroke="#EAF0F7"
+                                    horizontal={false}
+                                />
+                                <XAxis
+                                    type="number"
+                                    tickFormatter={(value) =>
+                                        formatCompactRupiah(Number(value))
+                                    }
+                                    tick={{ fill: '#7C7C7C', fontSize: 10 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    type="category"
+                                    dataKey="name"
+                                    width={140}
+                                    tick={{
+                                        fill: '#303030',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                    }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    formatter={(value) => [
+                                        formatRupiah(Number(value ?? 0)),
+                                        'Omset',
+                                    ]}
+                                    contentStyle={{
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        boxShadow:
+                                            '0 4px 14px rgba(3,17,32,0.08)',
+                                        color: '#303030',
+                                        fontSize: '12px',
+                                    }}
+                                />
+                                <Bar
+                                    dataKey="total_turnover"
+                                    fill={color}
+                                    radius={[0, 3, 3, 0]}
+                                    barSize={22}
+                                >
+                                    <LabelList
+                                        dataKey="total_turnover"
+                                        position="right"
+                                        formatter={(
+                                            value:
+                                                | number
+                                                | string
+                                                | undefined,
+                                        ) =>
+                                            formatCompactRupiah(
+                                                Number(value ?? 0),
+                                            )
+                                        }
+                                        fill="#303030"
+                                        fontSize={10}
+                                        fontWeight={700}
+                                    />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
         </Card>
     );
 }
@@ -3373,6 +3653,8 @@ export default function SurveyAssignmentShow({
     summary,
     aspects,
     tab_counts,
+    score_charts,
+    turnover_charts,
     umkms,
     pariwisata,
     pariwisata_survey_groups,
@@ -3826,6 +4108,39 @@ export default function SurveyAssignmentShow({
                                 {/* <VillageAnnualMultipleBarChart
                                     values={village_annual_edit_values}
                                 /> */}
+
+                                <div className="grid gap-5 xl:grid-cols-2">
+                                    <ScoreHorizontalChart
+                                        title="Skor UMKM"
+                                        description="Skor survey UMKM dalam persentase"
+                                        data={score_charts.umkm}
+                                        color="#0066AE"
+                                        emptyMessage="Belum ada skor UMKM."
+                                        showCategoryFilter
+                                    />
+                                    <ScoreHorizontalChart
+                                        title="Assessment GSTC"
+                                        description="Skor GSTC desa dalam persentase"
+                                        data={score_charts.pariwisata}
+                                        color="#2FA6FC"
+                                        emptyMessage="Belum ada skor GSTC."
+                                    />
+                                </div>
+
+                                <div className="grid gap-5 xl:grid-cols-2">
+                                    <TurnoverHorizontalChart
+                                        title="Omset UMKM"
+                                        description="Total omset seluruh tahun per UMKM"
+                                        data={turnover_charts.umkm}
+                                        color="#0066AE"
+                                    />
+                                    <TurnoverHorizontalChart
+                                        title="Omset Pariwisata"
+                                        description="Total omset seluruh tahun per pariwisata"
+                                        data={turnover_charts.pariwisata}
+                                        color="#2FA6FC"
+                                    />
+                                </div>
 
                                 <Card className="overflow-hidden">
                                     <div className="border-b border-[#EFEFEF] p-4">
