@@ -319,7 +319,7 @@ function ViewerVillageCarousel({
                                         <div className="mt-4 grid gap-5 sm:grid-cols-[1.2fr_.8fr]">
                                             <div>
                                                 <p className="text-xs font-bold text-[#526174]">
-                                                    Skor Assessment Kemenpar
+                                                    Skor Assessment Permenparekraf No. 9 Tahun 2021
                                                 </p>
                                                 <p className="mt-2 text-4xl leading-none font-bold text-[#102A43]">
                                                     {
@@ -730,14 +730,14 @@ export default function SurveyAssignmentIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Assessment KEMENPAR
+                                    Assessment Permenparekraf No. 9 Tahun 2021
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assessment KEMENPAR
+                                Assessment Permenparekraf No. 9 Tahun 2021
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
-                                Pantau KEMENPAR survey desa wisata, status
+                                Pantau Permenparekraf No. 9 Tahun 2021 survey desa wisata, status
                                 pengerjaan, reviewer, dan riwayat waktu dari
                                 database.
                             </p>
@@ -941,7 +941,7 @@ export default function SurveyAssignmentIndex({
                         <div className="flex flex-col gap-3 border-b border-[#EFEFEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="text-lg font-bold text-[#303030]">
-                                    Daftar Desa Wisata Tools Assessment Kemenpar
+                                    Daftar Desa Wisata Tools Assessment Permenparekraf No. 9 Tahun 2021
                                 </h2>
                                 <p className="mt-0.5 text-sm text-[#7C7C7C]">
                                     Ringkasan assignment survey desa wisata dan

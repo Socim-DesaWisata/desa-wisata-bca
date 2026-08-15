@@ -123,6 +123,14 @@ type KemenparAspectScore = {
     score_percent: number;
 };
 type IstcAspectScore = KemenparAspectScore;
+type VillageSummaryMetrics = {
+    kemenpar_score: number;
+    kemenpar_max_score: number;
+    gstc_score: number;
+    gstc_max_score: number;
+    total_visitors: number;
+    total_umkm: number;
+};
 type VillageLinkItem = {
     id: number;
     name: string;
@@ -197,6 +205,8 @@ type VillageShowProps = {
         pariwisata: PariwisataItem[];
         kemenpar_aspect_scores: KemenparAspectScore[];
         istc_aspect_scores: IstcAspectScore[];
+        umkm_scores: KemenparAspectScore[];
+        summary_metrics: VillageSummaryMetrics;
         survey_assignment: { code: string } | null;
         total_personnel: number;
         worker_types: VillageWorkerType[];
@@ -411,11 +421,13 @@ function VillageProfileSummary({
     workerTypes,
     stakeholders,
     institutionals,
+    summaryMetrics,
 }: {
     totalPersonnel?: number;
     workerTypes: VillageWorkerType[];
     stakeholders: VillageStakeholder[];
     institutionals: VillageInstitutional[];
+    summaryMetrics: VillageSummaryMetrics;
 }) {
     const sumWorkerTypes = workerTypes.reduce(
         (total, item) => total + (item.amount || 0),
@@ -458,6 +470,34 @@ function VillageProfileSummary({
             icon: Buildings,
             iconClass: 'bg-[#FFF4E5] text-[#E79A20]',
         },
+        {
+            value: `${summaryMetrics.kemenpar_score}/${summaryMetrics.kemenpar_max_score}`,
+            unit: null,
+            label: 'Total Skor PERMENPAREKRAF ',
+            icon: Trophy,
+            iconClass: 'bg-[#FFF4E5] text-[#E79A20]',
+        },
+        {
+            value: `${summaryMetrics.gstc_score}/${summaryMetrics.gstc_max_score}`,
+            unit: null,
+            label: 'Total Skor GSTC',
+            icon: Star,
+            iconClass: 'bg-[#F1EDFF] text-[#6D4AFF]',
+        },
+        {
+            value: summaryMetrics.total_visitors.toLocaleString('id-ID'),
+            unit: 'Orang',
+            label: 'Total Pengunjung',
+            icon: UsersThree,
+            iconClass: 'bg-[#EAFBF4] text-[#18A66A]',
+        },
+        {
+            value: summaryMetrics.total_umkm,
+            unit: 'UMKM',
+            label: 'Total UMKM',
+            icon: Storefront,
+            iconClass: 'bg-[#EAF3FF] text-[#0066AE]',
+        },
     ];
 
     return (
@@ -486,9 +526,11 @@ function VillageProfileSummary({
                                     <p className="text-[22px] font-black tracking-[-0.03em] text-[#0066AE]">
                                         {stat.value}
                                     </p>
-                                    <p className="mt-1 text-[10px] font-extrabold text-[#303030]">
-                                        {stat.unit}
-                                    </p>
+                                    {stat.unit ? (
+                                        <p className="mt-1 text-[10px] font-extrabold text-[#303030]">
+                                            {stat.unit}
+                                        </p>
+                                    ) : null}
                                 </div>
                             </div>
                             <p className="mt-3 text-[10px] leading-4 font-extrabold text-[#303030]">
@@ -1477,11 +1519,13 @@ function AspectScoreIcon({ className }: { className?: string }) {
 function AspectScoreCard({
     title,
     emptyLabel,
+    description = 'Total skor aktual / skor maksimal per aspek.',
     aspects = [],
     detailHref,
 }: {
     title: string;
     emptyLabel: string;
+    description?: string;
     aspects?: KemenparAspectScore[];
     detailHref?: string;
 }) {
@@ -1489,7 +1533,7 @@ function AspectScoreCard({
         <SidebarCard title={title} icon={AspectScoreIcon as unknown as Icon}>
             <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="text-[12px] leading-5 font-semibold text-[#7C7C7C]">
-                    Total skor aktual / skor maksimal per aspek.
+                    {description}
                 </p>
                 {detailHref ? (
                     <Link
@@ -1922,6 +1966,7 @@ export default function VillageDetail({
                             workerTypes={village.worker_types}
                             stakeholders={village.stakeholders}
                             institutionals={village.institutionals}
+                            summaryMetrics={village.summary_metrics}
                         />
                         <section id="pariwisata">
                             <Heading icon={Star}>Pariwisata</Heading>
@@ -2053,6 +2098,20 @@ export default function VillageDetail({
                                     ? showSurveyAssignment.url(
                                           village.survey_assignment.code,
                                           { query: { tab: 'pariwisata' } },
+                                      )
+                                    : undefined
+                            }
+                        />
+                        <AspectScoreCard
+                            title="Skor UMKM"
+                            emptyLabel="Belum ada data skor UMKM"
+                            description="Total skor survey / skor maksimal per UMKM."
+                            aspects={village.umkm_scores}
+                            detailHref={
+                                village.survey_assignment
+                                    ? showSurveyAssignment.url(
+                                          village.survey_assignment.code,
+                                          { query: { tab: 'umkm' } },
                                       )
                                     : undefined
                             }

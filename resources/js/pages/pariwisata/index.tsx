@@ -232,7 +232,7 @@ export default function PariwisataIndex({
                                 </span>
                             </nav>
                             <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assessment GSTC
+                                Assessment Global Sustainable Tourism Council (GSTC)
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau destinasi pariwisata desa, kategori,
