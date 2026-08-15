@@ -287,7 +287,7 @@ function Logo() {
             <img
                 src="/logo/desa-logo-trans.webp"
                 alt="Desa Bakti BCA"
-                className="size-14 shrink-0 object-contain"
+                className="size-10 shrink-0 object-contain"
             />
             <div className="leading-tight">
                 <p className="text-[18px] font-extrabold text-[#0f172a]">
