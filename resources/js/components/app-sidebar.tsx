@@ -152,7 +152,7 @@ export function AdminSidebarContent({
                     href={dashboard()}
                     prefetch
                     onClick={onNavigate}
-                    className="flex min-h-[112px] items-end justify-center px-2 pt-1 pb-0"
+                    className="flex min-h-[112px] items-start justify-center"
                     aria-label="BCA"
                 >
                     <SidebarLogo className="h-[96px] w-[210px] max-w-none scale-[1.04] object-contain object-bottom" />
