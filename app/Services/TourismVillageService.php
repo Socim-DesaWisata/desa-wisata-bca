@@ -189,7 +189,11 @@ class TourismVillageService
             'profileItems' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('name'),
             'profileItems.category:id,name,slug',
             'profileItems.media' => fn ($query) => $query->orderByDesc('is_cover')->orderBy('sort_order')->orderBy('id'),
-            'umkms' => fn ($query) => $query->orderBy('name')->orderBy('id'),
+            'umkms' => fn ($query) => $query
+                ->withCount('surveyAnswers')
+                ->withSum('surveyAnswers as total_weighted_score', 'weighted_score')
+                ->orderBy('name')
+                ->orderBy('id'),
             'umkms.categories:id,village_umkm_id,category',
             'umkms.dataCollector:id,name,email',
             'surveyAssignment.template:id,title,status',
@@ -200,7 +204,10 @@ class TourismVillageService
             'surveyAssignment.answers:id,village_survey_assignment_id,survey_question_id,score',
             'surveyAssignment.pariwisataSurveyAnswers:id,village_survey_assignment_id,pariwisata_survey_question_id,score',
             'enumerators:id,name,email',
-            'pariwisataVillages' => fn ($query) => $query->where('is_active', true)->latest('id'),
+            'pariwisataVillages' => fn ($query) => $query
+                ->where('is_active', true)
+                ->withSum('annualVisitors as total_visitors', 'value')
+                ->latest('id'),
             'pariwisataVillages.categories:id,pariwisata_village_id,category',
             'pariwisataVillages.packages' => fn ($query) => $query->orderBy('name')->orderBy('id'),
             'workerTypes' => fn ($query) => $query->orderBy('type')->orderBy('id'),
@@ -605,6 +612,9 @@ class TourismVillageService
      */
     private function formatVillageDetail(TourismVillage $village): array
     {
+        $kemenparAspectScores = $this->formatKemenparAspectScores($village->surveyAssignment);
+        $istcAspectScores = $this->formatIstcAspectScores($village->surveyAssignment);
+
         return [
             ...$this->formatVillage($village),
             'address' => $village->address ?: '-',
@@ -632,8 +642,18 @@ class TourismVillageService
             'survey_assignment' => $village->surveyAssignment
                 ? $this->formatSurveyAssignment($village->surveyAssignment)
                 : null,
-            'kemenpar_aspect_scores' => $this->formatKemenparAspectScores($village->surveyAssignment),
-            'istc_aspect_scores' => $this->formatIstcAspectScores($village->surveyAssignment),
+            'kemenpar_aspect_scores' => $kemenparAspectScores,
+            'istc_aspect_scores' => $istcAspectScores,
+            'umkm_scores' => $this->formatUmkmScores($village),
+            'summary_metrics' => [
+                'kemenpar_score' => collect($kemenparAspectScores)->sum('score'),
+                'kemenpar_max_score' => collect($kemenparAspectScores)->sum('max_score'),
+                'gstc_score' => collect($istcAspectScores)->sum('score'),
+                'gstc_max_score' => collect($istcAspectScores)->sum('max_score'),
+                'total_visitors' => $village->pariwisataVillages
+                    ->sum(fn (PariwisataVillage $pariwisata): int => (int) ($pariwisata->total_visitors ?? 0)),
+                'total_umkm' => $village->umkms->count(),
+            ],
             'enumerator_list' => $village->enumerators
                 ->map(fn (User $user): array => [
                     'id' => $user->id,
@@ -705,6 +725,28 @@ class TourismVillageService
                     ? $this->mediaUrl($village->media->first()->file_path, $village->media->first()->external_url)
                     : null,
             ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{name: string, score: float, max_score: int, score_percent: float}>
+     */
+    private function formatUmkmScores(TourismVillage $village): array
+    {
+        return $village->umkms
+            ->filter(fn (VillageUmkm $umkm): bool => (int) ($umkm->survey_answers_count ?? 0) > 0)
+            ->map(function (VillageUmkm $umkm): array {
+                $score = round(min(max((float) ($umkm->total_weighted_score ?? 0), 0), 100), 1);
+
+                return [
+                    'name' => $umkm->name,
+                    'score' => $score,
+                    'max_score' => 100,
+                    'score_percent' => $score,
+                ];
+            })
+            ->sortByDesc('score')
             ->values()
             ->all();
     }

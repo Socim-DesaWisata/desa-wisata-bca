@@ -72,7 +72,7 @@ const navGroups: SidebarNavGroup[] = [
                 roles: ['admin', 'viewer'],
                 children: [
                     {
-                        title: 'KEMENPAR',
+                        title: 'PERMENPAREKRAF',
                         href: surveyAssignments(),
                         icon: ClipboardCheck,
                     },

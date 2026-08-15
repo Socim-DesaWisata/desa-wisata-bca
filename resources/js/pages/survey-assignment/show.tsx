@@ -2702,7 +2702,7 @@ function PariwisataTab({
             <div className="flex flex-col gap-3 rounded-xl border border-[#D7E8F8] bg-[#F8FBFE] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-base font-bold text-[#303030]">
-                        Data Master GSTC
+                        Data Master Global Sustainable Tourism Council (GSTC)
                     </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -3833,7 +3833,7 @@ export default function SurveyAssignmentShow({
                                 </span>
                             </div>
                             <h1 className="mt-2 text-2xl leading-tight font-bold text-[#303030] sm:text-[28px]">
-                                Detail Assessment KEMENPAR
+                                Detail Assessment
                             </h1>
                             <p className="mt-1 text-sm text-[#7C7C7C]">
                                 Data assignment, jawaban, skor, dokumen, dan
@@ -3895,7 +3895,7 @@ export default function SurveyAssignmentShow({
                         <div className="flex min-w-max gap-2">
                             <TabButton
                                 active={activeTab === 'desa'}
-                                label="Kemenpar"
+                                label="Permenparekraf No. 9 Tahun 2021"
                                 count={1}
                                 icon={<MapPin size={16} />}
                                 href={showSurveyAssignment.url(
@@ -3915,7 +3915,7 @@ export default function SurveyAssignmentShow({
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
-                                label="GSTC"
+                                label="Global Sustainable Tourism Council (GSTC)"
                                 count={tab_counts.istc}
                                 icon={<Flag size={16} />}
                                 href={showSurveyAssignment.url(
