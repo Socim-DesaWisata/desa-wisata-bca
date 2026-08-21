@@ -7,6 +7,12 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { dashboard } from '@/routes';
 import { show as showVillage } from '@/routes/villages';
 import { show as showSurveyAssignment } from '@/routes/survey-assignments';
@@ -473,14 +479,16 @@ function VillageProfileSummary({
         {
             value: `${summaryMetrics.kemenpar_score}/${summaryMetrics.kemenpar_max_score}`,
             unit: null,
-            label: 'Total Skor PERMENPAREKRAF ',
+            label: 'Total Skor 1',
+            tooltip: 'Mengacu pada Permenparekraf No. 9 Tahun 2021',
             icon: Trophy,
             iconClass: 'bg-[#FFF4E5] text-[#E79A20]',
         },
         {
             value: `${summaryMetrics.gstc_score}/${summaryMetrics.gstc_max_score}`,
             unit: null,
-            label: 'Total Skor GSTC',
+            label: 'Total Skor 2',
+            tooltip: 'Mengacu pada Global Sustainable Tourism Council (GSTC)',
             icon: Star,
             iconClass: 'bg-[#F1EDFF] text-[#6D4AFF]',
         },
@@ -533,9 +541,33 @@ function VillageProfileSummary({
                                     ) : null}
                                 </div>
                             </div>
-                            <p className="mt-3 text-[10px] leading-4 font-extrabold text-[#303030]">
-                                {stat.label}
-                            </p>
+                            <div className="mt-3 flex items-center justify-center gap-1 text-[10px] leading-4 font-extrabold text-[#303030]">
+                                <span>{stat.label}</span>
+                                {'tooltip' in stat && stat.tooltip && (
+                                    <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Info ${stat.label}`}
+                                                    className="inline-flex size-3.5 items-center justify-center text-[#7C7C7C] hover:text-[#0066AE]"
+                                                >
+                                                    <Info
+                                                        className="size-3"
+                                                        weight="bold"
+                                                    />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent
+                                                side="top"
+                                                className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#303030] shadow-md"
+                                            >
+                                                {stat.tooltip}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
                         </article>
                     );
                 })}
@@ -2090,8 +2122,8 @@ export default function VillageDetail({
                             }
                         />
                         <AspectScoreCard
-                            title="Skor Per Aspek (GSTC)"
-                            emptyLabel="Belum ada data skor GSTC"
+                            title="Skor Per Aspek (Skor 2)"
+                            emptyLabel="Belum ada data skor Skor 2"
                             aspects={village.istc_aspect_scores}
                             detailHref={
                                 village.survey_assignment

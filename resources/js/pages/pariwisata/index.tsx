@@ -2,7 +2,9 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     ClipboardCheck,
+    ClipboardList,
     Eye,
+    Info,
     MapPinned,
     MoreHorizontal,
     RotateCcw,
@@ -12,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { ClipboardList } from 'lucide-react';
 
 import {
     destroy as destroyPariwisata,
@@ -33,6 +34,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { dashboard, pariwisata as pariwisataRoute } from '@/routes';
 
 type IconKey = 'map' | 'check' | 'tag' | 'clipboard';
@@ -228,15 +235,37 @@ export default function PariwisataIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Pariwisata
+                                    Assessment Skor 2
                                 </span>
                             </nav>
-                            <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assessment Global Sustainable Tourism Council (GSTC)
-                            </h1>
+                            <div className="flex items-center gap-2.5">
+                                <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
+                                    Assessment Skor 2
+                                </h1>
+                                <TooltipProvider delayDuration={100}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                type="button"
+                                                aria-label="Info Assessment Skor 2"
+                                                className="inline-flex size-7 items-center justify-center rounded-full text-[#7C7C7C] transition hover:bg-[#EAF3FF] hover:text-[#0066AE]"
+                                            >
+                                                <Info className="size-4" />
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="right"
+                                            className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] shadow-md"
+                                        >
+                                            Mengacu pada Global Sustainable
+                                            Tourism Council (GSTC)
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
                                 Pantau destinasi pariwisata desa, kategori,
-                                operasional, PIC, tiket, dan assessment.
+                                operasional, PIC, tiket, dan assessment Skor 2.
                             </p>
                         </div>
 

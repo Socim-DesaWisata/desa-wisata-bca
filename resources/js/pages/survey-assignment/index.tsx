@@ -14,6 +14,7 @@ import {
     ArrowRight,
     ChevronLeft,
     ChevronRight,
+    Info,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -34,6 +35,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     bulkUpdateStatus,
     destroy as destroySurveyAssignment,
@@ -318,9 +325,36 @@ function ViewerVillageCarousel({
                                         </h2>
                                         <div className="mt-4 grid gap-5 sm:grid-cols-[1.2fr_.8fr]">
                                             <div>
-                                                <p className="text-xs font-bold text-[#526174]">
-                                                    Skor Assessment Permenparekraf No. 9 Tahun 2021
-                                                </p>
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="text-xs font-bold text-[#526174]">
+                                                        Skor Assessment Skor 1
+                                                    </p>
+                                                    <TooltipProvider
+                                                        delayDuration={100}
+                                                    >
+                                                        <Tooltip>
+                                                            <TooltipTrigger
+                                                                asChild
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    aria-label="Info Skor 1"
+                                                                    className="inline-flex size-4 items-center justify-center rounded-full text-[#7C8795] transition hover:text-[#0066AE]"
+                                                                >
+                                                                    <Info className="size-3.5" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent
+                                                                side="top"
+                                                                className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] shadow-md"
+                                                            >
+                                                                Mengacu pada
+                                                                Permenparekraf
+                                                                No. 9 Tahun 2021
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
                                                 <p className="mt-2 text-4xl leading-none font-bold text-[#102A43]">
                                                     {
                                                         assignment.village_score_total
@@ -730,14 +764,36 @@ export default function SurveyAssignmentIndex({
                                 </span>
                                 <span className="text-[#7C7C7C]">/</span>
                                 <span className="text-[#7C7C7C]">
-                                    Assessment Permenparekraf No. 9 Tahun 2021
+                                    Assessment Skor 1
                                 </span>
                             </nav>
-                            <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
-                                Assessment Permenparekraf No. 9 Tahun 2021
-                            </h1>
+                            <div className="flex items-center gap-2.5">
+                                <h1 className="text-[30px] leading-9 font-bold tracking-[-0.01em] text-[#303030]">
+                                    Assessment Skor 1
+                                </h1>
+                                <TooltipProvider delayDuration={100}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                type="button"
+                                                aria-label="Info Assessment Skor 1"
+                                                className="inline-flex size-7 items-center justify-center rounded-full text-[#7C7C7C] transition hover:bg-[#EAF3FF] hover:text-[#0066AE]"
+                                            >
+                                                <Info className="size-4" />
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="right"
+                                            className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] shadow-md"
+                                        >
+                                            Mengacu pada Permenparekraf No. 9
+                                            Tahun 2021
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <p className="mt-1 text-sm leading-5 text-[#7C7C7C]">
-                                Pantau Permenparekraf No. 9 Tahun 2021 survey desa wisata, status
+                                Pantau Skor 1 survey desa wisata, status
                                 pengerjaan, reviewer, dan riwayat waktu dari
                                 database.
                             </p>
@@ -940,9 +996,32 @@ export default function SurveyAssignmentIndex({
                     <section className="overflow-hidden rounded-xl border border-[#EFEFEF] bg-white shadow-[0_4px_12px_rgba(3,17,32,0.06)]">
                         <div className="flex flex-col gap-3 border-b border-[#EFEFEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h2 className="text-lg font-bold text-[#303030]">
-                                    Daftar Desa Wisata Tools Assessment Permenparekraf No. 9 Tahun 2021
-                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-lg font-bold text-[#303030]">
+                                        Daftar Desa Wisata Tools Assessment Skor
+                                        1
+                                    </h2>
+                                    <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    aria-label="Info Assessment Skor 1"
+                                                    className="inline-flex size-5 items-center justify-center rounded-full text-[#7C7C7C] transition hover:bg-[#EAF3FF] hover:text-[#0066AE]"
+                                                >
+                                                    <Info className="size-3.5" />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent
+                                                side="top"
+                                                className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] shadow-md"
+                                            >
+                                                Mengacu pada Permenparekraf No.
+                                                9 Tahun 2021
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                                 <p className="mt-0.5 text-sm text-[#7C7C7C]">
                                     Ringkasan assignment survey desa wisata dan
                                     progress pengisiannya.

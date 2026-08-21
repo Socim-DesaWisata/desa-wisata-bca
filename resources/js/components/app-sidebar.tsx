@@ -10,6 +10,7 @@ import {
     MapPinned,
     Store,
     ChartColumnBig,
+    Info,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -19,6 +20,12 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarLogo } from '@/components/ui/sidebar';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import {
@@ -33,10 +40,14 @@ import {
 import profile from '@/routes/profile';
 import type { NavItem } from '@/types';
 
+type SidebarChildNavItem = Pick<NavItem, 'title' | 'href' | 'icon'> & {
+    tooltip?: string;
+};
+
 type SidebarNavItem = NavItem & {
     badge?: string;
     warning?: boolean;
-    children?: Array<Pick<NavItem, 'title' | 'href' | 'icon'>>;
+    children?: SidebarChildNavItem[];
     roles?: Array<'admin' | 'enumerator' | 'viewer'>;
 };
 
@@ -72,12 +83,19 @@ const navGroups: SidebarNavGroup[] = [
                 roles: ['admin', 'viewer'],
                 children: [
                     {
-                        title: 'PERMENPAREKRAF',
+                        title: 'Skor 1',
                         href: surveyAssignments(),
                         icon: ClipboardCheck,
+                        tooltip: 'Mengacu pada Permenparekraf No. 9 Tahun 2021',
                     },
                     { title: 'UMKM', href: umkm(), icon: Store },
-                    { title: 'GSTC', href: pariwisata(), icon: ChartColumnBig },
+                    {
+                        title: 'Skor 2',
+                        href: pariwisata(),
+                        icon: ChartColumnBig,
+                        tooltip:
+                            'Mengacu pada Global Sustainable Tourism Council (GSTC)',
+                    },
                 ],
             },
             {
@@ -191,7 +209,10 @@ export function AdminSidebarContent({
                                         isCurrentUrl(child.href),
                                     ),
                                 );
-                                const isOpen = Boolean(openMenus[item.title]);
+                                const isOpen =
+                                    openMenus[item.title] !== undefined
+                                        ? openMenus[item.title]
+                                        : hasActiveChild;
                                 const isActive = hasActiveChild
                                     ? true
                                     : href && href.url === questions().url
@@ -255,10 +276,7 @@ export function AdminSidebarContent({
                                                 onClick={() =>
                                                     setOpenMenus((current) => ({
                                                         ...current,
-                                                        [item.title]:
-                                                            !current[
-                                                                item.title
-                                                            ],
+                                                        [item.title]: !isOpen,
                                                     }))
                                                 }
                                             >
@@ -270,34 +288,77 @@ export function AdminSidebarContent({
                                                         (child) => {
                                                             const ChildIcon =
                                                                 child.icon;
+                                                            const isChildActive =
+                                                                isCurrentUrl(
+                                                                    child.href,
+                                                                );
 
                                                             return (
-                                                                <Link
+                                                                <div
                                                                     key={
                                                                         child.title
                                                                     }
-                                                                    href={
-                                                                        child.href
-                                                                    }
-                                                                    onClick={
-                                                                        onNavigate
-                                                                    }
-                                                                    className={`flex h-9 items-center gap-2 rounded-lg px-3 text-[13px] font-medium transition ${isCurrentUrl(child.href) ? 'bg-white/20 font-semibold text-white' : 'text-white/68 hover:bg-white/10 hover:text-white'}`}
+                                                                    className={`group/child flex h-9 items-center justify-between rounded-lg px-3 text-[13px] font-medium transition ${isChildActive ? 'bg-white/20 font-semibold text-white' : 'text-white/68 hover:bg-white/10 hover:text-white'}`}
                                                                 >
-                                                                    {ChildIcon && (
-                                                                        <ChildIcon
-                                                                            className="size-4 shrink-0"
-                                                                            strokeWidth={
-                                                                                1.8
-                                                                            }
-                                                                        />
-                                                                    )}
-                                                                    <span className="truncate">
-                                                                        {
-                                                                            child.title
+                                                                    <Link
+                                                                        href={
+                                                                            child.href
                                                                         }
-                                                                    </span>
-                                                                </Link>
+                                                                        onClick={
+                                                                            onNavigate
+                                                                        }
+                                                                        className="flex h-full min-w-0 flex-1 items-center gap-2"
+                                                                    >
+                                                                        {ChildIcon && (
+                                                                            <ChildIcon
+                                                                                className="size-4 shrink-0"
+                                                                                strokeWidth={
+                                                                                    1.8
+                                                                                }
+                                                                            />
+                                                                        )}
+                                                                        <span className="truncate">
+                                                                            {
+                                                                                child.title
+                                                                            }
+                                                                        </span>
+                                                                    </Link>
+                                                                    {child.tooltip && (
+                                                                        <TooltipProvider
+                                                                            delayDuration={
+                                                                                150
+                                                                            }
+                                                                        >
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger
+                                                                                    asChild
+                                                                                >
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        aria-label={`Info ${child.title}`}
+                                                                                        className="ml-1.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-white/50 transition hover:bg-white/20 hover:text-white focus:outline-none"
+                                                                                    >
+                                                                                        <Info
+                                                                                            className="size-3.5"
+                                                                                            strokeWidth={
+                                                                                                2
+                                                                                            }
+                                                                                        />
+                                                                                    </button>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent
+                                                                                    side="right"
+                                                                                    align="center"
+                                                                                    className="z-50 max-w-xs rounded-lg border border-white/20 bg-[#093967] px-3 py-1.5 text-xs font-normal text-white shadow-xl"
+                                                                                >
+                                                                                    {
+                                                                                        child.tooltip
+                                                                                    }
+                                                                                </TooltipContent>
+                                                                            </Tooltip>
+                                                                        </TooltipProvider>
+                                                                    )}
+                                                                </div>
                                                             );
                                                         },
                                                     )}

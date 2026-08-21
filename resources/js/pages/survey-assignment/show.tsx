@@ -26,6 +26,7 @@ import {
     Trophy,
     UserRound,
     X,
+    Info,
 } from 'lucide-react';
 import { EditableFileName } from '@/components/editable-filename';
 import { useEffect, useMemo, useState } from 'react';
@@ -60,6 +61,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Tooltip as UiTooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { dashboard, surveyAssignments } from '@/routes';
 import {
     createPariwisata,
@@ -767,7 +774,9 @@ function ScoreHorizontalChart({
         <Card className="min-w-0 p-4">
             <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h2 className="text-sm font-bold text-[#303030]">{title}</h2>
+                    <h2 className="text-sm font-bold text-[#303030]">
+                        {title}
+                    </h2>
                     <p className="mt-1 text-xs font-semibold text-[#7C7C7C]">
                         {description}
                     </p>
@@ -776,7 +785,8 @@ function ScoreHorizontalChart({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-1 rounded-md border border-[#EFEFEF] bg-white px-3 py-1.5 text-xs font-semibold text-[#303030] shadow-sm hover:bg-[#F8FBFE]">
-                                {selectedCategory} <ChevronDown className="size-3" />
+                                {selectedCategory}{' '}
+                                <ChevronDown className="size-3" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -785,7 +795,9 @@ function ScoreHorizontalChart({
                         >
                             <DropdownMenuItem
                                 className="cursor-pointer text-xs"
-                                onSelect={() => setSelectedCategory('Semua Kategori')}
+                                onSelect={() =>
+                                    setSelectedCategory('Semua Kategori')
+                                }
                             >
                                 Semua Kategori
                             </DropdownMenuItem>
@@ -793,7 +805,9 @@ function ScoreHorizontalChart({
                                 <DropdownMenuItem
                                     key={category}
                                     className="cursor-pointer text-xs"
-                                    onSelect={() => setSelectedCategory(category!)}
+                                    onSelect={() =>
+                                        setSelectedCategory(category!)
+                                    }
                                 >
                                     {category}
                                 </DropdownMenuItem>
@@ -809,18 +823,31 @@ function ScoreHorizontalChart({
                 </div>
             ) : (
                 <div className="mt-4 overflow-x-auto">
-                    <div className="min-w-[480px]" style={{ height: chartHeight }}>
+                    <div
+                        className="min-w-[480px]"
+                        style={{ height: chartHeight }}
+                    >
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                                 data={filteredData}
                                 layout="vertical"
-                                margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
+                                margin={{
+                                    top: 4,
+                                    right: 56,
+                                    left: 8,
+                                    bottom: 4,
+                                }}
                             >
-                                <CartesianGrid stroke="#EAF0F7" horizontal={false} />
+                                <CartesianGrid
+                                    stroke="#EAF0F7"
+                                    horizontal={false}
+                                />
                                 <XAxis
                                     type="number"
                                     domain={[0, 100]}
-                                    tickFormatter={(value) => String(value) + '%'}
+                                    tickFormatter={(value) =>
+                                        String(value) + '%'
+                                    }
                                     tick={{ fill: '#7C7C7C', fontSize: 10 }}
                                     axisLine={false}
                                     tickLine={false}
@@ -829,21 +856,29 @@ function ScoreHorizontalChart({
                                     type="category"
                                     dataKey="name"
                                     width={140}
-                                    tick={{ fill: '#303030', fontSize: 10, fontWeight: 600 }}
+                                    tick={{
+                                        fill: '#303030',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                    }}
                                     axisLine={false}
                                     tickLine={false}
                                 />
                                 <Tooltip
                                     formatter={(value) => [
-                                        Number(value ?? 0).toLocaleString('id-ID', {
-                                            maximumFractionDigits: 1,
-                                        }) + '%',
+                                        Number(value ?? 0).toLocaleString(
+                                            'id-ID',
+                                            {
+                                                maximumFractionDigits: 1,
+                                            },
+                                        ) + '%',
                                         'Skor',
                                     ]}
                                     contentStyle={{
                                         borderRadius: '8px',
                                         border: 'none',
-                                        boxShadow: '0 4px 14px rgba(3,17,32,0.08)',
+                                        boxShadow:
+                                            '0 4px 14px rgba(3,17,32,0.08)',
                                         color: '#303030',
                                         fontSize: '12px',
                                     }}
@@ -857,10 +892,15 @@ function ScoreHorizontalChart({
                                     <LabelList
                                         dataKey="score"
                                         position="right"
-                                        formatter={(value: number | string | undefined) =>
-                                            Number(value ?? 0).toLocaleString('id-ID', {
-                                                maximumFractionDigits: 1,
-                                            }) + '%'
+                                        formatter={(
+                                            value: number | string | undefined,
+                                        ) =>
+                                            Number(value ?? 0).toLocaleString(
+                                                'id-ID',
+                                                {
+                                                    maximumFractionDigits: 1,
+                                                },
+                                            ) + '%'
                                         }
                                         fill="#303030"
                                         fontSize={10}
@@ -917,12 +957,20 @@ function TurnoverHorizontalChart({
                 </div>
             ) : (
                 <div className="mt-4 overflow-x-auto">
-                    <div className="min-w-[480px]" style={{ height: chartHeight }}>
+                    <div
+                        className="min-w-[480px]"
+                        style={{ height: chartHeight }}
+                    >
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                                 data={data}
                                 layout="vertical"
-                                margin={{ top: 4, right: 82, left: 8, bottom: 4 }}
+                                margin={{
+                                    top: 4,
+                                    right: 82,
+                                    left: 8,
+                                    bottom: 4,
+                                }}
                             >
                                 <CartesianGrid
                                     stroke="#EAF0F7"
@@ -973,10 +1021,7 @@ function TurnoverHorizontalChart({
                                         dataKey="total_turnover"
                                         position="right"
                                         formatter={(
-                                            value:
-                                                | number
-                                                | string
-                                                | undefined,
+                                            value: number | string | undefined,
                                         ) =>
                                             formatCompactRupiah(
                                                 Number(value ?? 0),
@@ -2354,14 +2399,16 @@ function TabButton({
     count,
     icon,
     href,
+    tooltip,
 }: {
     active: boolean;
     label: string;
     count: number | string;
     icon: React.ReactNode;
     href: string;
+    tooltip?: string;
 }) {
-    return (
+    const content = (
         <Link
             href={href}
             preserveScroll
@@ -2374,6 +2421,18 @@ function TabButton({
         >
             {icon}
             <span>{label}</span>
+            {tooltip && (
+                <span
+                    className={classNames(
+                        'inline-flex size-4 items-center justify-center rounded-full transition',
+                        active
+                            ? 'text-white/70 hover:text-white'
+                            : 'text-[#7C7C7C] hover:text-[#0066AE]',
+                    )}
+                >
+                    <Info size={13} />
+                </span>
+            )}
             <span
                 className={classNames(
                     'rounded-full px-2 py-0.5 text-[11px] font-black',
@@ -2386,6 +2445,24 @@ function TabButton({
             </span>
         </Link>
     );
+
+    if (tooltip) {
+        return (
+            <TooltipProvider delayDuration={100}>
+                <UiTooltip>
+                    <TooltipTrigger asChild>{content}</TooltipTrigger>
+                    <TooltipContent
+                        side="top"
+                        className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] shadow-md"
+                    >
+                        {tooltip}
+                    </TooltipContent>
+                </UiTooltip>
+            </TooltipProvider>
+        );
+    }
+
+    return content;
 }
 
 function EmptyState({
@@ -2700,10 +2777,30 @@ function PariwisataTab({
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3 rounded-xl border border-[#D7E8F8] bg-[#F8FBFE] p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+                <div className="flex items-center gap-2">
                     <h2 className="text-base font-bold text-[#303030]">
-                        Data Master Global Sustainable Tourism Council (GSTC)
+                        Data Master Skor 2
                     </h2>
+                    <TooltipProvider delayDuration={100}>
+                        <UiTooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    aria-label="Info Skor 2"
+                                    className="inline-flex size-5 items-center justify-center rounded-full text-[#7C7C7C] transition hover:bg-[#EAF3FF] hover:text-[#0066AE]"
+                                >
+                                    <Info size={14} />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent
+                                side="top"
+                                className="max-w-xs rounded-lg border border-[#DDE4EC] bg-white px-3 py-1.5 text-xs font-medium text-[#303030] shadow-md"
+                            >
+                                Mengacu pada Global Sustainable Tourism Council
+                                (GSTC)
+                            </TooltipContent>
+                        </UiTooltip>
+                    </TooltipProvider>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {!isViewer && (
@@ -3895,7 +3992,8 @@ export default function SurveyAssignmentShow({
                         <div className="flex min-w-max gap-2">
                             <TabButton
                                 active={activeTab === 'desa'}
-                                label="Permenparekraf No. 9 Tahun 2021"
+                                label="Skor 1"
+                                tooltip="Mengacu pada Permenparekraf No. 9 Tahun 2021"
                                 count={1}
                                 icon={<MapPin size={16} />}
                                 href={showSurveyAssignment.url(
@@ -3915,7 +4013,8 @@ export default function SurveyAssignmentShow({
                             />
                             <TabButton
                                 active={activeTab === 'pariwisata'}
-                                label="Global Sustainable Tourism Council (GSTC)"
+                                label="Skor 2"
+                                tooltip="Mengacu pada Global Sustainable Tourism Council (GSTC)"
                                 count={tab_counts.istc}
                                 icon={<Flag size={16} />}
                                 href={showSurveyAssignment.url(
