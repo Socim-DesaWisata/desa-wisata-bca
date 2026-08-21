@@ -1,0 +1,37 @@
+import { t as cn } from "./utils-DAgvUY2L.js";
+import "react";
+import { jsx, jsxs } from "react/jsx-runtime";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+//#region resources/js/components/ui/tooltip.tsx
+function TooltipProvider({ delayDuration = 0, ...props }) {
+	return /* @__PURE__ */ jsx(TooltipPrimitive.Provider, {
+		"data-slot": "tooltip-provider",
+		delayDuration,
+		...props
+	});
+}
+function Tooltip({ ...props }) {
+	return /* @__PURE__ */ jsx(TooltipPrimitive.Root, {
+		"data-slot": "tooltip",
+		...props
+	});
+}
+function TooltipTrigger({ ...props }) {
+	return /* @__PURE__ */ jsx(TooltipPrimitive.Trigger, {
+		"data-slot": "tooltip-trigger",
+		...props
+	});
+}
+function TooltipContent({ className, sideOffset = 4, children, ...props }) {
+	return /* @__PURE__ */ jsx(TooltipPrimitive.Portal, { children: /* @__PURE__ */ jsxs(TooltipPrimitive.Content, {
+		"data-slot": "tooltip-content",
+		sideOffset,
+		className: cn("bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-w-sm rounded-md px-3 py-1.5 text-xs", className),
+		...props,
+		children: [children, /* @__PURE__ */ jsx(TooltipPrimitive.Arrow, { className: "bg-primary fill-primary z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" })]
+	}) });
+}
+//#endregion
+export { TooltipTrigger as i, TooltipContent as n, TooltipProvider as r, Tooltip as t };
+
+//# sourceMappingURL=tooltip-g8yGnjzs.js.map
